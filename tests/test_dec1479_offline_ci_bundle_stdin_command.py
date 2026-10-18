@@ -49,7 +49,8 @@ def _read_complete_bounded_stdin(input_stream):
                 return "".join(chunks), None
             chunks.append(part)
     except (OSError, UnicodeError, ValueError, TypeError, RuntimeError,
-            RecursionError):
+            RecursionError, AssertionError, AttributeError, OverflowError,
+            IndexError, EOFError):
         return None, "BUNDLE_STDIN_READ_UNREVIEWED"
 
 
@@ -918,6 +919,81 @@ class ExplicitStdinReviewIsNotAnnualWorkflowAdmission(unittest.TestCase):
             self.assertEqual(main(), 0)
         result = json.loads(out.getvalue())
         self.assertTrue(result["source_consistency"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+
+    def test_stdin_stream_assertion_failure_is_sanitized(self):
+        class Fake:
+            def read(self, count):
+                raise AssertionError("PRIVATE-CANARY")
+        raw, code = _read_complete_bounded_stdin(Fake())
+        self.assertIsNone(raw)
+        self.assertEqual(code, "BUNDLE_STDIN_READ_UNREVIEWED")
+
+    def test_stdin_stream_missing_read_method_is_sanitized(self):
+        raw, code = _read_complete_bounded_stdin(object())
+        self.assertIsNone(raw)
+        self.assertEqual(code, "BUNDLE_STDIN_READ_UNREVIEWED")
+
+    def test_stdin_stream_overflow_error_is_sanitized(self):
+        class Fake:
+            def read(self, count):
+                raise OverflowError("PRIVATE-CANARY")
+        self.assertEqual(_read_complete_bounded_stdin(Fake())[1],
+                         "BUNDLE_STDIN_READ_UNREVIEWED")
+
+    def test_stdin_stream_index_error_is_sanitized(self):
+        class Fake:
+            def read(self, count):
+                raise IndexError("PRIVATE-CANARY")
+        self.assertEqual(_read_complete_bounded_stdin(Fake())[1],
+                         "BUNDLE_STDIN_READ_UNREVIEWED")
+
+    def test_stdin_stream_eof_error_is_sanitized(self):
+        class Fake:
+            def read(self, count):
+                raise EOFError("PRIVATE-CANARY")
+        self.assertEqual(_read_complete_bounded_stdin(Fake())[1],
+                         "BUNDLE_STDIN_READ_UNREVIEWED")
+
+    def test_stdin_stream_attribute_getter_exception_is_sanitized(self):
+        class Fake:
+            @property
+            def read(self):
+                raise AttributeError("PRIVATE-CANARY")
+        self.assertEqual(_read_complete_bounded_stdin(Fake())[1],
+                         "BUNDLE_STDIN_READ_UNREVIEWED")
+
+    def test_stdin_stream_exception_never_echoed_in_verdict(self):
+        class Fake:
+            def read(self, count):
+                raise AssertionError("PRIVATE-CANARY")
+        out = io.StringIO()
+        rc = run_stdin_review(Fake(), out)
+        result = json.loads(out.getvalue())
+        self.assertEqual(rc, 2)
+        self.assertEqual(result["diagnostics"], ["BUNDLE_STDIN_READ_UNREVIEWED"])
+        self.assertNotIn("PRIVATE-CANARY", out.getvalue())
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_stdin_read_error_still_emits_one_line_checked_json(self):
+        class Fake:
+            def read(self, count):
+                raise EOFError("PRIVATE-CANARY")
+        out = io.StringIO()
+        rc = run_stdin_review(Fake(), out)
+        self.assertEqual(rc, 2)
+        self.assertEqual(len(out.getvalue().splitlines()), 1)
+        self.assertFalse(json.loads(out.getvalue())["source_consistency"])
+
+    def test_stdin_read_exception_guard_preserves_clean_source_only(self):
+        out = io.StringIO()
+        rc = run_stdin_review(io.StringIO(json.dumps(self.bundle)), out)
+        self.assertEqual(rc, 0)
+        result = json.loads(out.getvalue())
+        self.assertTrue(result["source_consistency"])
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(result["can_authorize_annual_run"])
 
 
