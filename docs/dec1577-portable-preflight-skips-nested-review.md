@@ -1,0 +1,7 @@
+# DEC-1577 — Malformed portable envelopes never enter nested source review
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent tests/docs child of #1823 at `e08ee4e00b51446263762910dcd01f7d73d6c16d`, adding ten synthetic unittest methods and a preflight invocation helper (**2,948 proposed source-defined methods**).
+
+The portable envelope front-end is the strict allocation/shape gate for caller-supplied PR and CI data. Use a patched downstream `review_stacked_draft_evidence` that **raises if invoked** to prove that an extra root annual-permission field, unknown schema, wrong run category type, noncanonical run-map ID, invalid source Base64, absolute source path, NUL-containing raw runner log, case-colliding source name, or changed-source/checked-CI-workflow cross-map identity collision is rejected **before** nested source review. Assert each existing diagnostic and all negative protected permission flags. A clean fixture passes preflight and invokes a deliberately nonauthorizing mocked reviewer once. These tests strengthen the boundary, not the source-provider authenticity or protected server admission gates.
+
+Own exact-head Phase 3/full historical-general CI and qualified independent review required. Tests/docs only, no production/parser/limit/workflow/security-control changes. DEC-650/#820 independent original OS no-write and DEC-651/#821/#779 exclusive immutable protected 2023 run385/attempt1 admission remain **BLOCKED**. No protected original/archive/artifact access, annual execution/retry, merge, deployment or trading.
