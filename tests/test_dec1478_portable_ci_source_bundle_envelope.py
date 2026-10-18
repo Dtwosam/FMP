@@ -10239,3 +10239,93 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
             self._assert_portable_tree_object_order_consistency_only()
             self.assertEqual(self.envelope, initial)
 
+    PRIVATE_CANARY = "PRIVATE-CANARY-DEC1621-NOT-FOR-PUBLIC-VERDICTS"
+
+    def _assert_portable_private_canary_never_reflected(self):
+        import copy
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        unchanged = copy.deepcopy(self.envelope)
+        direct = self.verdict()
+        raw = json.dumps(self.envelope, sort_keys=True)
+        parsed = review_bundle_json_text(raw)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(raw), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(self.envelope, unchanged)
+        self.assertEqual(direct, parsed)
+        self.assertEqual(status, 0 if direct["source_consistency"] else 2)
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"], list(direct["diagnostics"]))
+        self.assertEqual(emitted["source_consistency"],
+                         direct["source_consistency"])
+        self.assertNotIn(self.PRIVATE_CANARY, out.getvalue())
+        self.assertNotIn(self.PRIVATE_CANARY,
+                         json.dumps(direct, sort_keys=True))
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        for result in (direct, emitted):
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_canary_full_root_extra_nonreflecting(self):
+        sha = self.envelope["commit"]["tree"]["sha"]
+        self.envelope["full_tree_snapshots"][sha]["private_sentinel"] = self.PRIVATE_CANARY
+        self._assert_portable_private_canary_never_reflected()
+
+    def test_portable_canary_full_child_extra_nonreflecting(self):
+        trees, _, sha = self._portable_snapshot_parent_child("docs")
+        trees[sha]["private_sentinel"] = self.PRIVATE_CANARY
+        self._assert_portable_private_canary_never_reflected()
+
+    def test_portable_canary_full_leaf_extra_nonreflecting(self):
+        self._portable_snapshot_leaf("tests")["private_sentinel"] = self.PRIVATE_CANARY
+        self._assert_portable_private_canary_never_reflected()
+
+    def test_portable_canary_flat_node_extra_nonreflecting(self):
+        self.envelope["nodes"]["docs/sample.md"]["private_sentinel"] = self.PRIVATE_CANARY
+        self._assert_portable_private_canary_never_reflected()
+
+    def test_portable_canary_pr_record_extra_nonreflecting(self):
+        self.envelope["pr"]["private_sentinel"] = self.PRIVATE_CANARY
+        self._assert_portable_private_canary_never_reflected()
+
+    def test_portable_canary_compare_record_extra_nonreflecting(self):
+        self.envelope["compare"]["private_sentinel"] = self.PRIVATE_CANARY
+        self._assert_portable_private_canary_never_reflected()
+
+    def test_portable_canary_commit_record_extra_nonreflecting(self):
+        self.envelope["commit"]["private_sentinel"] = self.PRIVATE_CANARY
+        self._assert_portable_private_canary_never_reflected()
+
+    def test_portable_canary_raw_receipt_extra_nonreflecting(self):
+        self.envelope["raw_ci_log_receipts"]["8000"]["private_sentinel"] = self.PRIVATE_CANARY
+        self._assert_portable_private_canary_never_reflected()
+
+    def test_portable_canary_phase3_evidence_extra_nonreflecting(self):
+        self.envelope["phase3_evidence_snapshot"]["private_sentinel"] = self.PRIVATE_CANARY
+        self._assert_portable_private_canary_never_reflected()
+
+    def test_portable_canary_merge_checkout_extra_nonreflecting(self):
+        self.envelope["merge_checkout_snapshot"]["private_sentinel"] = self.PRIVATE_CANARY
+        self._assert_portable_private_canary_never_reflected()
+
+    def test_portable_canary_changed_b64_invalid_canary_nonreflecting(self):
+        self.envelope["changed_bytes_b64"]["docs/sample.md"] = self.PRIVATE_CANARY
+        self._assert_portable_private_canary_never_reflected()
+
+    def test_portable_canary_raw_log_appended_canary_nonreflecting(self):
+        self.envelope["raw_ci_runner_logs"]["8001"] += self.PRIVATE_CANARY
+        self._assert_portable_private_canary_never_reflected()
+
+    def test_portable_canary_docs_leaf_private_path_nonreflecting(self):
+        self._portable_snapshot_leaf("docs")["path"] = self.PRIVATE_CANARY
+        self._assert_portable_private_canary_never_reflected()
+
+    def test_portable_canary_compare_file_private_path_nonreflecting(self):
+        self.envelope["compare"]["files"][0]["filename"] = "tests/" + self.PRIVATE_CANARY
+        self._assert_portable_private_canary_never_reflected()
+
+    def test_portable_canary_clean_fixture_source_only(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
