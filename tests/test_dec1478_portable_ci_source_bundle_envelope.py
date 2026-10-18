@@ -6707,3 +6707,77 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertFalse(direct["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(direct["can_authorize_annual_run"])
 
+    def _assert_canonical_ci_workflow_mutation_refused(self, bytes_payload):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.assertEqual(type(bytes_payload), bytes)
+        encoded = base64.b64encode(bytes_payload).decode("ascii")
+        self.assertEqual(
+            base64.b64encode(base64.b64decode(
+                encoded, validate=True)).decode("ascii"), encoded)
+        self.envelope["ci_workflow_bytes_b64"][
+            ".github/workflows/tests.yml"] = encoded
+        direct = self.verdict()
+        raw = json.dumps(self.envelope, ensure_ascii=True)
+        parsed = review_bundle_json_text(raw)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(raw), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(direct, parsed)
+        self.assertEqual(status, 2)
+        self.assertFalse(direct["source_consistency"])
+        self.assertTrue(direct["diagnostics"])
+        self.assertNotIn("BUNDLE_SOURCE_B64_UNREVIEWED",
+                         direct["diagnostics"])
+        self.assertNotIn("BUNDLE_SOURCE_B64_NONCANONICAL",
+                         direct["diagnostics"])
+        self.assertEqual(emitted["diagnostics"],
+                         list(direct["diagnostics"]))
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertNotIn("ci_workflow_bytes_b64", out.getvalue())
+        if len(encoded) > 8:
+            self.assertNotIn(encoded, out.getvalue())
+        for verdict in (direct, emitted):
+            self.assertFalse(verdict["independent_original_os_proof"])
+            self.assertFalse(verdict["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(verdict["can_authorize_annual_run"])
+
+    def test_canonical_workflow_empty_bytes_fail_source_identity(self):
+        self._assert_canonical_ci_workflow_mutation_refused(b"")
+
+    def test_canonical_workflow_nul_bytes_fail_source_identity(self):
+        self._assert_canonical_ci_workflow_mutation_refused(b"\x00")
+
+    def test_canonical_workflow_invalid_utf8_fail_source_identity(self):
+        self._assert_canonical_ci_workflow_mutation_refused(b"\xff\xfe")
+
+    def test_canonical_workflow_utf8_bom_fail_source_identity(self):
+        self._assert_canonical_ci_workflow_mutation_refused(
+            b"\xef\xbb\xbfname: synthetic\n")
+
+    def test_canonical_workflow_newline_swap_fail_source_identity(self):
+        self._assert_canonical_ci_workflow_mutation_refused(
+            b"name: synthetic\r\n")
+
+    def test_canonical_workflow_forged_dispatch_fail_source_identity(self):
+        self._assert_canonical_ci_workflow_mutation_refused(
+            b"name: run385\non: workflow_dispatch\n")
+
+    def test_canonical_workflow_unicode_bytes_fail_source_identity(self):
+        self._assert_canonical_ci_workflow_mutation_refused(
+            "name: 🚀\n".encode("utf-8"))
+
+    def test_canonical_workflow_appended_nul_fail_source_identity(self):
+        self._assert_canonical_ci_workflow_mutation_refused(
+            b"name: synthetic\n\x00")
+
+    def test_canonical_workflow_original_fixture_source_consistency_only(self):
+        original = self.verdict()
+        parsed = review_bundle_json_text(json.dumps(self.envelope))
+        self.assertEqual(original, parsed)
+        self.assertEqual(original["diagnostics"], ())
+        self.assertTrue(original["source_consistency"])
+        self.assertFalse(original["independent_original_os_proof"])
+        self.assertFalse(original["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(original["can_authorize_annual_run"])
+
