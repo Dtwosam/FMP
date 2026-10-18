@@ -45,6 +45,8 @@ MAX_INMEMORY_NODES = 200_000
 MAX_INMEMORY_DEPTH = 512
 MAX_INMEMORY_SCALAR_UNITS = 4_000_000
 MAX_INMEMORY_TOTAL_SCALAR_UNITS = 16_000_000
+MAX_INMEMORY_SCALAR_UTF8_BYTES = 4_000_000
+MAX_INMEMORY_TOTAL_UTF8_BYTES = 16_000_000
 MAX_INMEMORY_INTEGER_MAGNITUDE = 10**MAX_JSON_INTEGER_DIGITS-1
 VERDICT_FIELDS = frozenset((
     "source_consistency", "diagnostics", "independent_original_os_proof",
@@ -322,6 +324,7 @@ def _within_inmemory_structure_budget(root):
     stack = [(root, 0, False)]
     nodes = 0
     total_scalar_units = 0
+    total_utf8_units = 0
     while stack:
         item, depth, leaving = stack.pop()
         if leaving:
@@ -348,6 +351,15 @@ def _within_inmemory_structure_budget(root):
             total_scalar_units += units
             if (units > MAX_INMEMORY_SCALAR_UNITS or
                     total_scalar_units > MAX_INMEMORY_TOTAL_SCALAR_UNITS):
+                return False
+            try:
+                byte_units = (len(item.encode("utf-8")) if type(item) is str
+                              else len(item))
+            except UnicodeError:
+                return False
+            total_utf8_units += byte_units
+            if (byte_units > MAX_INMEMORY_SCALAR_UTF8_BYTES or
+                    total_utf8_units > MAX_INMEMORY_TOTAL_UTF8_BYTES):
                 return False
             if type(item) is str and any(
                     0xD800 <= ord(char) <= 0xDFFF for char in item):
@@ -3346,6 +3358,53 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
 
     def test_json_text_utf8_cap_preserves_synthetic_source_only(self):
         result = review_bundle_json_text(json.dumps(self.envelope))
+        self.assertTrue(result["source_consistency"])
+        self.assertEqual(result["diagnostics"], ())
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_direct_utf8_exact_four_megabyte_scalar_accepted(self):
+        value = "é" * 2000000
+        self.assertEqual(len(value.encode("utf-8")), MAX_INMEMORY_SCALAR_UTF8_BYTES)
+        self.assertTrue(_within_inmemory_structure_budget(value))
+
+    def test_direct_utf8_one_over_scalar_byte_limit_refused(self):
+        value = "é" * 2000000 + "a"
+        self.assertFalse(_within_inmemory_structure_budget(value))
+
+    def test_direct_utf8_emoji_scalar_excess_refused(self):
+        self.assertFalse(_within_inmemory_structure_budget("🚀"*1000001))
+
+    def test_direct_utf8_bytes_scalar_at_exact_limit_accepted(self):
+        value = b"x" * MAX_INMEMORY_SCALAR_UTF8_BYTES
+        self.assertTrue(_within_inmemory_structure_budget(value))
+
+    def test_direct_utf8_aggregate_byte_cap_refuses_unicode(self):
+        value = "é"*2000000
+        self.assertFalse(_within_inmemory_structure_budget([value]*5))
+
+    def test_direct_utf8_aggregate_byte_cap_exact_boundary_accepted(self):
+        value = "é"*2000000
+        self.assertTrue(_within_inmemory_structure_budget([value]*4))
+
+    def test_direct_utf8_unicode_dict_key_budget_enforced(self):
+        value = "é"*2000001
+        self.assertFalse(_within_inmemory_structure_budget({value: None}))
+
+    def test_direct_utf8_byte_cap_in_envelope_is_sanitized(self):
+        data = dict(self.envelope)
+        pr = dict(data["pr"])
+        pr["synthetic_private"] = "canary" + "🚀"*1000001
+        data["pr"] = pr
+        result = review_bundle_envelope(data)
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_STRUCTURE_BUDGET_UNREVIEWED",))
+        self.assertNotIn("canary", repr(result))
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_direct_utf8_scalar_budget_clean_consistency_only(self):
+        result = self.verdict()
         self.assertTrue(result["source_consistency"])
         self.assertEqual(result["diagnostics"], ())
         self.assertFalse(result["independent_original_os_proof"])
