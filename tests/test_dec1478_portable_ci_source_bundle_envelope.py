@@ -10446,3 +10446,57 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_bad_object_order_clean_source_control(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+    def test_portable_nested_falsy_original_os_float_zero_refused(self):
+        self._assert_forged_tree_review_verdict_refused({"independent_original_os_proof": 0.0})
+
+    def test_portable_nested_falsy_original_os_empty_list_refused(self):
+        self._assert_forged_tree_review_verdict_refused({"independent_original_os_proof": []})
+
+    def test_portable_nested_falsy_original_os_empty_dict_refused(self):
+        self._assert_forged_tree_review_verdict_refused({"independent_original_os_proof": {}})
+
+    def test_portable_nested_falsy_original_os_empty_string_refused(self):
+        self._assert_forged_tree_review_verdict_refused({"independent_original_os_proof": ""})
+
+    def test_portable_nested_falsy_original_os_byte_false_refused(self):
+        self._assert_forged_tree_review_verdict_refused({"independent_original_os_proof": b"false"})
+
+    def test_portable_nested_falsy_exclusive_gate_float_zero_refused(self):
+        self._assert_forged_tree_review_verdict_refused({"exclusive_server_dispatch_gate_proven": 0.0})
+
+    def test_portable_nested_falsy_exclusive_gate_empty_list_refused(self):
+        self._assert_forged_tree_review_verdict_refused({"exclusive_server_dispatch_gate_proven": []})
+
+    def test_portable_nested_falsy_exclusive_gate_empty_dict_refused(self):
+        self._assert_forged_tree_review_verdict_refused({"exclusive_server_dispatch_gate_proven": {}})
+
+    def test_portable_nested_falsy_exclusive_gate_empty_string_refused(self):
+        self._assert_forged_tree_review_verdict_refused({"exclusive_server_dispatch_gate_proven": ""})
+
+    def test_portable_nested_falsy_annual_run_float_zero_refused(self):
+        self._assert_forged_tree_review_verdict_refused({"can_authorize_annual_run": 0.0})
+
+    def test_portable_nested_falsy_annual_run_empty_list_refused(self):
+        self._assert_forged_tree_review_verdict_refused({"can_authorize_annual_run": []})
+
+    def test_portable_nested_falsy_annual_run_empty_dict_refused(self):
+        self._assert_forged_tree_review_verdict_refused({"can_authorize_annual_run": {}})
+
+    def test_portable_nested_falsy_annual_run_empty_tuple_refused(self):
+        self._assert_forged_tree_review_verdict_refused({"can_authorize_annual_run": ()})
+
+    def test_portable_nested_falsy_source_consistency_float_zero_refused(self):
+        self._assert_forged_tree_review_verdict_refused({"source_consistency": 0.0})
+
+    def test_portable_nested_falsy_source_consistency_empty_dict_refused(self):
+        self._assert_forged_tree_review_verdict_refused({"source_consistency": {}})
+
+    def test_portable_nested_falsy_clean_control_source_only(self):
+        result = self.verdict()
+        self.assertTrue(result["source_consistency"])
+        self.assertEqual(result["diagnostics"], ())
+        for key in ("independent_original_os_proof",
+                    "exclusive_server_dispatch_gate_proven",
+                    "can_authorize_annual_run"):
+            self.assertIs(result[key], False)
+
