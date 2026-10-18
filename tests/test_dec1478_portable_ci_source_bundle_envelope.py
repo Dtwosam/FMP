@@ -5756,3 +5756,83 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertFalse(direct["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(direct["can_authorize_annual_run"])
 
+    def _assert_base64_decoder_skipped_for_preflight(self, category,
+                                                      new_map, code):
+        from unittest.mock import patch
+        self.envelope[category] = new_map
+        with patch.object(base64, "b64decode",
+                          side_effect=AssertionError("decoder was invoked")) as decoder:
+            result = self.verdict()
+        decoder.assert_not_called()
+        self.assertEqual(result["diagnostics"], (code,))
+        self.assertFalse(result["source_consistency"])
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_oversized_changed_base64_text_never_invokes_decoder(self):
+        limit = 4*((MAX_BLOB_BYTES+2)//3)
+        self._assert_base64_decoder_skipped_for_preflight(
+            "changed_bytes_b64",
+            {"tests/sample.py": "A"*(limit+4)},
+            "BUNDLE_SOURCE_BLOB_OVERSIZE")
+
+    def test_oversized_workflow_base64_text_never_invokes_decoder(self):
+        limit = 4*((MAX_BLOB_BYTES+2)//3)
+        self._assert_base64_decoder_skipped_for_preflight(
+            "ci_workflow_bytes_b64",
+            {".github/workflows/tests.yml": "A"*(limit+4)},
+            "BUNDLE_SOURCE_BLOB_OVERSIZE")
+
+    def test_overlarge_changed_source_inventory_never_decodes_any_blob(self):
+        values = {f"tests/sample-{i}.py": "AA=="
+                  for i in range(MAX_SOURCE_ENTRIES_PER_MAP+1)}
+        self._assert_base64_decoder_skipped_for_preflight(
+            "changed_bytes_b64", values,
+            "BUNDLE_SOURCE_MAP_OVERSIZE")
+
+    def test_overlarge_workflow_source_inventory_never_decodes_any_blob(self):
+        values = {f".github/workflows/synthetic-{i}.yml": "AA=="
+                  for i in range(MAX_SOURCE_ENTRIES_PER_MAP+1)}
+        self._assert_base64_decoder_skipped_for_preflight(
+            "ci_workflow_bytes_b64", values,
+            "BUNDLE_SOURCE_MAP_OVERSIZE")
+
+    def test_invalid_absolute_changed_source_path_skips_base64_decode(self):
+        self._assert_base64_decoder_skipped_for_preflight(
+            "changed_bytes_b64",
+            {"/private/not-a-source.py": "AA=="},
+            "BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_invalid_parent_workflow_source_path_skips_base64_decode(self):
+        self._assert_base64_decoder_skipped_for_preflight(
+            "ci_workflow_bytes_b64",
+            {".github/workflows/../unsafe.yml": "AA=="},
+            "BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_exact_encoded_length_still_decodes_then_checks_raw_bytes(self):
+        from unittest.mock import patch
+        limit = 4*((MAX_BLOB_BYTES+2)//3)
+        self.envelope["changed_bytes_b64"]["tests/sample.py"] = "A"*limit
+        with patch.object(base64, "b64decode",
+                          wraps=base64.b64decode) as decoder:
+            result = self.verdict()
+        decoder.assert_called_once()
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_SOURCE_BLOB_OVERSIZE",))
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_predecode_guards_preserve_canonical_small_clean_bundle(self):
+        from unittest.mock import patch
+        expected_count = (len(self.envelope["changed_bytes_b64"]) +
+                          len(self.envelope["ci_workflow_bytes_b64"]))
+        with patch.object(base64, "b64decode",
+                          wraps=base64.b64decode) as decoder:
+            result = self.verdict()
+        self.assertEqual(decoder.call_count, expected_count)
+        self.assertTrue(result["source_consistency"])
+        self.assertEqual(result["diagnostics"], ())
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+

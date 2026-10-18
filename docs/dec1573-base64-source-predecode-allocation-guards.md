@@ -1,0 +1,7 @@
+# DEC-1573 — Base64 allocation and source-path preflight ordering
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact one-commit tests/docs child of #1819 at `e81c4045c5304431917b56fe70521eef22cb6384`. Eight new synthetic regression methods and one predecode assertion helper (**2,914 proposed source-defined tests**).
+
+Lock the resource-safety ordering of the portable caller-supplied source bundle. A Base64 encoded blob length above the largest representation for a 1,000,000-byte source payload, a map with 8,193 entries (over the 8,192 ceiling), or an invalid absolute/parent-traversing source path must be refused **without invoking `base64.b64decode`** for either changed source files or reviewed CI workflow source bytes. The exact encoded size boundary must still run the decoder once and refuse decoded bytes above 1,000,000 bytes. A small canonical complete synthetic source fixture must continue to decode all expected blobs and yield source consistency only. The tests mock decoding to prove ordering rather than only checking an eventual negative verdict.
+
+No production code, parser/budget limit, workflow/security-control or protected admission changes. Exact-head Phase 3 and full historical/general CI plus independent qualified review required. DEC-650/#820 independent protected-original OS no-write and DEC-651/#821/#779 exclusive immutable protected 2023 run385/attempt1 server admission remain **BLOCKED**. No protected originals/archives/artifacts, annual execution/retry, merge, deployment or trading.
