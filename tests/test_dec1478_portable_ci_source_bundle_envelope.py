@@ -6026,3 +6026,95 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self._refingerprint_portable_synthetic_ci_log("8001")
         self._assert_pairwise_fault_review_parity()
 
+    def _assert_offline_review_no_external_action(self, runner,
+                                                  expect_consistent):
+        import builtins
+        import os
+        import pathlib
+        import socket
+        import subprocess
+        import urllib.request
+        from contextlib import ExitStack
+        from unittest.mock import patch
+        forbidden = []
+        def refuse(*args, **kwargs):
+            forbidden.append("unexpected external action")
+            raise AssertionError("offline source reviewer external action")
+        boundaries = (
+            (builtins, "open"),
+            (pathlib.Path, "open"),
+            (socket, "socket"),
+            (socket, "create_connection"),
+            (subprocess, "run"),
+            (subprocess, "Popen"),
+            (subprocess, "check_output"),
+            (os, "system"),
+            (os, "popen"),
+            (urllib.request, "urlopen"),
+        )
+        with ExitStack() as stack:
+            for module, name in boundaries:
+                stack.enter_context(
+                    patch.object(module, name, side_effect=refuse))
+            result = runner()
+        self.assertEqual(forbidden, [])
+        self.assertEqual(result["source_consistency"], expect_consistent)
+        self.assertEqual(type(result["diagnostics"]), tuple)
+        self.assertEqual(bool(result["diagnostics"]), not expect_consistent)
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_offline_clean_direct_memory_avoids_external_action_apis(self):
+        self._assert_offline_review_no_external_action(self.verdict, True)
+
+    def test_offline_clean_json_text_avoids_external_action_apis(self):
+        raw = json.dumps(self.envelope)
+        self._assert_offline_review_no_external_action(
+            lambda: review_bundle_json_text(raw), True)
+
+    def test_offline_bad_source_identity_avoids_external_action_apis(self):
+        self.envelope["changed_bytes_b64"]["tests/sample.py"] = (
+            base64.b64encode(b"synthetic-unreviewed").decode("ascii"))
+        self._assert_offline_review_no_external_action(self.verdict, False)
+
+    def test_offline_bad_ci_source_identity_avoids_external_action_apis(self):
+        self.envelope["ci_workflow_bytes_b64"][
+            ".github/workflows/tests.yml"] = (
+            base64.b64encode(b"synthetic-unreviewed").decode("ascii"))
+        self._assert_offline_review_no_external_action(self.verdict, False)
+
+    def test_offline_json_duplicate_key_avoids_external_action_apis(self):
+        self._assert_offline_review_no_external_action(
+            lambda: review_bundle_json_text(
+                '{"schema":1,"schema":2}'), False)
+
+    def test_offline_invalid_source_path_avoids_external_action_apis(self):
+        self.envelope["changed_bytes_b64"][
+            "/private/synthetic-evidence.py"] = (
+            self.envelope["changed_bytes_b64"].pop("tests/sample.py"))
+        self._assert_offline_review_no_external_action(
+            lambda: review_bundle_json_text(json.dumps(self.envelope)),
+            False)
+
+    def test_offline_private_url_string_never_triggers_network_apis(self):
+        self.envelope["pr"]["untrusted_origin"] = (
+            "https://private.invalid/annual-run385")
+        # An ignored untrusted note does not change reviewed source stages.
+        # Passing source consistency is still not provider authentication.
+        self._assert_offline_review_no_external_action(self.verdict, True)
+
+    def test_offline_stdin_review_avoids_external_action_apis(self):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        raw = json.dumps(self.envelope)
+        def review_via_stdin():
+            out = io.StringIO()
+            status = cli.run_stdin_review(io.StringIO(raw), out)
+            self.assertEqual(status, 0)
+            doc = json.loads(out.getvalue())
+            doc["diagnostics"] = tuple(doc["diagnostics"])
+            return doc
+        self._assert_offline_review_no_external_action(review_via_stdin,
+                                                       True)
+
