@@ -1,0 +1,7 @@
+# DEC-1568 — CI run identity and source-map inventories across input interfaces
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** One-commit tests/docs child of #1814 at `987e85be8e135e7a47bcdf276277e2b1993794f3`; eleven synthetic unittest methods and a cross-interface assertion helper (**2,869 proposed source-defined methods**).
+
+Every required run-ID map can contain only the two separately evidenced Phase 3 and historical CI runs, and each run ID must match its evidence. Test removal of each kind of required record; injection of an extra syntactically valid positive ID into jobs, checkout, log and receipt maps; a changed Phase 3 run ID; and attempted collision of historical and Phase 3 run IDs. These inputs remain structurally decodable yet must fail closed across direct-memory, JSON-text and bounded stdin entry points. The clean, exactly two-run synthetic control proves source consistency alone, not GitHub provider authenticity or protected annual authorization.
+
+Own exact-head Phase 3 and full historical/general CI and qualified independent review required. Tests/docs only: no changes to parser, resource ceilings, workflow/security controls or protected admission. DEC-650/#820 independently witnessed protected-original OS no-write and DEC-651/#821/#779 immutable exclusive protected 2023 run385/attempt1 server admission remain **BLOCKED**. No protected original/archive/artifact access, annual run/retry, merge, deployment or trading.
