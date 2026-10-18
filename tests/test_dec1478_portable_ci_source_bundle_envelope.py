@@ -10145,3 +10145,97 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_receipt_tree_clean_source_control(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+    def _assert_repeated_reviewer_failclosed_is_pure(self):
+        import copy
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        original = copy.deepcopy(self.envelope)
+        raw = json.dumps(self.envelope, sort_keys=True)
+        first = self.verdict()
+        self.assertFalse(first["source_consistency"])
+        self.assertTrue(first["diagnostics"])
+        for _ in range(3):
+            self.assertEqual(self.verdict(), first)
+            self.assertEqual(review_bundle_json_text(raw), first)
+            out = io.StringIO()
+            status = cli.run_stdin_review(io.StringIO(raw), out)
+            emitted = json.loads(out.getvalue())
+            self.assertEqual(status, 2)
+            self.assertEqual(set(emitted), VERDICT_FIELDS)
+            self.assertEqual(emitted["diagnostics"],
+                             list(first["diagnostics"]))
+            self.assertFalse(emitted["source_consistency"])
+            self.assertNotIn("tests/sample.py", out.getvalue())
+            self.assertNotIn("docs/sample.md", out.getvalue())
+            for verdict in (first, emitted):
+                self.assertFalse(verdict["independent_original_os_proof"])
+                self.assertFalse(verdict["exclusive_server_dispatch_gate_proven"])
+                self.assertFalse(verdict["can_authorize_annual_run"])
+            self.assertEqual(self.envelope, original)
+
+    def test_portable_repeatability_root_tree_sha_wrong_stable(self):
+        self.envelope["commit"]["tree"]["sha"] = "f"*40
+        self._assert_repeated_reviewer_failclosed_is_pure()
+
+    def test_portable_repeatability_docs_blob_sha_wrong_stable(self):
+        self._portable_snapshot_leaf("docs")["sha"] = "a"*40
+        self._assert_repeated_reviewer_failclosed_is_pure()
+
+    def test_portable_repeatability_tests_leaf_executable_stable(self):
+        self._portable_snapshot_leaf("tests")["mode"] = "100755"
+        self._assert_repeated_reviewer_failclosed_is_pure()
+
+    def test_portable_repeatability_docs_leaf_path_mutated_stable(self):
+        self._portable_snapshot_leaf("docs")["path"] = "changed.md"
+        self._assert_repeated_reviewer_failclosed_is_pure()
+
+    def test_portable_repeatability_docs_parent_symlink_stable(self):
+        root = self.envelope["full_tree_snapshots"][self.envelope["commit"]["tree"]["sha"]]
+        next(e for e in root["tree"] if e["path"] == "docs")["mode"] = "120000"
+        self._assert_repeated_reviewer_failclosed_is_pure()
+
+    def test_portable_repeatability_missing_full_tree_child_stable(self):
+        trees, _, sha = self._portable_snapshot_parent_child("tests")
+        trees.pop(sha)
+        self._assert_repeated_reviewer_failclosed_is_pure()
+
+    def test_portable_repeatability_extra_full_tree_object_stable(self):
+        self.envelope["full_tree_snapshots"]["f"*40] = {"sha": "f"*40, "truncated": False, "tree": []}
+        self._assert_repeated_reviewer_failclosed_is_pure()
+
+    def test_portable_repeatability_flat_node_mode_wrong_stable(self):
+        self.envelope["nodes"]["tests/sample.py"]["mode"] = "120000"
+        self._assert_repeated_reviewer_failclosed_is_pure()
+
+    def test_portable_repeatability_changed_b64_invalid_stable(self):
+        self.envelope["changed_bytes_b64"]["docs/sample.md"] = "%%%!"
+        self._assert_repeated_reviewer_failclosed_is_pure()
+
+    def test_portable_repeatability_raw_ci_runner_log_missing_stable(self):
+        self.envelope["raw_ci_runner_logs"].pop("8000")
+        self._assert_repeated_reviewer_failclosed_is_pure()
+
+    def test_portable_repeatability_raw_ci_receipt_hash_wrong_stable(self):
+        self.envelope["raw_ci_log_receipts"]["8001"]["text_sha256"] = "f"*64
+        self._assert_repeated_reviewer_failclosed_is_pure()
+
+    def test_portable_repeatability_compare_changed_status_removed_stable(self):
+        self.envelope["compare"]["files"][1]["status"] = "removed"
+        self._assert_repeated_reviewer_failclosed_is_pure()
+
+    def test_portable_repeatability_pr_changed_file_count_stable(self):
+        self.envelope["pr"]["changed_files"] = 3
+        self._assert_repeated_reviewer_failclosed_is_pure()
+
+    def test_portable_repeatability_root_truncated_numeric_stable(self):
+        root = self.envelope["full_tree_snapshots"][self.envelope["commit"]["tree"]["sha"]]
+        root["truncated"] = 0
+        self._assert_repeated_reviewer_failclosed_is_pure()
+
+    def test_portable_repeatability_clean_fixture_source_only(self):
+        import copy
+        initial = copy.deepcopy(self.envelope)
+        for _ in range(3):
+            self._assert_portable_tree_object_order_consistency_only()
+            self.assertEqual(self.envelope, initial)
+

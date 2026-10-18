@@ -1,0 +1,7 @@
+# DEC-1620 — Repeated portable reviews must be deterministic and preserve the caller graph
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent one-commit tests/docs child of #1866 at `eb1155f0e50b8cf268017f57ca98bfd072723277`. Fifteen synthetic methods (**3,478 proposed source-defined tests**).
+
+Regression tests that check a single invocation can miss mutation-induced review drift. For fourteen malformed but JSON-serializable inputs spanning root/child Git tree identity, parent/leaf mode, tree object inventory, flat nodes, changed-source Base64, missing raw CI runner log, changed CI receipt, PR compare and metadata counts, execute **three complete review rounds** across direct-memory, JSON text and bounded stdin. All later responses must equal the first, remain fail-closed and nonauthorizing, and preserve the original caller evidence without echoing paths. A clean control repeats the source-only positive case without becoming original-OS proof or annual-run admission.
+
+These synthetic checks cannot independently authenticate GitHub objects, runner evidence, protected originals or annual execution. Own exact-head Phase 3/general CI and independent qualified review required. Tests/docs only; no production/parser/budget/workflow/security/admission modifications, protected original/archive/artifact access, annual dispatch/retry, merge/deployment/trading. DEC-650/#820 and DEC-651/#821/#779 remain **BLOCKED**.
