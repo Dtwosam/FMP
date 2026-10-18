@@ -1,0 +1,7 @@
+# DEC-1588 — Escaped JSON member names keep canonical evidence identity
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent tests/docs child of #1834 at `c2566f4f5c1f2f7db1026d113bd14c1eba83a940`. Ten synthetic methods and one parity helper (**3,049 proposed source-defined methods**).
+
+Unicode escape syntax in a JSON **member name** is different from either a Unicode-normalized repository file path or canonical decoded Base64. For unmodified caller-supplied synthetic evidence, replace one literal ASCII character in the JSON key name for `tests/sample.py`, `.github/workflows/tests.yml`, each of the four run-ID-keyed maps, the root `schema` key, and the schema version **value** with an equivalent `\uXXXX` escape. Assert that the resulting JSON is lexically different but decodes to the *identical* input envelope, and that direct-memory, JSON-text and bounded stdin return the same source-consistency-only verdict where applicable. Valid decoded keys must remain valid; DEC-1586's invalid decoded Base64 characters and earlier duplicate **decoded** key tests still fail closed.
+
+No claim of independently authenticated GitHub records, protected-original OS no-write or immutable exclusive annual dispatch admission. Requires own exact-head Phase 3/full historical-general CI and qualified independent review. Tests/docs only; no production, workflow/security-control/parser/budget changes. DEC-650/#820 and DEC-651/#821/#779 remain BLOCKED. No protected originals/archives/artifacts, annual execution/retry, merge, deployment or trading.
