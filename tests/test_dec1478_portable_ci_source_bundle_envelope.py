@@ -11656,3 +11656,82 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_canonical_byte_drift_clean_control(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+    def _assert_inmemory_nonstring_source_key_refused(self, category, key):
+        import copy
+        from unittest.mock import patch
+        self.assertIn(category, ("changed_bytes_b64",
+                                 "ci_workflow_bytes_b64"))
+        example = next(iter(self.envelope[category].values()))
+        self.envelope[category][key] = example
+        original = copy.deepcopy(self.envelope)
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          side_effect=AssertionError(
+                              "unreviewed key reached nested source reviewer")):
+            direct = self.verdict()
+        self.assertEqual(original, self.envelope)
+        self.assertEqual(direct["diagnostics"],
+                         ("BUNDLE_SOURCE_PATH_UNREVIEWED",))
+        self.assertFalse(direct["source_consistency"])
+        self.assertFalse(direct["independent_original_os_proof"])
+        self.assertFalse(direct["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(direct["can_authorize_annual_run"])
+
+    def test_portable_nonstring_source_key_changed_integer_42_refused(self):
+        self._assert_inmemory_nonstring_source_key_refused(
+            "changed_bytes_b64", 42)
+
+    def test_portable_nonstring_source_key_ci_integer_42_refused(self):
+        self._assert_inmemory_nonstring_source_key_refused(
+            "ci_workflow_bytes_b64", 42)
+
+    def test_portable_nonstring_source_key_changed_boolean_true_refused(self):
+        self._assert_inmemory_nonstring_source_key_refused(
+            "changed_bytes_b64", True)
+
+    def test_portable_nonstring_source_key_ci_boolean_true_refused(self):
+        self._assert_inmemory_nonstring_source_key_refused(
+            "ci_workflow_bytes_b64", True)
+
+    def test_portable_nonstring_source_key_changed_null_refused(self):
+        self._assert_inmemory_nonstring_source_key_refused(
+            "changed_bytes_b64", None)
+
+    def test_portable_nonstring_source_key_ci_null_refused(self):
+        self._assert_inmemory_nonstring_source_key_refused(
+            "ci_workflow_bytes_b64", None)
+
+    def test_portable_nonstring_source_key_changed_bytes_label_refused(self):
+        self._assert_inmemory_nonstring_source_key_refused(
+            "changed_bytes_b64", b"fake/sample.py")
+
+    def test_portable_nonstring_source_key_ci_bytes_label_refused(self):
+        self._assert_inmemory_nonstring_source_key_refused(
+            "ci_workflow_bytes_b64", b"fake/sample.py")
+
+    def test_portable_nonstring_source_key_changed_tuple_label_refused(self):
+        self._assert_inmemory_nonstring_source_key_refused(
+            "changed_bytes_b64", ("fake", "sample.py"))
+
+    def test_portable_nonstring_source_key_ci_tuple_label_refused(self):
+        self._assert_inmemory_nonstring_source_key_refused(
+            "ci_workflow_bytes_b64", ("fake", "sample.py"))
+
+    def test_portable_nonstring_source_key_changed_float_label_refused(self):
+        self._assert_inmemory_nonstring_source_key_refused(
+            "changed_bytes_b64", 3.5)
+
+    def test_portable_nonstring_source_key_ci_float_label_refused(self):
+        self._assert_inmemory_nonstring_source_key_refused(
+            "ci_workflow_bytes_b64", 3.5)
+
+    def test_portable_nonstring_source_key_changed_negative_integer_refused(self):
+        self._assert_inmemory_nonstring_source_key_refused(
+            "changed_bytes_b64", -11)
+
+    def test_portable_nonstring_source_key_ci_negative_integer_refused(self):
+        self._assert_inmemory_nonstring_source_key_refused(
+            "ci_workflow_bytes_b64", -11)
+
+    def test_portable_nonstring_source_key_clean_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+

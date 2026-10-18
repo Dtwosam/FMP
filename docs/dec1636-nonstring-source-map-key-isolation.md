@@ -1,0 +1,7 @@
+# DEC-1636 — Reject non-string source map keys before nested evidence review
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent one-commit tests/docs child of #1882 at `d86e8893b45cd85a3f7a44ba4f0b8768feb9c201`. Fifteen regression methods (**3,715 proposed source-defined tests**).
+
+The direct-memory Python ingress can receive dictionary keys not expressible as JSON object keys. Fourteen mutations place integer, Boolean, null, bytes, tuple, float or negative integer keys into either the changed-source Base64 map or installed CI workflow source map, without altering the two reviewed source fixtures. No such key is a repository path: require exact `BUNDLE_SOURCE_PATH_UNREVIEWED` **before** calling the nested composite reviewer, preserve caller evidence and all protected original-OS/exclusive-server/annual flags false. These are intentionally direct-memory-only tests: `json.dumps` can coerce primitive mapping keys to strings or reject others. One clean control confirms the existing JSON/direct/stdin source-only agreement.
+
+Caller-provided evidence is not provider-authenticated source nor protected annual execution authorization. Exact-head Phase 3/general CI and qualified independent review required. Tests/docs only; no production/parser/budget/workflow/security/admission changes, protected originals/archives/artifacts, annual dispatch/retry, merging, deployment or trading. DEC-650/#820 and DEC-651/#821/#779 remain **BLOCKED**.
