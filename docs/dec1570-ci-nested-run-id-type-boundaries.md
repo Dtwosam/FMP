@@ -1,0 +1,7 @@
+# DEC-1570 — CI run record ID type and signed-range boundaries
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact one-commit tests/docs child of #1816 at `65286e79ed676188a389fc8d6aa3540e83b2a7cc`. Ten new synthetic unittest methods with a cross-entrypoint helper (**2,887 proposed source-defined methods**).
+
+Portability of an apparently valid CI run-ID map is insufficient if the *nested run metadata record* uses an invalid ID type or identity. Supply a Phase 3 run ID as boolean, JSON string, float, null, list, object, zero, negative integer or one greater than signed-64-bit maximum and compare direct-memory, JSON-text and bounded stdin results. All are JSON-standard serializable and must fail source consistency without traceback, output leakage or protected annual authorization. The exact canonical two-run fixture stays source-consistent but not independently authenticated and never authorized for protected execution.
+
+Both own exact-head Phase 3 and full historical/general CI and independent qualified review required. Only tests/docs, with no production/parser/resource-limit, workflow/security-control or admission change. DEC-650/#820 independent protected-original OS no-write and DEC-651/#821/#779 exclusive immutable protected 2023 run385/attempt1 server admission remain **BLOCKED**. No protected originals/archives/artifacts, annual dispatch/retry, merging, deployment or trading.

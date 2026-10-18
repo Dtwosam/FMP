@@ -5535,3 +5535,68 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
             "protected 2023 annual run385 attempt1 permission granted",
             change_checkout=True)
 
+    def _assert_malformed_numeric_run_identity_all_entrypoints(self, run_id):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        target = next(r for r in self.envelope["runs"]
+                      if r["name"] == "phase3-acceptance")
+        target["id"] = run_id
+        raw = json.dumps(self.envelope, allow_nan=False)
+        direct = self.verdict()
+        json_result = review_bundle_json_text(raw)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(raw), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(direct, json_result)
+        self.assertFalse(direct["source_consistency"])
+        self.assertTrue(direct["diagnostics"])
+        self.assertEqual(status, 2)
+        self.assertEqual(emitted["diagnostics"],
+                         list(json_result["diagnostics"]))
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertFalse(emitted["source_consistency"])
+        self.assertFalse(emitted["independent_original_os_proof"])
+        self.assertFalse(emitted["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(emitted["can_authorize_annual_run"])
+
+    def test_phase3_nested_run_id_boolean_not_integer_identity(self):
+        self._assert_malformed_numeric_run_identity_all_entrypoints(True)
+
+    def test_phase3_nested_run_id_string_not_integer_identity(self):
+        self._assert_malformed_numeric_run_identity_all_entrypoints("8000")
+
+    def test_phase3_nested_run_id_float_not_integer_identity(self):
+        self._assert_malformed_numeric_run_identity_all_entrypoints(8000.0)
+
+    def test_phase3_nested_run_id_null_not_integer_identity(self):
+        self._assert_malformed_numeric_run_identity_all_entrypoints(None)
+
+    def test_phase3_nested_run_id_list_not_integer_identity(self):
+        self._assert_malformed_numeric_run_identity_all_entrypoints([8000])
+
+    def test_phase3_nested_run_id_object_not_integer_identity(self):
+        self._assert_malformed_numeric_run_identity_all_entrypoints(
+            {"synthetic": 8000})
+
+    def test_phase3_nested_run_id_zero_not_positive_identity(self):
+        self._assert_malformed_numeric_run_identity_all_entrypoints(0)
+
+    def test_phase3_nested_run_id_negative_not_positive_identity(self):
+        self._assert_malformed_numeric_run_identity_all_entrypoints(-8000)
+
+    def test_phase3_nested_run_id_over_signed64_cannot_rebind_maps(self):
+        self._assert_malformed_numeric_run_identity_all_entrypoints(
+            9223372036854775808)
+
+    def test_phase3_nested_run_id_clean_two_runner_control(self):
+        values = {r["id"] for r in self.envelope["runs"]}
+        self.assertEqual(values, {8000, 8001})
+        direct = self.verdict()
+        parsed = review_bundle_json_text(json.dumps(self.envelope))
+        self.assertEqual(direct, parsed)
+        self.assertEqual(direct["diagnostics"], ())
+        self.assertTrue(direct["source_consistency"])
+        self.assertFalse(direct["independent_original_os_proof"])
+        self.assertFalse(direct["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(direct["can_authorize_annual_run"])
+
