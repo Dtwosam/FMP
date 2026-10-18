@@ -577,6 +577,50 @@ def _finite_json_float(value):
     return number
 
 
+def _json_lexical_array_budgets(text):
+    """Check array sizes before JSON decoding, skipping quoted content."""
+    stack = []
+    in_string = False
+    escaped = False
+    total = 0
+    for char in text:
+        if in_string:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                in_string = False
+            continue
+        if char == '"':
+            if stack and stack[-1][0] == "[":
+                stack[-1][2] = True
+            in_string = True
+        elif char in "[{":
+            if stack and stack[-1][0] == "[":
+                stack[-1][2] = True
+            stack.append([char, 0, False])
+        elif char == ",":
+            if stack and stack[-1][0] == "[":
+                stack[-1][1] += 1
+                if stack[-1][1] >= MAX_JSON_ARRAY_ITEMS:
+                    return False
+        elif char in "]}":
+            if not stack or (stack[-1][0] == "[") != (char == "]"):
+                return False
+            opening, commas, has_content = stack.pop()
+            if opening == "[":
+                members = commas + (1 if has_content else 0)
+                total += members
+                if (members > MAX_JSON_ARRAY_ITEMS or
+                        total > MAX_JSON_TOTAL_ARRAY_ITEMS):
+                    return False
+        elif not char.isspace():
+            if stack and stack[-1][0] == "[" and char != ":":
+                stack[-1][2] = True
+    return not stack
+
+
 def _within_json_array_budgets(root):
     """Inspect built-in parsed JSON containers without recursion."""
     total_items = 0
@@ -604,7 +648,8 @@ def review_bundle_json_text(text):
             return fail_closed("BUNDLE_JSON_TEXT_UNREVIEWED")
     except UnicodeError:
         return fail_closed("BUNDLE_JSON_UNICODE_UNREVIEWED")
-    if not _json_nesting_within_limit(text):
+    if (not _json_nesting_within_limit(text) or
+            not _json_lexical_array_budgets(text)):
         return fail_closed("BUNDLE_JSON_GRAMMAR_UNREVIEWED")
     try:
         doc = json.loads(text, object_pairs_hook=_bounded_json_pairs_hook(),
@@ -3743,6 +3788,60 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         result = review_bundle_json_text(json.dumps(self.envelope))
         self.assertTrue(result["source_consistency"])
         self.assertEqual(result["diagnostics"], ())
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_lexical_array_max_items_stays_in_bounds(self):
+        raw = "[" + ",".join("0" for _ in range(MAX_JSON_ARRAY_ITEMS)) + "]"
+        self.assertTrue(_json_lexical_array_budgets(raw))
+
+    def test_lexical_array_one_over_max_items_fails(self):
+        raw = "[" + ",".join("0" for _ in range(MAX_JSON_ARRAY_ITEMS+1)) + "]"
+        self.assertFalse(_json_lexical_array_budgets(raw))
+
+    def test_lexical_array_many_nested_containers_exceed_global_items(self):
+        raw = "[" + ",".join("[1,2,3,4]" for _ in range(16384)) + "]"
+        self.assertFalse(_json_lexical_array_budgets(raw))
+
+    def test_lexical_array_global_exact_limit_stays_in_bounds(self):
+        raw = "[" + ",".join("[1,2,3]" for _ in range(16384)) + "]"
+        self.assertTrue(_json_lexical_array_budgets(raw))
+
+    def test_lexical_scanner_ignores_commas_brackets_in_quoted_strings(self):
+        raw = json.dumps(["x," * 20000 + "[]{}"])
+        self.assertTrue(_json_lexical_array_budgets(raw))
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_SHAPE_UNREVIEWED",))
+
+    def test_lexical_scanner_ignores_escaped_quotes_inside_string(self):
+        raw = '["text \\"escaped,] quote", 1]'
+        self.assertTrue(_json_lexical_array_budgets(raw))
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_SHAPE_UNREVIEWED",))
+
+    def test_lexical_empty_arrays_not_counted_as_one_item(self):
+        raw = "[" + ",".join("[]" for _ in range(MAX_JSON_ARRAY_ITEMS)) + "]"
+        self.assertTrue(_json_lexical_array_budgets(raw))
+
+    def test_lexical_oversized_array_refused_before_json_decoder(self):
+        from unittest.mock import patch
+        raw = "[" + ",".join("0" for _ in range(MAX_JSON_ARRAY_ITEMS+1)) + "]"
+        with patch.object(json, "loads",
+                          side_effect=AssertionError("decoder must not run")) as decoder:
+            result = review_bundle_json_text(raw)
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+        decoder.assert_not_called()
+
+    def test_lexical_scanner_rejects_mismatched_containers(self):
+        self.assertFalse(_json_lexical_array_budgets("[1,2}"))
+        self.assertFalse(_json_lexical_array_budgets('{"x":[1,2}'))
+
+    def test_lexical_array_budget_keeps_valid_non_authorizing_fixture(self):
+        result = review_bundle_json_text(json.dumps(self.envelope))
+        self.assertEqual(result["diagnostics"], ())
+        self.assertTrue(result["source_consistency"])
         self.assertFalse(result["independent_original_os_proof"])
         self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(result["can_authorize_annual_run"])
