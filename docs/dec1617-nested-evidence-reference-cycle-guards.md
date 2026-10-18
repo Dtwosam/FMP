@@ -1,0 +1,7 @@
+# DEC-1617 — Cyclic caller evidence graphs cannot enter nested Git review
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent one-commit tests/docs child of #1863 at `6ee1fa25ca2d366742c7c271c29308bb7238b371`. Fifteen new regression methods (**3,444 proposed source-defined tests**).
+
+Direct-memory envelopes can contain reference cycles that JSON cannot represent. Add self-referential and map-backpointer cycles in full Git tree maps/objects/entries, flat nodes, compare-file metadata, commit tree, raw CI receipts, run records, merge/Phase 3 snapshots and changed-source Base64 maps. Any such graph must be rejected by the bounded structural preflight with `BUNDLE_STRUCTURE_BUDGET_UNREVIEWED`, **without invoking the nested composite reviewer**. An injected nested-review trap detects accidental traversal. All independent original-OS, exclusive server admission and annual authority fields stay false; one clean source-only control remains valid.
+
+This is synthetic in-memory defensive testing, not provider-authenticated provenance, protected original OS evidence, or protected annual dispatch consent. Own exact-head Phase 3/full historical-general CI and qualified independent review required. Tests/docs only; no production/parser/resource budget/workflow/security/admission changes, protected originals/archives/artifacts, annual execution/retry, merging, deployment or trading. DEC-650/#820 and DEC-651/#821/#779 remain **BLOCKED**.
