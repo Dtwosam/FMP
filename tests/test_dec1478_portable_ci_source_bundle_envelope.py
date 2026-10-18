@@ -7887,3 +7887,141 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_tree_json_duplicate_nested_truncated_key_refused(self):
         self._assert_json_tree_duplicate_decoded_key_refused("truncated")
 
+    def _json_full_tree_entry_value_escape(self, field, value, offset):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.assertLess(offset, len(value))
+        self.assertLess(ord(value[offset]), 128)
+        raw = json.dumps(self.envelope, sort_keys=True,
+                         separators=(",", ":"))
+        marker = '"full_tree_snapshots":{'
+        self.assertEqual(raw.count(marker), 1)
+        before, after = raw.split(marker, 1)
+        needle = json.dumps(field) + ":" + json.dumps(value)
+        self.assertIn(needle, after)
+        escaped_value = (
+            '"' + value[:offset] + '\\u%04x' % ord(value[offset]) +
+            value[offset+1:] + '"')
+        self.assertNotEqual(escaped_value, json.dumps(value))
+        encoded = before + marker + after.replace(
+            needle, json.dumps(field) + ":" + escaped_value, 1)
+        self.assertNotEqual(encoded, raw)
+        self.assertEqual(json.loads(encoded), self.envelope)
+        direct = self.verdict()
+        parsed = review_bundle_json_text(encoded)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(encoded), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(direct, parsed)
+        self.assertEqual(direct["diagnostics"], ())
+        self.assertTrue(direct["source_consistency"])
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"], [])
+        self.assertTrue(emitted["source_consistency"])
+        for result in (direct, emitted):
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def _json_full_tree_unicode_path_rejected(self, directory, mutated,
+                                              parent=False):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        if parent:
+            root = self.envelope["full_tree_snapshots"][
+                self.envelope["commit"]["tree"]["sha"]]
+            item = next(entry for entry in root["tree"]
+                        if entry["path"] == directory)
+        else:
+            item = self._portable_snapshot_leaf(directory)
+        self.assertNotEqual(mutated, item["path"])
+        item["path"] = mutated
+        raw = json.dumps(self.envelope, sort_keys=True)
+        self.assertIn("\\u", raw)
+        direct = self.verdict()
+        parsed = review_bundle_json_text(raw)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(raw), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(direct, parsed)
+        self.assertEqual(status, 2)
+        self.assertIn("TREE_CHAIN_ENTRY_CARDINALITY_UNREVIEWED",
+                      direct["diagnostics"])
+        self.assertFalse(direct["source_consistency"])
+        self.assertEqual(emitted["diagnostics"],
+                         list(direct["diagnostics"]))
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertNotIn(mutated, out.getvalue())
+        for result in (direct, emitted):
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_tree_json_escaped_docs_parent_path_value_equivalent(self):
+        self._json_full_tree_entry_value_escape("path", "docs", 0)
+
+    def test_portable_tree_json_escaped_tests_parent_path_value_equivalent(self):
+        self._json_full_tree_entry_value_escape("path", "tests", 1)
+
+    def test_portable_tree_json_escaped_docs_leaf_path_value_equivalent(self):
+        self._json_full_tree_entry_value_escape("path", "sample.md", 6)
+
+    def test_portable_tree_json_escaped_tests_leaf_path_value_equivalent(self):
+        self._json_full_tree_entry_value_escape("path", "sample.py", 7)
+
+    def test_portable_tree_json_escaped_parent_mode_value_equivalent(self):
+        self._json_full_tree_entry_value_escape("mode", "040000", 0)
+
+    def test_portable_tree_json_escaped_leaf_mode_value_equivalent(self):
+        self._json_full_tree_entry_value_escape("mode", "100644", 3)
+
+    def test_portable_tree_json_escaped_leaf_type_value_equivalent(self):
+        self._json_full_tree_entry_value_escape("type", "blob", 0)
+
+    def test_portable_tree_json_escaped_leaf_sha_value_equivalent(self):
+        self._json_full_tree_entry_value_escape(
+            "sha", self.envelope["nodes"]["docs/sample.md"]["sha"], 2)
+
+    def test_portable_tree_json_docs_one_dot_confusable_refused(self):
+        self._json_full_tree_unicode_path_rejected(
+            "docs", "sample\u2024md")
+
+    def test_portable_tree_json_docs_division_slash_confusable_refused(self):
+        self._json_full_tree_unicode_path_rejected(
+            "docs", "sample\u2215md")
+
+    def test_portable_tree_json_docs_zero_width_space_refused(self):
+        self._json_full_tree_unicode_path_rejected(
+            "docs", "s\u200bample.md")
+
+    def test_portable_tree_json_docs_word_joiner_refused(self):
+        self._json_full_tree_unicode_path_rejected(
+            "docs", "s\u2060ample.md")
+
+    def test_portable_tree_json_docs_cyrillic_e_refused(self):
+        self._json_full_tree_unicode_path_rejected(
+            "docs", "sampl\u0435.md")
+
+    def test_portable_tree_json_tests_fullwidth_s_refused(self):
+        self._json_full_tree_unicode_path_rejected(
+            "tests", "\uff53ample.py")
+
+    def test_portable_tree_json_root_tests_zero_width_joiner_refused(self):
+        self._json_full_tree_unicode_path_rejected(
+            "tests", "te\u200dsts", parent=True)
+
+    def test_portable_tree_json_root_docs_zero_width_space_refused(self):
+        self._json_full_tree_unicode_path_rejected(
+            "docs", "d\u200bocs", parent=True)
+
+    def test_portable_tree_json_entry_clean_control_nonauthorizing(self):
+        direct = self.verdict()
+        parsed = review_bundle_json_text(json.dumps(self.envelope))
+        self.assertEqual(direct, parsed)
+        self.assertTrue(direct["source_consistency"])
+        self.assertEqual(direct["diagnostics"], ())
+        self.assertFalse(direct["independent_original_os_proof"])
+        self.assertFalse(direct["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(direct["can_authorize_annual_run"])
+
