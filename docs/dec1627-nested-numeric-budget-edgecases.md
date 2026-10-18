@@ -1,0 +1,7 @@
+# DEC-1627 — Nested nonfinite floats and oversized integers fail before source review
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** One-commit tests/docs child of #1873 at `14201c52f7c4abe66732ee78742c00ee45d7e9bf`. Sixteen synthetic regression methods (**3,589 proposed source-defined methods**).
+
+Python direct-memory inputs can contain floating NaN or infinity, or 65-digit integers, which are not admissible as bounded source evidence. Fifteen mutants place these values into full Git tree objects/entries, flat nodes, PR and compare metadata, commit root pointers, raw CI receipt sizes, changed source payloads, Phase 3 records or run records. The bounded structure validator must refuse them uniformly with `BUNDLE_STRUCTURE_BUDGET_UNREVIEWED` **before** any nested source review, keeping protected original-OS, exclusive admission and annual-run authority false. These direct-memory-only cases are intentionally not JSON parity assertions, because JSON rejects or rewrites such values differently. A clean source-only control remains consistent.
+
+These synthetic inputs authenticate no provider source object, protected original OS or annual execution consent. Own exact-head Phase 3 and historical/general CI and qualified independent review required. Tests/docs only; no production/parser/resource-budget/workflow/security/admission changes, protected original/archive/artifact access, annual dispatch/retry, merge/deployment or trading. DEC-650/#820 and DEC-651/#821/#779 remain **BLOCKED**.

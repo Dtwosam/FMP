@@ -10793,3 +10793,78 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_source_map_crossrole_clean_control(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+    def _assert_nested_numeric_structure_budget_refused(self):
+        result = self.verdict()
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_STRUCTURE_BUDGET_UNREVIEWED",))
+        self.assertFalse(result["source_consistency"])
+        self.assertIs(result["independent_original_os_proof"], False)
+        self.assertIs(result["exclusive_server_dispatch_gate_proven"], False)
+        self.assertIs(result["can_authorize_annual_run"], False)
+
+    def test_portable_numeric_budget_root_self_sha_large_int_refused(self):
+        sha = self.envelope["commit"]["tree"]["sha"]
+        self.envelope["full_tree_snapshots"][sha]["sha"] = 10**64
+        self._assert_nested_numeric_structure_budget_refused()
+
+    def test_portable_numeric_budget_root_truncated_positive_inf_refused(self):
+        sha = self.envelope["commit"]["tree"]["sha"]
+        self.envelope["full_tree_snapshots"][sha]["truncated"] = float("inf")
+        self._assert_nested_numeric_structure_budget_refused()
+
+    def test_portable_numeric_budget_root_entry_mode_nan_refused(self):
+        sha = self.envelope["commit"]["tree"]["sha"]
+        self.envelope["full_tree_snapshots"][sha]["tree"][0]["mode"] = float("nan")
+        self._assert_nested_numeric_structure_budget_refused()
+
+    def test_portable_numeric_budget_docs_leaf_negative_large_int_refused(self):
+        self._portable_snapshot_leaf("docs")["sha"] = -(10**64)
+        self._assert_nested_numeric_structure_budget_refused()
+
+    def test_portable_numeric_budget_tests_leaf_negative_inf_refused(self):
+        self._portable_snapshot_leaf("tests")["mode"] = float("-inf")
+        self._assert_nested_numeric_structure_budget_refused()
+
+    def test_portable_numeric_budget_flat_nodes_large_int_refused(self):
+        self.envelope["nodes"]["docs/sample.md"]["mode"] = 10**64
+        self._assert_nested_numeric_structure_budget_refused()
+
+    def test_portable_numeric_budget_flat_node_nan_refused(self):
+        self.envelope["nodes"]["tests/sample.py"]["sha"] = float("nan")
+        self._assert_nested_numeric_structure_budget_refused()
+
+    def test_portable_numeric_budget_pr_additions_large_int_refused(self):
+        self.envelope["pr"]["additions"] = 10**64
+        self._assert_nested_numeric_structure_budget_refused()
+
+    def test_portable_numeric_budget_compare_line_count_large_int_refused(self):
+        self.envelope["compare"]["files"][0]["changes"] = 10**64
+        self._assert_nested_numeric_structure_budget_refused()
+
+    def test_portable_numeric_budget_compare_float_nan_refused(self):
+        self.envelope["compare"]["files"][1]["deletions"] = float("nan")
+        self._assert_nested_numeric_structure_budget_refused()
+
+    def test_portable_numeric_budget_commit_tree_large_int_refused(self):
+        self.envelope["commit"]["tree"]["sha"] = 10**64
+        self._assert_nested_numeric_structure_budget_refused()
+
+    def test_portable_numeric_budget_phase3_evidence_nan_refused(self):
+        self.envelope["phase3_evidence_snapshot"]["private_number"] = float("nan")
+        self._assert_nested_numeric_structure_budget_refused()
+
+    def test_portable_numeric_budget_raw_receipt_length_large_int_refused(self):
+        self.envelope["raw_ci_log_receipts"]["8000"]["byte_count"] = 10**64
+        self._assert_nested_numeric_structure_budget_refused()
+
+    def test_portable_numeric_budget_source_b64_value_nan_refused(self):
+        self.envelope["changed_bytes_b64"]["docs/sample.md"] = float("nan")
+        self._assert_nested_numeric_structure_budget_refused()
+
+    def test_portable_numeric_budget_run_record_negative_inf_refused(self):
+        self.envelope["runs"][0]["private_number"] = float("-inf")
+        self._assert_nested_numeric_structure_budget_refused()
+
+    def test_portable_numeric_budget_clean_control_source_only(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
