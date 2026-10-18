@@ -66,7 +66,10 @@ def _emit_safe_verdict(verdict, output_stream):
         if flush is not None:
             if not callable(flush):
                 return False
-            flush()
+            if flush() is not None:
+                # Python text stream flush has no return value. Do not
+                # infer successful delivery from an unexpected result.
+                return False
     except (OSError, UnicodeError, ValueError, TypeError, RuntimeError,
             RecursionError, AssertionError, AttributeError):
         return False
@@ -990,6 +993,92 @@ class ExplicitStdinReviewIsNotAnnualWorkflowAdmission(unittest.TestCase):
         out = io.StringIO()
         rc = run_stdin_review(io.StringIO(json.dumps(self.bundle)), out)
         self.assertEqual(rc, 0)
+        result = json.loads(out.getvalue())
+        self.assertTrue(result["source_consistency"])
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+
+    def test_checked_writer_accepts_standard_none_flush_result(self):
+        class Output:
+            def __init__(self):
+                self.flushes = 0
+            def write(self, value):
+                return len(value)
+            def flush(self):
+                self.flushes += 1
+        output = Output()
+        self.assertTrue(_emit_safe_verdict(envelope.fail_closed("BUNDLE_SHAPE_UNREVIEWED"),
+                                          output))
+        self.assertEqual(output.flushes, 1)
+
+    def test_checked_writer_refuses_boolean_flush_return(self):
+        class Output:
+            def write(self, value):
+                return len(value)
+            def flush(self):
+                return True
+        self.assertFalse(_emit_safe_verdict(
+            envelope.fail_closed("BUNDLE_SHAPE_UNREVIEWED"), Output()))
+
+    def test_checked_writer_refuses_integer_flush_return(self):
+        class Output:
+            def write(self, value):
+                return len(value)
+            def flush(self):
+                return 0
+        self.assertFalse(_emit_safe_verdict(
+            envelope.fail_closed("BUNDLE_SHAPE_UNREVIEWED"), Output()))
+
+    def test_checked_writer_refuses_text_flush_return(self):
+        class Output:
+            def write(self, value):
+                return len(value)
+            def flush(self):
+                return "flushed"
+        self.assertFalse(_emit_safe_verdict(
+            envelope.fail_closed("BUNDLE_SHAPE_UNREVIEWED"), Output()))
+
+    def test_review_never_exits_zero_if_flush_reports_non_none(self):
+        class Output:
+            def write(self, value):
+                return len(value)
+            def flush(self):
+                return False
+        self.assertEqual(run_stdin_review(
+            io.StringIO(json.dumps(self.bundle)), Output()), 2)
+
+    def test_denied_argv_with_invalid_flush_still_returns_two(self):
+        from unittest.mock import patch
+        class Output:
+            def write(self, value):
+                return len(value)
+            def flush(self):
+                return True
+        with patch.object(sys, "argv", ["review", "--unsafe"]), \
+             patch.object(sys, "stdout", Output()):
+            self.assertEqual(main(), 2)
+
+    def test_bad_flush_response_does_not_trigger_second_write(self):
+        class Output:
+            def __init__(self):
+                self.writes = 0
+            def write(self, value):
+                self.writes += 1
+                return len(value)
+            def flush(self):
+                return "unreviewed"
+        output = Output()
+        self.assertEqual(run_stdin_review(
+            io.StringIO(json.dumps(self.bundle)), output), 2)
+        self.assertEqual(output.writes, 1)
+
+    def test_real_stringio_flush_none_keeps_non_authorizing_verdict(self):
+        out = io.StringIO()
+        self.assertEqual(run_stdin_review(
+            io.StringIO(json.dumps(self.bundle)), out), 0)
+        self.assertIsNone(out.flush())
         result = json.loads(out.getvalue())
         self.assertTrue(result["source_consistency"])
         self.assertFalse(result["independent_original_os_proof"])
