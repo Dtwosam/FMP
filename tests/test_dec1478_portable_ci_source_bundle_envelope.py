@@ -5048,3 +5048,63 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(result["can_authorize_annual_run"])
 
+    def _assert_portable_order_invariance_with_json(self, expect_clean=False):
+        original = self.verdict()
+        baseline_json = review_bundle_json_text(json.dumps(self.envelope))
+        self.assertEqual(original, baseline_json)
+        for key in ("raw_ci_runner_logs", "raw_ci_log_receipts",
+                    "jobs_by_run", "checkout_by_run", "changed_bytes_b64",
+                    "ci_workflow_bytes_b64"):
+            value = self.envelope[key]
+            self.envelope[key] = dict(reversed(list(value.items())))
+        self.envelope = dict(reversed(list(self.envelope.items())))
+        reordered = self.verdict()
+        decoded = review_bundle_json_text(
+            json.dumps(self.envelope, sort_keys=True))
+        self.assertEqual(original, reordered)
+        self.assertEqual(reordered, decoded)
+        self.assertEqual(original["source_consistency"], expect_clean)
+        self.assertFalse(decoded["independent_original_os_proof"])
+        self.assertFalse(decoded["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(decoded["can_authorize_annual_run"])
+
+    def test_portable_map_order_clean_evidence_stays_source_only(self):
+        self._assert_portable_order_invariance_with_json(expect_clean=True)
+
+    def test_portable_map_order_refingerprinted_wrong_merge_is_stable(self):
+        raw = self.envelope["raw_ci_runner_logs"]["8001"]
+        self.envelope["raw_ci_runner_logs"]["8001"] = (
+            raw.replace("f"*40, "e"*40)
+               .replace("fffffff Merge ", "eeeeeee Merge "))
+        self._refingerprint_portable_synthetic_ci_log("8001")
+        self._assert_portable_order_invariance_with_json()
+
+    def test_portable_map_order_refingerprinted_phase3_upload_is_stable(self):
+        raw = self.envelope["raw_ci_runner_logs"]["8000"]
+        self.envelope["raw_ci_runner_logs"]["8000"] = raw.replace(
+            "7777", "8888")
+        self._refingerprint_portable_synthetic_ci_log("8000")
+        self._assert_portable_order_invariance_with_json()
+
+    def test_portable_map_order_changed_pr_file_count_is_stable(self):
+        self.envelope["pr"]["changed_files"] = 3
+        self._assert_portable_order_invariance_with_json()
+
+    def test_portable_map_order_invalid_run_key_precedence_is_stable(self):
+        self.envelope["jobs_by_run"]["0"] = {}
+        self._assert_portable_order_invariance_with_json()
+
+    def test_portable_map_order_changed_receipt_job_binding_is_stable(self):
+        self.envelope["raw_ci_log_receipts"]["8001"]["job_id"] = (
+            self.envelope["raw_ci_log_receipts"]["8000"]["job_id"])
+        self._assert_portable_order_invariance_with_json()
+
+    def test_portable_map_order_invalid_source_base64_is_stable(self):
+        key = next(iter(self.envelope["changed_bytes_b64"]))
+        self.envelope["changed_bytes_b64"][key] = "not-base64%"
+        self._assert_portable_order_invariance_with_json()
+
+    def test_portable_map_order_extra_annual_authority_stays_rejected(self):
+        self.envelope["can_authorize_annual_run"] = True
+        self._assert_portable_order_invariance_with_json()
+
