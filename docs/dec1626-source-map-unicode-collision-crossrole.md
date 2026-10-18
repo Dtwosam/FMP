@@ -1,0 +1,7 @@
+# DEC-1626 — Unicode-normalized source identities must not overlap maps or roles
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent one-commit tests/docs child of #1872 at `76548cf3cfb195ad476bd445e8d3672b3a9cb91f`. Sixteen new regression methods (**3,573 proposed source-defined methods**).
+
+Duplicate labels that differ only by ASCII case, Unicode fullwidth compatibility forms, or long-s normalization cannot claim distinct repository source identities. Nine mutants add a second canonical Base64 changed-source payload using such an alias and one duplicates a CI workflow label by case; all must refuse as `BUNDLE_SOURCE_CASE_COLLISION_UNREVIEWED`. Five more mutants assert a changed source path cannot simultaneously appear in the CI-workflow role under identical or normalized equivalent spelling, requiring `BUNDLE_SOURCE_CROSSMAP_COLLISION_UNREVIEWED`. Confirm exact direct-memory, JSON-text and stdin parity, no path echo, no caller mutation or protected annual-run authority. The untouched synthetic clean fixture remains source-consistent only.
+
+These inputs are not verified remote GitHub objects or protected original operating-system witnesses. Own exact-head Phase 3/full historical/general CI and independent qualified review required; tests/docs only. No production/parser/resources/workflow/security-control changes, protected original/archive/artifact access, annual execution/retry, merge/deployment or trading. DEC-650/#820 and DEC-651/#821/#779 remain **BLOCKED**.

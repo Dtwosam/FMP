@@ -10673,3 +10673,123 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_lexical_path_clean_source_only_control(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+    def _assert_portable_source_role_collision_refused(self, code):
+        import io
+        import copy
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        before = copy.deepcopy(self.envelope)
+        raw = json.dumps(self.envelope, ensure_ascii=True)
+        direct = self.verdict()
+        parsed = review_bundle_json_text(raw)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(raw), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(self.envelope, before)
+        self.assertEqual(direct, parsed)
+        self.assertEqual(status, 2)
+        self.assertEqual(direct["diagnostics"], (code,))
+        self.assertFalse(direct["source_consistency"])
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"], [code])
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        self.assertNotIn("tests/sample.py", out.getvalue())
+        for result in (direct, emitted):
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_source_map_alias_doc_uppercase_refused(self):
+        raw = self.envelope["changed_bytes_b64"]["docs/sample.md"]
+        self.envelope["changed_bytes_b64"]["docs/SAMPLE.md"] = raw
+        self._assert_portable_source_role_collision_refused(
+            "BUNDLE_SOURCE_CASE_COLLISION_UNREVIEWED")
+
+    def test_portable_source_map_alias_doc_parent_case_refused(self):
+        raw = self.envelope["changed_bytes_b64"]["docs/sample.md"]
+        self.envelope["changed_bytes_b64"]["DOCS/sample.md"] = raw
+        self._assert_portable_source_role_collision_refused(
+            "BUNDLE_SOURCE_CASE_COLLISION_UNREVIEWED")
+
+    def test_portable_source_map_alias_doc_extension_case_refused(self):
+        raw = self.envelope["changed_bytes_b64"]["docs/sample.md"]
+        self.envelope["changed_bytes_b64"]["docs/sample.MD"] = raw
+        self._assert_portable_source_role_collision_refused(
+            "BUNDLE_SOURCE_CASE_COLLISION_UNREVIEWED")
+
+    def test_portable_source_map_alias_doc_fullwidth_s_refused(self):
+        raw = self.envelope["changed_bytes_b64"]["docs/sample.md"]
+        self.envelope["changed_bytes_b64"]["docs/ｓample.md"] = raw
+        self._assert_portable_source_role_collision_refused(
+            "BUNDLE_SOURCE_CASE_COLLISION_UNREVIEWED")
+
+    def test_portable_source_map_alias_doc_long_s_refused(self):
+        raw = self.envelope["changed_bytes_b64"]["docs/sample.md"]
+        self.envelope["changed_bytes_b64"]["docs/ſample.md"] = raw
+        self._assert_portable_source_role_collision_refused(
+            "BUNDLE_SOURCE_CASE_COLLISION_UNREVIEWED")
+
+    def test_portable_source_map_alias_test_uppercase_refused(self):
+        raw = self.envelope["changed_bytes_b64"]["tests/sample.py"]
+        self.envelope["changed_bytes_b64"]["tests/SAMPLE.PY"] = raw
+        self._assert_portable_source_role_collision_refused(
+            "BUNDLE_SOURCE_CASE_COLLISION_UNREVIEWED")
+
+    def test_portable_source_map_alias_test_parent_case_refused(self):
+        raw = self.envelope["changed_bytes_b64"]["tests/sample.py"]
+        self.envelope["changed_bytes_b64"]["TESTS/sample.py"] = raw
+        self._assert_portable_source_role_collision_refused(
+            "BUNDLE_SOURCE_CASE_COLLISION_UNREVIEWED")
+
+    def test_portable_source_map_alias_test_fullwidth_s_refused(self):
+        raw = self.envelope["changed_bytes_b64"]["tests/sample.py"]
+        self.envelope["changed_bytes_b64"]["tests/ｓample.py"] = raw
+        self._assert_portable_source_role_collision_refused(
+            "BUNDLE_SOURCE_CASE_COLLISION_UNREVIEWED")
+
+    def test_portable_source_map_alias_test_fullwidth_e_refused(self):
+        raw = self.envelope["changed_bytes_b64"]["tests/sample.py"]
+        self.envelope["changed_bytes_b64"]["tests/samplｅ.py"] = raw
+        self._assert_portable_source_role_collision_refused(
+            "BUNDLE_SOURCE_CASE_COLLISION_UNREVIEWED")
+
+    def test_portable_source_map_crossrole_doc_exact_refused(self):
+        raw = self.envelope["changed_bytes_b64"]["docs/sample.md"]
+        self.envelope["ci_workflow_bytes_b64"]["docs/sample.md"] = raw
+        self._assert_portable_source_role_collision_refused(
+            "BUNDLE_SOURCE_CROSSMAP_COLLISION_UNREVIEWED")
+
+    def test_portable_source_map_crossrole_doc_uppercase_refused(self):
+        raw = self.envelope["changed_bytes_b64"]["docs/sample.md"]
+        self.envelope["ci_workflow_bytes_b64"]["DOCS/SAMPLE.MD"] = raw
+        self._assert_portable_source_role_collision_refused(
+            "BUNDLE_SOURCE_CROSSMAP_COLLISION_UNREVIEWED")
+
+    def test_portable_source_map_crossrole_doc_long_s_refused(self):
+        raw = self.envelope["changed_bytes_b64"]["docs/sample.md"]
+        self.envelope["ci_workflow_bytes_b64"]["docs/ſample.md"] = raw
+        self._assert_portable_source_role_collision_refused(
+            "BUNDLE_SOURCE_CROSSMAP_COLLISION_UNREVIEWED")
+
+    def test_portable_source_map_crossrole_test_exact_refused(self):
+        raw = self.envelope["changed_bytes_b64"]["tests/sample.py"]
+        self.envelope["ci_workflow_bytes_b64"]["tests/sample.py"] = raw
+        self._assert_portable_source_role_collision_refused(
+            "BUNDLE_SOURCE_CROSSMAP_COLLISION_UNREVIEWED")
+
+    def test_portable_source_map_crossrole_test_uppercase_refused(self):
+        raw = self.envelope["changed_bytes_b64"]["tests/sample.py"]
+        self.envelope["ci_workflow_bytes_b64"]["TESTS/SAMPLE.PY"] = raw
+        self._assert_portable_source_role_collision_refused(
+            "BUNDLE_SOURCE_CROSSMAP_COLLISION_UNREVIEWED")
+
+    def test_portable_source_map_workflow_case_alias_refused(self):
+        key, value = next(iter(self.envelope["ci_workflow_bytes_b64"].items()))
+        alias = key.swapcase()
+        self.assertNotEqual(alias, key)
+        self.envelope["ci_workflow_bytes_b64"][alias] = value
+        self._assert_portable_source_role_collision_refused(
+            "BUNDLE_SOURCE_CASE_COLLISION_UNREVIEWED")
+
+    def test_portable_source_map_crossrole_clean_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
