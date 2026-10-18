@@ -8025,3 +8025,124 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertFalse(direct["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(direct["can_authorize_annual_run"])
 
+    def _assert_portable_tree_object_order_consistency_only(self):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        direct = self.verdict()
+        encoded = json.dumps(self.envelope)
+        parsed = review_bundle_json_text(encoded)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(encoded), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(direct, parsed)
+        self.assertEqual(status, 0)
+        self.assertTrue(direct["source_consistency"])
+        self.assertEqual(direct["diagnostics"], ())
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"], [])
+        self.assertTrue(emitted["source_consistency"])
+        for result in (direct, emitted):
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def _reversed_portable_tree_fields(self, directory=None):
+        trees = self.envelope["full_tree_snapshots"]
+        if directory is None:
+            sha = self.envelope["commit"]["tree"]["sha"]
+        else:
+            _, _, sha = self._portable_snapshot_parent_child(directory)
+        trees[sha] = dict(reversed(list(trees[sha].items())))
+
+    def _reversed_portable_tree_entry_fields(self, directory, leaf=False):
+        trees = self.envelope["full_tree_snapshots"]
+        root = trees[self.envelope["commit"]["tree"]["sha"]]
+        if leaf:
+            _, _, sha = self._portable_snapshot_parent_child(directory)
+            entries = trees[sha]["tree"]
+            index = 0
+        else:
+            entries = root["tree"]
+            index = next(i for i, e in enumerate(entries)
+                         if e["path"] == directory)
+        entries[index] = dict(reversed(list(entries[index].items())))
+
+    def test_portable_tree_map_order_reverse_snapshot_inventory_clean(self):
+        trees = self.envelope["full_tree_snapshots"]
+        self.envelope["full_tree_snapshots"] = dict(
+            reversed(list(trees.items())))
+        self._assert_portable_tree_object_order_consistency_only()
+
+    def test_portable_tree_map_order_reverse_root_object_fields_clean(self):
+        self._reversed_portable_tree_fields()
+        self._assert_portable_tree_object_order_consistency_only()
+
+    def test_portable_tree_map_order_reverse_tests_object_fields_clean(self):
+        self._reversed_portable_tree_fields("tests")
+        self._assert_portable_tree_object_order_consistency_only()
+
+    def test_portable_tree_map_order_reverse_docs_object_fields_clean(self):
+        self._reversed_portable_tree_fields("docs")
+        self._assert_portable_tree_object_order_consistency_only()
+
+    def test_portable_tree_map_order_reverse_tests_parent_fields_clean(self):
+        self._reversed_portable_tree_entry_fields("tests")
+        self._assert_portable_tree_object_order_consistency_only()
+
+    def test_portable_tree_map_order_reverse_docs_parent_fields_clean(self):
+        self._reversed_portable_tree_entry_fields("docs")
+        self._assert_portable_tree_object_order_consistency_only()
+
+    def test_portable_tree_map_order_reverse_tests_leaf_fields_clean(self):
+        self._reversed_portable_tree_entry_fields("tests", leaf=True)
+        self._assert_portable_tree_object_order_consistency_only()
+
+    def test_portable_tree_map_order_reverse_docs_leaf_fields_clean(self):
+        self._reversed_portable_tree_entry_fields("docs", leaf=True)
+        self._assert_portable_tree_object_order_consistency_only()
+
+    def test_portable_tree_map_order_reverse_flat_node_inventory_clean(self):
+        self.envelope["nodes"] = dict(
+            reversed(list(self.envelope["nodes"].items())))
+        self._assert_portable_tree_object_order_consistency_only()
+
+    def test_portable_tree_map_order_reverse_flat_node_fields_clean(self):
+        self.envelope["nodes"] = {
+            k: dict(reversed(list(v.items())))
+            for k, v in self.envelope["nodes"].items()}
+        self._assert_portable_tree_object_order_consistency_only()
+
+    def test_portable_tree_map_order_reverse_changed_bytes_map_clean(self):
+        pairs = self.envelope["changed_bytes_b64"]
+        self.envelope["changed_bytes_b64"] = dict(
+            reversed(list(pairs.items())))
+        self._assert_portable_tree_object_order_consistency_only()
+
+    def test_portable_tree_map_order_all_nested_objects_reversed_clean(self):
+        trees = self.envelope["full_tree_snapshots"]
+        self.envelope["full_tree_snapshots"] = {
+            sha: dict(reversed([
+                (k, ([dict(reversed(list(entry.items())))
+                      for entry in v] if k == "tree" else v))
+                for k, v in snapshot.items()]))
+            for sha, snapshot in reversed(list(trees.items()))}
+        self.envelope["nodes"] = dict(reversed([
+            (k, dict(reversed(list(v.items()))))
+            for k, v in self.envelope["nodes"].items()]))
+        pairs = self.envelope["changed_bytes_b64"]
+        self.envelope["changed_bytes_b64"] = dict(
+            reversed(list(pairs.items())))
+        self._assert_portable_tree_object_order_consistency_only()
+
+    def test_portable_tree_map_order_root_entry_array_reversed_refused(self):
+        root = self.envelope["full_tree_snapshots"][
+            self.envelope["commit"]["tree"]["sha"]]
+        self.assertEqual([e["path"] for e in root["tree"]],
+                         ["docs", "tests"])
+        root["tree"].reverse()
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_OBJECT_BYTES_SHA_MISMATCH")
+
+    def test_portable_tree_map_order_original_clean_source_only(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
