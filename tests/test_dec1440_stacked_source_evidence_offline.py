@@ -909,3 +909,101 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
         self.assertEqual(index, self.phase3_evidence["index"])
         self.assertEqual(receipt["id"], self.phase3_evidence["upload"]["id"])
         self.assertEqual(receipt["run_id"], 8000)
+
+    def _refresh_synthetic_log_receipt(self, run_id):
+        raw = self.raw_ci_runner_logs[run_id].encode("utf-8")
+        self.raw_log_receipts[run_id]["byte_count"] = len(raw)
+        self.raw_log_receipts[run_id]["text_sha256"] = hashlib.sha256(raw).hexdigest()
+
+    def _assert_refingerprinted_log_is_not_annual_authority(self, diagnostic):
+        result = self.verdict()
+        self.assertFalse(result["source_consistency"])
+        self.assertIn(diagnostic, result["diagnostics"])
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_refingerprinted_historical_wrong_merge_remains_mismatch(self):
+        raw = self.raw_ci_runner_logs[8001]
+        self.raw_ci_runner_logs[8001] = (
+            raw.replace("f"*40, "e"*40)
+               .replace("fffffff Merge ", "eeeeeee Merge "))
+        self._refresh_synthetic_log_receipt(8001)
+        self._assert_refingerprinted_log_is_not_annual_authority(
+            "RAW_CI_RUNNER_LOG_METADATA_MISMATCH")
+
+    def test_refingerprinted_phase3_wrong_pr_ref_remains_mismatch(self):
+        raw = self.raw_ci_runner_logs[8000]
+        self.raw_ci_runner_logs[8000] = raw.replace(
+            "/1649/merge", "/9999/merge")
+        self._refresh_synthetic_log_receipt(8000)
+        self._assert_refingerprinted_log_is_not_annual_authority(
+            "RUNNER_LOG_PR_REF_MISMATCH")
+
+    def test_refingerprinted_phase3_upload_id_conflicts_with_snapshot(self):
+        raw = self.raw_ci_runner_logs[8000]
+        self.assertIn("Artifact ID 7777", raw)
+        self.raw_ci_runner_logs[8000] = raw.replace("7777", "8888")
+        self._refresh_synthetic_log_receipt(8000)
+        self._assert_refingerprinted_log_is_not_annual_authority(
+            "PHASE3_RAW_UPLOAD_VS_SUPPLIED_EVIDENCE_MISMATCH")
+
+    def test_refingerprinted_phase3_index_payload_conflicts_with_snapshot(self):
+        raw = self.raw_ci_runner_logs[8000]
+        self.assertIn('"trade_count":1', raw)
+        self.raw_ci_runner_logs[8000] = raw.replace(
+            '"trade_count":1', '"trade_count":99', 1)
+        self._refresh_synthetic_log_receipt(8000)
+        self._assert_refingerprinted_log_is_not_annual_authority(
+            "PHASE3_RAW_INDEX_VS_SUPPLIED_EVIDENCE_MISMATCH")
+
+    def test_refingerprinted_historical_receipt_wrong_job_remains_bound(self):
+        self._refresh_synthetic_log_receipt(8001)
+        self.raw_log_receipts[8001]["job_id"] = self.jobs[8000][0]["id"]
+        self._assert_refingerprinted_log_is_not_annual_authority(
+            "tests_RECEIPT_JOB_MISMATCH")
+
+    def test_refingerprinted_log_and_checkout_cannot_rebind_merge(self):
+        raw = self.raw_ci_runner_logs[8001]
+        self.raw_ci_runner_logs[8001] = (
+            raw.replace("f"*40, "e"*40)
+               .replace("fffffff Merge ", "eeeeeee Merge "))
+        self.runner_checks[8001]["checkout_fetch_sha"] = "e"*40
+        self.runner_checks[8001]["checkout_sha_prefix"] = "eeeeeee"
+        self._refresh_synthetic_log_receipt(8001)
+        self._assert_refingerprinted_log_is_not_annual_authority(
+            "DUAL_CHECKOUT_TESTED_MERGE_SHA_DIFFERENT")
+
+    def test_refingerprinted_phase3_head_named_upload_cannot_rebind_merge(self):
+        merge_name = "phase3-backtester-acceptance-" + "f"*40
+        head_name = "phase3-backtester-acceptance-" + self.pr["head_sha"]
+        self.assertIn(merge_name, self.raw_ci_runner_logs[8000])
+        self.raw_ci_runner_logs[8000] = (
+            self.raw_ci_runner_logs[8000].replace(merge_name, head_name))
+        self.phase3_evidence["upload"]["name"] = head_name
+        self._refresh_synthetic_log_receipt(8000)
+        self._assert_refingerprinted_log_is_not_annual_authority(
+            "PHASE3_UPLOAD_MERGE_SHA_NAME_MISMATCH")
+
+    def test_refingerprinted_historical_extra_git_checkout_is_refused(self):
+        self.raw_ci_runner_logs[8001] += (
+            "\n2026-10-17T10:00:04.1000000Z "
+            "[command]/usr/bin/git checkout refs/heads/other")
+        self._refresh_synthetic_log_receipt(8001)
+        result = self.verdict()
+        self.assertFalse(result["source_consistency"])
+        self.assertTrue(result["diagnostics"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_refreshing_unchanged_synthetic_log_receipts_is_source_only(self):
+        for run_id in (8000, 8001):
+            before = dict(self.raw_log_receipts[run_id])
+            self._refresh_synthetic_log_receipt(run_id)
+            self.assertEqual(before, self.raw_log_receipts[run_id])
+        result = self.verdict()
+        self.assertEqual(result["diagnostics"], ())
+        self.assertTrue(result["source_consistency"])
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+

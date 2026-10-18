@@ -1,0 +1,7 @@
+# DEC-1560 — Refingerprinted raw CI evidence cannot bypass independent source bindings
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent one-commit tests/docs child of #1806 at `c348185b65c403134eebbb4d875831786a8d81ea`. Nine synthetic regression methods and two small test helpers (**2,801 proposed source-defined tests**).
+
+Recomputing a caller-supplied raw CI log receipt's byte count and SHA-256 is not GitHub provider authentication or protected execution consent. Tests deliberately rewrite the historical runner's checkout SHA, Phase 3 PR ref, Phase 3 artifact ID, Phase 3 index scenario count, and job association; refresh the synthetic digest/length; and require independent source binding mismatches. They also exercise a coordinated rewritten historical raw checkout and metadata, a head-named artifact masquerading as a merge-named upload, and an extra Git checkout. An unchanged fixture with its receipts recomputed continues to pass **source consistency only**. The protected original OS and exclusive server admission fields never become true.
+
+Both own exact-head Phase 3 and full historical/general CI, plus independent qualified review, are required. Tests/docs only: no provider APIs, protected original access, workflow/security-control edits, annual dispatch/retry, merge, deployment or trading. DEC-650/#820 independent protected-original OS no-write and DEC-651/#821/#779 exclusive immutable protected 2023 run385/attempt1 admission remain **BLOCKED**.
