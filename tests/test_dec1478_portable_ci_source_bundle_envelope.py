@@ -4377,3 +4377,67 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
                 self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
                 self.assertFalse(result["can_authorize_annual_run"])
 
+    def test_json_decoded_ascii_escape_alias_is_duplicate_key(self):
+        raw = r'{"\u0061":1,"a":2}'
+        self.assertTrue(_json_lexical_object_budgets(raw))
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_json_decoded_slash_escape_alias_is_duplicate_key(self):
+        raw = r'{"\/":1,"/":2}'
+        self.assertTrue(_json_lexical_object_budgets(raw))
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_json_decoded_backslash_escape_alias_is_duplicate_key(self):
+        raw = r'{"\\":1,"\u005c":2}'
+        self.assertTrue(_json_lexical_object_budgets(raw))
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_json_decoded_surrogate_pair_alias_is_duplicate_key(self):
+        raw = r'{"😀":1,"\ud83d\ude00":2}'
+        self.assertTrue(_json_lexical_object_budgets(raw))
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_json_decoded_accent_escape_alias_is_duplicate_key(self):
+        raw = r'{"é":1,"\u00e9":2}'
+        self.assertTrue(_json_lexical_object_budgets(raw))
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_json_nested_alias_duplicate_fails_before_inventory(self):
+        raw = r'{"synthetic":{"k":1,"\u006b":2}}'
+        self.assertTrue(_json_lexical_object_budgets(raw))
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_json_case_distinct_keys_are_not_false_duplicates(self):
+        raw = r'{"A":1,"a":2}'
+        self.assertTrue(_json_lexical_object_budgets(raw))
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_KEY_INVENTORY_UNREVIEWED",))
+
+    def test_json_equal_keys_in_distinct_objects_are_not_duplicates(self):
+        raw = r'[{"a":1},{"a":2}]'
+        self.assertTrue(_json_lexical_array_budgets(raw))
+        self.assertTrue(_json_lexical_object_budgets(raw))
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_SHAPE_UNREVIEWED",))
+
+    def test_json_cli_decoded_private_duplicate_key_is_not_echoed(self):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        raw = r'{"private-canary":1,"\u0070rivate-canary":2}'
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(raw), out)
+        self.assertEqual(status, 2)
+        record = json.loads(out.getvalue())
+        self.assertEqual(record["diagnostics"],
+                         ["BUNDLE_JSON_GRAMMAR_UNREVIEWED"])
+        self.assertNotIn("private-canary", out.getvalue())
+        self.assertFalse(record["independent_original_os_proof"])
+        self.assertFalse(record["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(record["can_authorize_annual_run"])
+
