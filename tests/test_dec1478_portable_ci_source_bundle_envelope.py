@@ -20,6 +20,7 @@ import test_dec1440_stacked_source_evidence_offline as composite
 
 ENVELOPE_SCHEMA = "fmp-offline-source-bundle-v1"
 MAX_TEXT_CHARS = 2_000_000
+MAX_TEXT_UTF8_BYTES = 2_000_000
 MAX_BLOB_BYTES = 1_000_000
 MAX_TOTAL_BLOB_BYTES = 4_000_000
 MAX_JSON_NESTING = 512
@@ -550,6 +551,11 @@ def review_bundle_json_text(text):
     """No external I/O: caller provides raw UTF-8-decoded JSON text."""
     if type(text) is not str or len(text) > MAX_TEXT_CHARS:
         return fail_closed("BUNDLE_JSON_TEXT_UNREVIEWED")
+    try:
+        if len(text.encode("utf-8")) > MAX_TEXT_UTF8_BYTES:
+            return fail_closed("BUNDLE_JSON_TEXT_UNREVIEWED")
+    except UnicodeError:
+        return fail_closed("BUNDLE_JSON_UNICODE_UNREVIEWED")
     if not _json_nesting_within_limit(text):
         return fail_closed("BUNDLE_JSON_GRAMMAR_UNREVIEWED")
     try:
@@ -3281,6 +3287,65 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
 
     def test_compatibility_dot_segment_guard_preserves_source_only_fixture(self):
         result = self.verdict()
+        self.assertTrue(result["source_consistency"])
+        self.assertEqual(result["diagnostics"], ())
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_json_text_exact_two_million_ascii_bytes_keeps_parser_contract(self):
+        raw = "x" * MAX_TEXT_UTF8_BYTES
+        self.assertEqual(len(raw), MAX_TEXT_CHARS)
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_json_text_one_over_ascii_byte_limit_refused(self):
+        raw = "x" * (MAX_TEXT_UTF8_BYTES+1)
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_JSON_TEXT_UNREVIEWED",))
+
+    def test_json_text_exact_multibyte_utf8_byte_limit(self):
+        raw = '"'+ "é" * (MAX_TEXT_UTF8_BYTES//2 - 2) + '"'
+        self.assertLess(len(raw.encode("utf-8")), MAX_TEXT_UTF8_BYTES)
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_SHAPE_UNREVIEWED",))
+
+    def test_json_text_multibyte_excess_refused_before_parse(self):
+        raw = '"'+ "é" * (MAX_TEXT_UTF8_BYTES//2) + '"'
+        self.assertLess(len(raw), MAX_TEXT_CHARS)
+        self.assertGreater(len(raw.encode("utf-8")), MAX_TEXT_UTF8_BYTES)
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_JSON_TEXT_UNREVIEWED",))
+
+    def test_json_text_emoji_byte_excess_refused(self):
+        raw = '"'+ "🚀" * (MAX_TEXT_UTF8_BYTES//4) + '"'
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_JSON_TEXT_UNREVIEWED",))
+
+    def test_json_text_actual_unpaired_surrogate_refused_without_traceback(self):
+        raw = '{"private":"\ud800"}'
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_JSON_UNICODE_UNREVIEWED",))
+
+    def test_json_text_escaped_surrogate_retains_unicode_specific_refusal(self):
+        raw = r'{"private":"\ud800"}'
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_JSON_UNICODE_UNREVIEWED",))
+
+    def test_json_text_utf8_size_refusal_stdin_does_not_echo_source(self):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        raw = '{"secret":"'+ "é" * (MAX_TEXT_UTF8_BYTES//2) + '"}'
+        out = io.StringIO()
+        rc = cli.run_stdin_review(io.StringIO(raw), out)
+        result = json.loads(out.getvalue())
+        self.assertEqual(rc, 2)
+        self.assertEqual(result["diagnostics"], ["BUNDLE_JSON_TEXT_UNREVIEWED"])
+        self.assertNotIn("secret", out.getvalue())
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_json_text_utf8_cap_preserves_synthetic_source_only(self):
+        result = review_bundle_json_text(json.dumps(self.envelope))
         self.assertTrue(result["source_consistency"])
         self.assertEqual(result["diagnostics"], ())
         self.assertFalse(result["independent_original_os_proof"])
