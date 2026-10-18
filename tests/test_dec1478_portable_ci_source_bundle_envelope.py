@@ -7563,3 +7563,77 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self._assert_full_tree_snapshot_mutation_refused(
             "TREE_CHAIN_TREE_OBJECT_UNREVIEWED")
 
+    def test_portable_wire_root_entries_reordered_refused(self):
+        trees = self.envelope["full_tree_snapshots"]
+        root_sha = self.envelope["commit"]["tree"]["sha"]
+        trees[root_sha]["tree"].reverse()
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_OBJECT_BYTES_SHA_MISMATCH")
+
+    def test_portable_wire_docs_leaf_uppercase_sha_refused(self):
+        self._portable_snapshot_leaf("docs")["sha"] = "A"*40
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_ENTRY_SHA_UNREVIEWED")
+
+    def test_portable_wire_tests_leaf_short_sha_refused(self):
+        self._portable_snapshot_leaf("tests")["sha"] = "a"*39
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_ENTRY_SHA_UNREVIEWED")
+
+    def test_portable_wire_root_parent_nonhex_sha_refused(self):
+        trees = self.envelope["full_tree_snapshots"]
+        root = trees[self.envelope["commit"]["tree"]["sha"]]
+        next(e for e in root["tree"] if e["path"] == "tests")["sha"] = "z"*40
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_ENTRY_SHA_UNREVIEWED")
+
+    def test_portable_wire_docs_leaf_slash_path_refused(self):
+        self._portable_snapshot_leaf("docs")["path"] = "nested/sample.md"
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_OBJECT_BYTES_SHA_MISMATCH")
+
+    def test_portable_wire_docs_leaf_nul_path_refused(self):
+        self._portable_snapshot_leaf("docs")["path"] = "sample.md\x00forged"
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_OBJECT_BYTES_SHA_MISMATCH")
+
+    def test_portable_wire_root_parent_noncanonical_tree_mode_refused(self):
+        trees = self.envelope["full_tree_snapshots"]
+        root = trees[self.envelope["commit"]["tree"]["sha"]]
+        next(e for e in root["tree"] if e["path"] == "docs")["mode"] = "40000"
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_OBJECT_BYTES_SHA_MISMATCH")
+
+    def test_portable_wire_tests_leaf_list_mode_refused(self):
+        self._portable_snapshot_leaf("tests")["mode"] = ["100644"]
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_OBJECT_BYTES_SHA_MISMATCH")
+
+    def test_portable_wire_docs_leaf_missing_sha_refused(self):
+        self._portable_snapshot_leaf("docs").pop("sha")
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_ENTRY_SHA_UNREVIEWED")
+
+    def test_portable_wire_docs_child_tree_object_not_array_refused(self):
+        trees, _, child_sha = self._portable_snapshot_parent_child("docs")
+        trees[child_sha]["tree"] = {}
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_TREE_ENTRIES_UNREVIEWED")
+
+    def test_portable_wire_tests_child_null_entry_refused(self):
+        trees, _, child_sha = self._portable_snapshot_parent_child("tests")
+        trees[child_sha]["tree"] = [None]
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_TREE_ENTRIES_UNREVIEWED")
+
+    def test_portable_wire_root_tree_entries_string_refused(self):
+        trees = self.envelope["full_tree_snapshots"]
+        trees[self.envelope["commit"]["tree"]["sha"]]["tree"] = "not-a-tree"
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_TREE_ENTRIES_UNREVIEWED")
+
+    def test_portable_wire_docs_leaf_numeric_sha_refused(self):
+        self._portable_snapshot_leaf("docs")["sha"] = 12345
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_ENTRY_SHA_UNREVIEWED")
+
