@@ -1,0 +1,9 @@
+# DEC-1574 — Source blob aggregate budget across direct-memory and JSON ingress
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact one-commit tests/docs child of #1820 at `f2b8fc16f360caf3331a92aec5f2e6aaaae1d901`; six synthetic regression methods plus helpers (**2,920 proposed source-defined methods**).
+
+The direct in-memory offline evidence envelope supports up to 1,000,000 raw bytes per source blob, but no more than 4,000,000 raw bytes across **changed-source and reviewed CI workflow source maps combined**. Synthetic 800,001-byte blobs prove that five individually acceptable entries fail before the downstream reviewer is called, both within one map and split across maps, irrespective of map insertion order. The exact 4,000,000-byte case reaches a mocked source-only nested reviewer; one blob over the per-source limit is rejected with the more specific per-blob diagnostic. These are input-contract checks, not independent evidence authentication.
+
+The bounded JSON and stdin entry points have a stricter 2,000,000-character/UTF-8-byte document limit: an aggregate raw-blob-overflow example is necessarily too long as canonical Base64 JSON, so those interfaces correctly refuse it **earlier** with `BUNDLE_JSON_TEXT_UNREVIEWED`, not the direct-memory aggregate diagnostic. Tests document both entrypoint behaviors without confusing them or granting any protected annual authority.
+
+Own exact-head Phase 3 and full historical/general CI plus independent qualified review required. Tests/docs only; no production parser/resource-ceiling/workflow/security-control/admission changes. DEC-650/#820 independent protected-original OS no-write and DEC-651/#821/#779 exclusive immutable protected 2023 run385/attempt1 server admission remain BLOCKED. No protected originals/archives/artifacts, annual execution/retry, merge, deployment or trading.
