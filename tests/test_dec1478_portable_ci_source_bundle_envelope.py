@@ -8796,3 +8796,106 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_tree_forged_verdict_clean_real_checker_source_only(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+    def _assert_reviewed_nested_tree_failure_code_preserved(self, codes):
+        import io
+        from unittest.mock import patch
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.assertEqual(codes, tuple(sorted(set(codes))))
+        self.assertTrue(codes)
+        before = copy.deepcopy(self.envelope)
+        raw = json.dumps(self.envelope, sort_keys=True)
+
+        def synthetic_review(**evidence):
+            evidence["full_tree_snapshots"].clear()
+            return {
+                "source_consistency": False,
+                "diagnostics": codes,
+                "independent_original_os_proof": False,
+                "exclusive_server_dispatch_gate_proven": False,
+                "can_authorize_annual_run": False,
+            }
+
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          side_effect=synthetic_review):
+            direct = self.verdict()
+            parsed = review_bundle_json_text(raw)
+            out = io.StringIO()
+            status = cli.run_stdin_review(io.StringIO(raw), out)
+        self.assertEqual(self.envelope, before)
+        self.assertEqual(direct, parsed)
+        self.assertEqual(status, 2)
+        self.assertEqual(direct["diagnostics"], codes)
+        self.assertFalse(direct["source_consistency"])
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"], list(codes))
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        for result in (direct, emitted):
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+        self.assertEqual(self.verdict()["diagnostics"], ())
+
+    def test_portable_reviewed_tree_negative_git_tree_root_sha_preserved(self):
+        self._assert_reviewed_nested_tree_failure_code_preserved(
+            ("TREE_CHAIN_ROOT_SHA_UNREVIEWED",))
+
+    def test_portable_reviewed_tree_negative_git_tree_object_preserved(self):
+        self._assert_reviewed_nested_tree_failure_code_preserved(
+            ("TREE_CHAIN_TREE_OBJECT_UNREVIEWED",))
+
+    def test_portable_reviewed_tree_negative_git_tree_wire_sha_preserved(self):
+        self._assert_reviewed_nested_tree_failure_code_preserved(
+            ("TREE_CHAIN_OBJECT_BYTES_SHA_MISMATCH",))
+
+    def test_portable_reviewed_tree_negative_git_tree_parent_mode_preserved(self):
+        self._assert_reviewed_nested_tree_failure_code_preserved(
+            ("TREE_CHAIN_PARENT_NOT_REGULAR_TREE",))
+
+    def test_portable_reviewed_tree_negative_git_tree_leaf_mode_preserved(self):
+        self._assert_reviewed_nested_tree_failure_code_preserved(
+            ("TREE_CHAIN_LEAF_NOT_REGULAR_BLOB",))
+
+    def test_portable_reviewed_tree_negative_git_tree_source_blob_preserved(self):
+        self._assert_reviewed_nested_tree_failure_code_preserved(
+            ("TREE_CHAIN_LEAF_BYTES_SHA_MISMATCH",))
+
+    def test_portable_reviewed_tree_negative_git_tree_entry_cardinality_preserved(self):
+        self._assert_reviewed_nested_tree_failure_code_preserved(
+            ("TREE_CHAIN_ENTRY_CARDINALITY_UNREVIEWED",))
+
+    def test_portable_reviewed_tree_negative_blob_sha_preserved(self):
+        self._assert_reviewed_nested_tree_failure_code_preserved(
+            ("BLOB_SHA_UNREVIEWED",))
+
+    def test_portable_reviewed_tree_negative_blob_source_sha_preserved(self):
+        self._assert_reviewed_nested_tree_failure_code_preserved(
+            ("BLOB_SOURCE_BYTES_SHA_MISMATCH",))
+
+    def test_portable_reviewed_tree_negative_flat_git_leaf_mode_preserved(self):
+        self._assert_reviewed_nested_tree_failure_code_preserved(
+            ("GIT_TREE_LEAF_MODE_DRIFT",))
+
+    def test_portable_reviewed_tree_negative_flat_git_parent_mode_preserved(self):
+        self._assert_reviewed_nested_tree_failure_code_preserved(
+            ("GIT_TREE_DIRECTORY_MODE_DRIFT",))
+
+    def test_portable_reviewed_tree_negative_flat_git_path_missing_preserved(self):
+        self._assert_reviewed_nested_tree_failure_code_preserved(
+            ("GIT_TREE_PATH_MISSING",))
+
+    def test_portable_reviewed_tree_negative_git_tree_snapshot_preserved(self):
+        self._assert_reviewed_nested_tree_failure_code_preserved(
+            ("GIT_TREE_SNAPSHOT_UNREVIEWED",))
+
+    def test_portable_reviewed_tree_negative_sorted_multiple_codes_preserved(self):
+        codes = tuple(sorted((
+            "TREE_CHAIN_LEAF_BYTES_SHA_MISMATCH",
+            "BLOB_SHA_UNREVIEWED",
+            "GIT_TREE_LEAF_MODE_DRIFT",
+        )))
+        self._assert_reviewed_nested_tree_failure_code_preserved(codes)
+
+    def test_portable_reviewed_tree_negative_clean_real_source_only(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
