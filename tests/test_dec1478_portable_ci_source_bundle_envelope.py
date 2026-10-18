@@ -4441,3 +4441,99 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertFalse(record["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(record["can_authorize_annual_run"])
 
+    def test_json_global_object_overlimit_skips_decoder_allocation(self):
+        from unittest.mock import patch
+        raw = ("[" + '[{"a":1},{"a":1},{"a":1}],' +
+               ",".join('[{"a":1},{"a":1}]' for _ in range(
+                   MAX_JSON_ARRAY_ITEMS-1)) + "]")
+        self.assertTrue(_json_lexical_array_budgets(raw))
+        self.assertFalse(_json_lexical_object_budgets(raw))
+        with patch.object(json, "loads",
+                          side_effect=AssertionError("decoder must not run")) as decode:
+            result = review_bundle_json_text(raw)
+        decode.assert_not_called()
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_json_global_array_overlimit_skips_decoder_allocation(self):
+        from unittest.mock import patch
+        raw = "[" + ",".join("[0,0,0,0]" for _ in range(
+            MAX_JSON_ARRAY_ITEMS)) + "]"
+        self.assertFalse(_json_lexical_array_budgets(raw))
+        self.assertTrue(_json_lexical_object_budgets(raw))
+        with patch.object(json, "loads",
+                          side_effect=AssertionError("decoder must not run")) as decode:
+            result = review_bundle_json_text(raw)
+        decode.assert_not_called()
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_json_exact_global_object_budget_invokes_decoder_once(self):
+        from unittest.mock import patch
+        raw = "[" + ",".join('[{"a":1},{"a":1}]' for _ in range(
+            MAX_JSON_ARRAY_ITEMS)) + "]"
+        self.assertTrue(_json_lexical_array_budgets(raw))
+        self.assertTrue(_json_lexical_object_budgets(raw))
+        with patch.object(json, "loads", wraps=json.loads) as decode:
+            result = review_bundle_json_text(raw)
+        decode.assert_called_once()
+        self.assertEqual(result["diagnostics"], ("BUNDLE_SHAPE_UNREVIEWED",))
+
+    def test_json_exact_global_array_budget_invokes_decoder_once(self):
+        from unittest.mock import patch
+        raw = "[" + ",".join("[0,0,0]" for _ in range(
+            MAX_JSON_ARRAY_ITEMS)) + "]"
+        self.assertTrue(_json_lexical_array_budgets(raw))
+        self.assertTrue(_json_lexical_object_budgets(raw))
+        with patch.object(json, "loads", wraps=json.loads) as decode:
+            result = review_bundle_json_text(raw)
+        decode.assert_called_once()
+        self.assertEqual(result["diagnostics"], ("BUNDLE_SHAPE_UNREVIEWED",))
+
+    def test_json_unbalanced_container_fails_without_decoder(self):
+        from unittest.mock import patch
+        raw = '{"a":[1,2}'
+        self.assertFalse(_json_lexical_array_budgets(raw))
+        with patch.object(json, "loads",
+                          side_effect=AssertionError("decoder must not run")) as decode:
+            result = review_bundle_json_text(raw)
+        decode.assert_not_called()
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_json_utf8_overlimit_skips_decoder_even_below_char_cap(self):
+        from unittest.mock import patch
+        raw = json.dumps(["🚀"*500000], ensure_ascii=False)
+        self.assertLess(len(raw), MAX_TEXT_CHARS)
+        self.assertGreater(len(raw.encode("utf-8")), MAX_TEXT_UTF8_BYTES)
+        with patch.object(json, "loads",
+                          side_effect=AssertionError("decoder must not run")) as decode:
+            result = review_bundle_json_text(raw)
+        decode.assert_not_called()
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_JSON_TEXT_UNREVIEWED",))
+
+    def test_json_char_overlimit_skips_decoder(self):
+        from unittest.mock import patch
+        raw = " " * (MAX_TEXT_CHARS + 1)
+        with patch.object(json, "loads",
+                          side_effect=AssertionError("decoder must not run")) as decode:
+            result = review_bundle_json_text(raw)
+        decode.assert_not_called()
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_JSON_TEXT_UNREVIEWED",))
+
+    def test_json_lexically_bounded_invalid_separator_defers_to_decoder(self):
+        from unittest.mock import patch
+        raw = '{"synthetic":[1,]}'
+        self.assertTrue(_json_lexical_array_budgets(raw))
+        self.assertTrue(_json_lexical_object_budgets(raw))
+        with patch.object(json, "loads", wraps=json.loads) as decode:
+            result = review_bundle_json_text(raw)
+        decode.assert_called_once()
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
