@@ -4735,3 +4735,70 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assert_lexically_bounded_invalid_json_uses_decoder(
             '{"a":[1 2]}')
 
+    def test_json_exact_text_cap_with_trailing_space_reaches_shape(self):
+        raw = "null" + " "*(MAX_TEXT_CHARS-4)
+        self.assertEqual(len(raw), MAX_TEXT_CHARS)
+        self.assertEqual(len(raw.encode("utf-8")), MAX_TEXT_UTF8_BYTES)
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_SHAPE_UNREVIEWED",))
+
+    def test_json_one_trailing_space_over_text_cap_refused(self):
+        raw = "null" + " "*(MAX_TEXT_CHARS-3)
+        self.assertEqual(len(raw), MAX_TEXT_CHARS+1)
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_JSON_TEXT_UNREVIEWED",))
+
+    def test_json_semantic_same_pretty_layout_can_cross_character_cap(self):
+        value = ["a"*(MAX_TEXT_CHARS-6)]
+        compact = json.dumps(value, separators=(",", ":"))
+        pretty = json.dumps(value, indent=2)
+        self.assertLessEqual(len(compact), MAX_TEXT_CHARS)
+        self.assertGreater(len(pretty), MAX_TEXT_CHARS)
+        self.assertEqual(json.loads(compact), json.loads(pretty))
+        self.assertEqual(review_bundle_json_text(compact)["diagnostics"],
+                         ("BUNDLE_SHAPE_UNREVIEWED",))
+        self.assertEqual(review_bundle_json_text(pretty)["diagnostics"],
+                         ("BUNDLE_JSON_TEXT_UNREVIEWED",))
+
+    def test_json_valid_ascii_whitespace_around_document_is_allowed(self):
+        raw = " \t\r\n" + json.dumps(["synthetic"]) + "\r\n\t "
+        self.assertTrue(_json_lexical_array_budgets(raw))
+        self.assertTrue(_json_lexical_object_budgets(raw))
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_SHAPE_UNREVIEWED",))
+
+    def test_json_vertical_tab_not_accepted_as_json_whitespace(self):
+        raw = "\vnull"
+        self.assertTrue(_json_lexical_array_budgets(raw))
+        self.assertTrue(_json_lexical_object_budgets(raw))
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_json_nbsp_not_accepted_as_json_whitespace(self):
+        raw = "\u00a0null"
+        self.assertTrue(_json_lexical_array_budgets(raw))
+        self.assertTrue(_json_lexical_object_budgets(raw))
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_json_leading_bom_is_not_a_valid_prefix(self):
+        raw = "\ufeffnull"
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_json_nul_outside_quoted_value_is_grammar_error(self):
+        raw = "null\x00"
+        self.assertTrue(_json_lexical_array_budgets(raw))
+        self.assertTrue(_json_lexical_object_budgets(raw))
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_json_ascii_whitespace_clean_bundle_stays_source_only(self):
+        raw = " \n\t" + json.dumps(self.envelope, sort_keys=True) + "\r\n "
+        result = review_bundle_json_text(raw)
+        self.assertEqual(result["diagnostics"], ())
+        self.assertTrue(result["source_consistency"])
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
