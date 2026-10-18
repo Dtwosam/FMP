@@ -6626,3 +6626,84 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertFalse(original["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(original["can_authorize_annual_run"])
 
+    def _assert_canonical_binary_source_mutation_rejected(self, changed):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.assertEqual(type(changed), bytes)
+        canonical = base64.b64encode(changed).decode("ascii")
+        self.assertEqual(base64.b64encode(
+            base64.b64decode(canonical, validate=True)).decode("ascii"),
+            canonical)
+        self.envelope["changed_bytes_b64"]["tests/sample.py"] = canonical
+        direct = self.verdict()
+        raw = json.dumps(self.envelope, ensure_ascii=True)
+        parsed = review_bundle_json_text(raw)
+        output = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(raw), output)
+        emitted = json.loads(output.getvalue())
+        self.assertEqual(direct, parsed)
+        self.assertEqual(status, 2)
+        self.assertFalse(direct["source_consistency"])
+        self.assertTrue(direct["diagnostics"])
+        self.assertNotIn("BUNDLE_SOURCE_B64_UNREVIEWED",
+                         direct["diagnostics"])
+        self.assertNotIn("BUNDLE_SOURCE_B64_NONCANONICAL",
+                         direct["diagnostics"])
+        self.assertEqual(emitted["diagnostics"],
+                         list(direct["diagnostics"]))
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        if canonical:
+            self.assertNotIn(canonical, output.getvalue())
+        self.assertNotIn("changed_bytes_b64", output.getvalue())
+        for verdict in (direct, emitted):
+            self.assertFalse(verdict["independent_original_os_proof"])
+            self.assertFalse(verdict["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(verdict["can_authorize_annual_run"])
+
+    def test_canonical_raw_source_null_byte_fails_source_identity(self):
+        self._assert_canonical_binary_source_mutation_rejected(b"\x00")
+
+    def test_canonical_raw_source_invalid_utf8_fails_source_identity(self):
+        self._assert_canonical_binary_source_mutation_rejected(b"\xff\xfe")
+
+    def test_canonical_raw_source_utf8_bom_fails_source_identity(self):
+        self._assert_canonical_binary_source_mutation_rejected(
+            b"\xef\xbb\xbf# Source-only\n")
+
+    def test_canonical_raw_source_crlf_fails_source_identity(self):
+        self._assert_canonical_binary_source_mutation_rejected(
+            b"# Source-only\r\n")
+
+    def test_canonical_raw_source_appended_nul_fails_source_identity(self):
+        self._assert_canonical_binary_source_mutation_rejected(
+            b"# Source-only\n\x00")
+
+    def test_canonical_raw_source_trailing_space_fails_source_identity(self):
+        self._assert_canonical_binary_source_mutation_rejected(
+            b"# Source-only \n")
+
+    def test_canonical_raw_source_nonascii_utf8_fails_source_identity(self):
+        self._assert_canonical_binary_source_mutation_rejected(
+            "🚀".encode("utf-8"))
+
+    def test_canonical_raw_source_empty_bytes_fails_source_identity(self):
+        self._assert_canonical_binary_source_mutation_rejected(b"")
+
+    def test_canonical_raw_source_same_length_edit_fails_source_identity(self):
+        self._assert_canonical_binary_source_mutation_rejected(
+            b"# source-only\n")
+
+    def test_canonical_source_original_bytes_still_source_only(self):
+        expected = b"# Source-only\n"
+        self.assertEqual(
+            base64.b64decode(self.envelope["changed_bytes_b64"][
+                "tests/sample.py"], validate=True), expected)
+        direct = self.verdict()
+        parsed = review_bundle_json_text(json.dumps(self.envelope))
+        self.assertEqual(direct, parsed)
+        self.assertTrue(direct["source_consistency"])
+        self.assertEqual(direct["diagnostics"], ())
+        self.assertFalse(direct["independent_original_os_proof"])
+        self.assertFalse(direct["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(direct["can_authorize_annual_run"])
+
