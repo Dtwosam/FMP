@@ -1007,3 +1007,92 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
         self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(result["can_authorize_annual_run"])
 
+    def _assert_rehashed_log_stage_fault(self, run_id, expected=None):
+        self._refresh_synthetic_log_receipt(run_id)
+        result = self.verdict()
+        self.assertFalse(result["source_consistency"])
+        self.assertTrue(result["diagnostics"])
+        if expected is not None:
+            self.assertIn(expected, result["diagnostics"])
+        self.assertNotIn("tests_RECEIPT_DIGEST_MISMATCH",
+                         result["diagnostics"])
+        self.assertNotIn("phase3-acceptance_RECEIPT_DIGEST_MISMATCH",
+                         result["diagnostics"])
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_rehashed_history_fetch_after_checkout_is_still_refused(self):
+        lines = self.raw_ci_runner_logs[8001].splitlines()
+        lines[0], lines[1] = lines[1], lines[0]
+        self.raw_ci_runner_logs[8001] = "\n".join(lines)
+        self._assert_rehashed_log_stage_fault(
+            8001, "RUNNER_LOG_ORDER_UNREVIEWED")
+
+    def test_rehashed_phase3_missing_checkout_head_is_still_refused(self):
+        lines = self.raw_ci_runner_logs[8000].splitlines()
+        self.assertIn("HEAD is now at", lines[2])
+        del lines[2]
+        self.raw_ci_runner_logs[8000] = "\n".join(lines)
+        self._assert_rehashed_log_stage_fault(8000)
+
+    def test_rehashed_phase3_index_before_checkout_stamp_is_refused(self):
+        raw = self.raw_ci_runner_logs[8000]
+        self.assertIn("10:00:03.1000000Z ", raw)
+        self.raw_ci_runner_logs[8000] = raw.replace(
+            "10:00:03.1000000Z ", "10:00:01.5000000Z ", 1)
+        self._assert_rehashed_log_stage_fault(
+            8000, "PHASE3_ACCEPTANCE_TIMESTAMP_BEFORE_CHECKOUT")
+
+    def test_rehashed_phase3_index_line_before_head_is_refused(self):
+        lines = self.raw_ci_runner_logs[8000].splitlines()
+        self.assertIn('"code_commit":', lines[3])
+        lines[2], lines[3] = lines[3], lines[2]
+        self.raw_ci_runner_logs[8000] = "\n".join(lines)
+        self._assert_rehashed_log_stage_fault(
+            8000, "PHASE3_ACCEPTANCE_GENERATED_BEFORE_CHECKOUT")
+
+    def test_rehashed_phase3_missing_index_is_still_refused(self):
+        lines = self.raw_ci_runner_logs[8000].splitlines()
+        self.raw_ci_runner_logs[8000] = "\n".join(
+            line for line in lines if '"code_commit":' not in line)
+        self._assert_rehashed_log_stage_fault(
+            8000, "PHASE3_RAW_LOG_STAGE_CARDINALITY_UNREVIEWED")
+
+    def test_rehashed_phase3_duplicate_index_is_still_refused(self):
+        lines = self.raw_ci_runner_logs[8000].splitlines()
+        self.assertIn('"code_commit":', lines[3])
+        lines.insert(4, lines[3])
+        self.raw_ci_runner_logs[8000] = "\n".join(lines)
+        self._assert_rehashed_log_stage_fault(8000)
+
+    def test_rehashed_phase3_upload_before_finalization_is_refused(self):
+        lines = self.raw_ci_runner_logs[8000].splitlines()
+        self.assertIn("successfully finalized", lines[5])
+        self.assertIn("successfully uploaded", lines[6])
+        lines[5], lines[6] = lines[6], lines[5]
+        self.raw_ci_runner_logs[8000] = "\n".join(lines)
+        self._assert_rehashed_log_stage_fault(8000)
+
+    def test_rehashed_phase3_missing_upload_line_is_still_refused(self):
+        lines = self.raw_ci_runner_logs[8000].splitlines()
+        self.raw_ci_runner_logs[8000] = "\n".join(
+            line for line in lines if "successfully uploaded" not in line)
+        self._assert_rehashed_log_stage_fault(8000)
+
+    def test_rehashed_historical_extra_git_mutation_is_refused(self):
+        self.raw_ci_runner_logs[8001] += (
+            "\n2026-10-17T10:00:04.1000000Z "
+            "[command]/usr/bin/git checkout --force refs/heads/unreviewed")
+        self._assert_rehashed_log_stage_fault(8001)
+
+    def test_rehashed_unchanged_stage_order_remains_source_only(self):
+        for run_id in (8000, 8001):
+            self._refresh_synthetic_log_receipt(run_id)
+        result = self.verdict()
+        self.assertEqual(result["diagnostics"], ())
+        self.assertTrue(result["source_consistency"])
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
