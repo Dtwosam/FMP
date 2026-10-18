@@ -4607,3 +4607,84 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(result["can_authorize_annual_run"])
 
+    def test_json_unicode_accent_escape_inflation_hits_document_cap(self):
+        value = ["é" * 400000]
+        escaped = json.dumps(value, ensure_ascii=True)
+        literal = json.dumps(value, ensure_ascii=False)
+        self.assertGreater(len(escaped.encode("utf-8")), MAX_TEXT_UTF8_BYTES)
+        self.assertLess(len(literal.encode("utf-8")), MAX_TEXT_UTF8_BYTES)
+        self.assertEqual(json.loads(escaped), json.loads(literal))
+        self.assertEqual(review_bundle_json_text(escaped)["diagnostics"],
+                         ("BUNDLE_JSON_TEXT_UNREVIEWED",))
+        self.assertEqual(review_bundle_json_text(literal)["diagnostics"],
+                         ("BUNDLE_SHAPE_UNREVIEWED",))
+
+    def test_json_unicode_emoji_escape_inflation_hits_document_cap(self):
+        value = ["🚀" * 170000]
+        escaped = json.dumps(value, ensure_ascii=True)
+        literal = json.dumps(value, ensure_ascii=False)
+        self.assertGreater(len(escaped), MAX_TEXT_CHARS)
+        self.assertLess(len(literal.encode("utf-8")), MAX_TEXT_UTF8_BYTES)
+        self.assertEqual(review_bundle_json_text(escaped)["diagnostics"],
+                         ("BUNDLE_JSON_TEXT_UNREVIEWED",))
+        self.assertEqual(review_bundle_json_text(literal)["diagnostics"],
+                         ("BUNDLE_SHAPE_UNREVIEWED",))
+
+    def test_json_literal_unicode_exact_utf8_document_ceiling(self):
+        raw = json.dumps(["é"*999998], ensure_ascii=False)
+        self.assertEqual(len(raw.encode("utf-8")), MAX_TEXT_UTF8_BYTES)
+        self.assertLess(len(raw), MAX_TEXT_CHARS)
+        result = review_bundle_json_text(raw)
+        self.assertEqual(result["diagnostics"], ("BUNDLE_SHAPE_UNREVIEWED",))
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_json_literal_unicode_one_utf8_scalar_above_ceiling(self):
+        raw = json.dumps(["é"*999999], ensure_ascii=False)
+        self.assertEqual(len(raw.encode("utf-8")), MAX_TEXT_UTF8_BYTES+2)
+        self.assertLess(len(raw), MAX_TEXT_CHARS)
+        result = review_bundle_json_text(raw)
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_JSON_TEXT_UNREVIEWED",))
+
+    def test_json_control_escape_expansion_is_counted_before_decode(self):
+        raw = json.dumps(["\x00" * 333334])
+        self.assertGreater(len(raw), MAX_TEXT_CHARS)
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_JSON_TEXT_UNREVIEWED",))
+
+    def test_json_small_control_escape_payload_remains_grammar_valid(self):
+        raw = json.dumps(["\x00" * 1000])
+        self.assertTrue(_json_lexical_array_budgets(raw))
+        self.assertTrue(_json_lexical_object_budgets(raw))
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_SHAPE_UNREVIEWED",))
+
+    def test_json_escaped_lone_surrogate_uses_unicode_diagnostic(self):
+        raw = r'["\ud800"]'
+        self.assertTrue(_json_lexical_array_budgets(raw))
+        self.assertTrue(_json_lexical_object_budgets(raw))
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_JSON_UNICODE_UNREVIEWED",))
+
+    def test_json_unescaped_lone_surrogate_fails_utf8_preflight(self):
+        raw = json.dumps(["\ud800"], ensure_ascii=False)
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_JSON_UNICODE_UNREVIEWED",))
+
+    def test_json_stdin_escaped_unicode_oversize_never_echoes_canary(self):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        canary = "private-unicode-overlimit-canary"
+        raw = json.dumps([canary + "é"*400000], ensure_ascii=True)
+        self.assertGreater(len(raw), MAX_TEXT_CHARS)
+        output = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(raw), output)
+        self.assertEqual(status, 2)
+        record = json.loads(output.getvalue())
+        self.assertEqual(record["diagnostics"],
+                         ["BUNDLE_JSON_TEXT_UNREVIEWED"])
+        self.assertNotIn(canary, output.getvalue())
+        self.assertFalse(record["independent_original_os_proof"])
+        self.assertFalse(record["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(record["can_authorize_annual_run"])
+
