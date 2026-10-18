@@ -1,0 +1,7 @@
+# DEC-1606 — Valid reviewed negative diagnostic results remain stable and nonauthorizing
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent one-commit tests/docs child of #1852 at `651336c30e7c2c75fff6d792f9fa20b1cab31f6a`. Fifteen synthetic methods (**3,289 proposed source-defined methods**).
+
+The DEC-1605 negative tests reject malformed or forged nested results. This companion verifies strictly *valid* failure verdicts are not overwritten, lost, or mistaken for protected execution permission. Mock the combined source checker on an isolated deep-copied Git tree to produce individual allowlisted flat Git mode, changed-source blob and full tree chain diagnostic codes, plus a canonical sorted three-code combination. Direct-memory, JSON-text and bounded stdin must report those exact reviewed codes, false source consistency, no path echoes and all three nonauthorizing fields false. Restore the genuine checker and verify the original synthetic clean source-only fixture.
+
+These mock results are not authenticated GitHub object provenance, original protected OS witnesses or exclusive annual gates. Own exact-head Phase 3/general CI and independent qualified review required. Tests/docs only; no production/parser/limits/workflow/security/admission changes, protected originals/archives/artifacts, annual dispatch/retry, merge/deployment/trading. DEC-650/#820 and DEC-651/#821/#779 remain **BLOCKED**.
