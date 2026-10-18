@@ -7002,3 +7002,94 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self._assert_canonical_binary_source_mutation_rejected(
             b"pass")
 
+    def _assert_json_escaped_key_spelling_keeps_source_only(self, category,
+                                                            key, offset):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.assertLess(offset, len(key))
+        self.assertLess(ord(key[offset]), 128)
+        encoded = json.dumps(self.envelope, sort_keys=True,
+                             separators=(",", ":"))
+        inner = json.dumps(self.envelope[category][key], sort_keys=True,
+                           separators=(",", ":"))
+        literal = json.dumps(key) + ":" + inner
+        self.assertEqual(encoded.count(literal), 1)
+        alias = ('"' + key[:offset] + '\\u%04x' % ord(key[offset]) +
+                 key[offset+1:] + '"')
+        self.assertNotEqual(alias, json.dumps(key))
+        rewritten = encoded.replace(literal, alias + ":" + inner, 1)
+        self.assertEqual(json.loads(rewritten), self.envelope)
+        original = self.verdict()
+        parsed = review_bundle_json_text(rewritten)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(rewritten), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(original, parsed)
+        self.assertEqual(status, 0)
+        self.assertEqual(original["diagnostics"], ())
+        self.assertTrue(original["source_consistency"])
+        self.assertEqual(emitted["diagnostics"], [])
+        self.assertTrue(emitted["source_consistency"])
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        for result in (original, emitted):
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_json_escaped_changed_source_first_path_letter_is_equivalent(self):
+        self._assert_json_escaped_key_spelling_keeps_source_only(
+            "changed_bytes_b64", "tests/sample.py", 0)
+
+    def test_json_escaped_changed_source_path_separator_is_equivalent(self):
+        self._assert_json_escaped_key_spelling_keeps_source_only(
+            "changed_bytes_b64", "tests/sample.py", 5)
+
+    def test_json_escaped_ci_workflow_first_path_dot_is_equivalent(self):
+        self._assert_json_escaped_key_spelling_keeps_source_only(
+            "ci_workflow_bytes_b64", ".github/workflows/tests.yml", 0)
+
+    def test_json_escaped_ci_workflow_path_separator_is_equivalent(self):
+        self._assert_json_escaped_key_spelling_keeps_source_only(
+            "ci_workflow_bytes_b64", ".github/workflows/tests.yml", 7)
+
+    def test_json_escaped_jobs_run_map_key_is_equivalent(self):
+        self._assert_json_escaped_key_spelling_keeps_source_only(
+            "jobs_by_run", "8000", 0)
+
+    def test_json_escaped_checkout_run_map_key_is_equivalent(self):
+        self._assert_json_escaped_key_spelling_keeps_source_only(
+            "checkout_by_run", "8000", 1)
+
+    def test_json_escaped_raw_log_run_map_key_is_equivalent(self):
+        self._assert_json_escaped_key_spelling_keeps_source_only(
+            "raw_ci_runner_logs", "8001", 2)
+
+    def test_json_escaped_receipt_run_map_key_is_equivalent(self):
+        self._assert_json_escaped_key_spelling_keeps_source_only(
+            "raw_ci_log_receipts", "8001", 3)
+
+    def test_json_escaped_schema_root_key_is_equivalent(self):
+        raw = json.dumps(self.envelope, sort_keys=True,
+                         separators=(",", ":"))
+        before = '"schema":'
+        self.assertEqual(raw.count(before), 1)
+        rewritten = raw.replace(before, '"\\u0073chema":', 1)
+        self.assertEqual(json.loads(rewritten), self.envelope)
+        self.assertEqual(review_bundle_json_text(rewritten), self.verdict())
+        self.assertTrue(self.verdict()["source_consistency"])
+        self.assertFalse(self.verdict()["can_authorize_annual_run"])
+
+    def test_json_escaped_schema_value_is_equivalent(self):
+        raw = json.dumps(self.envelope, sort_keys=True,
+                         separators=(",", ":"))
+        before = '"schema":' + json.dumps(ENVELOPE_SCHEMA)
+        self.assertEqual(raw.count(before), 1)
+        encoded_schema = '"\\u%04x%s"' % (
+            ord(ENVELOPE_SCHEMA[0]), ENVELOPE_SCHEMA[1:])
+        rewritten = raw.replace(before, '"schema":' + encoded_schema, 1)
+        self.assertEqual(json.loads(rewritten), self.envelope)
+        self.assertEqual(review_bundle_json_text(rewritten), self.verdict())
+        self.assertFalse(self.verdict()["independent_original_os_proof"])
+        self.assertFalse(self.verdict()["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(self.verdict()["can_authorize_annual_run"])
+
