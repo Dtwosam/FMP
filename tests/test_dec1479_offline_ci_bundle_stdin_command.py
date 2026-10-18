@@ -71,7 +71,8 @@ def _emit_safe_verdict(verdict, output_stream):
                 # infer successful delivery from an unexpected result.
                 return False
     except (OSError, UnicodeError, ValueError, TypeError, RuntimeError,
-            RecursionError, AssertionError, AttributeError):
+            RecursionError, AssertionError, AttributeError, OverflowError,
+            IndexError, EOFError):
         return False
     return True
 
@@ -1084,6 +1085,88 @@ class ExplicitStdinReviewIsNotAnnualWorkflowAdmission(unittest.TestCase):
         self.assertFalse(result["independent_original_os_proof"])
         self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(result["can_authorize_annual_run"])
+
+
+    def test_output_write_overflow_error_is_sanitized(self):
+        class Output:
+            def write(self, text):
+                raise OverflowError("private-canary")
+        out = Output()
+        self.assertFalse(_emit_safe_verdict(
+            envelope.fail_closed("BUNDLE_SHAPE_UNREVIEWED"), out))
+
+    def test_output_write_index_error_is_sanitized(self):
+        class Output:
+            def write(self, text):
+                raise IndexError("private-canary")
+        self.assertEqual(run_stdin_review(
+            io.StringIO(json.dumps(self.bundle)), Output()), 2)
+
+    def test_output_write_eof_error_is_sanitized(self):
+        class Output:
+            def write(self, text):
+                raise EOFError("private-canary")
+        self.assertEqual(run_stdin_review(
+            io.StringIO(json.dumps(self.bundle)), Output()), 2)
+
+    def test_output_flush_overflow_error_is_sanitized(self):
+        class Output:
+            def write(self, text):
+                return len(text)
+            def flush(self):
+                raise OverflowError("private-canary")
+        self.assertEqual(run_stdin_review(
+            io.StringIO(json.dumps(self.bundle)), Output()), 2)
+
+    def test_output_flush_index_error_is_sanitized(self):
+        class Output:
+            def write(self, text):
+                return len(text)
+            def flush(self):
+                raise IndexError("private-canary")
+        self.assertEqual(run_stdin_review(
+            io.StringIO(json.dumps(self.bundle)), Output()), 2)
+
+    def test_output_flush_getter_eof_error_is_sanitized(self):
+        class Output:
+            def write(self, text):
+                return len(text)
+            @property
+            def flush(self):
+                raise EOFError("private-canary")
+        self.assertEqual(run_stdin_review(
+            io.StringIO(json.dumps(self.bundle)), Output()), 2)
+
+    def test_output_exception_denied_args_does_not_escape(self):
+        from unittest.mock import patch
+        class Output:
+            def write(self, text):
+                raise OverflowError("private-canary")
+        with patch.object(sys, "argv", ["review", "--unsafe"]), \
+             patch.object(sys, "stdout", Output()):
+            self.assertEqual(main(), 2)
+
+    def test_output_exception_never_retries_partial_write(self):
+        class Output:
+            def __init__(self):
+                self.calls = 0
+            def write(self, text):
+                self.calls += 1
+                raise IndexError("private-canary")
+        output = Output()
+        self.assertEqual(run_stdin_review(
+            io.StringIO(json.dumps(self.bundle)), output), 2)
+        self.assertEqual(output.calls, 1)
+
+    def test_output_exception_guard_preserves_source_only_verdict(self):
+        out = io.StringIO()
+        rc = run_stdin_review(io.StringIO(json.dumps(self.bundle)), out)
+        self.assertEqual(rc, 0)
+        verdict = json.loads(out.getvalue())
+        self.assertTrue(verdict["source_consistency"])
+        self.assertFalse(verdict["independent_original_os_proof"])
+        self.assertFalse(verdict["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(verdict["can_authorize_annual_run"])
 
 
 if __name__ == "__main__":
