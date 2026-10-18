@@ -10564,3 +10564,112 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self._assert_reviewed_nested_tree_failure_code_preserved(
             ("TREE_CHAIN_TREE_OBJECT_UNREVIEWED",))
 
+    def _assert_lexically_invalid_source_path_fails_at_ingress(self):
+        import io
+        import copy
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        before = copy.deepcopy(self.envelope)
+        raw = json.dumps(self.envelope, ensure_ascii=True)
+        direct = self.verdict()
+        parsed = review_bundle_json_text(raw)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(raw), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(self.envelope, before)
+        self.assertEqual(direct, parsed)
+        self.assertEqual(status, 2)
+        self.assertEqual(direct["diagnostics"],
+                         ("BUNDLE_SOURCE_PATH_UNREVIEWED",))
+        self.assertFalse(direct["source_consistency"])
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"],
+                         ["BUNDLE_SOURCE_PATH_UNREVIEWED"])
+        self.assertNotIn("private", out.getvalue())
+        for result in (direct, emitted):
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_lexical_path_absolute_refused(self):
+        payload = self.envelope["changed_bytes_b64"].pop("docs/sample.md")
+        self.envelope["changed_bytes_b64"]["/private/changed.py"] = payload
+        self._assert_lexically_invalid_source_path_fails_at_ingress()
+
+    def test_portable_lexical_path_windows_drive_refused(self):
+        payload = self.envelope["changed_bytes_b64"].pop("docs/sample.md")
+        self.envelope["changed_bytes_b64"]["C:/private/changed.py"] = payload
+        self._assert_lexically_invalid_source_path_fails_at_ingress()
+
+    def test_portable_lexical_path_backslash_refused(self):
+        payload = self.envelope["changed_bytes_b64"].pop("docs/sample.md")
+        self.envelope["changed_bytes_b64"]["docs\\changed.py"] = payload
+        self._assert_lexically_invalid_source_path_fails_at_ingress()
+
+    def test_portable_lexical_path_dot_segment_refused(self):
+        payload = self.envelope["changed_bytes_b64"].pop("docs/sample.md")
+        self.envelope["changed_bytes_b64"]["docs/./changed.py"] = payload
+        self._assert_lexically_invalid_source_path_fails_at_ingress()
+
+    def test_portable_lexical_path_parent_segment_refused(self):
+        payload = self.envelope["changed_bytes_b64"].pop("docs/sample.md")
+        self.envelope["changed_bytes_b64"]["docs/../changed.py"] = payload
+        self._assert_lexically_invalid_source_path_fails_at_ingress()
+
+    def test_portable_lexical_path_empty_segment_refused(self):
+        payload = self.envelope["changed_bytes_b64"].pop("docs/sample.md")
+        self.envelope["changed_bytes_b64"]["docs//changed.py"] = payload
+        self._assert_lexically_invalid_source_path_fails_at_ingress()
+
+    def test_portable_lexical_path_trailing_dot_refused(self):
+        payload = self.envelope["changed_bytes_b64"].pop("docs/sample.md")
+        self.envelope["changed_bytes_b64"]["docs/changed.py."] = payload
+        self._assert_lexically_invalid_source_path_fails_at_ingress()
+
+    def test_portable_lexical_path_trailing_space_refused(self):
+        payload = self.envelope["changed_bytes_b64"].pop("docs/sample.md")
+        self.envelope["changed_bytes_b64"]["docs/changed.py "] = payload
+        self._assert_lexically_invalid_source_path_fails_at_ingress()
+
+    def test_portable_lexical_path_reserved_con_refused(self):
+        payload = self.envelope["changed_bytes_b64"].pop("docs/sample.md")
+        self.envelope["changed_bytes_b64"]["docs/CON.txt"] = payload
+        self._assert_lexically_invalid_source_path_fails_at_ingress()
+
+    def test_portable_lexical_path_reserved_prn_refused(self):
+        payload = self.envelope["changed_bytes_b64"].pop("docs/sample.md")
+        self.envelope["changed_bytes_b64"]["docs/PRN"] = payload
+        self._assert_lexically_invalid_source_path_fails_at_ingress()
+
+    def test_portable_lexical_path_reserved_nul_refused(self):
+        payload = self.envelope["changed_bytes_b64"].pop("docs/sample.md")
+        self.envelope["changed_bytes_b64"]["docs/NUL.md"] = payload
+        self._assert_lexically_invalid_source_path_fails_at_ingress()
+
+    def test_portable_lexical_path_reserved_com1_refused(self):
+        payload = self.envelope["changed_bytes_b64"].pop("docs/sample.md")
+        self.envelope["changed_bytes_b64"]["docs/COM1.txt"] = payload
+        self._assert_lexically_invalid_source_path_fails_at_ingress()
+
+    def test_portable_lexical_path_reserved_lpt1_refused(self):
+        payload = self.envelope["changed_bytes_b64"].pop("docs/sample.md")
+        self.envelope["changed_bytes_b64"]["docs/LPT1.dat"] = payload
+        self._assert_lexically_invalid_source_path_fails_at_ingress()
+
+    def test_portable_lexical_path_non_nfc_refused(self):
+        payload = self.envelope["changed_bytes_b64"].pop("docs/sample.md")
+        self.envelope["changed_bytes_b64"]["docs/café.md"] = payload
+        self._assert_lexically_invalid_source_path_fails_at_ingress()
+
+    def test_portable_lexical_path_zero_width_refused(self):
+        payload = self.envelope["changed_bytes_b64"].pop("docs/sample.md")
+        self.envelope["changed_bytes_b64"]["docs/a​b.py"] = payload
+        self._assert_lexically_invalid_source_path_fails_at_ingress()
+
+    def test_portable_lexical_path_fraction_slash_refused(self):
+        payload = self.envelope["changed_bytes_b64"].pop("docs/sample.md")
+        self.envelope["changed_bytes_b64"]["docs/changed⁄.py"] = payload
+        self._assert_lexically_invalid_source_path_fails_at_ingress()
+
+    def test_portable_lexical_path_clean_source_only_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
