@@ -1,0 +1,9 @@
+# DEC-1565 — Repair portable rehashed-log contract expectations
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Forward-only one-commit tests/docs child of #1811 at `1bfbc850847bfd408c768575fe46a09d8ea2d441`. Correct three inherited synthetic test expectations that caused #1808 historical/general CI to fail (three assertion failures) and add two precise contrast tests (**2,842 proposed source-defined methods**).
+
+The observed #1808 exact-head historical/general run 39134562883 shows: (1) a rehashed additional *non-stage* log text line does not alter checked checkout/CI artifact stages, so the reviewer can still report **caller-supplied source consistency**, which is never authenticated provider provenance or annual permission; (2) an altered CI receipt job ID is refused by the portable reviewer's **generic `BUNDLE_RESULT_SHAPE_UNREVIEWED`** result, not the unallowlisted nested `tests_RECEIPT_JOB_MISMATCH` output; and (3) an additional non-stage line does not change the stdin source-consistency-only exit code. The inherited assumptions must not be disguised as an implementation bypass.
+
+The new regression pair differentiates an innocuous extra log line from a **real checkout PR-ref mutation** with the log receipt rehashed; both direct review and bounded stdin reject the changed mandatory stage and never echo a private synthetic canary. The patch does not relax the parser, diagnostic allowlist, execution gates or resource limits.
+
+Requires exact-head Phase 3/full historical-general CI and independent qualified review. DEC-650/#820 independently witnessed protected-original OS no-write and DEC-651/#821/#779 immutable exclusive 2023 run385/attempt1 server admission remain **BLOCKED**. No protected original/archive/artifact access, protected execution/retry, workflow/security changes, merge, deployment or trading.

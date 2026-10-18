@@ -4997,8 +4997,10 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self._refingerprint_portable_synthetic_ci_log("8001")
         self.envelope["raw_ci_log_receipts"]["8001"]["job_id"] = (
             self.envelope["raw_ci_log_receipts"]["8000"]["job_id"])
+        # The portable result allowlist intentionally declines this nested
+        # receipt diagnostic and emits a generic, nonauthorizing refusal.
         self._assert_refingerprinted_portable_log_rejected(
-            "tests_RECEIPT_JOB_MISMATCH")
+            "BUNDLE_RESULT_SHAPE_UNREVIEWED")
 
     def test_portable_refingerprint_private_raw_log_never_echoes(self):
         text = self.envelope["raw_ci_runner_logs"]["8001"]
@@ -5006,9 +5008,13 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
             text + "\nprivate-synthetic-canary")
         self._refingerprint_portable_synthetic_ci_log("8001")
         result = self.verdict()
-        self.assertFalse(result["source_consistency"])
-        self.assertTrue(result["diagnostics"])
+        # An additional non-stage log line is not a checkout or artifact
+        # identity mutation. Source consistency is not provider authentication.
+        self.assertTrue(result["source_consistency"], result["diagnostics"])
+        self.assertEqual(result["diagnostics"], ())
         self.assertNotIn("private-synthetic-canary", repr(result))
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(result["can_authorize_annual_run"])
 
     def test_portable_refingerprint_swapped_runner_logs_fail_closed(self):
@@ -5028,8 +5034,11 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         status = cli.run_stdin_review(
             io.StringIO(json.dumps(self.envelope)), out)
         record = json.loads(out.getvalue())
-        self.assertEqual(status, 2)
-        self.assertTrue(record["diagnostics"])
+        # A generic log line does not alter mandatory evidence stages.
+        # CLI exit zero here is only a source-consistency signal.
+        self.assertEqual(status, 0)
+        self.assertTrue(record["source_consistency"])
+        self.assertEqual(record["diagnostics"], [])
         self.assertNotIn("private-stdin-canary", out.getvalue())
         self.assertFalse(record["independent_original_os_proof"])
         self.assertFalse(record["exclusive_server_dispatch_gate_proven"])
@@ -5182,4 +5191,39 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self._assert_untrusted_nested_authority_claim_not_promoted()
         self.assertEqual(self.verdict()["diagnostics"], ())
         self.assertTrue(self.verdict()["source_consistency"])
+
+    def test_portable_refingerprinted_checkout_mutation_with_benign_line_fails(self):
+        text = self.envelope["raw_ci_runner_logs"]["8001"]
+        self.assertIn("/1649/merge", text)
+        self.envelope["raw_ci_runner_logs"]["8001"] = (
+            text.replace("/1649/merge", "/9999/merge") +
+            "\nprivate-stage-checkout-canary")
+        self._refingerprint_portable_synthetic_ci_log("8001")
+        result = self.verdict()
+        self.assertFalse(result["source_consistency"])
+        self.assertIn("RUNNER_LOG_PR_REF_MISMATCH", result["diagnostics"])
+        self.assertNotIn("private-stage-checkout-canary", repr(result))
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_stdin_rehashed_stage_mutation_not_echoed(self):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        text = self.envelope["raw_ci_runner_logs"]["8000"]
+        self.assertIn("/1649/merge", text)
+        self.envelope["raw_ci_runner_logs"]["8000"] = (
+            text.replace("/1649/merge", "/9999/merge") +
+            "\nprivate-stage-stdin-canary")
+        self._refingerprint_portable_synthetic_ci_log("8000")
+        out = io.StringIO()
+        status = cli.run_stdin_review(
+            io.StringIO(json.dumps(self.envelope)), out)
+        record = json.loads(out.getvalue())
+        self.assertEqual(status, 2)
+        self.assertIn("RUNNER_LOG_PR_REF_MISMATCH", record["diagnostics"])
+        self.assertNotIn("private-stage-stdin-canary", out.getvalue())
+        self.assertFalse(record["independent_original_os_proof"])
+        self.assertFalse(record["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(record["can_authorize_annual_run"])
 
