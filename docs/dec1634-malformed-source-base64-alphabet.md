@@ -1,0 +1,7 @@
+# DEC-1634 — Reject malformed Base64 source text before nested Git evidence review
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent one-commit tests/docs child of #1880 at `26849a14914b4f68a19ef672da543645da143496`. Fifteen new regression methods (**3,685 proposed source-defined tests**).
+
+DEC-1630 covered canonical unused Base64 pad bits. This draft checks invalid source byte encodings instead: percent signs, punctuation, whitespace, embedded ASCII controls, interior padding, non-ASCII fullwidth letters and format characters. Fourteen mutants alter the encoded text of one changed-source fixture while preserving the untouched source path and full Git tree. Each must fail at portable ingress with exactly `BUNDLE_SOURCE_B64_UNREVIEWED` across direct-memory, JSON-text and bounded stdin, without leaking source paths or conferring original protected OS, exclusive dispatch or annual-run authority. The canonical clean control remains consistent but nonauthorizing.
+
+These are synthetic, caller-provided bytes, not remotely authenticated repository evidence. Own exact-head Phase 3/historical-general CI and independent qualified review required. Tests/docs-only; no production, parser, resource limit, workflow/security/admission controls, protected original/archive/artifact access, annual execution/retry, merging, deployment or trading. DEC-650/#820 and DEC-651/#821/#779 remain **BLOCKED**.
