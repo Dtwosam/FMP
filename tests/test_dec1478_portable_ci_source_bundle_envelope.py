@@ -11150,3 +11150,157 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_pad_bit_clean_source_control(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+    def _assert_portable_precedence_stable(self, first, second, expected):
+        import copy
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        pristine = copy.deepcopy(self.envelope)
+        first()
+        second()
+        direct = self.verdict()
+        self.envelope = copy.deepcopy(pristine)
+        second()
+        first()
+        self.assertEqual(self.verdict(), direct)
+        raw = json.dumps(self.envelope, sort_keys=True)
+        parsed = review_bundle_json_text(raw)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(raw), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(direct, parsed)
+        self.assertEqual(status, 2)
+        self.assertEqual(direct["diagnostics"], (expected,))
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"], [expected])
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        for result in (direct, emitted):
+            self.assertFalse(result["source_consistency"])
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_early_priority_schema_before_category_stable(self):
+        def mutate_first():
+            self.envelope["schema"] = "private-invalid-schema"
+        def mutate_second():
+            self.envelope["nodes"] = []
+        self._assert_portable_precedence_stable(
+            mutate_first, mutate_second,
+            "BUNDLE_SCHEMA_UNREVIEWED")
+
+    def test_portable_early_priority_category_before_source_b64_stable(self):
+        def mutate_first():
+            self.envelope["nodes"] = []
+        def mutate_second():
+            self.envelope["changed_bytes_b64"]["docs/sample.md"] = "%%%"
+        self._assert_portable_precedence_stable(
+            mutate_first, mutate_second,
+            "BUNDLE_CATEGORY_TYPE_UNREVIEWED")
+
+    def test_portable_early_priority_runs_bound_before_source_b64_stable(self):
+        def mutate_first():
+            self.envelope["runs"] = [{} for _ in range(MAX_RUNS_PER_ENVELOPE + 1)]
+        def mutate_second():
+            self.envelope["changed_bytes_b64"]["docs/sample.md"] = "%%%"
+        self._assert_portable_precedence_stable(
+            mutate_first, mutate_second,
+            "BUNDLE_RUN_COLLECTION_OVERSIZE")
+
+    def test_portable_early_priority_source_b64_before_checkout_stable(self):
+        def mutate_first():
+            self.envelope["changed_bytes_b64"]["docs/sample.md"] = "%%%"
+        def mutate_second():
+            self.envelope["checkout_by_run"]["0"] = {}
+        self._assert_portable_precedence_stable(
+            mutate_first, mutate_second,
+            "BUNDLE_SOURCE_B64_UNREVIEWED")
+
+    def test_portable_early_priority_source_path_before_jobs_stable(self):
+        def mutate_first():
+            raw = self.envelope["changed_bytes_b64"].pop("docs/sample.md")
+            self.envelope["changed_bytes_b64"]["../private.md"] = raw
+        def mutate_second():
+            self.envelope["jobs_by_run"]["0"] = {}
+        self._assert_portable_precedence_stable(
+            mutate_first, mutate_second,
+            "BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_portable_early_priority_source_b64_before_workflow_stable(self):
+        def mutate_first():
+            self.envelope["changed_bytes_b64"]["docs/sample.md"] = "%%%"
+        def mutate_second():
+            key = next(iter(self.envelope["ci_workflow_bytes_b64"]))
+            self.envelope["ci_workflow_bytes_b64"][key] = "%%%"
+        self._assert_portable_precedence_stable(
+            mutate_first, mutate_second,
+            "BUNDLE_SOURCE_B64_UNREVIEWED")
+
+    def test_portable_early_priority_checkout_before_workflow_stable(self):
+        def mutate_first():
+            self.envelope["checkout_by_run"]["0"] = {}
+        def mutate_second():
+            key = next(iter(self.envelope["ci_workflow_bytes_b64"]))
+            self.envelope["ci_workflow_bytes_b64"][key] = "%%%"
+        self._assert_portable_precedence_stable(
+            mutate_first, mutate_second,
+            "BUNDLE_RUN_KEY_UNREVIEWED")
+
+    def test_portable_early_priority_workflow_before_raw_log_stable(self):
+        def mutate_first():
+            key = next(iter(self.envelope["ci_workflow_bytes_b64"]))
+            self.envelope["ci_workflow_bytes_b64"][key] = "%%%"
+        def mutate_second():
+            self.envelope["raw_ci_runner_logs"]["8000"] = None
+        self._assert_portable_precedence_stable(
+            mutate_first, mutate_second,
+            "BUNDLE_SOURCE_B64_UNREVIEWED")
+
+    def test_portable_early_priority_jobs_before_raw_log_stable(self):
+        def mutate_first():
+            self.envelope["jobs_by_run"]["0"] = {}
+        def mutate_second():
+            self.envelope["raw_ci_runner_logs"]["8000"] = None
+        self._assert_portable_precedence_stable(
+            mutate_first, mutate_second,
+            "BUNDLE_RUN_KEY_UNREVIEWED")
+
+    def test_portable_early_priority_receipts_before_raw_log_stable(self):
+        def mutate_first():
+            self.envelope["raw_ci_log_receipts"]["0"] = {}
+        def mutate_second():
+            self.envelope["raw_ci_runner_logs"]["8000"] = None
+        self._assert_portable_precedence_stable(
+            mutate_first, mutate_second,
+            "BUNDLE_RUN_KEY_UNREVIEWED")
+
+    def test_portable_early_priority_raw_log_type_before_key_stable(self):
+        def mutate_first():
+            self.envelope["raw_ci_runner_logs"]["8000"] = None
+        def mutate_second():
+            self.envelope["raw_ci_runner_logs"]["0"] = "synthetic"
+        self._assert_portable_precedence_stable(
+            mutate_first, mutate_second,
+            "BUNDLE_RAW_LOG_TEXT_UNREVIEWED")
+
+    def test_portable_early_priority_raw_log_type_before_null_stable(self):
+        def mutate_first():
+            self.envelope["raw_ci_runner_logs"]["8000"] = None
+        def mutate_second():
+            self.envelope["raw_ci_runner_logs"]["8001"] += "\x00"
+        self._assert_portable_precedence_stable(
+            mutate_first, mutate_second,
+            "BUNDLE_RAW_LOG_TEXT_UNREVIEWED")
+
+    def test_portable_early_priority_source_path_before_test_b64_stable(self):
+        def mutate_first():
+            raw = self.envelope["changed_bytes_b64"].pop("docs/sample.md")
+            self.envelope["changed_bytes_b64"]["../private.md"] = raw
+        def mutate_second():
+            self.envelope["changed_bytes_b64"]["tests/sample.py"] = "%%%"
+        self._assert_portable_precedence_stable(
+            mutate_first, mutate_second,
+            "BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_portable_early_priority_clean_source_only(self):
+        self._assert_portable_tree_object_order_consistency_only()
+

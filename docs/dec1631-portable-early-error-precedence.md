@@ -1,0 +1,7 @@
+# DEC-1631 — Early malformed-envelope diagnostic priority cannot depend on mutation order
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent one-commit tests/docs child of #1877 at `6940d8060650bccbf173f21e0f6a857674b15116`. Fourteen synthetic regression methods (**3,644 proposed source-defined methods**).
+
+Early input checks intentionally have reviewed precedence: envelope schema and category types, maximum run count, then deterministic sorted category evaluation and per-map guard priority. Thirteen two-fault mutants combine bad source Base64/path labels, bad run map IDs, oversized run lists, invalid CI workflow Base64, malformed raw logs, bad category type, or incorrect schema. Mutate each pair in **both orders** and demand the same precise public diagnostic across direct-memory, JSON-text and bounded stdin. Do not return arbitrary nested reviewer internals, echo caller paths, mutate evidence or grant protected annual execution. A clean control remains source-consistent only.
+
+These tests verify deterministic offline validation, not provider-authenticated GitHub objects, independent original protected OS, or protected annual dispatch authorization. Require own exact-head Phase 3/full historical-general CI and qualified independent review. Tests/docs only; no production/parser/resource/workflow/security-control changes, protected original/archive/artifact access, annual execution/retry, merging, deployment or trading. DEC-650/#820 and DEC-651/#821/#779 remain **BLOCKED**.
