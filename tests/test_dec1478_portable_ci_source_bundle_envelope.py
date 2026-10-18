@@ -4940,3 +4940,111 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         altered = dict(reversed(list(altered.items())))
         self._assert_inmemory_and_json_bundle_parity(altered, ())
 
+    def _refingerprint_portable_synthetic_ci_log(self, run_id):
+        import hashlib
+        raw = self.envelope["raw_ci_runner_logs"][run_id].encode("utf-8")
+        receipt = self.envelope["raw_ci_log_receipts"][run_id]
+        receipt["byte_count"] = len(raw)
+        receipt["text_sha256"] = hashlib.sha256(raw).hexdigest()
+
+    def _assert_refingerprinted_portable_log_rejected(self, expected=None):
+        direct = self.verdict()
+        parsed = review_bundle_json_text(json.dumps(self.envelope))
+        self.assertEqual(direct, parsed)
+        self.assertFalse(direct["source_consistency"])
+        self.assertTrue(direct["diagnostics"])
+        if expected is not None:
+            self.assertIn(expected, direct["diagnostics"])
+        self.assertFalse(direct["independent_original_os_proof"])
+        self.assertFalse(direct["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(direct["can_authorize_annual_run"])
+
+    def test_portable_refingerprint_wrong_historical_checkout_still_rejected(self):
+        text = self.envelope["raw_ci_runner_logs"]["8001"]
+        self.envelope["raw_ci_runner_logs"]["8001"] = (
+            text.replace("f"*40, "e"*40)
+                .replace("fffffff Merge ", "eeeeeee Merge "))
+        self._refingerprint_portable_synthetic_ci_log("8001")
+        self._assert_refingerprinted_portable_log_rejected(
+            "RAW_CI_RUNNER_LOG_METADATA_MISMATCH")
+
+    def test_portable_refingerprint_wrong_phase3_pr_ref_still_rejected(self):
+        text = self.envelope["raw_ci_runner_logs"]["8000"]
+        self.envelope["raw_ci_runner_logs"]["8000"] = text.replace(
+            "/1649/merge", "/9999/merge")
+        self._refingerprint_portable_synthetic_ci_log("8000")
+        self._assert_refingerprinted_portable_log_rejected(
+            "RUNNER_LOG_PR_REF_MISMATCH")
+
+    def test_portable_refingerprint_changed_phase3_index_still_rejected(self):
+        text = self.envelope["raw_ci_runner_logs"]["8000"]
+        self.assertIn('"trade_count":1', text)
+        self.envelope["raw_ci_runner_logs"]["8000"] = text.replace(
+            '"trade_count":1', '"trade_count":99', 1)
+        self._refingerprint_portable_synthetic_ci_log("8000")
+        self._assert_refingerprinted_portable_log_rejected(
+            "PHASE3_RAW_INDEX_VS_SUPPLIED_EVIDENCE_MISMATCH")
+
+    def test_portable_refingerprint_changed_upload_id_still_rejected(self):
+        text = self.envelope["raw_ci_runner_logs"]["8000"]
+        self.envelope["raw_ci_runner_logs"]["8000"] = text.replace(
+            "7777", "8888")
+        self._refingerprint_portable_synthetic_ci_log("8000")
+        self._assert_refingerprinted_portable_log_rejected(
+            "PHASE3_RAW_UPLOAD_VS_SUPPLIED_EVIDENCE_MISMATCH")
+
+    def test_portable_refingerprint_receipt_cannot_change_job_identity(self):
+        self._refingerprint_portable_synthetic_ci_log("8001")
+        self.envelope["raw_ci_log_receipts"]["8001"]["job_id"] = (
+            self.envelope["raw_ci_log_receipts"]["8000"]["job_id"])
+        self._assert_refingerprinted_portable_log_rejected(
+            "tests_RECEIPT_JOB_MISMATCH")
+
+    def test_portable_refingerprint_private_raw_log_never_echoes(self):
+        text = self.envelope["raw_ci_runner_logs"]["8001"]
+        self.envelope["raw_ci_runner_logs"]["8001"] = (
+            text + "\nprivate-synthetic-canary")
+        self._refingerprint_portable_synthetic_ci_log("8001")
+        result = self.verdict()
+        self.assertFalse(result["source_consistency"])
+        self.assertTrue(result["diagnostics"])
+        self.assertNotIn("private-synthetic-canary", repr(result))
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_refingerprint_swapped_runner_logs_fail_closed(self):
+        logs = self.envelope["raw_ci_runner_logs"]
+        logs["8000"], logs["8001"] = logs["8001"], logs["8000"]
+        for key in ("8000", "8001"):
+            self._refingerprint_portable_synthetic_ci_log(key)
+        self._assert_refingerprinted_portable_log_rejected()
+
+    def test_portable_refingerprint_stdin_result_never_echoes_canary(self):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.envelope["raw_ci_runner_logs"]["8001"] += (
+            "\nprivate-stdin-canary")
+        self._refingerprint_portable_synthetic_ci_log("8001")
+        out = io.StringIO()
+        status = cli.run_stdin_review(
+            io.StringIO(json.dumps(self.envelope)), out)
+        record = json.loads(out.getvalue())
+        self.assertEqual(status, 2)
+        self.assertTrue(record["diagnostics"])
+        self.assertNotIn("private-stdin-canary", out.getvalue())
+        self.assertFalse(record["independent_original_os_proof"])
+        self.assertFalse(record["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(record["can_authorize_annual_run"])
+
+    def test_portable_unchanged_receipt_refresh_only_proves_source_consistency(self):
+        for run_id in ("8000", "8001"):
+            before = dict(self.envelope["raw_ci_log_receipts"][run_id])
+            self._refingerprint_portable_synthetic_ci_log(run_id)
+            self.assertEqual(self.envelope["raw_ci_log_receipts"][run_id],
+                             before)
+        result = review_bundle_json_text(json.dumps(self.envelope))
+        self.assertEqual(result["diagnostics"], ())
+        self.assertTrue(result["source_consistency"])
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+

@@ -1,0 +1,7 @@
+# DEC-1561 — Refingerprinted CI logs through portable bundle and stdin boundaries
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent one-commit tests/docs child of #1807 at `d6d3e24003f89af58b6f3944489eebbff235b0b3`, with nine synthetic regression methods and two assertion helpers (**2,810 proposed source-defined tests**).
+
+DEC-1560 showed that caller-regenerated SHA-256/byte-count log receipts cannot authenticate modified source evidence in the composite offline reviewer. Exercise the same guarantee after the portable Base64/JSON envelope decodes run-ID-keyed text maps: a rewritten historical checkout, Phase 3 PR ref, scenario/index content, artifact ID, receipt job ID, swapped runner logs, and private log trailers remain rejected even with self-consistent raw-log digests. Verify parity of direct-memory versus JSON-text verdicts and stdout no-echo through the bounded stdin CLI. An unchanged synthetic receipt refresh only establishes source consistency, with OS original and exclusive protected dispatch gates still false.
+
+Own exact-head Phase 3 and historical/general CI and independent qualified review required. No remote provenance, protected originals/archives/artifacts, workflow/security-control edits, annual dispatch/retry, merge, deployment or trading. DEC-650/#820 independently witnessed protected-original OS no-write and DEC-651/#821/#779 immutable exclusive protected 2023 run385/attempt1 admission remain **BLOCKED**.
