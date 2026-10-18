@@ -8146,3 +8146,92 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_tree_map_order_original_clean_source_only(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+    def test_portable_tree_root_snapshot_key_uppercase_not_same_sha(self):
+        trees = self.envelope["full_tree_snapshots"]
+        old = self.envelope["commit"]["tree"]["sha"]
+        self.assertNotEqual(old.upper(), old)
+        trees[old.upper()] = trees.pop(old)
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_TREE_OBJECT_UNREVIEWED")
+
+    def test_portable_tree_root_snapshot_key_fullwidth_not_same_sha(self):
+        trees = self.envelope["full_tree_snapshots"]
+        old = self.envelope["commit"]["tree"]["sha"]
+        trees["\uff14" + old[1:]] = trees.pop(old)
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_TREE_OBJECT_UNREVIEWED")
+
+    def test_portable_tree_root_snapshot_key_zero_width_not_same_sha(self):
+        trees = self.envelope["full_tree_snapshots"]
+        old = self.envelope["commit"]["tree"]["sha"]
+        trees[old[:8] + "\u200b" + old[8:]] = trees.pop(old)
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_TREE_OBJECT_UNREVIEWED")
+
+    def test_portable_tree_tests_snapshot_key_uppercase_not_same_sha(self):
+        trees, _, old = self._portable_snapshot_parent_child("tests")
+        self.assertNotEqual(old.upper(), old)
+        trees[old.upper()] = trees.pop(old)
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_TREE_OBJECT_UNREVIEWED")
+
+    def test_portable_tree_docs_snapshot_key_trailing_space_not_same_sha(self):
+        trees, _, old = self._portable_snapshot_parent_child("docs")
+        trees[old + " "] = trees.pop(old)
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_TREE_OBJECT_UNREVIEWED")
+
+    def test_portable_tree_root_snapshot_self_sha_uppercase_refused(self):
+        trees = self.envelope["full_tree_snapshots"]
+        root = trees[self.envelope["commit"]["tree"]["sha"]]
+        root["sha"] = root["sha"].upper()
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_TREE_OBJECT_UNREVIEWED")
+
+    def test_portable_tree_tests_snapshot_self_sha_newline_refused(self):
+        trees, _, old = self._portable_snapshot_parent_child("tests")
+        trees[old]["sha"] += "\n"
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_TREE_OBJECT_UNREVIEWED")
+
+    def test_portable_tree_docs_snapshot_self_sha_unicode_refused(self):
+        trees, _, old = self._portable_snapshot_parent_child("docs")
+        trees[old]["sha"] = "\uff46" + old[1:]
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_TREE_OBJECT_UNREVIEWED")
+
+    def test_portable_tree_commit_root_sha_uppercase_refused(self):
+        tree = self.envelope["commit"]["tree"]
+        tree["sha"] = tree["sha"].upper()
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_ROOT_SHA_UNREVIEWED")
+
+    def test_portable_tree_commit_root_sha_hex_prefix_refused(self):
+        self.envelope["commit"]["tree"]["sha"] = (
+            "0x" + self.envelope["commit"]["tree"]["sha"])
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_ROOT_SHA_UNREVIEWED")
+
+    def test_portable_tree_tests_parent_pointer_uppercase_refused(self):
+        trees = self.envelope["full_tree_snapshots"]
+        root = trees[self.envelope["commit"]["tree"]["sha"]]
+        parent = next(e for e in root["tree"] if e["path"] == "tests")
+        parent["sha"] = parent["sha"].upper()
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_ENTRY_SHA_UNREVIEWED")
+
+    def test_portable_tree_docs_parent_pointer_nonhex_refused(self):
+        trees = self.envelope["full_tree_snapshots"]
+        root = trees[self.envelope["commit"]["tree"]["sha"]]
+        next(e for e in root["tree"] if e["path"] == "docs")["sha"] = "g"*40
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_ENTRY_SHA_UNREVIEWED")
+
+    def test_portable_tree_leaf_sha_fullwidth_digit_refused(self):
+        self._portable_snapshot_leaf("docs")["sha"] = "\uff11"*40
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_ENTRY_SHA_UNREVIEWED")
+
+    def test_portable_tree_sha_lexical_clean_source_only(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
