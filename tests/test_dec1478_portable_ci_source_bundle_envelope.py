@@ -10934,15 +10934,15 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self._assert_portable_run_map_key_invalid()
 
     def test_portable_run_key_raw_log_hidden_zwsp_refused(self):
-        self.envelope["raw_ci_runner_logs"]["1​"] = {}
+        self.envelope["raw_ci_runner_logs"]["1​"] = "synthetic log text"
         self._assert_portable_run_map_key_invalid()
 
     def test_portable_run_key_raw_log_hex_refused(self):
-        self.envelope["raw_ci_runner_logs"]["0x8000"] = {}
+        self.envelope["raw_ci_runner_logs"]["0x8000"] = "synthetic log text"
         self._assert_portable_run_map_key_invalid()
 
     def test_portable_run_key_raw_log_long_refused(self):
-        self.envelope["raw_ci_runner_logs"]["12345678901234567890"] = {}
+        self.envelope["raw_ci_runner_logs"]["12345678901234567890"] = "synthetic log text"
         self._assert_portable_run_map_key_invalid()
 
     def test_portable_run_key_receipt_over_int64_refused(self):
@@ -11405,5 +11405,59 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self._assert_json_lexical_format_only(encoded, False)
 
     def test_portable_json_spacing_clean_source_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
+    def _assert_run_log_key_vs_value_priority(self, key, payload, expected):
+        import copy
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.envelope["raw_ci_runner_logs"][key] = payload
+        before = copy.deepcopy(self.envelope)
+        raw = json.dumps(self.envelope, ensure_ascii=True)
+        direct = self.verdict()
+        parsed = review_bundle_json_text(raw)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(raw), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(direct, parsed)
+        self.assertEqual(self.envelope, before)
+        self.assertEqual(status, 2)
+        self.assertEqual(direct["diagnostics"], (expected,))
+        self.assertFalse(direct["source_consistency"])
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"], [expected])
+        self.assertNotIn("synthetic log", out.getvalue())
+        self.assertNotIn("tests/sample.py", out.getvalue())
+        for result in (direct, emitted):
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_run_log_priority_invalid_id_with_text(self):
+        self._assert_run_log_key_vs_value_priority(
+            "0x8000", "synthetic log text", "BUNDLE_RUN_KEY_UNREVIEWED")
+
+    def test_portable_run_log_priority_invalid_id_with_empty_text(self):
+        self._assert_run_log_key_vs_value_priority(
+            "1\u200b", "", "BUNDLE_RUN_KEY_UNREVIEWED")
+
+    def test_portable_run_log_priority_invalid_id_with_dictionary(self):
+        self._assert_run_log_key_vs_value_priority(
+            "0x8000", {}, "BUNDLE_RAW_LOG_TEXT_UNREVIEWED")
+
+    def test_portable_run_log_priority_invalid_id_with_list(self):
+        self._assert_run_log_key_vs_value_priority(
+            "1\u200b", [], "BUNDLE_RAW_LOG_TEXT_UNREVIEWED")
+
+    def test_portable_run_log_priority_invalid_id_with_null(self):
+        self._assert_run_log_key_vs_value_priority(
+            "12345678901234567890", None,
+            "BUNDLE_RAW_LOG_TEXT_UNREVIEWED")
+
+    def test_portable_run_log_priority_invalid_id_with_boolean(self):
+        self._assert_run_log_key_vs_value_priority(
+            "0x8000", False, "BUNDLE_RAW_LOG_TEXT_UNREVIEWED")
+
+    def test_portable_run_log_priority_clean_source_only(self):
         self._assert_portable_tree_object_order_consistency_only()
 
