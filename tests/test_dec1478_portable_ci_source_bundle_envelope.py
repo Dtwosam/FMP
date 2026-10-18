@@ -8992,3 +8992,76 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_verdict_shape_clean_source_only_control(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+    def test_portable_root_binding_commit_sha_all_zero_refused(self):
+        self.envelope["commit"]["tree"]["sha"] = "0"*40
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_TREE_OBJECT_UNREVIEWED")
+
+    def test_portable_root_binding_commit_sha_all_f_refused(self):
+        self.envelope["commit"]["tree"]["sha"] = "f"*40
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_TREE_OBJECT_UNREVIEWED")
+
+    def test_portable_root_binding_commit_sha_short_refused(self):
+        self.envelope["commit"]["tree"]["sha"] = "f"*39
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_ROOT_SHA_UNREVIEWED")
+
+    def test_portable_root_binding_commit_sha_long_refused(self):
+        self.envelope["commit"]["tree"]["sha"] = "f"*41
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_ROOT_SHA_UNREVIEWED")
+
+    def test_portable_root_binding_commit_sha_null_refused(self):
+        self.envelope["commit"]["tree"]["sha"] = None
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_ROOT_SHA_UNREVIEWED")
+
+    def test_portable_root_binding_commit_sha_boolean_refused(self):
+        self.envelope["commit"]["tree"]["sha"] = False
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_ROOT_SHA_UNREVIEWED")
+
+    def test_portable_root_binding_commit_missing_tree_refused(self):
+        self.envelope["commit"].pop("tree")
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_ROOT_SHA_UNREVIEWED")
+
+    def test_portable_root_binding_commit_tree_list_refused(self):
+        self.envelope["commit"]["tree"] = []
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_ROOT_SHA_UNREVIEWED")
+
+    def test_portable_root_binding_commit_tree_empty_dict_refused(self):
+        self.envelope["commit"]["tree"] = {}
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_ROOT_SHA_UNREVIEWED")
+
+    def test_portable_root_binding_flat_tree_wrong_root_refused(self):
+        self.envelope["tree"]["sha"] = "f"*40
+        self._assert_full_tree_snapshot_mutation_refused(
+            "COMMIT_TREE_ROOT_UNREVIEWED")
+
+    def test_portable_root_binding_flat_tree_root_null_refused(self):
+        self.envelope["tree"]["sha"] = None
+        self._assert_full_tree_snapshot_mutation_refused(
+            "COMMIT_TREE_ROOT_UNREVIEWED")
+
+    def test_portable_root_binding_flat_tree_truncated_true_refused(self):
+        self.envelope["tree"]["truncated"] = True
+        self._assert_full_tree_snapshot_mutation_refused(
+            "COMMIT_TREE_ROOT_UNREVIEWED")
+
+    def test_portable_root_binding_flat_tree_truncated_numeric_zero_refused(self):
+        self.envelope["tree"]["truncated"] = 0
+        self._assert_full_tree_snapshot_mutation_refused(
+            "COMMIT_TREE_ROOT_UNREVIEWED")
+
+    def test_portable_root_binding_flat_tree_missing_sha_refused(self):
+        self.envelope["tree"].pop("sha")
+        self._assert_full_tree_snapshot_mutation_refused(
+            "COMMIT_TREE_ROOT_UNREVIEWED")
+
+    def test_portable_root_binding_clean_control_source_only(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
