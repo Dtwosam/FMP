@@ -5108,3 +5108,78 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.envelope["can_authorize_annual_run"] = True
         self._assert_portable_order_invariance_with_json()
 
+    def _assert_untrusted_nested_authority_claim_not_promoted(self):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        raw = json.dumps(self.envelope, sort_keys=True)
+        direct = self.verdict()
+        parsed = review_bundle_json_text(raw)
+        self.assertEqual(direct, parsed)
+        output = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(raw), output)
+        record = json.loads(output.getvalue())
+        self.assertEqual(status, 0 if parsed["source_consistency"] else 2)
+        self.assertEqual(set(record), VERDICT_FIELDS)
+        self.assertEqual(record["diagnostics"], list(parsed["diagnostics"]))
+        self.assertEqual(record["source_consistency"],
+                         parsed["source_consistency"])
+        self.assertNotIn("private-authority-canary", output.getvalue())
+        self.assertFalse(parsed["independent_original_os_proof"])
+        self.assertFalse(parsed["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(parsed["can_authorize_annual_run"])
+        self.assertFalse(record["independent_original_os_proof"])
+        self.assertFalse(record["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(record["can_authorize_annual_run"])
+
+    def test_untrusted_authority_top_level_claim_not_promoted(self):
+        self.envelope["can_authorize_annual_run"] = True
+        self._assert_untrusted_nested_authority_claim_not_promoted()
+
+    def test_untrusted_authority_pr_metadata_claim_not_promoted(self):
+        self.envelope["pr"]["can_authorize_annual_run"] = True
+        self._assert_untrusted_nested_authority_claim_not_promoted()
+
+    def test_untrusted_authority_run_metadata_claim_not_promoted(self):
+        self.envelope["runs"][0]["can_authorize_annual_run"] = True
+        self._assert_untrusted_nested_authority_claim_not_promoted()
+
+    def test_untrusted_authority_ci_job_claim_not_promoted(self):
+        self.envelope["jobs_by_run"]["8000"][0]["can_authorize_annual_run"] = True
+        self._assert_untrusted_nested_authority_claim_not_promoted()
+
+    def test_untrusted_authority_compare_claim_not_promoted(self):
+        self.envelope["compare"]["can_authorize_annual_run"] = True
+        self._assert_untrusted_nested_authority_claim_not_promoted()
+
+    def test_untrusted_authority_commit_claim_not_promoted(self):
+        self.envelope["commit"]["can_authorize_annual_run"] = True
+        self._assert_untrusted_nested_authority_claim_not_promoted()
+
+    def test_untrusted_authority_git_tree_claim_not_promoted(self):
+        self.envelope["tree"]["can_authorize_annual_run"] = True
+        self._assert_untrusted_nested_authority_claim_not_promoted()
+
+    def test_untrusted_authority_merge_checkout_claim_not_promoted(self):
+        self.envelope["merge_checkout_snapshot"]["can_authorize_annual_run"] = True
+        self._assert_untrusted_nested_authority_claim_not_promoted()
+
+    def test_untrusted_authority_phase3_index_claim_not_promoted(self):
+        self.envelope["phase3_evidence_snapshot"]["index"][
+            "can_authorize_annual_run"] = True
+        self._assert_untrusted_nested_authority_claim_not_promoted()
+
+    def test_untrusted_authority_log_receipt_claim_not_promoted(self):
+        self.envelope["raw_ci_log_receipts"]["8001"][
+            "can_authorize_annual_run"] = True
+        self._assert_untrusted_nested_authority_claim_not_promoted()
+
+    def test_untrusted_authority_private_claim_cannot_echo_from_stdin(self):
+        self.envelope["pr"]["can_authorize_annual_run"] = True
+        self.envelope["pr"]["private_note"] = "private-authority-canary"
+        self._assert_untrusted_nested_authority_claim_not_promoted()
+
+    def test_untrusted_authority_clean_source_only_control(self):
+        self._assert_untrusted_nested_authority_claim_not_promoted()
+        self.assertEqual(self.verdict()["diagnostics"], ())
+        self.assertTrue(self.verdict()["source_consistency"])
+
