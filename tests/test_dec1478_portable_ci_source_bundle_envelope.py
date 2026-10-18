@@ -11981,3 +11981,88 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertEqual(set(self.envelope), REQUIRED)
         self._assert_portable_tree_object_order_consistency_only()
 
+    def _assert_extra_top_level_key_refused(self, key, value,
+                                            json_compatible=True):
+        import copy
+        import io
+        self.envelope[key] = value
+        original = copy.deepcopy(self.envelope)
+        direct = self.verdict()
+        self.assertEqual(self.envelope, original)
+        self.assertEqual(direct["diagnostics"],
+                         ("BUNDLE_KEY_INVENTORY_UNREVIEWED",))
+        self.assertFalse(direct["source_consistency"])
+        self.assertFalse(direct["independent_original_os_proof"])
+        self.assertFalse(direct["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(direct["can_authorize_annual_run"])
+        if not json_compatible:
+            return
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        raw = json.dumps(self.envelope, ensure_ascii=True)
+        parsed = review_bundle_json_text(raw)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(raw), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(direct, parsed)
+        self.assertEqual(status, 2)
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"],
+                         ["BUNDLE_KEY_INVENTORY_UNREVIEWED"])
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        for result in (parsed, emitted):
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_extra_key_annual_authority_refused(self):
+        self._assert_extra_top_level_key_refused("can_authorize_annual_run", True)
+
+    def test_portable_extra_key_protected_original_refused(self):
+        self._assert_extra_top_level_key_refused("independent_original_os_proof", True)
+
+    def test_portable_extra_key_server_gate_refused(self):
+        self._assert_extra_top_level_key_refused("exclusive_server_dispatch_gate_proven", True)
+
+    def test_portable_extra_key_source_consistency_refused(self):
+        self._assert_extra_top_level_key_refused("source_consistency", True)
+
+    def test_portable_extra_key_diagnostics_refused(self):
+        self._assert_extra_top_level_key_refused("diagnostics", [])
+
+    def test_portable_extra_key_signature_refused(self):
+        self._assert_extra_top_level_key_refused("synthetic_signature", "signed")
+
+    def test_portable_extra_key_approval_refused(self):
+        self._assert_extra_top_level_key_refused("annual_approved", True)
+
+    def test_portable_extra_key_unexpected_run_refused(self):
+        self._assert_extra_top_level_key_refused("raw_ci_runner_logs_backup", {})
+
+    def test_portable_extra_key_new_schema_refused(self):
+        self._assert_extra_top_level_key_refused("schema_v2", "private")
+
+    def test_portable_extra_key_source_override_refused(self):
+        self._assert_extra_top_level_key_refused("changed_source_b64_override", {})
+
+    def test_portable_extra_key_unicode_name_refused(self):
+        self._assert_extra_top_level_key_refused("ｃan_authorize_annual_run", True)
+
+    def test_portable_extra_key_nonstring_integer_refused(self):
+        self._assert_extra_top_level_key_refused(9, True, False)
+
+    def test_portable_extra_key_nonstring_boolean_refused(self):
+        self._assert_extra_top_level_key_refused(True, True, False)
+
+    def test_portable_extra_key_nonstring_none_refused(self):
+        self._assert_extra_top_level_key_refused(None, True, False)
+
+    def test_portable_extra_key_nonstring_bytes_refused(self):
+        self._assert_extra_top_level_key_refused(b"annual_gate", True, False)
+
+    def test_portable_extra_key_nonstring_tuple_refused(self):
+        self._assert_extra_top_level_key_refused(("annual", "gate"), True, False)
+
+    def test_portable_extra_key_clean_source_control(self):
+        self.assertEqual(set(self.envelope), REQUIRED)
+        self._assert_portable_tree_object_order_consistency_only()
+
