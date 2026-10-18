@@ -1,0 +1,7 @@
+# DEC-1635 — Canonical Base64 is necessary but does not prove unchanged Git source bytes
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent one-commit tests/docs child of #1881 at `2dfb06570c00776815488ab33ca655795cd3d1a7`. Fifteen regression methods (**3,700 proposed source-defined tests**).
+
+Fourteen synthetic changed-source mutants are freshly encoded into **perfectly valid, canonical Base64**, keeping their source path labels and caller-supplied full Git tree and flat node SHA evidence untouched. Mutations include same-length substitutions, case changes, CR vs LF, removed/added line terminators, embedded NUL bytes, a UTF-8 BOM and an altered Markdown marker. A valid Base64 decoder may return the changed bytes, but the independent Git blob/tree evidence can no longer match. Assert direct-memory, JSON and stdin consistently reject source consistency, do not mutate caller evidence, do not echo source paths and never grant protected original OS/exclusive gate/annual permission. An untouched fixture remains source-consistent only.
+
+These assertions do not authenticate remote GitHub objects, actual protected original operating systems or protected annual dispatch. Own exact-head Phase 3/general CI and qualified independent review required. Tests/docs-only; no production/parser/resources/workflow/security/admission changes, protected original/archive/artifact access, annual execution/retry, merge/deployment or trading. DEC-650/#820 and DEC-651/#821/#779 remain **BLOCKED**.
