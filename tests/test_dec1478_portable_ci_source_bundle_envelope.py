@@ -5836,3 +5836,97 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(result["can_authorize_annual_run"])
 
+    def _synthetic_bulk_source_encoding(self, size=800001):
+        return base64.b64encode(b"x"*size).decode("ascii")
+
+    def _assert_source_aggregate_refusal_before_nested_review(self):
+        from unittest.mock import patch
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          side_effect=AssertionError("source review must not run")) as review:
+            result = self.verdict()
+        review.assert_not_called()
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_TOTAL_SOURCE_OVERSIZE",))
+        self.assertFalse(result["source_consistency"])
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_direct_memory_changed_source_aggregate_over_ceiling(self):
+        encoded = self._synthetic_bulk_source_encoding()
+        self.envelope["changed_bytes_b64"] = {
+            f"tests/bulk-{i}.py": encoded for i in range(5)}
+        self.envelope["ci_workflow_bytes_b64"] = {}
+        self._assert_source_aggregate_refusal_before_nested_review()
+
+    def test_direct_memory_cross_category_source_aggregate_over_ceiling(self):
+        encoded = self._synthetic_bulk_source_encoding()
+        self.envelope["changed_bytes_b64"] = {
+            f"tests/bulk-{i}.py": encoded for i in range(3)}
+        self.envelope["ci_workflow_bytes_b64"] = {
+            f".github/workflows/bulk-{i}.yml": encoded for i in range(2)}
+        self._assert_source_aggregate_refusal_before_nested_review()
+
+    def test_direct_memory_cross_category_order_does_not_change_budget(self):
+        encoded = self._synthetic_bulk_source_encoding()
+        changed = [(f"tests/bulk-{i}.py", encoded) for i in range(3)]
+        workflows = [(f".github/workflows/bulk-{i}.yml", encoded)
+                     for i in range(2)]
+        self.envelope["changed_bytes_b64"] = dict(reversed(changed))
+        self.envelope["ci_workflow_bytes_b64"] = dict(reversed(workflows))
+        self._assert_source_aggregate_refusal_before_nested_review()
+
+    def test_direct_memory_exact_four_million_bytes_reaches_nested_review(self):
+        from unittest.mock import patch
+        encoded = self._synthetic_bulk_source_encoding(1_000_000)
+        self.envelope["changed_bytes_b64"] = {
+            f"tests/exact-{i}.py": encoded for i in range(4)}
+        self.envelope["ci_workflow_bytes_b64"] = {}
+        allowed_source_only = {
+            "source_consistency": True, "diagnostics": (),
+            "independent_original_os_proof": False,
+            "exclusive_server_dispatch_gate_proven": False,
+            "can_authorize_annual_run": False,
+        }
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          return_value=allowed_source_only) as review:
+            result = self.verdict()
+        review.assert_called_once()
+        self.assertEqual(result, allowed_source_only)
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_per_source_raw_byte_limit_precedes_aggregate_budget(self):
+        encoded = self._synthetic_bulk_source_encoding(1_000_001)
+        self.envelope["changed_bytes_b64"] = {
+            "tests/over-single.py": encoded}
+        self.envelope["ci_workflow_bytes_b64"] = {}
+        result = self.verdict()
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_SOURCE_BLOB_OVERSIZE",))
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_json_document_budget_precedes_large_aggregate_source_budget(self):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        encoded = self._synthetic_bulk_source_encoding()
+        self.envelope["changed_bytes_b64"] = {
+            f"tests/bulk-{i}.py": encoded for i in range(5)}
+        self.envelope["ci_workflow_bytes_b64"] = {}
+        self.assertEqual(self.verdict()["diagnostics"],
+                         ("BUNDLE_TOTAL_SOURCE_OVERSIZE",))
+        raw = json.dumps(self.envelope)
+        self.assertGreater(len(raw), MAX_TEXT_CHARS)
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_JSON_TEXT_UNREVIEWED",))
+        out = io.StringIO()
+        exit_code = cli.run_stdin_review(io.StringIO(raw), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(exit_code, 2)
+        self.assertEqual(emitted["diagnostics"],
+                         ["BUNDLE_JSON_TEXT_UNREVIEWED"])
+        self.assertFalse(emitted["independent_original_os_proof"])
+        self.assertFalse(emitted["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(emitted["can_authorize_annual_run"])
+
