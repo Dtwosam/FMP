@@ -1,0 +1,7 @@
+# DEC-1595 — Even rehashed Git tree snapshots cannot rewrite changed-source identity
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent one-commit tests/docs child of #1841 at `ee6ab191d6ed0fb8e0e36cef71f830c5857226e9`. Thirteen synthetic regression methods (**3,127 proposed source-defined tests**).
+
+Prior drafts reject stale Git tree hashes and invalid modes. Here the adversary recomputes **valid canonical Git tree object hashes** bottom-up after changing the separately supplied full tree. Source bytes stay exactly `tests/sample.py = b"pass\\n"` and `docs/sample.md = b"# Source-only\\n"`, and the flat Git `nodes` remain untouched. Mutations include using the other file's valid blob SHA, forged but well-formed blob SHA, executable/symlink/gitlink leaves, Unicode/case-renamed leaves, retyped parent, exchanged subtree pointers, and a case-renamed root parent. Each mutation must still fail `TREE_CHAIN_*` checks identically across direct-memory, JSON-text, and bounded stdin. A clean synthetic source remains nonauthorizing.
+
+Source-only and caller-controlled consistency tests are **not** independent GitHub repository authentication or protected original OS/run evidence. Own exact-head Phase 3 and full historical/general CI and qualified independent review required. No production/parser/resource-budget/workflow/security-control edits, protected original/archive/artifact access, annual dispatch/retry, merging, deployment or trading. DEC-650/#820 and DEC-651/#821/#779 remain **BLOCKED**.

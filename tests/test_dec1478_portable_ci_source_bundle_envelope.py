@@ -7637,3 +7637,127 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self._assert_full_tree_snapshot_mutation_refused(
             "TREE_CHAIN_ENTRY_SHA_UNREVIEWED")
 
+    def _rehash_portable_snapshot_root(self):
+        trees = self.envelope["full_tree_snapshots"]
+        old_root_sha = self.envelope["commit"]["tree"]["sha"]
+        root = trees.pop(old_root_sha)
+        new_root_sha = composite.tree_chain.reviewed_git_tree_sha(
+            root["tree"])
+        self.assertIsNotNone(new_root_sha)
+        self.assertNotEqual(new_root_sha, old_root_sha)
+        root["sha"] = new_root_sha
+        trees[new_root_sha] = root
+        self.envelope["commit"]["tree"]["sha"] = new_root_sha
+        self.envelope["tree"]["sha"] = new_root_sha
+
+    def _rehash_portable_snapshot_child_and_root(self, directory):
+        trees, root_sha, child_sha = self._portable_snapshot_parent_child(
+            directory)
+        child = trees.pop(child_sha)
+        new_child_sha = composite.tree_chain.reviewed_git_tree_sha(
+            child["tree"])
+        self.assertIsNotNone(new_child_sha)
+        self.assertNotEqual(new_child_sha, child_sha)
+        child["sha"] = new_child_sha
+        trees[new_child_sha] = child
+        root = trees[root_sha]
+        parent = next(e for e in root["tree"] if e["path"] == directory)
+        parent["sha"] = new_child_sha
+        self._rehash_portable_snapshot_root()
+
+    def test_portable_rehashed_tests_leaf_uses_docs_blob_sha_refused(self):
+        self._portable_snapshot_leaf("tests")["sha"] = (
+            self.envelope["nodes"]["docs/sample.md"]["sha"])
+        self._rehash_portable_snapshot_child_and_root("tests")
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_LEAF_BYTES_SHA_MISMATCH")
+
+    def test_portable_rehashed_docs_leaf_uses_tests_blob_sha_refused(self):
+        self._portable_snapshot_leaf("docs")["sha"] = (
+            self.envelope["nodes"]["tests/sample.py"]["sha"])
+        self._rehash_portable_snapshot_child_and_root("docs")
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_LEAF_BYTES_SHA_MISMATCH")
+
+    def test_portable_rehashed_tests_leaf_forged_blob_sha_refused(self):
+        self._portable_snapshot_leaf("tests")["sha"] = "a"*40
+        self._rehash_portable_snapshot_child_and_root("tests")
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_LEAF_BYTES_SHA_MISMATCH")
+
+    def test_portable_rehashed_docs_leaf_forged_blob_sha_refused(self):
+        self._portable_snapshot_leaf("docs")["sha"] = "b"*40
+        self._rehash_portable_snapshot_child_and_root("docs")
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_LEAF_BYTES_SHA_MISMATCH")
+
+    def test_portable_rehashed_docs_executable_leaf_refused(self):
+        self._portable_snapshot_leaf("docs")["mode"] = "100755"
+        self._rehash_portable_snapshot_child_and_root("docs")
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_LEAF_NOT_REGULAR_BLOB")
+
+    def test_portable_rehashed_tests_symlink_leaf_refused(self):
+        self._portable_snapshot_leaf("tests")["mode"] = "120000"
+        self._rehash_portable_snapshot_child_and_root("tests")
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_LEAF_NOT_REGULAR_BLOB")
+
+    def test_portable_rehashed_docs_gitlink_leaf_refused(self):
+        leaf = self._portable_snapshot_leaf("docs")
+        leaf["mode"], leaf["type"], leaf["sha"] = (
+            "160000", "commit", "a"*40)
+        self._rehash_portable_snapshot_child_and_root("docs")
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_LEAF_NOT_REGULAR_BLOB")
+
+    def test_portable_rehashed_tests_case_renamed_leaf_refused(self):
+        self._portable_snapshot_leaf("tests")["path"] = "Sample.py"
+        self._rehash_portable_snapshot_child_and_root("tests")
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_ENTRY_CARDINALITY_UNREVIEWED")
+
+    def test_portable_rehashed_docs_unicode_renamed_leaf_refused(self):
+        self._portable_snapshot_leaf("docs")["path"] = "sample\u2024md"
+        self._rehash_portable_snapshot_child_and_root("docs")
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_ENTRY_CARDINALITY_UNREVIEWED")
+
+    def test_portable_rehashed_docs_symlink_parent_refused(self):
+        trees = self.envelope["full_tree_snapshots"]
+        root = trees[self.envelope["commit"]["tree"]["sha"]]
+        parent = next(e for e in root["tree"] if e["path"] == "docs")
+        parent["mode"], parent["type"] = "120000", "blob"
+        self._rehash_portable_snapshot_root()
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_PARENT_NOT_REGULAR_TREE")
+
+    def test_portable_rehashed_root_swapped_child_pointers_refused(self):
+        trees = self.envelope["full_tree_snapshots"]
+        root = trees[self.envelope["commit"]["tree"]["sha"]]
+        parents = {e["path"]: e for e in root["tree"]}
+        parents["tests"]["sha"], parents["docs"]["sha"] = (
+            parents["docs"]["sha"], parents["tests"]["sha"])
+        self._rehash_portable_snapshot_root()
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_ENTRY_CARDINALITY_UNREVIEWED")
+
+    def test_portable_rehashed_root_case_renamed_docs_parent_refused(self):
+        trees = self.envelope["full_tree_snapshots"]
+        root = trees[self.envelope["commit"]["tree"]["sha"]]
+        next(e for e in root["tree"] if e["path"] == "docs")[
+            "path"] = "Docs"
+        self._rehash_portable_snapshot_root()
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_ENTRY_CARDINALITY_UNREVIEWED")
+
+    def test_portable_unmodified_rehashed_chain_control_source_only(self):
+        direct = self.verdict()
+        self.assertTrue(direct["source_consistency"])
+        self.assertEqual(direct["diagnostics"], ())
+        self.assertEqual(direct, review_bundle_json_text(
+            json.dumps(self.envelope, sort_keys=True)))
+        self.assertFalse(direct["independent_original_os_proof"])
+        self.assertFalse(direct["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(direct["can_authorize_annual_run"])
+
