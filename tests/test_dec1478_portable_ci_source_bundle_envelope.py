@@ -4289,3 +4289,91 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
                 self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
                 self.assertFalse(result["can_authorize_annual_run"])
 
+    def test_json_serialized_ascii_escape_corpus_matches_decoder(self):
+        samples = ('[,]{}:"\\', 'backslash \\ quote "', '\t\n\r', '',
+                   'comma,comma,comma', '[[[{{{}}}]]]')
+        for sample in samples:
+            with self.subTest(sample=repr(sample)):
+                raw = json.dumps([sample])
+                self.assertTrue(_json_lexical_array_budgets(raw))
+                self.assertTrue(_json_lexical_object_budgets(raw))
+                self.assertEqual(json.loads(raw), [sample])
+                self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                                 ("BUNDLE_SHAPE_UNREVIEWED",))
+
+    def test_json_unicode_serializations_share_lexical_verdict(self):
+        value = ["é", "🚀", "\u2028", "quotation \" and backslash \\"]
+        for ensure_ascii in (True, False):
+            with self.subTest(ensure_ascii=ensure_ascii):
+                raw = json.dumps(value, ensure_ascii=ensure_ascii)
+                self.assertTrue(_json_lexical_array_budgets(raw))
+                self.assertTrue(_json_lexical_object_budgets(raw))
+                self.assertEqual(json.loads(raw), value)
+                self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                                 ("BUNDLE_SHAPE_UNREVIEWED",))
+
+    def test_json_separator_and_indent_modes_keep_structural_counts(self):
+        value = [{"a": "[,:}]", "b": ['"\\', "two,three"]},
+                 {"c": {"d": "escaped: \\n and \\t"}}]
+        for opts in ({"separators": (",", ":")}, {"indent": 2},
+                     {"sort_keys": True}, {"ensure_ascii": False}):
+            with self.subTest(options=opts):
+                raw = json.dumps(value, **opts)
+                self.assertTrue(_json_lexical_array_budgets(raw))
+                self.assertTrue(_json_lexical_object_budgets(raw))
+                self.assertEqual(json.loads(raw), value)
+                self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                                 ("BUNDLE_SHAPE_UNREVIEWED",))
+
+    def test_json_scanners_ignore_even_and_odd_escaped_backslashes(self):
+        for count in range(9):
+            with self.subTest(count=count):
+                sample = "\\" * count + '"[,]{}'
+                raw = json.dumps({"sample": sample})
+                self.assertTrue(_json_lexical_array_budgets(raw))
+                self.assertTrue(_json_lexical_object_budgets(raw))
+                self.assertEqual(json.loads(raw)["sample"], sample)
+                self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                                 ("BUNDLE_KEY_INVENTORY_UNREVIEWED",))
+
+    def test_json_punctuation_dense_nested_strings_stay_in_budget(self):
+        value = [["[]{}:,\"\\"] * 3 for _ in range(1000)]
+        raw = json.dumps(value, separators=(",", ":"))
+        self.assertLess(len(raw.encode("utf-8")), MAX_TEXT_UTF8_BYTES)
+        self.assertTrue(_json_lexical_array_budgets(raw))
+        self.assertTrue(_json_lexical_object_budgets(raw))
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_SHAPE_UNREVIEWED",))
+
+    def test_json_scanners_do_not_accept_nonstandard_decoder_constants(self):
+        for raw in ('{"payload":NaN}', '{"payload":Infinity}',
+                    '{"payload":-Infinity}'):
+            with self.subTest(raw=raw):
+                self.assertTrue(_json_lexical_array_budgets(raw))
+                self.assertTrue(_json_lexical_object_budgets(raw))
+                self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                                 ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_json_trailing_escaped_quote_or_backslash_fails_closed(self):
+        for raw in ('{"payload":"unclosed', '{"payload":"unclosed\\',
+                    '{"payload":"closing\\"}'):
+            with self.subTest(raw=raw):
+                result = review_bundle_json_text(raw)
+                self.assertEqual(result["diagnostics"],
+                                 ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+                self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_json_serialized_source_fixture_only_proves_consistency(self):
+        for opts in ({"sort_keys": True}, {"separators": (",", ":")},
+                     {"indent": 2}):
+            with self.subTest(options=opts):
+                raw = json.dumps(self.envelope, **opts)
+                self.assertTrue(_json_lexical_array_budgets(raw))
+                self.assertTrue(_json_lexical_object_budgets(raw))
+                result = review_bundle_json_text(raw)
+                self.assertEqual(result["diagnostics"], ())
+                self.assertTrue(result["source_consistency"])
+                self.assertFalse(result["independent_original_os_proof"])
+                self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+                self.assertFalse(result["can_authorize_annual_run"])
+
