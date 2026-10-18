@@ -1,0 +1,7 @@
+# DEC-1563 — Rehashed CI raw-log stage and chronology invariants
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit tests/docs child of #1809 at `19ab7fb31ed10f7808b6ede13d62abad88c0eab0`. Ten synthetic unittest methods plus a test assertion helper (**2,828 proposed source-defined methods**).
+
+Recalculate caller-supplied raw CI log SHA-256 receipts after adversarial chronology/stage alterations. Reordered historical fetch/checkout, missing Phase 3 checkout HEAD, acceptance index timestamps or line order before checkout, missing/duplicated acceptance index, upload before artifact finalization, missing upload stage, and an extra historical Git mutation must all be refused by the *independent stage/identity review* while receipt digest checks now match. The unchanged synthetic timeline remains source-consistent only. Explicit assertions prevent a misleading test from passing merely because the original raw-log hash is stale. Protected original OS and exclusive immutable server admission flags always remain false.
+
+Own exact-head Phase 3 and full historical/general CI, plus independent qualified review, required. No changes to production, parser, resource bounds, workflows, security controls, protected originals or annual dispatch. DEC-650/#820 independent protected-original OS no-write and DEC-651/#821/#779 immutable exclusive protected 2023 run385/attempt1 admission remain BLOCKED. No execution/retry, protected archive/artifact access, merge, deployment or trading.
