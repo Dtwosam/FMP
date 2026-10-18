@@ -7266,3 +7266,81 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertFalse(direct["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(direct["can_authorize_annual_run"])
 
+    def _assert_changed_tree_node_mode_refused(self, code):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        direct = self.verdict()
+        raw = json.dumps(self.envelope)
+        parsed = review_bundle_json_text(raw)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(raw), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(direct, parsed)
+        self.assertEqual(status, 2)
+        self.assertFalse(direct["source_consistency"])
+        self.assertIn(code, direct["diagnostics"])
+        self.assertEqual(emitted["diagnostics"],
+                         list(direct["diagnostics"]))
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertNotIn("changed_bytes_b64", out.getvalue())
+        for result in (direct, emitted):
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_test_leaf_executable_mode_cannot_override_source(self):
+        self.envelope["nodes"]["tests/sample.py"]["mode"] = "100755"
+        self._assert_changed_tree_node_mode_refused(
+            "GIT_TREE_LEAF_MODE_DRIFT")
+
+    def test_portable_docs_leaf_executable_mode_cannot_override_source(self):
+        self.envelope["nodes"]["docs/sample.md"]["mode"] = "100755"
+        self._assert_changed_tree_node_mode_refused(
+            "GIT_TREE_LEAF_MODE_DRIFT")
+
+    def test_portable_test_leaf_symlink_mode_cannot_override_source(self):
+        self.envelope["nodes"]["tests/sample.py"]["mode"] = "120000"
+        self._assert_changed_tree_node_mode_refused(
+            "GIT_TREE_LEAF_MODE_DRIFT")
+
+    def test_portable_docs_leaf_symlink_mode_cannot_override_source(self):
+        self.envelope["nodes"]["docs/sample.md"]["mode"] = "120000"
+        self._assert_changed_tree_node_mode_refused(
+            "GIT_TREE_LEAF_MODE_DRIFT")
+
+    def test_portable_test_leaf_gitlink_mode_cannot_override_source(self):
+        self.envelope["nodes"]["tests/sample.py"] = {
+            "mode": "160000", "type": "commit", "sha": "a"*40}
+        self._assert_changed_tree_node_mode_refused(
+            "GIT_TREE_LEAF_MODE_DRIFT")
+
+    def test_portable_docs_leaf_tree_type_cannot_override_source(self):
+        self.envelope["nodes"]["docs/sample.md"]["type"] = "tree"
+        self._assert_changed_tree_node_mode_refused(
+            "GIT_TREE_LEAF_MODE_DRIFT")
+
+    def test_portable_docs_parent_symlink_cannot_override_source(self):
+        self.envelope["nodes"]["docs"] = {
+            "mode": "120000", "type": "blob"}
+        self._assert_changed_tree_node_mode_refused(
+            "GIT_TREE_DIRECTORY_MODE_DRIFT")
+
+    def test_portable_tests_parent_regular_file_cannot_override_source(self):
+        self.envelope["nodes"]["tests"] = {
+            "mode": "100644", "type": "blob"}
+        self._assert_changed_tree_node_mode_refused(
+            "GIT_TREE_DIRECTORY_MODE_DRIFT")
+
+    def test_portable_missing_docs_leaf_cannot_override_source(self):
+        self.envelope["nodes"].pop("docs/sample.md")
+        self._assert_changed_tree_node_mode_refused(
+            "GIT_TREE_PATH_MISSING")
+
+    def test_portable_tree_nodes_clean_source_is_not_annual_authority(self):
+        result = self.verdict()
+        self.assertEqual(result["diagnostics"], ())
+        self.assertTrue(result["source_consistency"])
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
