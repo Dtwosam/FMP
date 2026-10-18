@@ -7474,3 +7474,92 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertFalse(direct["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(direct["can_authorize_annual_run"])
 
+    def _portable_snapshot_parent_child(self, directory):
+        trees = self.envelope["full_tree_snapshots"]
+        root_sha = self.envelope["commit"]["tree"]["sha"]
+        root = trees[root_sha]
+        parents = [entry for entry in root["tree"]
+                   if entry["path"] == directory]
+        self.assertEqual(len(parents), 1)
+        child_sha = parents[0]["sha"]
+        self.assertIn(child_sha, trees)
+        return trees, root_sha, child_sha
+
+    def test_portable_full_snapshot_missing_root_object_refused(self):
+        trees = self.envelope["full_tree_snapshots"]
+        root_sha = self.envelope["commit"]["tree"]["sha"]
+        trees.pop(root_sha)
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_TREE_OBJECT_UNREVIEWED")
+
+    def test_portable_full_snapshot_missing_tests_subtree_refused(self):
+        trees, _, child_sha = self._portable_snapshot_parent_child("tests")
+        trees.pop(child_sha)
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_TREE_OBJECT_UNREVIEWED")
+
+    def test_portable_full_snapshot_missing_docs_subtree_refused(self):
+        trees, _, child_sha = self._portable_snapshot_parent_child("docs")
+        trees.pop(child_sha)
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_TREE_OBJECT_UNREVIEWED")
+
+    def test_portable_full_snapshot_truncated_tests_subtree_refused(self):
+        trees, _, child_sha = self._portable_snapshot_parent_child("tests")
+        trees[child_sha]["truncated"] = True
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_TREE_OBJECT_UNREVIEWED")
+
+    def test_portable_full_snapshot_truncated_docs_subtree_refused(self):
+        trees, _, child_sha = self._portable_snapshot_parent_child("docs")
+        trees[child_sha]["truncated"] = True
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_TREE_OBJECT_UNREVIEWED")
+
+    def test_portable_full_snapshot_duplicate_docs_leaf_refused(self):
+        trees, _, child_sha = self._portable_snapshot_parent_child("docs")
+        entries = trees[child_sha]["tree"]
+        entries.append(dict(entries[0]))
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_ENTRY_CARDINALITY_UNREVIEWED")
+
+    def test_portable_full_snapshot_duplicate_tests_parent_refused(self):
+        trees, root_sha, _ = self._portable_snapshot_parent_child("tests")
+        entries = trees[root_sha]["tree"]
+        parent = next(e for e in entries if e["path"] == "tests")
+        entries.append(dict(parent))
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_ENTRY_CARDINALITY_UNREVIEWED")
+
+    def test_portable_full_snapshot_missing_docs_leaf_refused(self):
+        trees, _, child_sha = self._portable_snapshot_parent_child("docs")
+        trees[child_sha]["tree"].clear()
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_ENTRY_CARDINALITY_UNREVIEWED")
+
+    def test_portable_full_snapshot_renamed_tests_leaf_refused(self):
+        self._portable_snapshot_leaf("tests")["path"] = "different.py"
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_ENTRY_CARDINALITY_UNREVIEWED")
+
+    def test_portable_full_snapshot_orphaned_extra_object_refused(self):
+        trees = self.envelope["full_tree_snapshots"]
+        self.assertNotIn("f"*40, trees)
+        trees["f"*40] = {
+            "sha": "f"*40, "truncated": False, "tree": []}
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_TREE_SNAPSHOT_INVENTORY_UNREVIEWED")
+
+    def test_portable_full_snapshot_wrong_root_self_sha_refused(self):
+        trees = self.envelope["full_tree_snapshots"]
+        root_sha = self.envelope["commit"]["tree"]["sha"]
+        trees[root_sha]["sha"] = "f"*40
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_TREE_OBJECT_UNREVIEWED")
+
+    def test_portable_full_snapshot_wrong_docs_self_sha_refused(self):
+        trees, _, child_sha = self._portable_snapshot_parent_child("docs")
+        trees[child_sha]["sha"] = "f"*40
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_TREE_OBJECT_UNREVIEWED")
+
