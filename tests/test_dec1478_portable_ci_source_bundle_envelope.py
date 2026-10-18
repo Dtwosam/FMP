@@ -6781,3 +6781,100 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertFalse(original["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(original["can_authorize_annual_run"])
 
+    def _json_escaped_canonical_b64_document(self, map_name, path, mode):
+        value = self.envelope[map_name][path]
+        self.assertTrue(value)
+        raw = json.dumps(self.envelope, sort_keys=True, separators=(",", ":"))
+        needle = json.dumps(path) + ":" + json.dumps(value)
+        self.assertEqual(raw.count(needle), 1)
+        def escape(ch):
+            return "\\u%04x" % ord(ch)
+        if mode == "all":
+            variant = "".join(escape(ch) for ch in value)
+        elif mode == "head":
+            variant = escape(value[0]) + value[1:]
+        elif mode == "tail":
+            variant = value[:-1] + escape(value[-1])
+        else:
+            raise AssertionError("unknown synthetic JSON spelling")
+        changed = raw.replace(
+            needle, json.dumps(path) + ':"' + variant + '"', 1)
+        self.assertNotEqual(changed, raw)
+        self.assertEqual(json.loads(changed), self.envelope)
+        return changed
+
+    def _assert_escaped_b64_json_parity(self, map_name, path, mode,
+                                        expect_clean):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        escaped = self._json_escaped_canonical_b64_document(
+            map_name, path, mode)
+        original = self.verdict()
+        plain_json = review_bundle_json_text(json.dumps(self.envelope))
+        escaped_json = review_bundle_json_text(escaped)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(escaped), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(original, plain_json)
+        self.assertEqual(original, escaped_json)
+        self.assertEqual(emitted["diagnostics"],
+                         list(original["diagnostics"]))
+        self.assertEqual(emitted["source_consistency"],
+                         original["source_consistency"])
+        self.assertEqual(status, 0 if expect_clean else 2)
+        self.assertEqual(original["source_consistency"], expect_clean)
+        self.assertFalse(original["independent_original_os_proof"])
+        self.assertFalse(original["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(original["can_authorize_annual_run"])
+        self.assertFalse(emitted["independent_original_os_proof"])
+        self.assertFalse(emitted["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(emitted["can_authorize_annual_run"])
+
+    def test_json_escaped_all_changed_base64_chars_preserves_clean_evidence(self):
+        self._assert_escaped_b64_json_parity(
+            "changed_bytes_b64", "tests/sample.py", "all", True)
+
+    def test_json_escaped_head_changed_base64_preserves_clean_evidence(self):
+        self._assert_escaped_b64_json_parity(
+            "changed_bytes_b64", "tests/sample.py", "head", True)
+
+    def test_json_escaped_tail_changed_base64_preserves_clean_evidence(self):
+        self._assert_escaped_b64_json_parity(
+            "changed_bytes_b64", "tests/sample.py", "tail", True)
+
+    def test_json_escaped_all_workflow_base64_preserves_clean_evidence(self):
+        self._assert_escaped_b64_json_parity(
+            "ci_workflow_bytes_b64", ".github/workflows/tests.yml",
+            "all", True)
+
+    def test_json_escaped_head_workflow_base64_preserves_clean_evidence(self):
+        self._assert_escaped_b64_json_parity(
+            "ci_workflow_bytes_b64", ".github/workflows/tests.yml",
+            "head", True)
+
+    def test_json_escaped_tail_workflow_base64_preserves_clean_evidence(self):
+        self._assert_escaped_b64_json_parity(
+            "ci_workflow_bytes_b64", ".github/workflows/tests.yml",
+            "tail", True)
+
+    def test_json_escaped_altered_changed_source_still_fails_identity(self):
+        self.envelope["changed_bytes_b64"]["tests/sample.py"] = (
+            base64.b64encode(b"synthetic-forged-source").decode("ascii"))
+        self._assert_escaped_b64_json_parity(
+            "changed_bytes_b64", "tests/sample.py", "all", False)
+
+    def test_json_escaped_altered_workflow_source_still_fails_identity(self):
+        self.envelope["ci_workflow_bytes_b64"][
+            ".github/workflows/tests.yml"] = (
+            base64.b64encode(b"synthetic-forged-workflow").decode("ascii"))
+        self._assert_escaped_b64_json_parity(
+            "ci_workflow_bytes_b64", ".github/workflows/tests.yml",
+            "all", False)
+
+    def test_json_escaped_malformed_base64_still_fails_closed(self):
+        self.envelope["changed_bytes_b64"]["tests/sample.py"] = "invalid%"
+        self._assert_escaped_b64_json_parity(
+            "changed_bytes_b64", "tests/sample.py", "all", False)
+        self.assertEqual(self.verdict()["diagnostics"],
+                         ("BUNDLE_SOURCE_B64_UNREVIEWED",))
+
