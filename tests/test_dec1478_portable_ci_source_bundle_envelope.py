@@ -5760,6 +5760,11 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
                                                       new_map, code):
         from unittest.mock import patch
         self.envelope[category] = new_map
+        # Map preflights are ordered. Isolate the target map so decoding
+        # valid entries in an earlier map cannot trip this sentinel.
+        other = ("ci_workflow_bytes_b64" if category == "changed_bytes_b64"
+                 else "changed_bytes_b64")
+        self.envelope[other] = {}
         with patch.object(base64, "b64decode",
                           side_effect=AssertionError("decoder was invoked")) as decoder:
             result = self.verdict()
@@ -5813,7 +5818,11 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_exact_encoded_length_still_decodes_then_checks_raw_bytes(self):
         from unittest.mock import patch
         limit = 4*((MAX_BLOB_BYTES+2)//3)
-        self.envelope["changed_bytes_b64"]["tests/sample.py"] = "A"*limit
+        # Isolate the target blob: the normal fixture has a valid docs
+        # entry that the decoder necessarily visits first.
+        self.envelope["changed_bytes_b64"] = {
+            "tests/sample.py": "A"*limit}
+        self.envelope["ci_workflow_bytes_b64"] = {}
         with patch.object(base64, "b64decode",
                           wraps=base64.b64decode) as decoder:
             result = self.verdict()
@@ -6298,4 +6307,45 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
                               if r["name"] == "tests")
             historical["id"] = 8000
         self._assert_repeated_review_does_not_retain_failed_input(corrupt)
+
+    def test_workflow_preflight_allows_decoded_earlier_source_map(self):
+        from unittest.mock import patch
+        limit = 4*((MAX_BLOB_BYTES+2)//3)
+        expected = len(self.envelope["changed_bytes_b64"])
+        self.envelope["ci_workflow_bytes_b64"] = {
+            ".github/workflows/tests.yml": "A"*(limit+4)}
+        with patch.object(base64, "b64decode",
+                          wraps=base64.b64decode) as decoder:
+            result = self.verdict()
+        self.assertEqual(decoder.call_count, expected)
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_SOURCE_BLOB_OVERSIZE",))
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_workflow_bad_path_allows_prior_changed_source_decoding(self):
+        from unittest.mock import patch
+        expected = len(self.envelope["changed_bytes_b64"])
+        self.envelope["ci_workflow_bytes_b64"] = {
+            ".github/workflows/../invalid.yml": "AA=="}
+        with patch.object(base64, "b64decode",
+                          wraps=base64.b64decode) as decoder:
+            result = self.verdict()
+        self.assertEqual(decoder.call_count, expected)
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_SOURCE_PATH_UNREVIEWED",))
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_workflow_overlarge_inventory_allows_earlier_source_decoding(self):
+        from unittest.mock import patch
+        expected = len(self.envelope["changed_bytes_b64"])
+        self.envelope["ci_workflow_bytes_b64"] = {
+            f".github/workflows/synthetic-{i}.yml": "AA=="
+            for i in range(MAX_SOURCE_ENTRIES_PER_MAP+1)}
+        with patch.object(base64, "b64decode",
+                          wraps=base64.b64decode) as decoder:
+            result = self.verdict()
+        self.assertEqual(decoder.call_count, expected)
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_SOURCE_MAP_OVERSIZE",))
+        self.assertFalse(result["can_authorize_annual_run"])
 
