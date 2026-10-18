@@ -501,6 +501,7 @@ def review_bundle_envelope(envelope):
             AssertionError, OSError) as _:
         return fail_closed("BUNDLE_NESTED_EVIDENCE_UNREVIEWED")
     if (type(verdict) is not dict or
+            any(type(key) is not str for key in verdict) or
             set(verdict) != VERDICT_FIELDS or
             verdict.get("independent_original_os_proof") is not False or
             verdict.get("exclusive_server_dispatch_gate_proven") is not False or
@@ -3404,6 +3405,105 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertFalse(result["can_authorize_annual_run"])
 
     def test_direct_utf8_scalar_budget_clean_consistency_only(self):
+        result = self.verdict()
+        self.assertTrue(result["source_consistency"])
+        self.assertEqual(result["diagnostics"], ())
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_nested_result_integer_key_is_safely_refused(self):
+        from unittest.mock import patch
+        bad = dict(self.verdict())
+        bad[99] = "private-canary"
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          return_value=bad):
+            self.assert_fails("BUNDLE_RESULT_SHAPE_UNREVIEWED")
+
+    def test_nested_result_none_key_is_safely_refused(self):
+        from unittest.mock import patch
+        bad = dict(self.verdict())
+        bad[None] = "private-canary"
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          return_value=bad):
+            self.assert_fails("BUNDLE_RESULT_SHAPE_UNREVIEWED")
+
+    def test_nested_result_string_subclass_key_is_safely_refused(self):
+        from unittest.mock import patch
+        class NonPlainKey(str):
+            pass
+        bad = dict(self.verdict())
+        bad[NonPlainKey("private-canary")] = True
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          return_value=bad):
+            self.assert_fails("BUNDLE_RESULT_SHAPE_UNREVIEWED")
+
+    def test_nested_result_custom_key_is_not_rehashed_during_review(self):
+        from unittest.mock import patch
+        class Untrusted:
+            def __init__(self):
+                self.hash_calls = 0
+            def __hash__(self):
+                self.hash_calls += 1
+                return 19024
+            def __eq__(self, other):
+                raise AssertionError("untrusted equality")
+        key = Untrusted()
+        bad = dict(self.verdict())
+        bad[key] = "private-canary"
+        key.hash_calls = 0
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          return_value=bad):
+            result = self.verdict()
+        self.assertEqual(key.hash_calls, 0)
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_RESULT_SHAPE_UNREVIEWED",))
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_nested_result_custom_key_never_rendered_into_diagnostics(self):
+        from unittest.mock import patch
+        class Untrusted:
+            def __hash__(self):
+                return 17290
+            def __repr__(self):
+                raise AssertionError("must not render key")
+        bad = dict(self.verdict())
+        bad[Untrusted()] = "secret-result"
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          return_value=bad):
+            result = self.verdict()
+        self.assertNotIn("secret-result", repr(result))
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_RESULT_SHAPE_UNREVIEWED",))
+
+    def test_nested_result_plain_unexpected_key_still_refused(self):
+        from unittest.mock import patch
+        bad = dict(self.verdict(), unauthorized_synthetic=True)
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          return_value=bad):
+            self.assert_fails("BUNDLE_RESULT_SHAPE_UNREVIEWED")
+
+    def test_nested_result_dict_subclass_still_refused_first(self):
+        from unittest.mock import patch
+        class CustomDict(dict):
+            pass
+        bad = CustomDict(self.verdict())
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          return_value=bad):
+            self.assert_fails("BUNDLE_RESULT_SHAPE_UNREVIEWED")
+
+    def test_nested_result_correct_plain_keys_can_preserve_known_failure(self):
+        from unittest.mock import patch
+        bad = dict(self.verdict(), source_consistency=False,
+                   diagnostics=("MERGE_HISTORICAL_RUN_UNREVIEWED",))
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          return_value=bad):
+            result = self.verdict()
+        self.assertEqual(result["diagnostics"],
+                         ("MERGE_HISTORICAL_RUN_UNREVIEWED",))
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_nested_result_key_type_guard_preserves_clean_source_only(self):
         result = self.verdict()
         self.assertTrue(result["source_consistency"])
         self.assertEqual(result["diagnostics"], ())
