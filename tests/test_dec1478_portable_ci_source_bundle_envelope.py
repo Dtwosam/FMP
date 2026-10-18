@@ -5386,3 +5386,84 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertFalse(direct["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(direct["can_authorize_annual_run"])
 
+    def _assert_run_inventory_mismatch_all_portable_entrypoints(self):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        direct = self.verdict()
+        raw = json.dumps(self.envelope, separators=(",", ":"))
+        parsed = review_bundle_json_text(raw)
+        output = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(raw), output)
+        cli_result = json.loads(output.getvalue())
+        self.assertEqual(direct, parsed)
+        self.assertEqual(status, 2)
+        self.assertFalse(direct["source_consistency"])
+        self.assertTrue(direct["diagnostics"])
+        self.assertEqual(cli_result["diagnostics"],
+                         list(direct["diagnostics"]))
+        self.assertEqual(set(cli_result), VERDICT_FIELDS)
+        self.assertFalse(cli_result["source_consistency"])
+        self.assertFalse(cli_result["independent_original_os_proof"])
+        self.assertFalse(cli_result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(cli_result["can_authorize_annual_run"])
+
+    def test_missing_historical_jobs_map_refuses_source_inventory(self):
+        self.envelope["jobs_by_run"].pop("8001")
+        self._assert_run_inventory_mismatch_all_portable_entrypoints()
+
+    def test_missing_phase3_checkout_map_refuses_source_inventory(self):
+        self.envelope["checkout_by_run"].pop("8000")
+        self._assert_run_inventory_mismatch_all_portable_entrypoints()
+
+    def test_missing_historical_raw_log_map_refuses_source_inventory(self):
+        self.envelope["raw_ci_runner_logs"].pop("8001")
+        self._assert_run_inventory_mismatch_all_portable_entrypoints()
+
+    def test_missing_phase3_raw_receipt_map_refuses_source_inventory(self):
+        self.envelope["raw_ci_log_receipts"].pop("8000")
+        self._assert_run_inventory_mismatch_all_portable_entrypoints()
+
+    def test_extra_positive_job_map_run_key_does_not_expand_run_list(self):
+        self.envelope["jobs_by_run"]["9000"] = []
+        self._assert_run_inventory_mismatch_all_portable_entrypoints()
+
+    def test_extra_positive_checkout_map_run_key_does_not_expand_run_list(self):
+        self.envelope["checkout_by_run"]["9000"] = {}
+        self._assert_run_inventory_mismatch_all_portable_entrypoints()
+
+    def test_extra_positive_raw_log_run_key_does_not_expand_run_list(self):
+        self.envelope["raw_ci_runner_logs"]["9000"] = "synthetic log"
+        self._assert_run_inventory_mismatch_all_portable_entrypoints()
+
+    def test_extra_positive_receipt_map_run_key_does_not_expand_run_list(self):
+        self.envelope["raw_ci_log_receipts"]["9000"] = {}
+        self._assert_run_inventory_mismatch_all_portable_entrypoints()
+
+    def test_changed_phase3_run_identity_not_fixed_by_existing_maps(self):
+        target = next(r for r in self.envelope["runs"]
+                      if r["name"] == "phase3-acceptance")
+        target["id"] = 9000
+        self._assert_run_inventory_mismatch_all_portable_entrypoints()
+
+    def test_colliding_two_run_ids_does_not_relabel_run_provenance(self):
+        historical = next(r for r in self.envelope["runs"]
+                          if r["name"] == "tests")
+        historical["id"] = 8000
+        self._assert_run_inventory_mismatch_all_portable_entrypoints()
+
+    def test_clean_two_run_inventory_retains_source_consistency_only(self):
+        expected = {"8000", "8001"}
+        for key in ("jobs_by_run", "checkout_by_run",
+                    "raw_ci_runner_logs", "raw_ci_log_receipts"):
+            self.assertEqual(set(self.envelope[key]), expected)
+        self.assertEqual({r["id"] for r in self.envelope["runs"]},
+                         {8000, 8001})
+        direct = self.verdict()
+        parsed = review_bundle_json_text(json.dumps(self.envelope))
+        self.assertEqual(direct, parsed)
+        self.assertEqual(direct["diagnostics"], ())
+        self.assertTrue(direct["source_consistency"])
+        self.assertFalse(direct["independent_original_os_proof"])
+        self.assertFalse(direct["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(direct["can_authorize_annual_run"])
+
