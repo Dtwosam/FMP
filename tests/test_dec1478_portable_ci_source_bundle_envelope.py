@@ -6878,3 +6878,87 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertEqual(self.verdict()["diagnostics"],
                          ("BUNDLE_SOURCE_B64_UNREVIEWED",))
 
+    def _assert_escaped_invalid_base64_character_refused(self, category,
+                                                          path, code_point):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.assertLessEqual(code_point, 0xFFFF)
+        value = self.envelope[category][path]
+        replacement = value[0] + chr(code_point) + value[1:]
+        raw = json.dumps(self.envelope, sort_keys=True, separators=(",", ":"))
+        needle = json.dumps(path) + ":" + json.dumps(value)
+        self.assertEqual(raw.count(needle), 1)
+        escaped = (value[0] + "\\u%04x" % code_point + value[1:])
+        raw = raw.replace(needle, json.dumps(path) + ':"' +
+                          escaped + '"', 1)
+        self.assertEqual(json.loads(raw)[category][path], replacement)
+        self.envelope[category][path] = replacement
+        direct = self.verdict()
+        parsed = review_bundle_json_text(raw)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(raw), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(direct, parsed)
+        self.assertEqual(status, 2)
+        self.assertEqual(direct["diagnostics"],
+                         ("BUNDLE_SOURCE_B64_UNREVIEWED",))
+        self.assertEqual(emitted["diagnostics"],
+                         ["BUNDLE_SOURCE_B64_UNREVIEWED"])
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertFalse(emitted["source_consistency"])
+        self.assertNotIn("changed_bytes_b64", out.getvalue())
+        self.assertNotIn("ci_workflow_bytes_b64", out.getvalue())
+        self.assertFalse(emitted["independent_original_os_proof"])
+        self.assertFalse(emitted["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(emitted["can_authorize_annual_run"])
+
+    def test_escaped_lf_inside_changed_base64_is_rejected(self):
+        self._assert_escaped_invalid_base64_character_refused(
+            "changed_bytes_b64", "tests/sample.py", 0x000A)
+
+    def test_escaped_cr_inside_changed_base64_is_rejected(self):
+        self._assert_escaped_invalid_base64_character_refused(
+            "changed_bytes_b64", "tests/sample.py", 0x000D)
+
+    def test_escaped_tab_inside_changed_base64_is_rejected(self):
+        self._assert_escaped_invalid_base64_character_refused(
+            "changed_bytes_b64", "tests/sample.py", 0x0009)
+
+    def test_escaped_nul_inside_changed_base64_is_rejected(self):
+        self._assert_escaped_invalid_base64_character_refused(
+            "changed_bytes_b64", "tests/sample.py", 0x0000)
+
+    def test_escaped_nbsp_inside_changed_base64_is_rejected(self):
+        self._assert_escaped_invalid_base64_character_refused(
+            "changed_bytes_b64", "tests/sample.py", 0x00A0)
+
+    def test_escaped_zero_width_space_inside_changed_base64_is_rejected(self):
+        self._assert_escaped_invalid_base64_character_refused(
+            "changed_bytes_b64", "tests/sample.py", 0x200B)
+
+    def test_escaped_fullwidth_a_inside_changed_base64_is_rejected(self):
+        self._assert_escaped_invalid_base64_character_refused(
+            "changed_bytes_b64", "tests/sample.py", 0xFF21)
+
+    def test_escaped_bidi_override_inside_changed_base64_is_rejected(self):
+        self._assert_escaped_invalid_base64_character_refused(
+            "changed_bytes_b64", "tests/sample.py", 0x202E)
+
+    def test_escaped_zero_width_joiner_inside_workflow_base64_is_rejected(self):
+        self._assert_escaped_invalid_base64_character_refused(
+            "ci_workflow_bytes_b64", ".github/workflows/tests.yml", 0x200D)
+
+    def test_escaped_unicode_accent_inside_workflow_base64_is_rejected(self):
+        self._assert_escaped_invalid_base64_character_refused(
+            "ci_workflow_bytes_b64", ".github/workflows/tests.yml", 0x00E9)
+
+    def test_escaped_base64_character_guard_preserves_clean_source_only(self):
+        direct = self.verdict()
+        json_result = review_bundle_json_text(json.dumps(self.envelope))
+        self.assertEqual(direct, json_result)
+        self.assertEqual(direct["diagnostics"], ())
+        self.assertTrue(direct["source_consistency"])
+        self.assertFalse(direct["independent_original_os_proof"])
+        self.assertFalse(direct["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(direct["can_authorize_annual_run"])
+

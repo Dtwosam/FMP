@@ -1,0 +1,7 @@
+# DEC-1586 — JSON-escaped Unicode and control bytes cannot enter Base64 source values
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent one-commit tests/docs child of #1832 at `f148525df59a75015746aad202908f65b19dfacb`. Eleven synthetic unittest methods and a cross-interface JSON-escape helper (**3,031 proposed source-defined methods**).
+
+A JSON string may legally encode an embedded LF, CR, tab, NUL, nonbreaking space, zero-width space/joiner, bidi override, fullwidth letter or Unicode accent using `\uXXXX`. Such decoded characters are **not Base64 alphabet characters** and must never be ignored, normalized or stripped from caller-supplied reviewed-source or installed-CI-workflow source payloads. Inject each as an escaped character inside an otherwise clean canonical source encoding. Assert the JSON parser produces the intended altered value; then require direct-memory, JSON-text and bounded stdin to agree on `BUNDLE_SOURCE_B64_UNREVIEWED`, with no source text/role inventory echo and all protected original OS, exclusive server admission and annual-run permissions false. A clean untouched synthetic source remains source-consistency-only.
+
+Own exact-head Phase 3/full historical-general CI and qualified independent review required. Tests/docs only; no parser/limits, workflow/security-control or admission edits. DEC-650/#820 and DEC-651/#821/#779 remain **BLOCKED**. No protected originals/archives/artifacts, annual dispatch/retry, merge, deployment or trading.
