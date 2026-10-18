@@ -27,15 +27,23 @@ def _read_complete_bounded_stdin(input_stream):
     """
     chunks = []
     size = 0
+    utf8_bytes = 0
     try:
         while True:
-            remaining = envelope.MAX_TEXT_CHARS - size + 1
+            remaining = min(envelope.MAX_TEXT_CHARS - size + 1,
+                            envelope.MAX_TEXT_UTF8_BYTES - utf8_bytes + 1)
             requested = min(MAX_STDIN_READ_CHARS, remaining)
             part = input_stream.read(requested)
             if type(part) is not str or len(part) > requested:
                 return None, "BUNDLE_STDIN_READ_UNREVIEWED"
             size += len(part)
             if size > envelope.MAX_TEXT_CHARS:
+                return None, "BUNDLE_JSON_TEXT_UNREVIEWED"
+            try:
+                utf8_bytes += len(part.encode("utf-8"))
+            except UnicodeError:
+                return None, "BUNDLE_JSON_UNICODE_UNREVIEWED"
+            if utf8_bytes > envelope.MAX_TEXT_UTF8_BYTES:
                 return None, "BUNDLE_JSON_TEXT_UNREVIEWED"
             if not part:
                 return "".join(chunks), None
@@ -739,6 +747,74 @@ class ExplicitStdinReviewIsNotAnnualWorkflowAdmission(unittest.TestCase):
         self.assertFalse(record["independent_original_os_proof"])
         self.assertFalse(record["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(record["can_authorize_annual_run"])
+
+
+    def test_stdin_utf8_reader_excess_rejected_before_bundle_review(self):
+        raw = '"' + "é" * (envelope.MAX_TEXT_UTF8_BYTES//2) + '"'
+        parsed, code = _read_complete_bounded_stdin(io.StringIO(raw))
+        self.assertIsNone(parsed)
+        self.assertEqual(code, "BUNDLE_JSON_TEXT_UNREVIEWED")
+
+    def test_stdin_utf8_reader_exact_boundary_reads_complete_text(self):
+        raw = '"' + "é" * (envelope.MAX_TEXT_UTF8_BYTES//2-1) + '"'
+        self.assertEqual(len(raw.encode("utf-8")),
+                         envelope.MAX_TEXT_UTF8_BYTES)
+        parsed, code = _read_complete_bounded_stdin(io.StringIO(raw))
+        self.assertIsNone(code)
+        self.assertEqual(parsed, raw)
+
+    def test_stdin_utf8_reader_emoji_excess_refused(self):
+        raw = '"' + "🚀" * (envelope.MAX_TEXT_UTF8_BYTES//4) + '"'
+        parsed, code = _read_complete_bounded_stdin(io.StringIO(raw))
+        self.assertIsNone(parsed)
+        self.assertEqual(code, "BUNDLE_JSON_TEXT_UNREVIEWED")
+
+    def test_stdin_utf8_reader_lone_surrogate_fails_closed(self):
+        raw = '{"private":"\ud800"}'
+        parsed, code = _read_complete_bounded_stdin(io.StringIO(raw))
+        self.assertIsNone(parsed)
+        self.assertEqual(code, "BUNDLE_JSON_UNICODE_UNREVIEWED")
+
+    def test_stdin_utf8_reader_short_chunks_counts_bytes(self):
+        raw = '{"a":"' + "é"*100 + '"}'
+        parsed, code = _read_complete_bounded_stdin(_ShortReadTextStream(raw, 1))
+        self.assertIsNone(code)
+        self.assertEqual(parsed, raw)
+
+    def test_stdin_utf8_reader_no_early_success_on_multibyte_prefix(self):
+        raw = '"' + "é" * (envelope.MAX_TEXT_UTF8_BYTES//2) + '"'
+        parsed, code = _read_complete_bounded_stdin(_ShortReadTextStream(raw, 503))
+        self.assertIsNone(parsed)
+        self.assertEqual(code, "BUNDLE_JSON_TEXT_UNREVIEWED")
+
+    def test_stdin_utf8_overrun_safe_verdict_never_echoes_input(self):
+        raw = '{"private-canary":"' + "é"*(envelope.MAX_TEXT_UTF8_BYTES//2) + '"}'
+        out = io.StringIO()
+        rc = run_stdin_review(io.StringIO(raw), out)
+        self.assertEqual(rc, 2)
+        result = json.loads(out.getvalue())
+        self.assertEqual(result["diagnostics"], ["BUNDLE_JSON_TEXT_UNREVIEWED"])
+        self.assertNotIn("private-canary", out.getvalue())
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_stdin_read_complete_ascii_valid_fixture_still_source_only(self):
+        raw, error = _read_complete_bounded_stdin(
+            io.StringIO(json.dumps(self.bundle)))
+        self.assertIsNone(error)
+        self.assertTrue(json.loads(raw)["schema"].startswith("fmp-"))
+        rc = run_stdin_review(io.StringIO(raw), self.stdout)
+        self.assertEqual(rc, 0)
+        self.assertFalse(json.loads(self.stdout.getvalue())["can_authorize_annual_run"])
+
+    def test_stdin_utf8_scalar_budget_false_all_execution_authority(self):
+        out = io.StringIO()
+        rc = run_stdin_review(io.StringIO(json.dumps(self.bundle)), out)
+        result = json.loads(out.getvalue())
+        self.assertEqual(rc, 0)
+        self.assertTrue(result["source_consistency"])
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
 
 
 if __name__ == "__main__":
