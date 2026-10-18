@@ -1,0 +1,7 @@
+# DEC-1641 — Required portable evidence categories have exact JSON types
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** One-commit tests/docs child of #1887 at `8d8da4183ddfde5ab4c35ce51044245fa6bec46a`. Seventeen new synthetic methods (**3,795 proposed source-defined tests**).
+
+A category being present is not sufficient when its JSON type is wrong. Replace each of fourteen required mapping categories (PR/compare/commit/tree/nodes, source maps, checkout, evidence, CI logs and receipts) with an array, replace the required runs list with a mapping, and replace the schema literal with Boolean false. Each malformed but otherwise JSON-compatible envelope must fail **before composite review** as `BUNDLE_CATEGORY_TYPE_UNREVIEWED` or `BUNDLE_SCHEMA_UNREVIEWED`, identically through direct-memory, JSON-text and bounded stdin. Preserve caller data, avoid source-path reflection and keep all protected annual-run authority flags false. The untouched fixture still shows consistency only.
+
+The tests authenticate no provider Git/CI object or protected original OS/run consent. Own exact-head Phase 3/historical/general CI and qualified independent review required. Tests/docs-only; no production/parser/limits/workflow/security/admission modifications, protected original/archive/artifact access, annual execution/retry, merges, deployment or trading. DEC-650/#820 and DEC-651/#821/#779 remain **BLOCKED**.

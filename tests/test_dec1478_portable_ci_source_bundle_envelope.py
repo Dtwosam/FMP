@@ -12066,3 +12066,96 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertEqual(set(self.envelope), REQUIRED)
         self._assert_portable_tree_object_order_consistency_only()
 
+    def _assert_bad_required_category_type_refused(self, category,
+                                                     value, code):
+        import io
+        import copy
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.envelope[category] = value
+        before = copy.deepcopy(self.envelope)
+        raw = json.dumps(self.envelope, sort_keys=True)
+        direct = self.verdict()
+        parsed = review_bundle_json_text(raw)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(raw), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(self.envelope, before)
+        self.assertEqual(direct, parsed)
+        self.assertEqual(status, 2)
+        self.assertEqual(direct["diagnostics"], (code,))
+        self.assertFalse(direct["source_consistency"])
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"], [code])
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        for result in (direct, emitted):
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_required_category_pr_list_refused(self):
+        self._assert_bad_required_category_type_refused(
+            "pr", [], "BUNDLE_CATEGORY_TYPE_UNREVIEWED")
+
+    def test_portable_required_category_jobs_by_run_list_refused(self):
+        self._assert_bad_required_category_type_refused(
+            "jobs_by_run", [], "BUNDLE_CATEGORY_TYPE_UNREVIEWED")
+
+    def test_portable_required_category_compare_list_refused(self):
+        self._assert_bad_required_category_type_refused(
+            "compare", [], "BUNDLE_CATEGORY_TYPE_UNREVIEWED")
+
+    def test_portable_required_category_commit_list_refused(self):
+        self._assert_bad_required_category_type_refused(
+            "commit", [], "BUNDLE_CATEGORY_TYPE_UNREVIEWED")
+
+    def test_portable_required_category_tree_list_refused(self):
+        self._assert_bad_required_category_type_refused(
+            "tree", [], "BUNDLE_CATEGORY_TYPE_UNREVIEWED")
+
+    def test_portable_required_category_nodes_list_refused(self):
+        self._assert_bad_required_category_type_refused(
+            "nodes", [], "BUNDLE_CATEGORY_TYPE_UNREVIEWED")
+
+    def test_portable_required_category_changed_bytes_b64_list_refused(self):
+        self._assert_bad_required_category_type_refused(
+            "changed_bytes_b64", [], "BUNDLE_CATEGORY_TYPE_UNREVIEWED")
+
+    def test_portable_required_category_ci_workflow_bytes_b64_list_refused(self):
+        self._assert_bad_required_category_type_refused(
+            "ci_workflow_bytes_b64", [], "BUNDLE_CATEGORY_TYPE_UNREVIEWED")
+
+    def test_portable_required_category_full_tree_snapshots_list_refused(self):
+        self._assert_bad_required_category_type_refused(
+            "full_tree_snapshots", [], "BUNDLE_CATEGORY_TYPE_UNREVIEWED")
+
+    def test_portable_required_category_merge_checkout_snapshot_list_refused(self):
+        self._assert_bad_required_category_type_refused(
+            "merge_checkout_snapshot", [], "BUNDLE_CATEGORY_TYPE_UNREVIEWED")
+
+    def test_portable_required_category_checkout_by_run_list_refused(self):
+        self._assert_bad_required_category_type_refused(
+            "checkout_by_run", [], "BUNDLE_CATEGORY_TYPE_UNREVIEWED")
+
+    def test_portable_required_category_phase3_evidence_snapshot_list_refused(self):
+        self._assert_bad_required_category_type_refused(
+            "phase3_evidence_snapshot", [], "BUNDLE_CATEGORY_TYPE_UNREVIEWED")
+
+    def test_portable_required_category_raw_ci_runner_logs_list_refused(self):
+        self._assert_bad_required_category_type_refused(
+            "raw_ci_runner_logs", [], "BUNDLE_CATEGORY_TYPE_UNREVIEWED")
+
+    def test_portable_required_category_raw_ci_log_receipts_list_refused(self):
+        self._assert_bad_required_category_type_refused(
+            "raw_ci_log_receipts", [], "BUNDLE_CATEGORY_TYPE_UNREVIEWED")
+
+    def test_portable_required_category_runs_dictionary_refused(self):
+        self._assert_bad_required_category_type_refused(
+            "runs", {}, "BUNDLE_CATEGORY_TYPE_UNREVIEWED")
+
+    def test_portable_required_category_schema_boolean_refused(self):
+        self._assert_bad_required_category_type_refused(
+            "schema", False, "BUNDLE_SCHEMA_UNREVIEWED")
+
+    def test_portable_required_category_clean_source_only_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
