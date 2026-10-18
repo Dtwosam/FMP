@@ -1,0 +1,7 @@
+# DEC-1598 — JSON object insertion order must not replace Git tree wire ordering
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent one-commit tests/docs child of #1844 at `dea62a742ae45676580dfe6979682291f8a99d87`. Fourteen regression methods (**3,174 proposed source-defined methods**).
+
+Git tree `tree` arrays use canonical Git-wire entry order, whereas JSON object dictionaries in untrusted offline evidence carry no meaningful order. Test independent reversals of the full-tree snapshot map, root and child snapshot field dictionaries, parent and leaf entry field dictionaries, flat Git `nodes` map and values, and canonical source bytes map. A combined case reverses these object representations simultaneously without reordering any Git tree entry array. Direct-memory, JSON text and bounded stdin must continue to agree on a source-consistent, nonauthorizing clean verdict. In contrast, reversing the real root Git tree **entry array** without repairing its tree SHA must fail `TREE_CHAIN_OBJECT_BYTES_SHA_MISMATCH`. An untouched control remains consistent only.
+
+All evidence here is caller-supplied and synthetic, not independent GitHub provenance or original protected OS proof. Require exact-head Phase 3 and historical/general CI and qualified independent review. Tests/docs only: no production/parser/budget/workflow/security/admission changes, protected original/archive/artifact access, annual dispatch/retry, merge, deployment or trading. DEC-650/#820 and DEC-651/#821/#779 remain **BLOCKED**.
