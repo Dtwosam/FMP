@@ -5600,3 +5600,69 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertFalse(direct["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(direct["can_authorize_annual_run"])
 
+    def _assert_returning_nested_reviewer_cannot_mutate_original(self, tamper):
+        from unittest.mock import patch
+        original = copy.deepcopy(self.envelope)
+        invoked = []
+        def synthetic_nested_result(**values):
+            tamper(values)
+            invoked.append(True)
+            return {
+                "source_consistency": True, "diagnostics": (),
+                "independent_original_os_proof": False,
+                "exclusive_server_dispatch_gate_proven": False,
+                "can_authorize_annual_run": False,
+            }
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          side_effect=synthetic_nested_result):
+            result = self.verdict()
+        self.assertEqual(invoked, [True])
+        self.assertEqual(self.envelope, original)
+        self.assertTrue(result["source_consistency"])
+        self.assertEqual(result["diagnostics"], ())
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+        after = self.verdict()
+        self.assertEqual(after["diagnostics"], ())
+        self.assertTrue(after["source_consistency"])
+        self.assertFalse(after["independent_original_os_proof"])
+        self.assertFalse(after["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(after["can_authorize_annual_run"])
+
+    def test_returning_nested_review_mutation_of_pr_is_isolated(self):
+        self._assert_returning_nested_reviewer_cannot_mutate_original(
+            lambda v: v["pr"].update({"private": "unreviewed"}))
+
+    def test_returning_nested_review_mutation_of_run_list_is_isolated(self):
+        self._assert_returning_nested_reviewer_cannot_mutate_original(
+            lambda v: v["runs"].clear())
+
+    def test_returning_nested_review_mutation_of_jobs_is_isolated(self):
+        self._assert_returning_nested_reviewer_cannot_mutate_original(
+            lambda v: v["jobs_by_run"].clear())
+
+    def test_returning_nested_review_mutation_of_ci_source_map_is_isolated(self):
+        self._assert_returning_nested_reviewer_cannot_mutate_original(
+            lambda v: v["ci_workflow_bytes"].clear())
+
+    def test_returning_nested_review_mutation_of_git_tree_is_isolated(self):
+        self._assert_returning_nested_reviewer_cannot_mutate_original(
+            lambda v: v["full_tree_snapshots"].clear())
+
+    def test_returning_nested_review_mutation_of_runner_evidence_is_isolated(self):
+        self._assert_returning_nested_reviewer_cannot_mutate_original(
+            lambda v: v["checkout_by_run"].clear())
+
+    def test_returning_nested_review_mutation_of_acceptance_is_isolated(self):
+        self._assert_returning_nested_reviewer_cannot_mutate_original(
+            lambda v: v["phase3_evidence_snapshot"].clear())
+
+    def test_returning_nested_review_mutation_of_raw_logs_is_isolated(self):
+        self._assert_returning_nested_reviewer_cannot_mutate_original(
+            lambda v: v["raw_ci_runner_logs"].clear())
+
+    def test_returning_nested_review_mutation_of_log_receipts_is_isolated(self):
+        self._assert_returning_nested_reviewer_cannot_mutate_original(
+            lambda v: v["raw_ci_log_receipts"].clear())
+
