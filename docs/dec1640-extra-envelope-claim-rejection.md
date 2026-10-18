@@ -1,0 +1,7 @@
+# DEC-1640 — Unrecognized top-level envelope fields cannot smuggle authority
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** One-commit tests/docs child of #1886 at `fdb615abdc6da4a265e39d8d3378d10e4f2fabcf`. Seventeen new methods (**3,778 proposed source-defined regression tests**).
+
+The envelope's exact versioned key inventory must reject any additional field, especially fields alleging independent protected original OS proof, exclusive server gate status or permission to dispatch an annual run. Eleven JSON-compatible string-key mutants inject forged proof, diagnostics, signatures, approvals, source overrides or Unicode compatibility aliases; assert `BUNDLE_KEY_INVENTORY_UNREVIEWED` across direct-memory, JSON-text and bounded stdin. Five non-string top-level key mutants (integer, Boolean, null, bytes, tuple) check direct-memory rejection without depending on JSON's key coercion. All cases preserve false protected authority and no source-path echo. The clean control remains source-consistent only.
+
+Offline caller-provided claims never establish independently reviewed GitHub or original OS provenance, or authorizing annual dispatch. Exact-head Phase 3/historical/general CI and qualified independent review required. Tests/docs only; no production/parser/resource budgets/workflow/security/admission changes, protected originals/archives/artifacts, annual execution/retry, merging, deployment or trading. DEC-650/#820 and DEC-651/#821/#779 remain **BLOCKED**.
