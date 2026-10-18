@@ -7344,3 +7344,133 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(result["can_authorize_annual_run"])
 
+    def _portable_snapshot_leaf(self, directory):
+        root_sha = self.envelope["commit"]["tree"]["sha"]
+        trees = self.envelope["full_tree_snapshots"]
+        root = trees[root_sha]
+        entries = [entry for entry in root["tree"]
+                   if entry["path"] == directory]
+        self.assertEqual(len(entries), 1)
+        child = trees[entries[0]["sha"]]
+        self.assertEqual(len(child["tree"]), 1)
+        return child["tree"][0]
+
+    def _assert_full_tree_snapshot_mutation_refused(self, code):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        for path, data in (("tests/sample.py", b"pass\n"),
+                           ("docs/sample.md", b"# Source-only\n")):
+            self.assertEqual(self.envelope["changed_bytes_b64"][path],
+                             base64.b64encode(data).decode("ascii"))
+            self.assertEqual(self.envelope["nodes"][path]["mode"], "100644")
+            self.assertEqual(self.envelope["nodes"][path]["type"], "blob")
+        direct = self.verdict()
+        raw = json.dumps(self.envelope, sort_keys=True)
+        parsed = review_bundle_json_text(raw)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(raw), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(direct, parsed)
+        self.assertEqual(status, 2)
+        self.assertFalse(direct["source_consistency"])
+        self.assertIn(code, direct["diagnostics"])
+        self.assertEqual(emitted["diagnostics"],
+                         list(direct["diagnostics"]))
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertNotIn("tests/sample.py", out.getvalue())
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        for result in (direct, emitted):
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_snapshot_tests_executable_leaf_refused(self):
+        self._portable_snapshot_leaf("tests")["mode"] = "100755"
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_LEAF_NOT_REGULAR_BLOB")
+
+    def test_portable_snapshot_docs_executable_leaf_refused(self):
+        self._portable_snapshot_leaf("docs")["mode"] = "100755"
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_LEAF_NOT_REGULAR_BLOB")
+
+    def test_portable_snapshot_tests_symlink_leaf_refused(self):
+        self._portable_snapshot_leaf("tests")["mode"] = "120000"
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_LEAF_NOT_REGULAR_BLOB")
+
+    def test_portable_snapshot_docs_symlink_leaf_refused(self):
+        self._portable_snapshot_leaf("docs")["mode"] = "120000"
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_LEAF_NOT_REGULAR_BLOB")
+
+    def test_portable_snapshot_docs_gitlink_leaf_refused(self):
+        leaf = self._portable_snapshot_leaf("docs")
+        leaf["mode"] = "160000"
+        leaf["type"] = "commit"
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_LEAF_NOT_REGULAR_BLOB")
+
+    def test_portable_snapshot_tests_tree_typed_leaf_refused(self):
+        self._portable_snapshot_leaf("tests")["type"] = "tree"
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_LEAF_NOT_REGULAR_BLOB")
+
+    def test_portable_snapshot_tests_blob_parent_refused(self):
+        root = self.envelope["full_tree_snapshots"][
+            self.envelope["commit"]["tree"]["sha"]]
+        parent = next(e for e in root["tree"] if e["path"] == "tests")
+        parent["mode"], parent["type"] = "100644", "blob"
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_PARENT_NOT_REGULAR_TREE")
+
+    def test_portable_snapshot_docs_symlink_parent_refused(self):
+        root = self.envelope["full_tree_snapshots"][
+            self.envelope["commit"]["tree"]["sha"]]
+        parent = next(e for e in root["tree"] if e["path"] == "docs")
+        parent["mode"], parent["type"] = "120000", "blob"
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_PARENT_NOT_REGULAR_TREE")
+
+    def test_portable_snapshot_docs_sha_points_at_python_blob_refused(self):
+        leaf = self._portable_snapshot_leaf("docs")
+        leaf["sha"] = self.envelope["nodes"]["tests/sample.py"]["sha"]
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_LEAF_BYTES_SHA_MISMATCH")
+
+    def test_portable_snapshot_rehashed_executable_chain_still_refused(self):
+        trees = self.envelope["full_tree_snapshots"]
+        old_root_sha = self.envelope["commit"]["tree"]["sha"]
+        root = trees[old_root_sha]
+        tests_parent = next(e for e in root["tree"] if e["path"] == "tests")
+        old_child_sha = tests_parent["sha"]
+        child = trees.pop(old_child_sha)
+        self.assertEqual(child["tree"][0]["path"], "sample.py")
+        child["tree"][0]["mode"] = "100755"
+        new_child_sha = composite.tree_chain.reviewed_git_tree_sha(
+            child["tree"])
+        self.assertNotEqual(new_child_sha, old_child_sha)
+        child["sha"] = new_child_sha
+        trees[new_child_sha] = child
+        tests_parent["sha"] = new_child_sha
+        new_root_sha = composite.tree_chain.reviewed_git_tree_sha(
+            root["tree"])
+        self.assertNotEqual(new_root_sha, old_root_sha)
+        root["sha"] = new_root_sha
+        trees.pop(old_root_sha)
+        trees[new_root_sha] = root
+        self.envelope["commit"]["tree"]["sha"] = new_root_sha
+        self.envelope["tree"]["sha"] = new_root_sha
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_LEAF_NOT_REGULAR_BLOB")
+
+    def test_portable_snapshot_clean_tree_remains_source_only(self):
+        direct = self.verdict()
+        parsed = review_bundle_json_text(json.dumps(self.envelope))
+        self.assertEqual(direct, parsed)
+        self.assertEqual(direct["diagnostics"], ())
+        self.assertTrue(direct["source_consistency"])
+        self.assertFalse(direct["independent_original_os_proof"])
+        self.assertFalse(direct["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(direct["can_authorize_annual_run"])
+
