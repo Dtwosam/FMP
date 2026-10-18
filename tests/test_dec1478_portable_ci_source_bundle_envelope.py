@@ -26,6 +26,7 @@ MAX_TOTAL_BLOB_BYTES = 4_000_000
 MAX_JSON_NESTING = 512
 MAX_JSON_INTEGER_DIGITS = 64
 MAX_JSON_OBJECT_MEMBERS = 16384
+MAX_JSON_TOTAL_OBJECT_MEMBERS = 32768
 MAX_JSON_FLOAT_LITERAL_CHARS = 128
 MAX_SOURCE_PATH_CHARS = 4096
 MAX_SOURCE_PATH_UTF8_BYTES = 4096
@@ -229,6 +230,20 @@ def _no_duplicate_keys(pairs):
             raise ValueError("duplicate JSON key")
         obj[key] = value
     return obj
+
+
+def _bounded_json_pairs_hook():
+    """Create one per-document budget shared by every decoded JSON object."""
+    total_members = 0
+
+    def accept(pairs):
+        nonlocal total_members
+        total_members += len(pairs)
+        if total_members > MAX_JSON_TOTAL_OBJECT_MEMBERS:
+            raise ValueError("unreviewed aggregate JSON member count")
+        return _no_duplicate_keys(pairs)
+
+    return accept
 
 
 def _no_nonfinite(value):
@@ -572,7 +587,7 @@ def review_bundle_json_text(text):
     if not _json_nesting_within_limit(text):
         return fail_closed("BUNDLE_JSON_GRAMMAR_UNREVIEWED")
     try:
-        doc = json.loads(text, object_pairs_hook=_no_duplicate_keys,
+        doc = json.loads(text, object_pairs_hook=_bounded_json_pairs_hook(),
                          parse_constant=_no_nonfinite,
                          parse_int=_bounded_json_integer,
                          parse_float=_finite_json_float)
@@ -3580,4 +3595,70 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertFalse(verdict["independent_original_os_proof"])
         self.assertFalse(verdict["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(verdict["can_authorize_annual_run"])
+
+    def test_json_total_member_hook_accepts_exact_global_budget(self):
+        hook = _bounded_json_pairs_hook()
+        for _ in range(MAX_JSON_TOTAL_OBJECT_MEMBERS):
+            self.assertEqual(hook([("k", 1)]), {"k": 1})
+
+    def test_json_total_member_hook_rejects_one_over_global_budget(self):
+        hook = _bounded_json_pairs_hook()
+        for _ in range(MAX_JSON_TOTAL_OBJECT_MEMBERS):
+            hook([("k", 1)])
+        with self.assertRaises(ValueError):
+            hook([("k", 1)])
+
+    def test_json_total_member_hook_preserves_per_object_limit(self):
+        hook = _bounded_json_pairs_hook()
+        with self.assertRaises(ValueError):
+            hook([(str(i), 1) for i in range(MAX_JSON_OBJECT_MEMBERS+1)])
+
+    def test_json_total_member_hook_rejects_duplicate_before_budget_exhaustion(self):
+        hook = _bounded_json_pairs_hook()
+        with self.assertRaises(ValueError):
+            hook([("k", 1), ("k", 2)])
+
+    def test_json_many_small_objects_exceed_aggregate_members(self):
+        raw = "[" + ",".join('{"a":1}' for _ in range(
+            MAX_JSON_TOTAL_OBJECT_MEMBERS+1)) + "]"
+        self.assertLess(len(raw.encode("utf-8")), MAX_TEXT_UTF8_BYTES)
+        result = review_bundle_json_text(raw)
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_json_exact_aggregate_object_members_reaches_shape(self):
+        raw = "[" + ",".join('{"a":1}' for _ in range(
+            MAX_JSON_TOTAL_OBJECT_MEMBERS)) + "]"
+        result = review_bundle_json_text(raw)
+        self.assertEqual(result["diagnostics"], ("BUNDLE_SHAPE_UNREVIEWED",))
+
+    def test_json_total_member_counter_resets_for_each_document(self):
+        raw = '["' + 'synthetic' + '"]'
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_SHAPE_UNREVIEWED",))
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_SHAPE_UNREVIEWED",))
+
+    def test_json_total_members_stdin_never_echoes_evidence(self):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        raw = '{"private_canary":[' + ",".join('{"x":1}' for _ in range(
+            MAX_JSON_TOTAL_OBJECT_MEMBERS+1)) + ']}'
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(raw), out)
+        record = json.loads(out.getvalue())
+        self.assertEqual(status, 2)
+        self.assertEqual(record["diagnostics"],
+                         ["BUNDLE_JSON_GRAMMAR_UNREVIEWED"])
+        self.assertNotIn("private_canary", out.getvalue())
+        self.assertFalse(record["can_authorize_annual_run"])
+
+    def test_json_total_member_budget_keeps_clean_source_only_fixture(self):
+        result = review_bundle_json_text(json.dumps(self.envelope))
+        self.assertEqual(result["diagnostics"], ())
+        self.assertTrue(result["source_consistency"])
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
 
