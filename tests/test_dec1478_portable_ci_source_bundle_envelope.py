@@ -5227,3 +5227,78 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertFalse(record["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(record["can_authorize_annual_run"])
 
+    def _tamper_portable_receipt_job_binding(self):
+        self.envelope["raw_ci_log_receipts"]["8001"]["job_id"] = (
+            self.envelope["raw_ci_log_receipts"]["8000"]["job_id"])
+
+    def test_receipt_nested_rejection_is_not_a_portable_diagnostic_allowlist_entry(self):
+        fixture = composite.CombinedSourceChecksRemainNonAuthorizing(
+            "test_consistent_synthetic_bundle_passes_only_source_consistency")
+        fixture.setUp()
+        fixture.raw_log_receipts[8001]["job_id"] = fixture.jobs[8000][0]["id"]
+        self.assertIn("tests_RECEIPT_JOB_MISMATCH",
+                      fixture.verdict()["diagnostics"])
+        self.assertNotIn("tests_RECEIPT_JOB_MISMATCH",
+                         REVIEWED_NESTED_DIAGNOSTICS)
+        self._tamper_portable_receipt_job_binding()
+        self.assertEqual(self.verdict()["diagnostics"],
+                         ("BUNDLE_RESULT_SHAPE_UNREVIEWED",))
+
+    def test_receipt_unallowlisted_nested_label_fails_closed_in_json(self):
+        self._tamper_portable_receipt_job_binding()
+        record = review_bundle_json_text(json.dumps(self.envelope))
+        self.assertEqual(record["diagnostics"],
+                         ("BUNDLE_RESULT_SHAPE_UNREVIEWED",))
+        self.assertFalse(record["source_consistency"])
+        self.assertFalse(record["independent_original_os_proof"])
+        self.assertFalse(record["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(record["can_authorize_annual_run"])
+
+    def test_receipt_unallowlisted_nested_label_fails_closed_via_stdin(self):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self._tamper_portable_receipt_job_binding()
+        out = io.StringIO()
+        status = cli.run_stdin_review(
+            io.StringIO(json.dumps(self.envelope)), out)
+        record = json.loads(out.getvalue())
+        self.assertEqual(status, 2)
+        self.assertEqual(record["diagnostics"],
+                         ["BUNDLE_RESULT_SHAPE_UNREVIEWED"])
+        self.assertNotIn("tests_RECEIPT_JOB_MISMATCH", out.getvalue())
+        self.assertEqual(set(record), VERDICT_FIELDS)
+        self.assertFalse(record["can_authorize_annual_run"])
+
+    def test_receipt_unallowlisted_diagnostic_stable_with_reordered_maps(self):
+        self._tamper_portable_receipt_job_binding()
+        prior = self.verdict()
+        self.envelope["raw_ci_log_receipts"] = dict(
+            reversed(list(self.envelope["raw_ci_log_receipts"].items())))
+        self.envelope = dict(reversed(list(self.envelope.items())))
+        self.assertEqual(prior, self.verdict())
+        self.assertEqual(prior, review_bundle_json_text(
+            json.dumps(self.envelope, sort_keys=True)))
+        self.assertEqual(prior["diagnostics"],
+                         ("BUNDLE_RESULT_SHAPE_UNREVIEWED",))
+
+    def test_reviewed_compare_failure_diagnostic_is_not_overly_suppressed(self):
+        self.envelope["pr"]["changed_files"] = 3
+        direct = self.verdict()
+        parsed = review_bundle_json_text(json.dumps(self.envelope))
+        self.assertEqual(direct, parsed)
+        self.assertIn("PR_COMPARE_FILE_COUNT_MISMATCH", direct["diagnostics"])
+        self.assertFalse(direct["source_consistency"])
+        self.assertFalse(direct["independent_original_os_proof"])
+        self.assertFalse(direct["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(direct["can_authorize_annual_run"])
+
+    def test_receipt_allowlist_clean_source_only_control(self):
+        original = self.verdict()
+        parsed = review_bundle_json_text(json.dumps(self.envelope))
+        self.assertEqual(original, parsed)
+        self.assertEqual(original["diagnostics"], ())
+        self.assertTrue(original["source_consistency"])
+        self.assertFalse(original["independent_original_os_proof"])
+        self.assertFalse(original["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(original["can_authorize_annual_run"])
+
