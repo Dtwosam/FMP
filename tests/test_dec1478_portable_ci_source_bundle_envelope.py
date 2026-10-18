@@ -4873,3 +4873,70 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(result["can_authorize_annual_run"])
 
+    def _assert_inmemory_and_json_bundle_parity(self, mutated, diagnostic):
+        direct = review_bundle_envelope(mutated)
+        serialized = json.dumps(mutated, ensure_ascii=True)
+        parsed = review_bundle_json_text(serialized)
+        self.assertEqual(direct, parsed)
+        self.assertEqual(direct["diagnostics"], diagnostic)
+        self.assertEqual(direct["source_consistency"], not diagnostic)
+        self.assertFalse(direct["independent_original_os_proof"])
+        self.assertFalse(direct["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(direct["can_authorize_annual_run"])
+
+    def test_inmemory_json_parity_rejects_unreviewed_schema(self):
+        altered = copy.deepcopy(self.envelope)
+        altered["schema"] = "synthetic-unreviewed-schema"
+        self._assert_inmemory_and_json_bundle_parity(
+            altered, ("BUNDLE_SCHEMA_UNREVIEWED",))
+
+    def test_inmemory_json_parity_rejects_missing_required_category(self):
+        altered = copy.deepcopy(self.envelope)
+        del altered["nodes"]
+        self._assert_inmemory_and_json_bundle_parity(
+            altered, ("BUNDLE_KEY_INVENTORY_UNREVIEWED",))
+
+    def test_inmemory_json_parity_rejects_extra_authorization_field(self):
+        altered = copy.deepcopy(self.envelope)
+        altered["can_authorize_annual_run"] = True
+        self._assert_inmemory_and_json_bundle_parity(
+            altered, ("BUNDLE_KEY_INVENTORY_UNREVIEWED",))
+
+    def test_inmemory_json_parity_rejects_nonlist_runs(self):
+        altered = copy.deepcopy(self.envelope)
+        altered["runs"] = {}
+        self._assert_inmemory_and_json_bundle_parity(
+            altered, ("BUNDLE_CATEGORY_TYPE_UNREVIEWED",))
+
+    def test_inmemory_json_parity_rejects_nonmap_logs(self):
+        altered = copy.deepcopy(self.envelope)
+        altered["raw_ci_runner_logs"] = []
+        self._assert_inmemory_and_json_bundle_parity(
+            altered, ("BUNDLE_CATEGORY_TYPE_UNREVIEWED",))
+
+    def test_inmemory_json_parity_rejects_invalid_run_map_key(self):
+        altered = copy.deepcopy(self.envelope)
+        key, value = altered["jobs_by_run"].popitem()
+        altered["jobs_by_run"]["0"] = value
+        self._assert_inmemory_and_json_bundle_parity(
+            altered, ("BUNDLE_RUN_KEY_UNREVIEWED",))
+
+    def test_inmemory_json_parity_rejects_invalid_base64_leaf(self):
+        altered = copy.deepcopy(self.envelope)
+        key = next(iter(altered["changed_bytes_b64"]))
+        altered["changed_bytes_b64"][key] = "synthetic%%%%"
+        self._assert_inmemory_and_json_bundle_parity(
+            altered, ("BUNDLE_SOURCE_B64_UNREVIEWED",))
+
+    def test_inmemory_json_parity_rejects_absolute_source_path(self):
+        altered = copy.deepcopy(self.envelope)
+        key, value = altered["changed_bytes_b64"].popitem()
+        altered["changed_bytes_b64"]["/private/synthetic.py"] = value
+        self._assert_inmemory_and_json_bundle_parity(
+            altered, ("BUNDLE_SOURCE_PATH_UNREVIEWED",))
+
+    def test_inmemory_json_parity_preserves_clean_source_only(self):
+        altered = copy.deepcopy(self.envelope)
+        altered = dict(reversed(list(altered.items())))
+        self._assert_inmemory_and_json_bundle_parity(altered, ())
+
