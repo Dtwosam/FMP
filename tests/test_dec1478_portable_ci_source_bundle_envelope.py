@@ -7093,3 +7093,82 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertFalse(self.verdict()["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(self.verdict()["can_authorize_annual_run"])
 
+    def _assert_canonical_doc_source_bytes_still_need_tree_identity(self, payload):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.assertEqual(type(payload), bytes)
+        original = b"# Source-only\n"
+        self.assertNotEqual(payload, original)
+        encoded = base64.b64encode(payload).decode("ascii")
+        self.assertEqual(base64.b64encode(
+            base64.b64decode(encoded, validate=True)).decode("ascii"),
+            encoded)
+        self.envelope["changed_bytes_b64"]["docs/sample.md"] = encoded
+        direct = self.verdict()
+        json_string = json.dumps(self.envelope)
+        parsed = review_bundle_json_text(json_string)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(json_string), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(status, 2)
+        self.assertEqual(direct, parsed)
+        self.assertFalse(direct["source_consistency"])
+        self.assertTrue(direct["diagnostics"])
+        self.assertNotIn("BUNDLE_SOURCE_B64_UNREVIEWED",
+                         direct["diagnostics"])
+        self.assertNotIn("BUNDLE_SOURCE_B64_NONCANONICAL",
+                         direct["diagnostics"])
+        self.assertEqual(emitted["diagnostics"],
+                         list(direct["diagnostics"]))
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertNotIn("changed_bytes_b64", out.getvalue())
+        for v in (direct, emitted):
+            self.assertFalse(v["independent_original_os_proof"])
+            self.assertFalse(v["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(v["can_authorize_annual_run"])
+
+    def test_actual_markdown_fixture_bytes_are_source_only(self):
+        actual = base64.b64decode(
+            self.envelope["changed_bytes_b64"]["docs/sample.md"],
+            validate=True)
+        self.assertEqual(actual, b"# Source-only\n")
+        self.assertEqual(self.verdict()["diagnostics"], ())
+        self.assertTrue(self.verdict()["source_consistency"])
+        self.assertFalse(self.verdict()["can_authorize_annual_run"])
+
+    def test_canonical_markdown_same_length_case_edit_fails_identity(self):
+        self._assert_canonical_doc_source_bytes_still_need_tree_identity(
+            b"# source-only\n")
+
+    def test_canonical_markdown_crlf_edit_fails_identity(self):
+        self._assert_canonical_doc_source_bytes_still_need_tree_identity(
+            b"# Source-only\r\n")
+
+    def test_canonical_markdown_bom_edit_fails_identity(self):
+        self._assert_canonical_doc_source_bytes_still_need_tree_identity(
+            b"\xef\xbb\xbf# Source-only\n")
+
+    def test_canonical_markdown_trailing_space_edit_fails_identity(self):
+        self._assert_canonical_doc_source_bytes_still_need_tree_identity(
+            b"# Source-only \n")
+
+    def test_canonical_markdown_nul_suffix_fails_identity(self):
+        self._assert_canonical_doc_source_bytes_still_need_tree_identity(
+            b"# Source-only\n\x00")
+
+    def test_canonical_markdown_empty_bytes_fail_identity(self):
+        self._assert_canonical_doc_source_bytes_still_need_tree_identity(
+            b"")
+
+    def test_canonical_markdown_wrong_heading_text_fails_identity(self):
+        self._assert_canonical_doc_source_bytes_still_need_tree_identity(
+            b"# Annual-approved\n")
+
+    def test_canonical_markdown_no_final_newline_fails_identity(self):
+        self._assert_canonical_doc_source_bytes_still_need_tree_identity(
+            b"# Source-only")
+
+    def test_canonical_markdown_unicode_heading_fails_identity(self):
+        self._assert_canonical_doc_source_bytes_still_need_tree_identity(
+            "# Sôurce-only\n".encode("utf-8"))
+
