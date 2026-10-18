@@ -1,0 +1,7 @@
+# DEC-1567 — Canonical signed-64-bit CI run-ID map key boundaries
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent one-commit tests/docs child of #1813 at `bf0bae49e88f28827019f0431ecf3b6dd0deaa6d`. Ten new synthetic methods and a cross-interface assertion helper (**2,858 proposed source-defined methods**).
+
+Portable offline CI evidence converts four JSON string-keyed run maps to signed 64-bit positive integer IDs. Across jobs, runner checkouts, raw CI logs and raw log receipts, reject signed prefixes, leading zero, trailing whitespace, scientific notation, non-ASCII Unicode decimal digits, signed-int64 overflow and extremely long decimal text. The same malformed input must fail with `BUNDLE_RUN_KEY_UNREVIEWED` through direct-memory, JSON text and bounded stdin and must not echo a private run-key canary. A canonical clean synthetic bundle retains source consistency only. Explicit negative flags guard against equating valid run-ID formatting with protected-original OS proof, exclusive server dispatch or annual-run consent.
+
+Own exact-head Phase 3/full historical-general CI and qualified independent review required. Tests/docs only: no resource cap, validator, workflow/security-control or protected-admission changes. DEC-650/#820 independent protected-original OS no-write and DEC-651/#821/#779 immutable exclusive protected 2023 run385/attempt1 admission remain **BLOCKED**. No protected original/archive/artifact access, annual dispatch/retry, merge, deployment or trading.
