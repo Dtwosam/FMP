@@ -1,0 +1,7 @@
+# DEC-1616 — Well-formed JSON supplementary Unicode does not rewrite Git tree identity
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent one-commit tests/docs child of #1862 at `6a2b9c522b301c022289a5f326f92f0904416d72`. Fifteen synthetic methods (**3,429 proposed source-defined tests**).
+
+DEC-1615 rejects *unpaired* UTF-16 surrogate escapes as invalid JSON Unicode evidence. This companion distinguishes valid pairs: an emoji encoded as the canonical JSON `\\ud83d\\ude00` sequence must decode to the same Python Unicode scalar, not fail as malformed JSON. But using that perfectly valid scalar to replace an exact Git root/child path, mode, object type, SHA, snapshot key, truncation flag, flat node mode or canonical source Base64 character must still trigger the correct source/tree integrity diagnostic. Assert direct/JSON/stdin parity, no `BUNDLE_JSON_UNICODE_UNREVIEWED` false positive, no path echo and false protected authority. One untouched control remains source-consistent only.
+
+These are offline synthetic consistency checks, not authenticated provider Git objects or protected original OS/annual dispatch authority. Own exact-head Phase 3/historical general CI and independent qualified review required. Tests/docs only; no production/parser/limit/workflow/security/admission change, protected originals/archives/artifacts, annual execution/retry, merge, deployment or trading. DEC-650/#820 and DEC-651/#821/#779 remain **BLOCKED**.
