@@ -53,6 +53,25 @@ def _read_complete_bounded_stdin(input_stream):
         return None, "BUNDLE_STDIN_READ_UNREVIEWED"
 
 
+def _emit_safe_verdict(verdict, output_stream):
+    """Never claim a complete machine-readable result on failed delivery."""
+    try:
+        encoded = (json.dumps(verdict, sort_keys=True, ensure_ascii=True,
+                              separators=(",", ":")) + "\n")
+        written = output_stream.write(encoded)
+        if type(written) is not int or written != len(encoded):
+            return False
+        flush = getattr(output_stream, "flush", None)
+        if flush is not None:
+            if not callable(flush):
+                return False
+            flush()
+    except (OSError, UnicodeError, ValueError, TypeError, RuntimeError,
+            RecursionError, AssertionError, AttributeError):
+        return False
+    return True
+
+
 def run_stdin_review(input_stream, output_stream):
     """Read complete capped stdin text and emit one fail-closed verdict."""
     raw, read_error = _read_complete_bounded_stdin(input_stream)
@@ -60,24 +79,9 @@ def run_stdin_review(input_stream, output_stream):
         verdict = envelope.fail_closed(read_error)
     else:
         verdict = envelope.review_bundle_json_text(raw)
-    # Never echo supplied evidence. Only machine-readable verdict fields.
-    # Refuse reported short/unknown writes: a partially emitted JSON record
-    # must not be mistaken for a successful machine-consumable verdict.
-    try:
-        encoded = (json.dumps(verdict, sort_keys=True, ensure_ascii=True,
-                              separators=(",", ":")) + "\n")
-        written = output_stream.write(encoded)
-        if type(written) is not int or written != len(encoded):
-            return 2
-        # A full buffered write alone is not delivery. Flush when the
-        # supplied output stream exposes the standard flush method.
-        flush = getattr(output_stream, "flush", None)
-        if flush is not None:
-            if not callable(flush):
-                return 2
-            flush()
-    except (OSError, UnicodeError, ValueError, TypeError, RuntimeError,
-            RecursionError, AssertionError, AttributeError):
+    # Never echo supplied evidence. An incomplete verdict cannot
+    # produce a success exit code.
+    if not _emit_safe_verdict(verdict, output_stream):
         return 2
     # Zero is merely *offline source consistency*, never execution consent.
     return 0 if verdict["source_consistency"] is True else 2
@@ -87,7 +91,7 @@ def main():
     # No positional filenames, network URLs, auth tokens or workflow actions.
     if len(sys.argv) != 1:
         verdict = envelope.fail_closed("BUNDLE_STDIN_ONLY_INVOCATION_REQUIRED")
-        sys.stdout.write(json.dumps(verdict, sort_keys=True) + "\n")
+        _emit_safe_verdict(verdict, sys.stdout)
         return 2
     return run_stdin_review(sys.stdin, sys.stdout)
 
@@ -814,6 +818,106 @@ class ExplicitStdinReviewIsNotAnnualWorkflowAdmission(unittest.TestCase):
         self.assertTrue(result["source_consistency"])
         self.assertFalse(result["independent_original_os_proof"])
         self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+
+    def test_denied_argv_uses_single_checked_machine_readable_verdict(self):
+        from unittest.mock import patch
+        out = io.StringIO()
+        with patch.object(sys, "argv", ["review", "--unsafe"]), \
+             patch.object(sys, "stdout", out):
+            rc = main()
+        self.assertEqual(rc, 2)
+        lines = out.getvalue().splitlines()
+        self.assertEqual(len(lines), 1)
+        self.assertEqual(json.loads(lines[0])["diagnostics"],
+                         ["BUNDLE_STDIN_ONLY_INVOCATION_REQUIRED"])
+
+    def test_denied_argv_does_not_echo_supplied_path(self):
+        from unittest.mock import patch
+        out = io.StringIO()
+        with patch.object(sys, "argv", ["review", "protected-canary.json"]), \
+             patch.object(sys, "stdout", out):
+            self.assertEqual(main(), 2)
+        self.assertNotIn("protected-canary", out.getvalue())
+
+    def test_denied_argv_never_reads_stdin(self):
+        from unittest.mock import patch
+        class Unreadable:
+            def read(self, amount):
+                raise AssertionError("denied args must not read evidence")
+        out = io.StringIO()
+        with patch.object(sys, "argv", ["review", "--url"]), \
+             patch.object(sys, "stdin", Unreadable()), \
+             patch.object(sys, "stdout", out):
+            self.assertEqual(main(), 2)
+
+    def test_denied_argv_short_write_remains_nonzero(self):
+        from unittest.mock import patch
+        class Partial:
+            def write(self, value):
+                return len(value)-1
+        with patch.object(sys, "argv", ["review", "--unsafe"]), \
+             patch.object(sys, "stdout", Partial()):
+            self.assertEqual(main(), 2)
+
+    def test_denied_argv_stdout_oserror_does_not_escape(self):
+        from unittest.mock import patch
+        class Broken:
+            def write(self, value):
+                raise BrokenPipeError("private-canary")
+        with patch.object(sys, "argv", ["review", "--unsafe"]), \
+             patch.object(sys, "stdout", Broken()):
+            self.assertEqual(main(), 2)
+
+    def test_denied_argv_flush_error_does_not_escape(self):
+        from unittest.mock import patch
+        class Broken:
+            def write(self, value):
+                return len(value)
+            def flush(self):
+                raise OSError("private-canary")
+        with patch.object(sys, "argv", ["review", "--unsafe"]), \
+             patch.object(sys, "stdout", Broken()):
+            self.assertEqual(main(), 2)
+
+    def test_denied_argv_flushed_once_before_exit(self):
+        from unittest.mock import patch
+        class Capture:
+            def __init__(self):
+                self.text = ""
+                self.flushes = 0
+            def write(self, value):
+                self.text += value
+                return len(value)
+            def flush(self):
+                self.flushes += 1
+        out = Capture()
+        with patch.object(sys, "argv", ["review", "ignored"]), \
+             patch.object(sys, "stdout", out):
+            self.assertEqual(main(), 2)
+        self.assertEqual(out.flushes, 1)
+        self.assertFalse(json.loads(out.text)["can_authorize_annual_run"])
+
+    def test_denied_argv_noncallable_flush_remains_nonzero(self):
+        from unittest.mock import patch
+        class Invalid:
+            flush = True
+            def write(self, value):
+                return len(value)
+        with patch.object(sys, "argv", ["review", "ignored"]), \
+             patch.object(sys, "stdout", Invalid()):
+            self.assertEqual(main(), 2)
+
+    def test_normal_main_stdin_synthetic_success_uses_shared_writer(self):
+        from unittest.mock import patch
+        out = io.StringIO()
+        with patch.object(sys, "argv", ["review"]), \
+             patch.object(sys, "stdin", io.StringIO(json.dumps(self.bundle))), \
+             patch.object(sys, "stdout", out):
+            self.assertEqual(main(), 0)
+        result = json.loads(out.getvalue())
+        self.assertTrue(result["source_consistency"])
         self.assertFalse(result["can_authorize_annual_run"])
 
 
