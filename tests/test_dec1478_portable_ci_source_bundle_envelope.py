@@ -4688,3 +4688,50 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertFalse(record["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(record["can_authorize_annual_run"])
 
+    def assert_lexically_bounded_invalid_json_uses_decoder(self, raw):
+        from unittest.mock import patch
+        self.assertLess(len(raw.encode("utf-8")), MAX_TEXT_UTF8_BYTES)
+        self.assertTrue(_json_nesting_within_limit(raw))
+        self.assertTrue(_json_lexical_array_budgets(raw))
+        self.assertTrue(_json_lexical_object_budgets(raw))
+        with patch.object(json, "loads", wraps=json.loads) as decoder, \
+             patch.object(composite, "review_stacked_draft_evidence",
+                          side_effect=AssertionError("nested review forbidden")) as nested:
+            verdict = review_bundle_json_text(raw)
+        decoder.assert_called_once()
+        nested.assert_not_called()
+        self.assertEqual(verdict["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+        self.assertFalse(verdict["independent_original_os_proof"])
+        self.assertFalse(verdict["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(verdict["can_authorize_annual_run"])
+
+    def test_json_grammar_missing_object_colon_rejected_after_lexing(self):
+        self.assert_lexically_bounded_invalid_json_uses_decoder('{"a" 1}')
+
+    def test_json_grammar_missing_object_comma_rejected_after_lexing(self):
+        self.assert_lexically_bounded_invalid_json_uses_decoder(
+            '{"a":1 "b":2}')
+
+    def test_json_grammar_trailing_object_comma_rejected_after_lexing(self):
+        self.assert_lexically_bounded_invalid_json_uses_decoder('{"a":1,}')
+
+    def test_json_grammar_trailing_array_comma_rejected_after_lexing(self):
+        self.assert_lexically_bounded_invalid_json_uses_decoder('[1,]')
+
+    def test_json_grammar_single_quote_key_rejected_after_lexing(self):
+        self.assert_lexically_bounded_invalid_json_uses_decoder("{'a':1}")
+
+    def test_json_grammar_javascript_comment_rejected_after_lexing(self):
+        self.assert_lexically_bounded_invalid_json_uses_decoder(
+            '{"a":1/* synthetic comment */}')
+
+    def test_json_grammar_invalid_number_tokens_rejected_after_lexing(self):
+        for raw in ('{"a":01}', '{"a":+1}', '{"a":.5}'):
+            with self.subTest(raw=raw):
+                self.assert_lexically_bounded_invalid_json_uses_decoder(raw)
+
+    def test_json_grammar_missing_nested_array_separator_rejected_after_lexing(self):
+        self.assert_lexically_bounded_invalid_json_uses_decoder(
+            '{"a":[1 2]}')
+
