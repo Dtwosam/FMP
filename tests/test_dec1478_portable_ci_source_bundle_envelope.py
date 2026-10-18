@@ -7761,3 +7761,129 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertFalse(direct["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(direct["can_authorize_annual_run"])
 
+    def _json_full_tree_member_spelling(self, key, duplicate=False,
+                                        root_category=False):
+        raw = json.dumps(self.envelope, sort_keys=True,
+                         separators=(",", ":"))
+        if root_category:
+            self.assertEqual(key, "full_tree_snapshots")
+            prefix, suffix = "", raw
+        else:
+            marker = '"full_tree_snapshots":{'
+            self.assertEqual(raw.count(marker), 1)
+            before, after = raw.split(marker, 1)
+            prefix, suffix = before + marker, after
+        needle = json.dumps(key) + ":"
+        self.assertIn(needle, suffix)
+        escaped = ('"' + '\\u%04x' % ord(key[0]) + key[1:] + '"')
+        self.assertNotEqual(escaped, json.dumps(key))
+        replacement = ((needle + "null," + escaped + ":")
+                       if duplicate else escaped + ":")
+        rewritten = prefix + suffix.replace(needle, replacement, 1)
+        self.assertNotEqual(rewritten, raw)
+        # A naive JSON decoder silently retains the second decoded key.
+        # Strict ingress must reject that ambiguity before source review.
+        self.assertEqual(json.loads(rewritten), self.envelope)
+        return rewritten
+
+    def _assert_json_tree_member_equivalence(self, key, root_category=False):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        encoded = self._json_full_tree_member_spelling(
+            key, root_category=root_category)
+        direct = self.verdict()
+        parsed = review_bundle_json_text(encoded)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(encoded), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(direct["diagnostics"], ())
+        self.assertTrue(direct["source_consistency"])
+        self.assertEqual(direct, parsed)
+        self.assertEqual(status, 0)
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"], [])
+        self.assertTrue(emitted["source_consistency"])
+        for result in (direct, emitted):
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def _assert_json_tree_duplicate_decoded_key_refused(
+            self, key, root_category=False):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        encoded = self._json_full_tree_member_spelling(
+            key, duplicate=True, root_category=root_category)
+        direct = self.verdict()
+        self.assertTrue(direct["source_consistency"])
+        self.assertEqual(direct["diagnostics"], ())
+        parsed = review_bundle_json_text(encoded)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(encoded), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(status, 2)
+        self.assertEqual(parsed["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+        self.assertFalse(parsed["source_consistency"])
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"],
+                         list(parsed["diagnostics"]))
+        self.assertNotIn("tests/sample.py", out.getvalue())
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        for result in (parsed, emitted):
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_tree_json_escaped_root_category_equivalent(self):
+        self._assert_json_tree_member_equivalence(
+            "full_tree_snapshots", root_category=True)
+
+    def test_portable_tree_json_escaped_root_snapshot_hash_key_equivalent(self):
+        self._assert_json_tree_member_equivalence(
+            self.envelope["commit"]["tree"]["sha"])
+
+    def test_portable_tree_json_escaped_nested_path_key_equivalent(self):
+        self._assert_json_tree_member_equivalence("path")
+
+    def test_portable_tree_json_escaped_nested_mode_key_equivalent(self):
+        self._assert_json_tree_member_equivalence("mode")
+
+    def test_portable_tree_json_escaped_nested_type_key_equivalent(self):
+        self._assert_json_tree_member_equivalence("type")
+
+    def test_portable_tree_json_escaped_nested_sha_key_equivalent(self):
+        self._assert_json_tree_member_equivalence("sha")
+
+    def test_portable_tree_json_escaped_nested_tree_key_equivalent(self):
+        self._assert_json_tree_member_equivalence("tree")
+
+    def test_portable_tree_json_escaped_nested_truncated_key_equivalent(self):
+        self._assert_json_tree_member_equivalence("truncated")
+
+    def test_portable_tree_json_duplicate_root_category_refused(self):
+        self._assert_json_tree_duplicate_decoded_key_refused(
+            "full_tree_snapshots", root_category=True)
+
+    def test_portable_tree_json_duplicate_root_snapshot_hash_key_refused(self):
+        self._assert_json_tree_duplicate_decoded_key_refused(
+            self.envelope["commit"]["tree"]["sha"])
+
+    def test_portable_tree_json_duplicate_nested_path_key_refused(self):
+        self._assert_json_tree_duplicate_decoded_key_refused("path")
+
+    def test_portable_tree_json_duplicate_nested_mode_key_refused(self):
+        self._assert_json_tree_duplicate_decoded_key_refused("mode")
+
+    def test_portable_tree_json_duplicate_nested_type_key_refused(self):
+        self._assert_json_tree_duplicate_decoded_key_refused("type")
+
+    def test_portable_tree_json_duplicate_nested_sha_key_refused(self):
+        self._assert_json_tree_duplicate_decoded_key_refused("sha")
+
+    def test_portable_tree_json_duplicate_nested_tree_key_refused(self):
+        self._assert_json_tree_duplicate_decoded_key_refused("tree")
+
+    def test_portable_tree_json_duplicate_nested_truncated_key_refused(self):
+        self._assert_json_tree_duplicate_decoded_key_refused("truncated")
+
