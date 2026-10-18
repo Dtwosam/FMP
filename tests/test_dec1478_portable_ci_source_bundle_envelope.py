@@ -9176,86 +9176,94 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_fault_order_clean_control(self):
         self._assert_portable_tree_object_order_consistency_only()
 
-    def test_portable_ci_tree_phase3_log_missing_tests_mode_both_refused(self):
+
+    def _assert_portable_ci_tree_opaque_rejection(self):
+        """Do not elevate nested, possibly unreviewed diagnostics into public evidence."""
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        import copy
+        before = copy.deepcopy(self.envelope)
+        direct = self.verdict()
+        raw = json.dumps(self.envelope, sort_keys=True)
+        parsed = review_bundle_json_text(raw)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(raw), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(self.envelope, before)
+        self.assertEqual(direct, parsed)
+        self.assertEqual(status, 2)
+        self.assertEqual(direct["diagnostics"],
+                         ("BUNDLE_RESULT_SHAPE_UNREVIEWED",))
+        self.assertFalse(direct["source_consistency"])
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"], list(direct["diagnostics"]))
+        self.assertNotIn("tests/sample.py", out.getvalue())
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        for result in (direct, emitted):
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_ci_tree_phase3_log_missing_tests_mode_opaque_refused(self):
         self.assertIn("8000", self.envelope["raw_ci_runner_logs"])
         self.envelope["raw_ci_runner_logs"].pop("8000")
         self._portable_snapshot_leaf("tests")["mode"] = "100755"
-        self._assert_portable_multiple_tree_faults(
-            "RAW_CI_RUNNER_LOG_INVENTORY_UNREVIEWED",
-            "TREE_CHAIN_LEAF_NOT_REGULAR_BLOB")
+        self._assert_portable_ci_tree_opaque_rejection()
 
-    def test_portable_ci_tree_historical_log_missing_docs_mode_both_refused(self):
+    def test_portable_ci_tree_historical_log_missing_docs_mode_opaque_refused(self):
         self.assertIn("8001", self.envelope["raw_ci_runner_logs"])
         self.envelope["raw_ci_runner_logs"].pop("8001")
         self._portable_snapshot_leaf("docs")["mode"] = "100755"
-        self._assert_portable_multiple_tree_faults(
-            "RAW_CI_RUNNER_LOG_INVENTORY_UNREVIEWED",
-            "TREE_CHAIN_LEAF_NOT_REGULAR_BLOB")
+        self._assert_portable_ci_tree_opaque_rejection()
 
-    def test_portable_ci_tree_phase3_log_missing_docs_sha_both_refused(self):
+    def test_portable_ci_tree_phase3_log_missing_docs_sha_opaque_refused(self):
         self.assertIn("8000", self.envelope["raw_ci_runner_logs"])
         self.envelope["raw_ci_runner_logs"].pop("8000")
         self._portable_snapshot_leaf("docs")["sha"] = "a"*40
-        self._assert_portable_multiple_tree_faults(
-            "RAW_CI_RUNNER_LOG_INVENTORY_UNREVIEWED",
-            "TREE_CHAIN_LEAF_BYTES_SHA_MISMATCH")
+        self._assert_portable_ci_tree_opaque_rejection()
 
-    def test_portable_ci_tree_historical_log_missing_tests_sha_both_refused(self):
+    def test_portable_ci_tree_historical_log_missing_tests_sha_opaque_refused(self):
         self.assertIn("8001", self.envelope["raw_ci_runner_logs"])
         self.envelope["raw_ci_runner_logs"].pop("8001")
         self._portable_snapshot_leaf("tests")["sha"] = "b"*40
-        self._assert_portable_multiple_tree_faults(
-            "RAW_CI_RUNNER_LOG_INVENTORY_UNREVIEWED",
-            "TREE_CHAIN_LEAF_BYTES_SHA_MISMATCH")
+        self._assert_portable_ci_tree_opaque_rejection()
 
-    def test_portable_ci_tree_phase3_log_missing_docs_path_both_refused(self):
+    def test_portable_ci_tree_phase3_log_missing_docs_path_opaque_refused(self):
         self.assertIn("8000", self.envelope["raw_ci_runner_logs"])
         self.envelope["raw_ci_runner_logs"].pop("8000")
         self._portable_snapshot_leaf("docs")["path"] = "changed.md"
-        self._assert_portable_multiple_tree_faults(
-            "RAW_CI_RUNNER_LOG_INVENTORY_UNREVIEWED",
-            "TREE_CHAIN_ENTRY_CARDINALITY_UNREVIEWED")
+        self._assert_portable_ci_tree_opaque_rejection()
 
-    def test_portable_ci_tree_historical_log_missing_tests_path_both_refused(self):
+    def test_portable_ci_tree_historical_log_missing_tests_path_opaque_refused(self):
         self.assertIn("8001", self.envelope["raw_ci_runner_logs"])
         self.envelope["raw_ci_runner_logs"].pop("8001")
         self._portable_snapshot_leaf("tests")["path"] = "changed.py"
-        self._assert_portable_multiple_tree_faults(
-            "RAW_CI_RUNNER_LOG_INVENTORY_UNREVIEWED",
-            "TREE_CHAIN_ENTRY_CARDINALITY_UNREVIEWED")
+        self._assert_portable_ci_tree_opaque_rejection()
 
-    def test_portable_ci_tree_phase3_log_missing_flat_node_mode_both_refused(self):
+    def test_portable_ci_tree_phase3_log_missing_flat_node_mode_opaque_refused(self):
         self.assertIn("8000", self.envelope["raw_ci_runner_logs"])
         self.envelope["raw_ci_runner_logs"].pop("8000")
         self.envelope["nodes"]["tests/sample.py"]["mode"] = "120000"
-        self._assert_portable_multiple_tree_faults(
-            "RAW_CI_RUNNER_LOG_INVENTORY_UNREVIEWED",
-            "GIT_TREE_LEAF_MODE_DRIFT")
+        self._assert_portable_ci_tree_opaque_rejection()
 
-    def test_portable_ci_tree_historical_log_missing_flat_node_mode_both_refused(self):
+    def test_portable_ci_tree_historical_log_missing_flat_node_mode_opaque_refused(self):
         self.assertIn("8001", self.envelope["raw_ci_runner_logs"])
         self.envelope["raw_ci_runner_logs"].pop("8001")
         self.envelope["nodes"]["docs/sample.md"]["mode"] = "120000"
-        self._assert_portable_multiple_tree_faults(
-            "RAW_CI_RUNNER_LOG_INVENTORY_UNREVIEWED",
-            "GIT_TREE_LEAF_MODE_DRIFT")
+        self._assert_portable_ci_tree_opaque_rejection()
 
-    def test_portable_ci_tree_phase3_log_missing_orphan_tree_both_refused(self):
+    def test_portable_ci_tree_phase3_log_missing_orphan_tree_opaque_refused(self):
         self.assertIn("8000", self.envelope["raw_ci_runner_logs"])
         self.envelope["raw_ci_runner_logs"].pop("8000")
         self.envelope["full_tree_snapshots"]["f"*40] = {"sha": "f"*40, "truncated": False, "tree": []}
-        self._assert_portable_multiple_tree_faults(
-            "RAW_CI_RUNNER_LOG_INVENTORY_UNREVIEWED",
-            "TREE_CHAIN_TREE_SNAPSHOT_INVENTORY_UNREVIEWED")
+        self._assert_portable_ci_tree_opaque_rejection()
 
-    def test_portable_ci_tree_historical_log_missing_docs_parent_both_refused(self):
+    def test_portable_ci_tree_historical_log_missing_docs_parent_opaque_refused(self):
         self.assertIn("8001", self.envelope["raw_ci_runner_logs"])
         self.envelope["raw_ci_runner_logs"].pop("8001")
         root = self.envelope["full_tree_snapshots"][self.envelope["commit"]["tree"]["sha"]]
         next(e for e in root["tree"] if e["path"] == "docs")["mode"] = "120000"
-        self._assert_portable_multiple_tree_faults(
-            "RAW_CI_RUNNER_LOG_INVENTORY_UNREVIEWED",
-            "TREE_CHAIN_PARENT_NOT_REGULAR_TREE")
+        self._assert_portable_ci_tree_opaque_rejection()
 
     def test_portable_ci_tree_raw_logs_clean_control(self):
         self._assert_portable_tree_object_order_consistency_only()
@@ -9986,5 +9994,48 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self._assert_portable_cyclic_graph_rejected_before_nested_review()
 
     def test_portable_cyclic_tree_clean_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
+    def test_portable_compound_raw_log_tree_faults_reverse_order_phase3(self):
+        import copy
+        initial = copy.deepcopy(self.envelope)
+        self.envelope["raw_ci_runner_logs"].pop("8000")
+        self._portable_snapshot_leaf("tests")["mode"] = "100755"
+        expected = self.verdict()
+        self.envelope = copy.deepcopy(initial)
+        self._portable_snapshot_leaf("tests")["mode"] = "100755"
+        self.envelope["raw_ci_runner_logs"].pop("8000")
+        self.assertEqual(self.verdict(), expected)
+        self._assert_portable_ci_tree_opaque_rejection()
+
+    def test_portable_compound_raw_log_tree_faults_reverse_order_historical(self):
+        import copy
+        initial = copy.deepcopy(self.envelope)
+        self.envelope["raw_ci_runner_logs"].pop("8001")
+        self._portable_snapshot_leaf("docs")["sha"] = "a"*40
+        expected = self.verdict()
+        self.envelope = copy.deepcopy(initial)
+        self._portable_snapshot_leaf("docs")["sha"] = "a"*40
+        self.envelope["raw_ci_runner_logs"].pop("8001")
+        self.assertEqual(self.verdict(), expected)
+        self._assert_portable_ci_tree_opaque_rejection()
+
+    def test_portable_reviewed_compound_raw_log_tree_codes_remain_source_only(self):
+        codes = tuple(sorted((
+            "RAW_CI_RUNNER_LOG_INVENTORY_UNREVIEWED",
+            "TREE_CHAIN_LEAF_BYTES_SHA_MISMATCH",
+        )))
+        self._assert_reviewed_nested_tree_failure_code_preserved(codes)
+
+    def test_portable_unreviewed_compound_raw_log_code_is_safely_masked(self):
+        self._assert_forged_tree_review_verdict_refused({
+            "source_consistency": False,
+            "diagnostics": (
+                "RAW_CI_RUNNER_LOG_INVENTORY_UNREVIEWED",
+                "UNREVIEWED_PRIVATE_COMPOSITE_DIAGNOSTIC",
+            ),
+        })
+
+    def test_portable_corrected_compound_clean_fixture_remains_nonauthorizing(self):
         self._assert_portable_tree_object_order_consistency_only()
 

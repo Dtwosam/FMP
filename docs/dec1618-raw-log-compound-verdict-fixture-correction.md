@@ -1,0 +1,9 @@
+# DEC-1618 — Correct compound raw CI log/tree fixture to match fail-closed public verdict
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent, one-commit tests/docs child of #1864 at `586c19bde2daed7054d9b480f7d794b5c1c1a853`. Ten corrected existing assertions and five additional synthetic regression methods (**3,449 proposed source-defined methods**).
+
+The historical/general suites for #1858–#1864 failed on the ten DEC-1611 test cases: when a required raw CI runner log is removed alongside an independent tree fault, the **portable envelope** deliberately reduces the composite's unreviewed or malformed nested diagnostic result to the safe `BUNDLE_RESULT_SHAPE_UNREVIEWED`. The previous tests incorrectly expected multiple internal `RAW_CI_RUNNER_LOG_INVENTORY_UNREVIEWED` and `TREE_CHAIN_*` codes to be exposed as the *public* portable verdict. That assumption was not supported by the actual reviewer behavior. Do not weaken any reviewed diagnostic allowlist, output schema, or protected run gate merely to satisfy the fixture.
+
+The corrected ten source tests assert exact safe rejection and parity for direct-memory, JSON-text and bounded stdin, no changed-path echo and all protected proof/gate/authorization fields false. Five follow-on cases check mutation-order invariance, valid allowlisted negative diagnostics under a deliberately mocked nested reviewer, rejection of unreviewed private composite diagnostics, and the nonauthorizing clean control. This change is **tests/docs-only** and does not authenticate independent GitHub, protected-original OS or annual admission evidence.
+
+Require own exact-head Phase 3/full historical-general CI and qualified independent review. No production/parser/resource-budget/workflow/security-control changes, protected original/archive/artifact access, annual dispatch/retry, merging, deployment or trading. DEC-650/#820 and DEC-651/#821/#779 remain **BLOCKED**.
