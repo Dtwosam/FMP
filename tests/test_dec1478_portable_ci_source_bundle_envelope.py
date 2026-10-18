@@ -11814,3 +11814,74 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_nonstring_run_key_clean_control(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+    def _assert_source_path_unicode_byte_limit_refused(self, label):
+        import io
+        import copy
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        payload = self.envelope["changed_bytes_b64"].pop("docs/sample.md")
+        self.envelope["changed_bytes_b64"][label] = payload
+        before = copy.deepcopy(self.envelope)
+        raw = json.dumps(self.envelope, ensure_ascii=True)
+        direct = self.verdict()
+        parsed = review_bundle_json_text(raw)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(raw), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(self.envelope, before)
+        self.assertEqual(direct, parsed)
+        self.assertEqual(status, 2)
+        self.assertEqual(direct["diagnostics"],
+                         ("BUNDLE_SOURCE_PATH_UNREVIEWED",))
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"],
+                         ["BUNDLE_SOURCE_PATH_UNREVIEWED"])
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        self.assertNotIn("tests/sample.py", out.getvalue())
+        for result in (direct, emitted):
+            self.assertFalse(result["source_consistency"])
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_path_bytes_ascii_segment_over_255_refused(self):
+        self._assert_source_path_unicode_byte_limit_refused("docs/" + "a"*256 + ".md")
+
+    def test_portable_path_bytes_utf8_segment_over_255_refused(self):
+        self._assert_source_path_unicode_byte_limit_refused("docs/" + "é"*128 + ".md")
+
+    def test_portable_path_bytes_emoji_segment_over_255_refused(self):
+        self._assert_source_path_unicode_byte_limit_refused("docs/" + "😀"*64 + ".md")
+
+    def test_portable_path_bytes_total_utf8_over_4096_refused(self):
+        self._assert_source_path_unicode_byte_limit_refused("docs/" + "/".join(["a"*210]*20) + "/x.py")
+
+    def test_portable_path_bytes_length_over_4096_refused(self):
+        self._assert_source_path_unicode_byte_limit_refused("docs/" + "a"*4097)
+
+    def test_portable_path_bytes_combining_grapheme_joiner_refused(self):
+        self._assert_source_path_unicode_byte_limit_refused("docs/a\u034fb.md")
+
+    def test_portable_path_bytes_variation_selector_refused(self):
+        self._assert_source_path_unicode_byte_limit_refused("docs/a\ufe0fb.md")
+
+    def test_portable_path_bytes_noncharacter_fdd0_refused(self):
+        self._assert_source_path_unicode_byte_limit_refused("docs/a\ufdd0b.md")
+
+    def test_portable_path_bytes_c1_control_refused(self):
+        self._assert_source_path_unicode_byte_limit_refused("docs/a\u0085b.md")
+
+    def test_portable_path_bytes_unicode_line_separator_refused(self):
+        self._assert_source_path_unicode_byte_limit_refused("docs/a\u2028b.md")
+
+    def test_portable_path_bytes_unicode_paragraph_separator_refused(self):
+        self._assert_source_path_unicode_byte_limit_refused("docs/a\u2029b.md")
+
+    def test_portable_path_bytes_unicode_ideographic_space_refused(self):
+        self._assert_source_path_unicode_byte_limit_refused("docs/a\u3000b.md")
+
+    def test_portable_path_bytes_emoji_variation_selector_refused(self):
+        self._assert_source_path_unicode_byte_limit_refused("docs/emoji\U000e0100.md")
+
+    def test_portable_path_bytes_clean_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+

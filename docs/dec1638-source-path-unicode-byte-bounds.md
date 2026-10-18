@@ -1,0 +1,7 @@
+# DEC-1638 — Source path byte-length limits and invisible Unicode remain strict
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** One-commit tests/docs child of #1884 at `cb20dc6267fef861b8ddc376701126ad8fb917bb`. Fourteen new methods (**3,744 proposed source-defined tests**).
+
+Even a relative POSIX-looking path can be unsafe if a segment exceeds the 255-byte limit, if the complete UTF-8 label exceeds 4,096 bytes/characters, or if invisible format/control Unicode is present. Thirteen synthetic source-map key replacements cover ASCII, multibyte and emoji segment sizes; long multisegment paths; combining grapheme joiner, variation selectors, Unicode noncharacters, C1 control, line/paragraph separators, ideographic space and supplementary variation selectors. All fail exactly `BUNDLE_SOURCE_PATH_UNREVIEWED` across direct-memory, JSON-text and bounded stdin before composite source review, while preserving caller data, source path privacy and false protected authority. A canonical clean fixture remains source-consistent only.
+
+These are offline source label constraints, not independent provider authentication or annual-run permission. Require own exact-head Phase 3/historical-general CI and qualified independent review. Tests/docs only; no production/parser/resource-limit/workflow/security/admission changes, protected originals/archive/artifact access, annual dispatch/retry, merge, deployment or trading. DEC-650/#820 and DEC-651/#821/#779 remain **BLOCKED**.
