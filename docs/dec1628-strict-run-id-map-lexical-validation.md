@@ -1,0 +1,7 @@
+# DEC-1628 — GitHub run ID map keys require exact canonical decimal identities
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent one-commit tests/docs child of #1874 at `dc915911ec69abc57c302314b261f939f4cfc157`. Seventeen source-defined methods (**3,606 proposed regression tests**).
+
+The four portable run-key maps—jobs, checkout evidence, raw runner logs and raw log receipts—accept only nonzero canonical ASCII decimal run IDs within signed 64-bit range. Sixteen mutants inject zero, leading zeros, signs, decimal/scientific/hex text, whitespace/newline, Unicode numerals, invisible characters, empty keys, overlength digits or an out-of-range integer. Every valid JSON-serializable mutant must be rejected **before** nested review with exactly `BUNDLE_RUN_KEY_UNREVIEWED` over direct-memory, JSON-text and bounded stdin. Preserve caller inputs and never echo raw source paths or grant protected annual execution. One clean source-only control remains nonauthorizing.
+
+This test-only draft establishes no provider-authenticated GitHub/runner evidence, original protected OS proof or annual dispatch consent. Own exact-head Phase 3/full historical-general CI and independent qualified review required. No production/parser/resources/workflow/security/admission changes, protected original/archive/artifact access, annual dispatch/retry, merging, deployment or trading. DEC-650/#820 and DEC-651/#821/#779 remain **BLOCKED**.

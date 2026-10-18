@@ -10868,3 +10868,95 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_numeric_budget_clean_control_source_only(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+    def _assert_portable_run_map_key_invalid(self):
+        import copy
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        before = copy.deepcopy(self.envelope)
+        raw = json.dumps(self.envelope, ensure_ascii=True, sort_keys=True)
+        direct = self.verdict()
+        parsed = review_bundle_json_text(raw)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(raw), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(self.envelope, before)
+        self.assertEqual(direct, parsed)
+        self.assertEqual(status, 2)
+        self.assertEqual(direct["diagnostics"],
+                         ("BUNDLE_RUN_KEY_UNREVIEWED",))
+        self.assertFalse(direct["source_consistency"])
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"], ["BUNDLE_RUN_KEY_UNREVIEWED"])
+        self.assertNotIn("tests/sample.py", out.getvalue())
+        for verdict in (direct, emitted):
+            self.assertFalse(verdict["independent_original_os_proof"])
+            self.assertFalse(verdict["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(verdict["can_authorize_annual_run"])
+
+    def test_portable_run_key_jobs_zero_refused(self):
+        self.envelope["jobs_by_run"]["0"] = {}
+        self._assert_portable_run_map_key_invalid()
+
+    def test_portable_run_key_jobs_leading_zero_refused(self):
+        self.envelope["jobs_by_run"]["0001"] = {}
+        self._assert_portable_run_map_key_invalid()
+
+    def test_portable_run_key_jobs_plus_sign_refused(self):
+        self.envelope["jobs_by_run"]["+1"] = {}
+        self._assert_portable_run_map_key_invalid()
+
+    def test_portable_run_key_jobs_negative_refused(self):
+        self.envelope["jobs_by_run"]["-1"] = {}
+        self._assert_portable_run_map_key_invalid()
+
+    def test_portable_run_key_jobs_decimal_refused(self):
+        self.envelope["jobs_by_run"]["1.0"] = {}
+        self._assert_portable_run_map_key_invalid()
+
+    def test_portable_run_key_jobs_sci_notation_refused(self):
+        self.envelope["jobs_by_run"]["1e3"] = {}
+        self._assert_portable_run_map_key_invalid()
+
+    def test_portable_run_key_checkout_leading_space_refused(self):
+        self.envelope["checkout_by_run"][" 1"] = {}
+        self._assert_portable_run_map_key_invalid()
+
+    def test_portable_run_key_checkout_trailing_space_refused(self):
+        self.envelope["checkout_by_run"]["1 "] = {}
+        self._assert_portable_run_map_key_invalid()
+
+    def test_portable_run_key_checkout_fullwidth_digit_refused(self):
+        self.envelope["checkout_by_run"]["１"] = {}
+        self._assert_portable_run_map_key_invalid()
+
+    def test_portable_run_key_checkout_arabic_digit_refused(self):
+        self.envelope["checkout_by_run"]["١"] = {}
+        self._assert_portable_run_map_key_invalid()
+
+    def test_portable_run_key_raw_log_hidden_zwsp_refused(self):
+        self.envelope["raw_ci_runner_logs"]["1​"] = {}
+        self._assert_portable_run_map_key_invalid()
+
+    def test_portable_run_key_raw_log_hex_refused(self):
+        self.envelope["raw_ci_runner_logs"]["0x8000"] = {}
+        self._assert_portable_run_map_key_invalid()
+
+    def test_portable_run_key_raw_log_long_refused(self):
+        self.envelope["raw_ci_runner_logs"]["12345678901234567890"] = {}
+        self._assert_portable_run_map_key_invalid()
+
+    def test_portable_run_key_receipt_over_int64_refused(self):
+        self.envelope["raw_ci_log_receipts"]["9223372036854775808"] = {}
+        self._assert_portable_run_map_key_invalid()
+
+    def test_portable_run_key_receipt_empty_refused(self):
+        self.envelope["raw_ci_log_receipts"][""] = {}
+        self._assert_portable_run_map_key_invalid()
+
+    def test_portable_run_key_receipt_newline_refused(self):
+        self.envelope["raw_ci_log_receipts"]["1\n"] = {}
+        self._assert_portable_run_map_key_invalid()
+
+    def test_portable_run_key_clean_control_source_only(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
