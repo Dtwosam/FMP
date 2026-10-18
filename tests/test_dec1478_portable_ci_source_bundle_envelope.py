@@ -9899,3 +9899,92 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_valid_pair_tree_clean_source_only_control(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+    def _assert_portable_cyclic_graph_rejected_before_nested_review(self):
+        from unittest.mock import patch
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          side_effect=AssertionError(
+                              "cyclic input reached nested review")):
+            result = self.verdict()
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_STRUCTURE_BUDGET_UNREVIEWED",))
+        self.assertFalse(result["source_consistency"])
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_cyclic_tree_root_full_tree_map_refused(self):
+        trees = self.envelope["full_tree_snapshots"]
+        trees["loop"] = trees
+        self._assert_portable_cyclic_graph_rejected_before_nested_review()
+
+    def test_portable_cyclic_tree_root_tree_snapshot_refused(self):
+        sha = self.envelope["commit"]["tree"]["sha"]
+        root = self.envelope["full_tree_snapshots"][sha]
+        root["loop"] = root
+        self._assert_portable_cyclic_graph_rejected_before_nested_review()
+
+    def test_portable_cyclic_tree_child_tree_snapshot_refused(self):
+        trees, _, sha = self._portable_snapshot_parent_child("docs")
+        child = trees[sha]
+        child["loop"] = child
+        self._assert_portable_cyclic_graph_rejected_before_nested_review()
+
+    def test_portable_cyclic_tree_root_tree_entry_refused(self):
+        sha = self.envelope["commit"]["tree"]["sha"]
+        entry = self.envelope["full_tree_snapshots"][sha]["tree"][0]
+        entry["loop"] = entry
+        self._assert_portable_cyclic_graph_rejected_before_nested_review()
+
+    def test_portable_cyclic_tree_child_tree_entry_refused(self):
+        entry = self._portable_snapshot_leaf("tests")
+        entry["loop"] = entry
+        self._assert_portable_cyclic_graph_rejected_before_nested_review()
+
+    def test_portable_cyclic_tree_flat_node_directory_refused(self):
+        node = self.envelope["nodes"]["tests"]
+        node["loop"] = node
+        self._assert_portable_cyclic_graph_rejected_before_nested_review()
+
+    def test_portable_cyclic_tree_flat_nodes_map_refused(self):
+        nodes = self.envelope["nodes"]
+        nodes["docs/sample.md"]["loop"] = nodes
+        self._assert_portable_cyclic_graph_rejected_before_nested_review()
+
+    def test_portable_cyclic_tree_compare_file_record_refused(self):
+        item = self.envelope["compare"]["files"][0]
+        item["loop"] = item
+        self._assert_portable_cyclic_graph_rejected_before_nested_review()
+
+    def test_portable_cyclic_tree_commit_tree_record_refused(self):
+        item = self.envelope["commit"]["tree"]
+        item["loop"] = item
+        self._assert_portable_cyclic_graph_rejected_before_nested_review()
+
+    def test_portable_cyclic_tree_phase3_evidence_record_refused(self):
+        item = self.envelope["phase3_evidence_snapshot"]
+        item["loop"] = item
+        self._assert_portable_cyclic_graph_rejected_before_nested_review()
+
+    def test_portable_cyclic_tree_merge_checkout_record_refused(self):
+        item = self.envelope["merge_checkout_snapshot"]
+        item["loop"] = item
+        self._assert_portable_cyclic_graph_rejected_before_nested_review()
+
+    def test_portable_cyclic_tree_raw_log_receipt_record_refused(self):
+        item = self.envelope["raw_ci_log_receipts"]["8000"]
+        item["loop"] = item
+        self._assert_portable_cyclic_graph_rejected_before_nested_review()
+
+    def test_portable_cyclic_tree_runner_metadata_record_refused(self):
+        item = self.envelope["runs"][0]
+        item["loop"] = item
+        self._assert_portable_cyclic_graph_rejected_before_nested_review()
+
+    def test_portable_cyclic_tree_changed_source_map_refused(self):
+        item = self.envelope["changed_bytes_b64"]
+        item["loop"] = item
+        self._assert_portable_cyclic_graph_rejected_before_nested_review()
+
+    def test_portable_cyclic_tree_clean_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
