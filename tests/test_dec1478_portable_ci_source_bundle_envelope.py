@@ -9260,3 +9260,73 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_ci_tree_raw_logs_clean_control(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+    def test_portable_compare_tree_pr_file_count_and_test_exec_refused(self):
+        self.envelope["pr"]["changed_files"] = 3
+        self._portable_snapshot_leaf("tests")["mode"] = "100755"
+        self._assert_portable_multiple_tree_faults(
+            "PR_COMPARE_FILE_COUNT_MISMATCH", "TREE_CHAIN_LEAF_NOT_REGULAR_BLOB")
+
+    def test_portable_compare_tree_pr_additions_and_docs_sha_refused(self):
+        self.envelope["pr"]["additions"] += 1
+        self._portable_snapshot_leaf("docs")["sha"] = "a"*40
+        self._assert_portable_multiple_tree_faults(
+            "PR_COMPARE_ADDITIONS_MISMATCH", "TREE_CHAIN_LEAF_BYTES_SHA_MISMATCH")
+
+    def test_portable_compare_tree_pr_deletions_and_test_exec_refused(self):
+        self.envelope["pr"]["deletions"] += 1
+        self._portable_snapshot_leaf("tests")["mode"] = "100755"
+        self._assert_portable_multiple_tree_faults(
+            "PR_COMPARE_DELETIONS_MISMATCH", "TREE_CHAIN_LEAF_NOT_REGULAR_BLOB")
+
+    def test_portable_compare_tree_compare_changes_and_docs_sha_refused(self):
+        self.envelope["compare"]["files"][0]["changes"] += 1
+        self._portable_snapshot_leaf("docs")["sha"] = "a"*40
+        self._assert_portable_multiple_tree_faults(
+            "COMPARE_FILE_TOTAL_LINES_MISMATCH", "TREE_CHAIN_LEAF_BYTES_SHA_MISMATCH")
+
+    def test_portable_compare_tree_compare_negative_deletions_and_tests_mode_refused(self):
+        self.envelope["compare"]["files"][0]["deletions"] = -1
+        self._portable_snapshot_leaf("tests")["mode"] = "100755"
+        self._assert_portable_multiple_tree_faults(
+            "COMPARE_FILE_LINE_COUNTS_UNREVIEWED", "TREE_CHAIN_LEAF_NOT_REGULAR_BLOB")
+
+    def test_portable_compare_tree_compare_null_additions_and_docs_mode_refused(self):
+        self.envelope["compare"]["files"][1]["additions"] = None
+        self._portable_snapshot_leaf("docs")["mode"] = "100755"
+        self._assert_portable_multiple_tree_faults(
+            "COMPARE_FILE_LINE_COUNTS_UNREVIEWED", "TREE_CHAIN_LEAF_NOT_REGULAR_BLOB")
+
+    def test_portable_compare_tree_compare_boolean_changes_and_tests_sha_refused(self):
+        self.envelope["compare"]["files"][0]["changes"] = True
+        self._portable_snapshot_leaf("tests")["sha"] = "a"*40
+        self._assert_portable_multiple_tree_faults(
+            "COMPARE_FILE_LINE_COUNTS_UNREVIEWED", "TREE_CHAIN_LEAF_BYTES_SHA_MISMATCH")
+
+    def test_portable_compare_tree_compare_two_commits_and_docs_mode_refused(self):
+        self.envelope["compare"]["total_commits"] = 2
+        self._portable_snapshot_leaf("docs")["mode"] = "120000"
+        self._assert_portable_multiple_tree_faults(
+            "COMPARE_NOT_STRICT_ONE_COMMIT_CHILD", "TREE_CHAIN_LEAF_NOT_REGULAR_BLOB")
+
+    def test_portable_compare_tree_pr_boolean_additions_and_test_mode_refused(self):
+        self.envelope["pr"]["additions"] = False
+        self._portable_snapshot_leaf("tests")["mode"] = "100755"
+        self._assert_portable_multiple_tree_faults(
+            "PR_ADDITIONS_UNREVIEWED", "TREE_CHAIN_LEAF_NOT_REGULAR_BLOB")
+
+    def test_portable_compare_tree_compare_missing_docs_status_and_test_sha_refused(self):
+        self.envelope["compare"]["files"][1]["status"] = "removed"
+        self._portable_snapshot_leaf("tests")["sha"] = "a"*40
+        self._assert_portable_multiple_tree_faults(
+            "DELETED_OR_UNREVIEWED_SOURCE_FILE", "TREE_CHAIN_LEAF_BYTES_SHA_MISMATCH")
+
+    def test_portable_compare_tree_compare_renamed_production_and_docs_bad_sha_refused(self):
+        self.envelope["compare"]["files"][0]["status"] = "renamed"
+        self.envelope["compare"]["files"][0]["previous_filename"] = "src/fmp/runtime.py"
+        self._portable_snapshot_leaf("docs")["sha"] = "a"*40
+        self._assert_portable_multiple_tree_faults(
+            "RENAMED_FROM_PRODUCTION_PATH_UNREVIEWED", "TREE_CHAIN_LEAF_BYTES_SHA_MISMATCH")
+
+    def test_portable_compare_tree_clean_control_source_only(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
