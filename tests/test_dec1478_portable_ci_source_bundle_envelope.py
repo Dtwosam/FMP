@@ -9794,3 +9794,108 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_tree_surrogate_clean_control(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+    def _assert_valid_unicode_pair_tree_mutation_refused(self, code):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        raw = json.dumps(self.envelope, ensure_ascii=True, sort_keys=True)
+        self.assertIn("\\ud83d\\ude00", raw)
+        self.assertEqual(json.loads(raw), self.envelope)
+        direct = self.verdict()
+        parsed = review_bundle_json_text(raw)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(raw), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(direct, parsed)
+        self.assertEqual(status, 2)
+        self.assertFalse(direct["source_consistency"])
+        self.assertIn(code, direct["diagnostics"])
+        self.assertEqual(emitted["diagnostics"], list(direct["diagnostics"]))
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertNotIn("BUNDLE_JSON_UNICODE_UNREVIEWED", direct["diagnostics"])
+        self.assertNotIn("tests/sample.py", out.getvalue())
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        for result in (direct, emitted):
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_valid_pair_docs_parent_path_tree_identity_refused(self):
+        root = self.envelope["full_tree_snapshots"][self.envelope["commit"]["tree"]["sha"]]
+        next(e for e in root["tree"] if e["path"] == "docs")["path"] = "docs\U0001f600"
+        self._assert_valid_unicode_pair_tree_mutation_refused(
+            "TREE_CHAIN_ENTRY_CARDINALITY_UNREVIEWED")
+
+    def test_portable_valid_pair_tests_parent_path_tree_identity_refused(self):
+        root = self.envelope["full_tree_snapshots"][self.envelope["commit"]["tree"]["sha"]]
+        next(e for e in root["tree"] if e["path"] == "tests")["path"] = "tests\U0001f600"
+        self._assert_valid_unicode_pair_tree_mutation_refused(
+            "TREE_CHAIN_ENTRY_CARDINALITY_UNREVIEWED")
+
+    def test_portable_valid_pair_docs_leaf_path_tree_identity_refused(self):
+        self._portable_snapshot_leaf("docs")["path"] = "sample\U0001f600.md"
+        self._assert_valid_unicode_pair_tree_mutation_refused(
+            "TREE_CHAIN_ENTRY_CARDINALITY_UNREVIEWED")
+
+    def test_portable_valid_pair_tests_leaf_path_tree_identity_refused(self):
+        self._portable_snapshot_leaf("tests")["path"] = "sample\U0001f600.py"
+        self._assert_valid_unicode_pair_tree_mutation_refused(
+            "TREE_CHAIN_ENTRY_CARDINALITY_UNREVIEWED")
+
+    def test_portable_valid_pair_docs_leaf_mode_tree_identity_refused(self):
+        self._portable_snapshot_leaf("docs")["mode"] = "\U0001f600"
+        self._assert_valid_unicode_pair_tree_mutation_refused(
+            "TREE_CHAIN_LEAF_NOT_REGULAR_BLOB")
+
+    def test_portable_valid_pair_tests_leaf_type_tree_identity_refused(self):
+        self._portable_snapshot_leaf("tests")["type"] = "\U0001f600"
+        self._assert_valid_unicode_pair_tree_mutation_refused(
+            "TREE_CHAIN_LEAF_NOT_REGULAR_BLOB")
+
+    def test_portable_valid_pair_docs_leaf_sha_tree_identity_refused(self):
+        self._portable_snapshot_leaf("docs")["sha"] = "\U0001f600"
+        self._assert_valid_unicode_pair_tree_mutation_refused(
+            "TREE_CHAIN_ENTRY_SHA_UNREVIEWED")
+
+    def test_portable_valid_pair_tests_leaf_sha_tree_identity_refused(self):
+        self._portable_snapshot_leaf("tests")["sha"] = "\U0001f600"
+        self._assert_valid_unicode_pair_tree_mutation_refused(
+            "TREE_CHAIN_ENTRY_SHA_UNREVIEWED")
+
+    def test_portable_valid_pair_docs_parent_mode_tree_identity_refused(self):
+        root = self.envelope["full_tree_snapshots"][self.envelope["commit"]["tree"]["sha"]]
+        next(e for e in root["tree"] if e["path"] == "docs")["mode"] = "\U0001f600"
+        self._assert_valid_unicode_pair_tree_mutation_refused(
+            "TREE_CHAIN_PARENT_NOT_REGULAR_TREE")
+
+    def test_portable_valid_pair_full_root_snapshot_key_tree_identity_refused(self):
+        trees = self.envelope["full_tree_snapshots"]
+        root_sha = self.envelope["commit"]["tree"]["sha"]
+        trees[root_sha + "\U0001f600"] = trees.pop(root_sha)
+        self._assert_valid_unicode_pair_tree_mutation_refused(
+            "TREE_CHAIN_TREE_OBJECT_UNREVIEWED")
+
+    def test_portable_valid_pair_full_root_self_sha_tree_identity_refused(self):
+        root_sha = self.envelope["commit"]["tree"]["sha"]
+        self.envelope["full_tree_snapshots"][root_sha]["sha"] = "\U0001f600"
+        self._assert_valid_unicode_pair_tree_mutation_refused(
+            "TREE_CHAIN_TREE_OBJECT_UNREVIEWED")
+
+    def test_portable_valid_pair_full_root_truncated_tree_identity_refused(self):
+        root_sha = self.envelope["commit"]["tree"]["sha"]
+        self.envelope["full_tree_snapshots"][root_sha]["truncated"] = "\U0001f600"
+        self._assert_valid_unicode_pair_tree_mutation_refused(
+            "TREE_CHAIN_TREE_OBJECT_UNREVIEWED")
+
+    def test_portable_valid_pair_flat_docs_mode_tree_identity_refused(self):
+        self.envelope["nodes"]["docs/sample.md"]["mode"] = "\U0001f600"
+        self._assert_valid_unicode_pair_tree_mutation_refused(
+            "GIT_TREE_LEAF_MODE_DRIFT")
+
+    def test_portable_valid_pair_changed_source_base64_tree_identity_refused(self):
+        self.envelope["changed_bytes_b64"]["docs/sample.md"] = "\U0001f600"
+        self._assert_valid_unicode_pair_tree_mutation_refused(
+            "BUNDLE_SOURCE_B64_UNREVIEWED")
+
+    def test_portable_valid_pair_tree_clean_source_only_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
