@@ -1,0 +1,7 @@
+# DEC-1611 — Raw CI runner log absence cannot mask separate Git tree faults
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent one-commit tests/docs child of #1857 at `5d6da9c6948e6c1813f7c9868bda1827fda954c6`. Eleven regression methods (**3,357 proposed source-defined tests**).
+
+A missing raw Phase 3 or historical CI runner log is an independent reason to withhold source consistency, not an excuse to skip tree integrity. Ten synthetic pairwise cases remove an expected run's raw runner log and simultaneously corrupt a full tree leaf mode, leaf SHA, exact source pathname, flat Git node mode, orphan tree object or parent mode. Require `RAW_CI_RUNNER_LOG_INVENTORY_UNREVIEWED` **and** the independent reviewed `TREE_CHAIN_*` or `GIT_TREE_LEAF_MODE_DRIFT` diagnostic. Direct-memory, JSON-text and bounded stdin must return identical sorted, deduplicated, safe nonauthorizing verdicts, with no source-path echo. One untouched control remains source-only.
+
+These fixtures are untrusted offline caller evidence, not protected annual-run authorization, independent original OS witnesses, or provider-authenticated CI/Git records. Own exact-head Phase 3/historical general CI and independent qualified review required. Tests/docs only; no production, parser/resource-budget, workflow/security/admission changes, protected originals/archives/artifacts, annual execution/retry, merge, deployment or trading. DEC-650/#820 and DEC-651/#821/#779 remain **BLOCKED**.
