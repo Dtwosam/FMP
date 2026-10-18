@@ -11735,3 +11735,82 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_nonstring_source_key_clean_control(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+    def _assert_inmemory_nonstring_run_key_refused(self, category, key):
+        import copy
+        from unittest.mock import patch
+        self.assertIn(category, ID_MAPS)
+        sample = next(iter(self.envelope[category].values()))
+        self.envelope[category][key] = sample
+        original = copy.deepcopy(self.envelope)
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          side_effect=AssertionError(
+                              "bad run ID reached composite reviewer")):
+            direct = self.verdict()
+        self.assertEqual(original, self.envelope)
+        self.assertEqual(direct["diagnostics"],
+                         ("BUNDLE_RUN_KEY_UNREVIEWED",))
+        self.assertFalse(direct["source_consistency"])
+        for field in ("independent_original_os_proof",
+                      "exclusive_server_dispatch_gate_proven",
+                      "can_authorize_annual_run"):
+            self.assertIs(direct[field], False)
+
+    def test_portable_nonstring_run_key_jobs_integer_refused(self):
+        self._assert_inmemory_nonstring_run_key_refused(
+            "jobs_by_run", 8000)
+
+    def test_portable_nonstring_run_key_jobs_boolean_refused(self):
+        self._assert_inmemory_nonstring_run_key_refused(
+            "jobs_by_run", True)
+
+    def test_portable_nonstring_run_key_jobs_none_refused(self):
+        self._assert_inmemory_nonstring_run_key_refused(
+            "jobs_by_run", None)
+
+    def test_portable_nonstring_run_key_jobs_bytes_refused(self):
+        self._assert_inmemory_nonstring_run_key_refused(
+            "jobs_by_run", b"8000")
+
+    def test_portable_nonstring_run_key_checkout_tuple_refused(self):
+        self._assert_inmemory_nonstring_run_key_refused(
+            "checkout_by_run", ("8000",))
+
+    def test_portable_nonstring_run_key_checkout_float_refused(self):
+        self._assert_inmemory_nonstring_run_key_refused(
+            "checkout_by_run", 8.5)
+
+    def test_portable_nonstring_run_key_checkout_integer_refused(self):
+        self._assert_inmemory_nonstring_run_key_refused(
+            "checkout_by_run", 8001)
+
+    def test_portable_nonstring_run_key_raw_log_integer_refused(self):
+        self._assert_inmemory_nonstring_run_key_refused(
+            "raw_ci_runner_logs", 8000)
+
+    def test_portable_nonstring_run_key_raw_log_boolean_refused(self):
+        self._assert_inmemory_nonstring_run_key_refused(
+            "raw_ci_runner_logs", False)
+
+    def test_portable_nonstring_run_key_raw_log_bytes_refused(self):
+        self._assert_inmemory_nonstring_run_key_refused(
+            "raw_ci_runner_logs", b"8000")
+
+    def test_portable_nonstring_run_key_raw_log_tuple_refused(self):
+        self._assert_inmemory_nonstring_run_key_refused(
+            "raw_ci_runner_logs", ("8", "000"))
+
+    def test_portable_nonstring_run_key_receipt_integer_refused(self):
+        self._assert_inmemory_nonstring_run_key_refused(
+            "raw_ci_log_receipts", 8001)
+
+    def test_portable_nonstring_run_key_receipt_none_refused(self):
+        self._assert_inmemory_nonstring_run_key_refused(
+            "raw_ci_log_receipts", None)
+
+    def test_portable_nonstring_run_key_receipt_tuple_refused(self):
+        self._assert_inmemory_nonstring_run_key_refused(
+            "raw_ci_log_receipts", ("8001",))
+
+    def test_portable_nonstring_run_key_clean_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+

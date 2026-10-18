@@ -1,0 +1,7 @@
+# DEC-1637 — Python non-string CI run map keys must not reach composite reviewer
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent one-commit tests/docs child of #1883 at `475ac658fdd7170b26276838dad108924a4e3eec`. Fifteen new regression methods (**3,730 proposed source-defined tests**).
+
+Python direct-memory caller evidence can contain non-JSON dictionary keys. Fourteen cases introduce numeric, Boolean, null, bytes, tuple or float labels into jobs-by-run, checkout, raw CI runner log and raw receipt maps while preserving each original valid run ID's value. Unlike an invalid raw log *value*, a non-string run map *key* is rejected before nested source review with `BUNDLE_RUN_KEY_UNREVIEWED`. A mocked composite checker fails if called; assert unchanged caller values and all protected original-OS/server-gate/annual authorization flags false. These tests intentionally avoid JSON serialization, which coerces or rejects non-string object keys. The clean control still returns source-only consistency.
+
+These are synthetic, offline source inputs, not authenticated provider records or protected annual execution approval. Exact-head Phase 3/full historical/general CI and qualified independent review required. Tests/docs only, no production/parser/resource/workflow/security/admission changes, protected originals/archives/artifacts, annual dispatch/retry, merges, deployment or trading. DEC-650/#820 and DEC-651/#821/#779 remain **BLOCKED**.
