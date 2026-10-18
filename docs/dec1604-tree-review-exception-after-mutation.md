@@ -1,0 +1,7 @@
+# DEC-1604 — A mutating nested reviewer exception must fail closed without leaking caller evidence
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent one-commit tests/docs child of #1850 at `686dc840d5408fef2ebd5427bc90a045612fb96d`. Twelve synthetic regression methods (**3,258 proposed source-defined methods**).
+
+The DEC-1603 mutation isolation checks cover a downstream synthetic checker that returns a well-shaped source-only verdict. This draft covers its failure branch: inject each explicitly handled nested-review exception class after the mocked reviewer clears tree snapshots, alters Git node modes and changes decoded source bytes. Require the portable envelope reviewer to catch errors, report only `BUNDLE_NESTED_EVIDENCE_UNREVIEWED`, keep the caller envelope identical across direct-memory, JSON and stdin, avoid echoing sensitive exception strings or source paths, and preserve false protected OS, exclusive annual server and dispatch admission flags. Restore the real checker and verify source-only consistency.
+
+All evidence and injected errors are synthetic; this is not independent GitHub authentication, original protected OS evidence or annual permission. Own exact-head Phase 3/general CI and independent qualified review required. Tests/docs only, no production/parser/resource budgets/workflow/security/admission changes, protected originals/archives/artifacts, annual dispatch/retry, merge, deployment or trading. DEC-650/#820 and DEC-651/#821/#779 remain **BLOCKED**.

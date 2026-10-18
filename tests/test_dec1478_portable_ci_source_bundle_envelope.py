@@ -8618,3 +8618,81 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_nested_tree_real_reviewer_still_non_authorizing(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+    def _assert_nested_tree_exception_after_mutation_refused(self, exception):
+        import io
+        from unittest.mock import patch
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        before = copy.deepcopy(self.envelope)
+        raw = json.dumps(self.envelope, sort_keys=True)
+        calls = []
+
+        def malicious_review(**evidence):
+            self.assertIsNot(evidence["full_tree_snapshots"],
+                             self.envelope["full_tree_snapshots"])
+            evidence["full_tree_snapshots"].clear()
+            evidence["nodes"]["docs/sample.md"]["mode"] = "120000"
+            evidence["changed_bytes"]["tests/sample.py"] = b"bad\n"
+            calls.append(True)
+            raise exception("synthetic private tree input must not be echoed")
+
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          side_effect=malicious_review):
+            direct = self.verdict()
+            parsed = review_bundle_json_text(raw)
+            out = io.StringIO()
+            status = cli.run_stdin_review(io.StringIO(raw), out)
+        self.assertEqual(len(calls), 3)
+        self.assertEqual(self.envelope, before)
+        self.assertEqual(direct, parsed)
+        self.assertEqual(status, 2)
+        self.assertFalse(direct["source_consistency"])
+        self.assertEqual(direct["diagnostics"],
+                         ("BUNDLE_NESTED_EVIDENCE_UNREVIEWED",))
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"],
+                         list(direct["diagnostics"]))
+        self.assertNotIn("synthetic private", out.getvalue())
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        for result in (direct, emitted):
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+        self.assertEqual(self.verdict()["diagnostics"], ())
+
+    def test_portable_tree_exception_type_error_after_mutation_refused(self):
+        self._assert_nested_tree_exception_after_mutation_refused(TypeError)
+
+    def test_portable_tree_exception_value_error_after_mutation_refused(self):
+        self._assert_nested_tree_exception_after_mutation_refused(ValueError)
+
+    def test_portable_tree_exception_key_error_after_mutation_refused(self):
+        self._assert_nested_tree_exception_after_mutation_refused(KeyError)
+
+    def test_portable_tree_exception_index_error_after_mutation_refused(self):
+        self._assert_nested_tree_exception_after_mutation_refused(IndexError)
+
+    def test_portable_tree_exception_attribute_error_after_mutation_refused(self):
+        self._assert_nested_tree_exception_after_mutation_refused(AttributeError)
+
+    def test_portable_tree_exception_overflow_error_after_mutation_refused(self):
+        self._assert_nested_tree_exception_after_mutation_refused(OverflowError)
+
+    def test_portable_tree_exception_unicode_error_after_mutation_refused(self):
+        self._assert_nested_tree_exception_after_mutation_refused(UnicodeError)
+
+    def test_portable_tree_exception_recursion_error_after_mutation_refused(self):
+        self._assert_nested_tree_exception_after_mutation_refused(RecursionError)
+
+    def test_portable_tree_exception_runtime_error_after_mutation_refused(self):
+        self._assert_nested_tree_exception_after_mutation_refused(RuntimeError)
+
+    def test_portable_tree_exception_assertion_error_after_mutation_refused(self):
+        self._assert_nested_tree_exception_after_mutation_refused(AssertionError)
+
+    def test_portable_tree_exception_os_error_after_mutation_refused(self):
+        self._assert_nested_tree_exception_after_mutation_refused(OSError)
+
+    def test_portable_tree_exception_clean_checker_recovers_source_only(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
