@@ -5930,3 +5930,99 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertFalse(emitted["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(emitted["can_authorize_annual_run"])
 
+    def _assert_pairwise_fault_review_parity(self):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        text = json.dumps(self.envelope, ensure_ascii=True)
+        direct = self.verdict()
+        parsed = review_bundle_json_text(text)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(text), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(direct, parsed)
+        self.assertEqual(status, 2)
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertFalse(direct["source_consistency"])
+        self.assertTrue(direct["diagnostics"])
+        self.assertEqual(emitted["diagnostics"], list(direct["diagnostics"]))
+        self.assertNotIn("private-pairwise-canary", out.getvalue())
+        for verdict in (direct, emitted):
+            self.assertFalse(verdict["independent_original_os_proof"])
+            self.assertFalse(verdict["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(verdict["can_authorize_annual_run"])
+
+    def test_pairwise_pr_diff_and_rehashed_checkout_mismatch_are_refused(self):
+        self.envelope["pr"]["changed_files"] = 3
+        log = self.envelope["raw_ci_runner_logs"]["8001"]
+        self.envelope["raw_ci_runner_logs"]["8001"] = log.replace(
+            "/1649/merge", "/9999/merge")
+        self._refingerprint_portable_synthetic_ci_log("8001")
+        self._assert_pairwise_fault_review_parity()
+
+    def test_pairwise_source_bytes_and_rehashed_artifact_id_are_refused(self):
+        self.envelope["changed_bytes_b64"]["tests/sample.py"] = (
+            base64.b64encode(b"private-pairwise-canary").decode("ascii"))
+        log = self.envelope["raw_ci_runner_logs"]["8000"]
+        self.envelope["raw_ci_runner_logs"]["8000"] = log.replace(
+            "7777", "8888")
+        self._refingerprint_portable_synthetic_ci_log("8000")
+        self._assert_pairwise_fault_review_parity()
+
+    def test_pairwise_tree_and_acceptance_index_mismatch_are_refused(self):
+        self.envelope["tree"]["sha"] = "e"*40
+        self.envelope["phase3_evidence_snapshot"]["index"][
+            "scenario_count"] = 9
+        self._assert_pairwise_fault_review_parity()
+
+    def test_pairwise_duplicate_run_identity_and_ci_job_failure_are_refused(self):
+        historical = next(r for r in self.envelope["runs"]
+                          if r["name"] == "tests")
+        historical["id"] = 8000
+        self.envelope["jobs_by_run"]["8001"][0]["conclusion"] = "failure"
+        self._assert_pairwise_fault_review_parity()
+
+    def test_pairwise_extra_annual_field_and_changed_source_fail_inventory(self):
+        self.envelope["can_authorize_annual_run"] = True
+        self.envelope["changed_bytes_b64"]["tests/sample.py"] = (
+            base64.b64encode(b"private-pairwise-canary").decode("ascii"))
+        self._assert_pairwise_fault_review_parity()
+        self.assertEqual(self.verdict()["diagnostics"],
+                         ("BUNDLE_KEY_INVENTORY_UNREVIEWED",))
+
+    def test_pairwise_invalid_run_map_key_and_bad_base64_fail_preflight(self):
+        self.envelope["jobs_by_run"]["08000"] = (
+            self.envelope["jobs_by_run"].pop("8000"))
+        self.envelope["changed_bytes_b64"]["tests/sample.py"] = (
+            "private-pairwise-canary%")
+        self._assert_pairwise_fault_review_parity()
+
+    def test_pairwise_absolute_source_path_and_failed_ci_run_are_refused(self):
+        self.envelope["changed_bytes_b64"][
+            "/private-pairwise-canary.py"] = (
+            self.envelope["changed_bytes_b64"].pop("tests/sample.py"))
+        self.envelope["runs"][0]["conclusion"] = "failure"
+        self._assert_pairwise_fault_review_parity()
+
+    def test_pairwise_extra_raw_log_run_and_wrong_pr_ref_are_refused(self):
+        self.envelope["raw_ci_runner_logs"]["9000"] = (
+            "private-pairwise-canary")
+        log = self.envelope["raw_ci_runner_logs"]["8000"]
+        self.envelope["raw_ci_runner_logs"]["8000"] = log.replace(
+            "/1649/merge", "/9999/merge")
+        self._refingerprint_portable_synthetic_ci_log("8000")
+        self._assert_pairwise_fault_review_parity()
+
+    def test_pairwise_job_map_type_and_wrong_upload_name_are_refused(self):
+        self.envelope["jobs_by_run"]["8001"] = "private-pairwise-canary"
+        self.envelope["phase3_evidence_snapshot"]["upload"]["name"] = (
+            "private-pairwise-canary")
+        self._assert_pairwise_fault_review_parity()
+
+    def test_pairwise_pr_number_and_raw_log_checkout_identity_are_refused(self):
+        self.envelope["pr"]["number"] = 9999
+        log = self.envelope["raw_ci_runner_logs"]["8001"]
+        self.envelope["raw_ci_runner_logs"]["8001"] = log.replace(
+            "/1649/merge", "/9999/merge")
+        self._refingerprint_portable_synthetic_ci_log("8001")
+        self._assert_pairwise_fault_review_parity()
+
