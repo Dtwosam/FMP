@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import base64
 import binascii
+import copy
 import json
 import math
 import re
@@ -512,7 +513,10 @@ def review_bundle_envelope(envelope):
         return fail_closed("BUNDLE_SOURCE_CROSSMAP_COLLISION_UNREVIEWED")
 
     try:
-        verdict = composite.review_stacked_draft_evidence(**converted)
+        # Caller-supplied source evidence must remain untouched even if a
+        # downstream checker unexpectedly mutates the decoded graph.
+        isolated = copy.deepcopy(converted)
+        verdict = composite.review_stacked_draft_evidence(**isolated)
     except (TypeError, ValueError, KeyError, IndexError, AttributeError,
             OverflowError, UnicodeError, RecursionError, RuntimeError,
             AssertionError, OSError) as _:
@@ -3958,5 +3962,109 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertEqual(result["diagnostics"], ())
         self.assertFalse(result["independent_original_os_proof"])
         self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_nested_mutation_of_pr_does_not_change_original_evidence(self):
+        from unittest.mock import patch
+        original = copy.deepcopy(self.envelope)
+        def mutate(**values):
+            values["pr"]["private_canary"] = "synthetic"
+            raise RuntimeError("synthetic nested failure")
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          side_effect=mutate):
+            self.assert_fails("BUNDLE_NESTED_EVIDENCE_UNREVIEWED")
+        self.assertEqual(self.envelope, original)
+
+    def test_nested_mutation_of_runs_does_not_change_original_evidence(self):
+        from unittest.mock import patch
+        original = copy.deepcopy(self.envelope)
+        def mutate(**values):
+            values["runs"].append({"private_canary": "synthetic"})
+            raise RuntimeError("synthetic nested failure")
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          side_effect=mutate):
+            self.assert_fails("BUNDLE_NESTED_EVIDENCE_UNREVIEWED")
+        self.assertEqual(self.envelope, original)
+
+    def test_nested_mutation_of_job_map_does_not_change_original_evidence(self):
+        from unittest.mock import patch
+        original = copy.deepcopy(self.envelope)
+        def mutate(**values):
+            values["jobs_by_run"][99999] = ["synthetic"]
+            raise RuntimeError("synthetic nested failure")
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          side_effect=mutate):
+            self.assert_fails("BUNDLE_NESTED_EVIDENCE_UNREVIEWED")
+        self.assertEqual(self.envelope, original)
+
+    def test_nested_mutation_of_full_trees_does_not_modify_source(self):
+        from unittest.mock import patch
+        original = copy.deepcopy(self.envelope)
+        def mutate(**values):
+            values["full_tree_snapshots"].clear()
+            raise RuntimeError("synthetic nested failure")
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          side_effect=mutate):
+            self.assert_fails("BUNDLE_NESTED_EVIDENCE_UNREVIEWED")
+        self.assertEqual(self.envelope, original)
+
+    def test_nested_mutation_of_source_byte_map_does_not_modify_source(self):
+        from unittest.mock import patch
+        original = copy.deepcopy(self.envelope)
+        def mutate(**values):
+            values["changed_bytes"]["docs/synthetic-private"] = b"secret"
+            raise RuntimeError("synthetic nested failure")
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          side_effect=mutate):
+            self.assert_fails("BUNDLE_NESTED_EVIDENCE_UNREVIEWED")
+        self.assertEqual(self.envelope, original)
+
+    def test_nested_mutation_followed_by_clean_review_still_consistent(self):
+        from unittest.mock import patch
+        def mutate(**values):
+            values["pr"]["private_canary"] = True
+            raise RuntimeError("synthetic")
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          side_effect=mutate):
+            self.assert_fails("BUNDLE_NESTED_EVIDENCE_UNREVIEWED")
+        result = self.verdict()
+        self.assertEqual(result["diagnostics"], ())
+        self.assertTrue(result["source_consistency"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_nested_copy_failure_is_sanitized_without_composite_invocation(self):
+        from unittest.mock import patch
+        with patch.object(copy, "deepcopy",
+                          side_effect=RuntimeError("private-source-canary")):
+            with patch.object(composite, "review_stacked_draft_evidence") as downstream:
+                result = self.verdict()
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_NESTED_EVIDENCE_UNREVIEWED",))
+        self.assertNotIn("private-source-canary", repr(result))
+        downstream.assert_not_called()
+
+    def test_mutated_nested_result_cannot_grant_protected_authority(self):
+        from unittest.mock import patch
+        original_pr = copy.deepcopy(self.envelope["pr"])
+        def mutate(**values):
+            values["pr"]["can_authorize_annual_run"] = True
+            return {"source_consistency": True, "diagnostics": (),
+                    "independent_original_os_proof": True,
+                    "exclusive_server_dispatch_gate_proven": True,
+                    "can_authorize_annual_run": True}
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          side_effect=mutate):
+            result = self.verdict()
+        self.assertFalse(result["can_authorize_annual_run"])
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertEqual(self.envelope["pr"], original_pr)
+
+    def test_nested_source_isolation_preserves_clean_consistency_only(self):
+        original = copy.deepcopy(self.envelope)
+        result = self.verdict()
+        self.assertEqual(self.envelope, original)
+        self.assertTrue(result["source_consistency"])
+        self.assertEqual(result["diagnostics"], ())
         self.assertFalse(result["can_authorize_annual_run"])
 
