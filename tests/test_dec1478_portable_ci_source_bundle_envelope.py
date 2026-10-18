@@ -3235,17 +3235,18 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertEqual(result["diagnostics"],
                          ("BUNDLE_RAW_LOG_UTF8_OVERSIZE",))
 
-    def test_utf8_log_cap_stdin_does_not_echo_unicode_log(self):
+    def test_stdin_global_utf8_json_cap_precedes_raw_log_byte_guard(self):
         import io
         import test_dec1479_offline_ci_bundle_stdin_command as cli
         self.envelope["raw_ci_runner_logs"]["9101"] = "PRIVATE-CANARY" + "😀"*500001
         output = io.StringIO()
-        rc = cli.run_stdin_review(
-            io.StringIO(json.dumps(self.envelope, ensure_ascii=False)), output)
+        raw = json.dumps(self.envelope, ensure_ascii=False)
+        self.assertGreater(len(raw.encode("utf-8")), MAX_TEXT_UTF8_BYTES)
+        rc = cli.run_stdin_review(io.StringIO(raw), output)
         verdict = json.loads(output.getvalue())
         self.assertEqual(rc, 2)
         self.assertEqual(verdict["diagnostics"],
-                         ["BUNDLE_RAW_LOG_UTF8_OVERSIZE"])
+                         ["BUNDLE_JSON_TEXT_UNREVIEWED"])
         self.assertNotIn("PRIVATE-CANARY", output.getvalue())
         self.assertFalse(verdict["can_authorize_annual_run"])
 
@@ -3510,4 +3511,73 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertFalse(result["independent_original_os_proof"])
         self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_direct_large_multibyte_log_retains_per_log_byte_refusal(self):
+        self.envelope["raw_ci_runner_logs"]["9101"] = "🚀"*500001
+        verdict = self.verdict()
+        self.assertEqual(verdict["diagnostics"],
+                         ("BUNDLE_RAW_LOG_UTF8_OVERSIZE",))
+        self.assertFalse(verdict["can_authorize_annual_run"])
+
+    def test_direct_raw_log_utf8_total_budget_is_still_independent(self):
+        self.envelope["raw_ci_runner_logs"] = {
+            "9101": "é"*800000, "9102": "é"*800000, "9103": "é"*800000}
+        verdict = self.verdict()
+        self.assertEqual(verdict["diagnostics"],
+                         ("BUNDLE_TOTAL_RAW_LOG_UTF8_OVERSIZE",))
+
+    def test_stdin_emits_global_byte_limit_when_log_exceeds_text_budget(self):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.envelope["raw_ci_runner_logs"]["9101"] = "é"*1000001
+        out = io.StringIO()
+        status = cli.run_stdin_review(
+            io.StringIO(json.dumps(self.envelope, ensure_ascii=False)), out)
+        self.assertEqual(status, 2)
+        self.assertEqual(json.loads(out.getvalue())["diagnostics"],
+                         ["BUNDLE_JSON_TEXT_UNREVIEWED"])
+
+    def test_global_input_byte_guard_applies_even_without_large_log(self):
+        raw = json.dumps(self.envelope) + " " * MAX_TEXT_UTF8_BYTES
+        verdict = review_bundle_json_text(raw)
+        self.assertEqual(verdict["diagnostics"],
+                         ("BUNDLE_JSON_TEXT_UNREVIEWED",))
+
+    def test_small_multibyte_ci_log_not_rejected_by_global_budget(self):
+        self.envelope["raw_ci_runner_logs"]["9101"] = "é"*100
+        raw = json.dumps(self.envelope, ensure_ascii=False)
+        self.assertLess(len(raw.encode("utf-8")), MAX_TEXT_UTF8_BYTES)
+        result = review_bundle_json_text(raw)
+        self.assertNotIn("BUNDLE_JSON_TEXT_UNREVIEWED", result["diagnostics"])
+        self.assertNotIn("BUNDLE_RAW_LOG_UTF8_OVERSIZE", result["diagnostics"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_stdin_global_limit_precedence_never_echoes_private_log(self):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.envelope["raw_ci_runner_logs"]["9101"] = (
+            "private-log-canary" + "🚀"*500001)
+        out = io.StringIO()
+        rc = cli.run_stdin_review(
+            io.StringIO(json.dumps(self.envelope, ensure_ascii=False)), out)
+        result = json.loads(out.getvalue())
+        self.assertEqual(rc, 2)
+        self.assertEqual(result["diagnostics"], ["BUNDLE_JSON_TEXT_UNREVIEWED"])
+        self.assertNotIn("private-log-canary", out.getvalue())
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_direct_oversized_raw_log_never_grants_exclusive_server_gate(self):
+        self.envelope["raw_ci_runner_logs"]["9101"] = "🚀"*500001
+        verdict = self.verdict()
+        self.assertFalse(verdict["independent_original_os_proof"])
+        self.assertFalse(verdict["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(verdict["can_authorize_annual_run"])
+
+    def test_utf8_precedence_correction_keeps_clean_source_consistency(self):
+        verdict = review_bundle_json_text(json.dumps(self.envelope))
+        self.assertEqual(verdict["diagnostics"], ())
+        self.assertTrue(verdict["source_consistency"])
+        self.assertFalse(verdict["independent_original_os_proof"])
+        self.assertFalse(verdict["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(verdict["can_authorize_annual_run"])
 
