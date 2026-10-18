@@ -83,7 +83,13 @@ def run_stdin_review(input_stream, output_stream):
     if read_error is not None:
         verdict = envelope.fail_closed(read_error)
     else:
-        verdict = envelope.review_bundle_json_text(raw)
+        try:
+            verdict = envelope.review_bundle_json_text(raw)
+        except (OSError, UnicodeError, ValueError, TypeError, RuntimeError,
+                RecursionError, AssertionError, AttributeError, OverflowError,
+                IndexError, EOFError):
+            # Never emit a traceback, exception message or source bytes.
+            verdict = envelope.fail_closed("BUNDLE_OFFLINE_REVIEW_UNREVIEWED")
     # Never echo supplied evidence. An incomplete verdict cannot
     # produce a success exit code.
     if not _emit_safe_verdict(verdict, output_stream):
@@ -1167,6 +1173,91 @@ class ExplicitStdinReviewIsNotAnnualWorkflowAdmission(unittest.TestCase):
         self.assertFalse(verdict["independent_original_os_proof"])
         self.assertFalse(verdict["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(verdict["can_authorize_annual_run"])
+
+
+    def test_unexpected_review_runtime_error_yields_safe_verdict(self):
+        from unittest.mock import patch
+        with patch.object(envelope, "review_bundle_json_text",
+                          side_effect=RuntimeError("private-canary")):
+            rc, record = self.run_raw(json.dumps(self.bundle))
+        self.assertEqual(rc, 2)
+        self.assertEqual(record["diagnostics"],
+                         ["BUNDLE_OFFLINE_REVIEW_UNREVIEWED"])
+        self.assertNotIn("private-canary", self.stdout.getvalue())
+
+    def test_unexpected_review_assertion_error_is_sanitized(self):
+        from unittest.mock import patch
+        with patch.object(envelope, "review_bundle_json_text",
+                          side_effect=AssertionError("private-canary")):
+            rc, record = self.run_raw(json.dumps(self.bundle))
+        self.assertEqual(rc, 2)
+        self.assertEqual(record["diagnostics"],
+                         ["BUNDLE_OFFLINE_REVIEW_UNREVIEWED"])
+
+    def test_unexpected_review_io_error_is_sanitized(self):
+        from unittest.mock import patch
+        with patch.object(envelope, "review_bundle_json_text",
+                          side_effect=OSError("secret-source")):
+            rc, record = self.run_raw(json.dumps(self.bundle))
+        self.assertEqual(rc, 2)
+        self.assertEqual(record["diagnostics"],
+                         ["BUNDLE_OFFLINE_REVIEW_UNREVIEWED"])
+
+    def test_unexpected_review_unicode_error_is_sanitized(self):
+        from unittest.mock import patch
+        with patch.object(envelope, "review_bundle_json_text",
+                          side_effect=UnicodeError("secret-source")):
+            rc, record = self.run_raw(json.dumps(self.bundle))
+        self.assertEqual(rc, 2)
+        self.assertEqual(record["diagnostics"],
+                         ["BUNDLE_OFFLINE_REVIEW_UNREVIEWED"])
+
+    def test_unexpected_review_overflow_error_is_sanitized(self):
+        from unittest.mock import patch
+        with patch.object(envelope, "review_bundle_json_text",
+                          side_effect=OverflowError("private-canary")):
+            rc, record = self.run_raw(json.dumps(self.bundle))
+        self.assertEqual(rc, 2)
+        self.assertEqual(record["diagnostics"],
+                         ["BUNDLE_OFFLINE_REVIEW_UNREVIEWED"])
+
+    def test_unexpected_review_index_error_is_sanitized(self):
+        from unittest.mock import patch
+        with patch.object(envelope, "review_bundle_json_text",
+                          side_effect=IndexError("private-canary")):
+            rc, record = self.run_raw(json.dumps(self.bundle))
+        self.assertEqual(rc, 2)
+        self.assertEqual(record["diagnostics"],
+                         ["BUNDLE_OFFLINE_REVIEW_UNREVIEWED"])
+
+    def test_unexpected_review_error_produces_one_checked_stdout_record(self):
+        from unittest.mock import patch
+        with patch.object(envelope, "review_bundle_json_text",
+                          side_effect=RuntimeError("protected-original-canary")):
+            out = io.StringIO()
+            rc = run_stdin_review(io.StringIO(json.dumps(self.bundle)), out)
+        self.assertEqual(rc, 2)
+        self.assertEqual(len(out.getvalue().splitlines()), 1)
+        self.assertFalse(json.loads(out.getvalue())["can_authorize_annual_run"])
+        self.assertNotIn("protected-original-canary", out.getvalue())
+
+    def test_unexpected_review_error_never_retries_evidence_review(self):
+        from unittest.mock import patch
+        with patch.object(envelope, "review_bundle_json_text",
+                          side_effect=ValueError("private-canary")) as review:
+            self.assertEqual(run_stdin_review(
+                io.StringIO(json.dumps(self.bundle)), io.StringIO()), 2)
+        review.assert_called_once()
+
+    def test_unexpected_review_error_guard_keeps_positive_source_only(self):
+        out = io.StringIO()
+        rc = run_stdin_review(io.StringIO(json.dumps(self.bundle)), out)
+        result = json.loads(out.getvalue())
+        self.assertEqual(rc, 0)
+        self.assertTrue(result["source_consistency"])
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
 
 
 if __name__ == "__main__":
