@@ -621,6 +621,45 @@ def _json_lexical_array_budgets(text):
     return not stack
 
 
+def _json_lexical_object_budgets(text):
+    """Reject too many object members before JSON decoder allocation."""
+    stack = []
+    in_string = False
+    escaped = False
+    total = 0
+    for char in text:
+        if in_string:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                in_string = False
+            continue
+        if char == '"':
+            if stack and stack[-1][0] == "{":
+                stack[-1][2] = True
+            in_string = True
+        elif char in "[{":
+            stack.append([char, 0, False])
+        elif char == ",":
+            if stack and stack[-1][0] == "{":
+                stack[-1][1] += 1
+                if stack[-1][1] >= MAX_JSON_OBJECT_MEMBERS:
+                    return False
+        elif char in "]}":
+            if not stack or (stack[-1][0] == "{") != (char == "}"):
+                return False
+            opening, commas, has_content = stack.pop()
+            if opening == "{":
+                count = commas + (1 if has_content else 0)
+                total += count
+                if (count > MAX_JSON_OBJECT_MEMBERS or
+                        total > MAX_JSON_TOTAL_OBJECT_MEMBERS):
+                    return False
+    return not stack
+
+
 def _within_json_array_budgets(root):
     """Inspect built-in parsed JSON containers without recursion."""
     total_items = 0
@@ -649,7 +688,8 @@ def review_bundle_json_text(text):
     except UnicodeError:
         return fail_closed("BUNDLE_JSON_UNICODE_UNREVIEWED")
     if (not _json_nesting_within_limit(text) or
-            not _json_lexical_array_budgets(text)):
+            not _json_lexical_array_budgets(text) or
+            not _json_lexical_object_budgets(text)):
         return fail_closed("BUNDLE_JSON_GRAMMAR_UNREVIEWED")
     try:
         doc = json.loads(text, object_pairs_hook=_bounded_json_pairs_hook(),
@@ -3842,6 +3882,80 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         result = review_bundle_json_text(json.dumps(self.envelope))
         self.assertEqual(result["diagnostics"], ())
         self.assertTrue(result["source_consistency"])
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_lexical_object_exact_individual_member_cap_allowed(self):
+        raw = "{" + ",".join('"k%d":0' % i for i in range(
+            MAX_JSON_OBJECT_MEMBERS)) + "}"
+        self.assertTrue(_json_lexical_object_budgets(raw))
+
+    def test_lexical_object_one_over_member_cap_rejected(self):
+        raw = "{" + ",".join('"k%d":0' % i for i in range(
+            MAX_JSON_OBJECT_MEMBERS+1)) + "}"
+        self.assertFalse(_json_lexical_object_budgets(raw))
+
+    def test_lexical_object_exact_aggregate_member_cap_allowed(self):
+        raw = "[" + ",".join('{"a":0}' for _ in range(
+            MAX_JSON_TOTAL_OBJECT_MEMBERS)) + "]"
+        self.assertTrue(_json_lexical_object_budgets(raw))
+
+    def test_lexical_many_small_objects_over_aggregate_cap_rejected(self):
+        groups = [
+            "[" + ",".join('{"a":0}' for _ in range(11000)) + "]"
+            for _ in range(3)]
+        raw = "[" + ",".join(groups) + "]"
+        self.assertLess(len(raw.encode("utf-8")), MAX_TEXT_UTF8_BYTES)
+        self.assertTrue(_json_lexical_array_budgets(raw))
+        self.assertFalse(_json_lexical_object_budgets(raw))
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_lexical_scanner_ignores_braces_commas_in_string_values(self):
+        raw = '{"message":"' + ",{}[]"*10000 + '"}'
+        self.assertTrue(_json_lexical_object_budgets(raw))
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_KEY_INVENTORY_UNREVIEWED",))
+
+    def test_lexical_scanner_ignores_escaped_quote_and_comma(self):
+        raw = '{"name":"embedded \\"quoted,\\": data"}'
+        self.assertTrue(_json_lexical_object_budgets(raw))
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_KEY_INVENTORY_UNREVIEWED",))
+
+    def test_lexical_empty_objects_have_zero_members(self):
+        raw = "[" + ",".join("{}" for _ in range(MAX_JSON_ARRAY_ITEMS)) + "]"
+        self.assertTrue(_json_lexical_object_budgets(raw))
+
+    def test_lexical_large_object_never_invokes_json_decoder(self):
+        from unittest.mock import patch
+        raw = "{" + ",".join('"k%d":0' % i for i in range(
+            MAX_JSON_OBJECT_MEMBERS+1)) + "}"
+        with patch.object(json, "loads",
+                          side_effect=AssertionError("decoder forbidden")) as p:
+            result = review_bundle_json_text(raw)
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+        p.assert_not_called()
+
+    def test_lexical_object_budget_does_not_echo_private_fields(self):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        raw = '{"private_canary":0,' + ",".join(
+            '"k%d":0' % i for i in range(MAX_JSON_OBJECT_MEMBERS)) + "}"
+        output = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(raw), output)
+        self.assertEqual(status, 2)
+        record = json.loads(output.getvalue())
+        self.assertEqual(record["diagnostics"],
+                         ["BUNDLE_JSON_GRAMMAR_UNREVIEWED"])
+        self.assertNotIn("private_canary", output.getvalue())
+
+    def test_lexical_object_budget_preserves_clean_source_consistency(self):
+        result = review_bundle_json_text(json.dumps(self.envelope))
+        self.assertTrue(result["source_consistency"])
+        self.assertEqual(result["diagnostics"], ())
         self.assertFalse(result["independent_original_os_proof"])
         self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(result["can_authorize_annual_run"])
