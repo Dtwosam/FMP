@@ -8899,3 +8899,51 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_reviewed_tree_negative_clean_real_source_only(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+    def test_portable_tree_false_flag_original_os_numeric_zero_refused(self):
+        self._assert_forged_tree_review_verdict_refused(
+            {"independent_original_os_proof": 0})
+
+    def test_portable_tree_false_flag_original_os_null_refused(self):
+        self._assert_forged_tree_review_verdict_refused(
+            {"independent_original_os_proof": None})
+
+    def test_portable_tree_false_flag_original_os_string_false_refused(self):
+        self._assert_forged_tree_review_verdict_refused(
+            {"independent_original_os_proof": "false"})
+
+    def test_portable_tree_false_flag_exclusive_dispatch_numeric_zero_refused(self):
+        self._assert_forged_tree_review_verdict_refused(
+            {"exclusive_server_dispatch_gate_proven": 0})
+
+    def test_portable_tree_false_flag_exclusive_dispatch_null_refused(self):
+        self._assert_forged_tree_review_verdict_refused(
+            {"exclusive_server_dispatch_gate_proven": None})
+
+    def test_portable_tree_false_flag_exclusive_dispatch_string_false_refused(self):
+        self._assert_forged_tree_review_verdict_refused(
+            {"exclusive_server_dispatch_gate_proven": "false"})
+
+    def test_portable_tree_false_flag_annual_authority_numeric_zero_refused(self):
+        self._assert_forged_tree_review_verdict_refused(
+            {"can_authorize_annual_run": 0})
+
+    def test_portable_tree_false_flag_annual_authority_null_refused(self):
+        self._assert_forged_tree_review_verdict_refused(
+            {"can_authorize_annual_run": None})
+
+    def test_portable_tree_false_flag_annual_authority_string_false_refused(self):
+        self._assert_forged_tree_review_verdict_refused(
+            {"can_authorize_annual_run": "false"})
+
+    def test_portable_tree_false_flag_numeric_source_consistency_refused(self):
+        self._assert_forged_tree_review_verdict_refused(
+            {"source_consistency": 0})
+
+    def test_portable_tree_false_flag_clean_literal_false_control(self):
+        result = self.verdict()
+        self.assertTrue(result["source_consistency"])
+        self.assertEqual(result["diagnostics"], ())
+        self.assertIs(result["independent_original_os_proof"], False)
+        self.assertIs(result["exclusive_server_dispatch_gate_proven"], False)
+        self.assertIs(result["can_authorize_annual_run"], False)
+
