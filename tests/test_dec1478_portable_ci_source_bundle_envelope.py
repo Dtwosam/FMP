@@ -10329,3 +10329,120 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_canary_clean_fixture_source_only(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+    def _assert_invalid_evidence_object_permutation_safe(self, mutate):
+        import copy
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self._portable_snapshot_leaf("docs")["sha"] = "a"*40
+        first = self.verdict()
+        self.assertFalse(first["source_consistency"])
+        self.assertIn("TREE_CHAIN_LEAF_BYTES_SHA_MISMATCH",
+                      first["diagnostics"])
+        mutate()
+        snapshot = copy.deepcopy(self.envelope)
+        direct = self.verdict()
+        parsed = review_bundle_json_text(json.dumps(self.envelope, sort_keys=True))
+        out = io.StringIO()
+        status = cli.run_stdin_review(
+            io.StringIO(json.dumps(self.envelope)), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(self.envelope, snapshot)
+        self.assertEqual(first, direct)
+        self.assertEqual(direct, parsed)
+        self.assertEqual(status, 2)
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"], list(direct["diagnostics"]))
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        for result in (direct, emitted):
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_bad_object_order_root_envelope_preserves_failure(self):
+        def reorder():
+            self.envelope = dict(reversed(list(self.envelope.items())))
+        self._assert_invalid_evidence_object_permutation_safe(reorder)
+
+    def test_portable_bad_object_order_full_snapshot_inventory_preserves_failure(self):
+        def reorder():
+            mapping = self.envelope["full_tree_snapshots"]
+            self.envelope["full_tree_snapshots"] = dict(reversed(list(mapping.items())))
+        self._assert_invalid_evidence_object_permutation_safe(reorder)
+
+    def test_portable_bad_object_order_full_root_object_preserves_failure(self):
+        def reorder():
+            sha = self.envelope["commit"]["tree"]["sha"]
+            item = self.envelope["full_tree_snapshots"][sha]
+            self.envelope["full_tree_snapshots"][sha] = dict(reversed(list(item.items())))
+        self._assert_invalid_evidence_object_permutation_safe(reorder)
+
+    def test_portable_bad_object_order_full_root_entry_fields_preserves_failure(self):
+        def reorder():
+            sha = self.envelope["commit"]["tree"]["sha"]
+            items = self.envelope["full_tree_snapshots"][sha]["tree"]
+            items[0] = dict(reversed(list(items[0].items())))
+        self._assert_invalid_evidence_object_permutation_safe(reorder)
+
+    def test_portable_bad_object_order_full_docs_child_fields_preserves_failure(self):
+        def reorder():
+            trees, _, sha = self._portable_snapshot_parent_child("docs")
+            trees[sha] = dict(reversed(list(trees[sha].items())))
+        self._assert_invalid_evidence_object_permutation_safe(reorder)
+
+    def test_portable_bad_object_order_flat_nodes_inventory_preserves_failure(self):
+        def reorder():
+            nodes = self.envelope["nodes"]
+            self.envelope["nodes"] = dict(reversed(list(nodes.items())))
+        self._assert_invalid_evidence_object_permutation_safe(reorder)
+
+    def test_portable_bad_object_order_flat_node_fields_preserves_failure(self):
+        def reorder():
+            nodes = self.envelope["nodes"]
+            nodes["tests/sample.py"] = dict(reversed(list(nodes["tests/sample.py"].items())))
+        self._assert_invalid_evidence_object_permutation_safe(reorder)
+
+    def test_portable_bad_object_order_changed_bytes_inventory_preserves_failure(self):
+        def reorder():
+            b = self.envelope["changed_bytes_b64"]
+            self.envelope["changed_bytes_b64"] = dict(reversed(list(b.items())))
+        self._assert_invalid_evidence_object_permutation_safe(reorder)
+
+    def test_portable_bad_object_order_raw_log_inventory_preserves_failure(self):
+        def reorder():
+            logs = self.envelope["raw_ci_runner_logs"]
+            self.envelope["raw_ci_runner_logs"] = dict(reversed(list(logs.items())))
+        self._assert_invalid_evidence_object_permutation_safe(reorder)
+
+    def test_portable_bad_object_order_raw_receipt_inventory_preserves_failure(self):
+        def reorder():
+            receipts = self.envelope["raw_ci_log_receipts"]
+            self.envelope["raw_ci_log_receipts"] = dict(reversed(list(receipts.items())))
+        self._assert_invalid_evidence_object_permutation_safe(reorder)
+
+    def test_portable_bad_object_order_jobs_by_run_inventory_preserves_failure(self):
+        def reorder():
+            jobs = self.envelope["jobs_by_run"]
+            self.envelope["jobs_by_run"] = dict(reversed(list(jobs.items())))
+        self._assert_invalid_evidence_object_permutation_safe(reorder)
+
+    def test_portable_bad_object_order_checkout_inventory_preserves_failure(self):
+        def reorder():
+            checkouts = self.envelope["checkout_by_run"]
+            self.envelope["checkout_by_run"] = dict(reversed(list(checkouts.items())))
+        self._assert_invalid_evidence_object_permutation_safe(reorder)
+
+    def test_portable_bad_object_order_pr_fields_preserves_failure(self):
+        def reorder():
+            pr = self.envelope["pr"]
+            self.envelope["pr"] = dict(reversed(list(pr.items())))
+        self._assert_invalid_evidence_object_permutation_safe(reorder)
+
+    def test_portable_bad_object_order_compare_fields_preserves_failure(self):
+        def reorder():
+            compare = self.envelope["compare"]
+            self.envelope["compare"] = dict(reversed(list(compare.items())))
+        self._assert_invalid_evidence_object_permutation_safe(reorder)
+
+    def test_portable_bad_object_order_clean_source_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
