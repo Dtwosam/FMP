@@ -5467,3 +5467,71 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertFalse(direct["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(direct["can_authorize_annual_run"])
 
+    def _assert_rehashed_nonstage_log_line_is_not_annual_admission(
+            self, added_text, change_checkout=False):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        raw = self.envelope["raw_ci_runner_logs"]["8001"]
+        if change_checkout:
+            self.assertIn("/1649/merge", raw)
+            raw = raw.replace("/1649/merge", "/9999/merge")
+        self.envelope["raw_ci_runner_logs"]["8001"] = (
+            raw + "\nprivate-untrusted-note: " + added_text)
+        self._refingerprint_portable_synthetic_ci_log("8001")
+        direct = self.verdict()
+        json_text = json.dumps(self.envelope, ensure_ascii=True)
+        parsed = review_bundle_json_text(json_text)
+        out = io.StringIO()
+        exit_code = cli.run_stdin_review(io.StringIO(json_text), out)
+        record = json.loads(out.getvalue())
+        self.assertEqual(direct, parsed)
+        self.assertEqual(record["diagnostics"], list(direct["diagnostics"]))
+        self.assertEqual(record["source_consistency"],
+                         direct["source_consistency"])
+        self.assertEqual(exit_code,
+                         2 if change_checkout else 0)
+        self.assertEqual(direct["source_consistency"],
+                         not change_checkout)
+        self.assertNotIn("private-untrusted-note", out.getvalue())
+        self.assertNotIn(added_text, out.getvalue())
+        self.assertFalse(direct["independent_original_os_proof"])
+        self.assertFalse(direct["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(direct["can_authorize_annual_run"])
+        self.assertFalse(record["independent_original_os_proof"])
+        self.assertFalse(record["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(record["can_authorize_annual_run"])
+
+    def test_rehashed_nonstage_log_fake_annual_permission_is_not_proof(self):
+        self._assert_rehashed_nonstage_log_line_is_not_annual_admission(
+            "can_authorize_annual_run=true")
+
+    def test_rehashed_nonstage_log_fake_original_os_proof_is_not_proof(self):
+        self._assert_rehashed_nonstage_log_line_is_not_annual_admission(
+            "independent_original_os_proof=true")
+
+    def test_rehashed_nonstage_log_fake_server_gate_is_not_proof(self):
+        self._assert_rehashed_nonstage_log_line_is_not_annual_admission(
+            "exclusive_server_dispatch_gate_proven=true")
+
+    def test_rehashed_nonstage_log_fake_annual_approval_is_not_proof(self):
+        self._assert_rehashed_nonstage_log_line_is_not_annual_admission(
+            "protected 2023 annual run385 attempt1 permission granted")
+
+    def test_rehashed_nonstage_log_fake_approval_cannot_mask_wrong_pr_ref(self):
+        self._assert_rehashed_nonstage_log_line_is_not_annual_admission(
+            "can_authorize_annual_run=true", change_checkout=True)
+
+    def test_rehashed_nonstage_log_fake_os_proof_cannot_mask_wrong_pr_ref(self):
+        self._assert_rehashed_nonstage_log_line_is_not_annual_admission(
+            "independent_original_os_proof=true", change_checkout=True)
+
+    def test_rehashed_nonstage_log_fake_gate_cannot_mask_wrong_pr_ref(self):
+        self._assert_rehashed_nonstage_log_line_is_not_annual_admission(
+            "exclusive_server_dispatch_gate_proven=true",
+            change_checkout=True)
+
+    def test_rehashed_nonstage_log_fake_approval_cannot_mask_wrong_pr_ref(self):
+        self._assert_rehashed_nonstage_log_line_is_not_annual_admission(
+            "protected 2023 annual run385 attempt1 permission granted",
+            change_checkout=True)
+
