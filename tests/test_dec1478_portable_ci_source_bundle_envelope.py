@@ -8512,3 +8512,109 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_multi_tree_clean_control_source_only(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+    def _assert_nested_tree_graph_mutation_isolated(self, mutate):
+        import io
+        from unittest.mock import patch
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        before = copy.deepcopy(self.envelope)
+        calls = []
+
+        def synthetic_nested_review(**evidence):
+            self.assertIsNot(evidence["full_tree_snapshots"],
+                             self.envelope["full_tree_snapshots"])
+            self.assertIsNot(evidence["nodes"], self.envelope["nodes"])
+            mutate(evidence)
+            calls.append(True)
+            return {
+                "source_consistency": True,
+                "diagnostics": (),
+                "independent_original_os_proof": False,
+                "exclusive_server_dispatch_gate_proven": False,
+                "can_authorize_annual_run": False,
+            }
+
+        raw = json.dumps(self.envelope, sort_keys=True)
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          side_effect=synthetic_nested_review):
+            direct = self.verdict()
+            parsed = review_bundle_json_text(raw)
+            out = io.StringIO()
+            status = cli.run_stdin_review(io.StringIO(raw), out)
+        self.assertEqual(len(calls), 3)
+        self.assertEqual(self.envelope, before)
+        self.assertEqual(direct, parsed)
+        self.assertEqual(status, 0)
+        self.assertTrue(direct["source_consistency"])
+        self.assertEqual(direct["diagnostics"], ())
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"], [])
+        self.assertTrue(emitted["source_consistency"])
+        self.assertNotIn("tests/sample.py", out.getvalue())
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        for result in (direct, emitted):
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+        # Run the real nested checker after the malicious mock was removed.
+        self.assertEqual(self.verdict()["diagnostics"], ())
+
+    def test_portable_nested_tree_mutate_snapshot_map_clear_isolated(self):
+        self._assert_nested_tree_graph_mutation_isolated(
+            lambda e: e["full_tree_snapshots"].clear())
+
+    def test_portable_nested_tree_mutate_root_entries_clear_isolated(self):
+        self._assert_nested_tree_graph_mutation_isolated(
+            lambda e: e["full_tree_snapshots"][
+                e["commit"]["tree"]["sha"]]["tree"].clear())
+
+    def test_portable_nested_tree_mutate_root_self_sha_isolated(self):
+        self._assert_nested_tree_graph_mutation_isolated(
+            lambda e: e["full_tree_snapshots"][
+                e["commit"]["tree"]["sha"]].__setitem__("sha", "a"*40))
+
+    def test_portable_nested_tree_mutate_root_truncated_isolated(self):
+        self._assert_nested_tree_graph_mutation_isolated(
+            lambda e: e["full_tree_snapshots"][
+                e["commit"]["tree"]["sha"]].__setitem__("truncated", True))
+
+    def test_portable_nested_tree_mutate_root_duplicate_entry_isolated(self):
+        self._assert_nested_tree_graph_mutation_isolated(
+            lambda e: e["full_tree_snapshots"][
+                e["commit"]["tree"]["sha"]]["tree"].append(
+                    dict(e["full_tree_snapshots"][
+                        e["commit"]["tree"]["sha"]]["tree"][0])))
+
+    def test_portable_nested_tree_mutate_flat_node_inventory_isolated(self):
+        self._assert_nested_tree_graph_mutation_isolated(
+            lambda e: e["nodes"].clear())
+
+    def test_portable_nested_tree_mutate_flat_docs_mode_isolated(self):
+        self._assert_nested_tree_graph_mutation_isolated(
+            lambda e: e["nodes"]["docs/sample.md"].__setitem__(
+                "mode", "120000"))
+
+    def test_portable_nested_tree_mutate_changed_raw_bytes_isolated(self):
+        self._assert_nested_tree_graph_mutation_isolated(
+            lambda e: e["changed_bytes"].__setitem__(
+                "tests/sample.py", b"evil\n"))
+
+    def test_portable_nested_tree_mutate_ci_source_map_isolated(self):
+        self._assert_nested_tree_graph_mutation_isolated(
+            lambda e: e["ci_workflow_bytes"].clear())
+
+    def test_portable_nested_tree_mutate_commit_root_pointer_isolated(self):
+        self._assert_nested_tree_graph_mutation_isolated(
+            lambda e: e["commit"]["tree"].__setitem__("sha", "a"*40))
+
+    def test_portable_nested_tree_mutate_compare_files_isolated(self):
+        self._assert_nested_tree_graph_mutation_isolated(
+            lambda e: e["compare"]["files"].clear())
+
+    def test_portable_nested_tree_mutate_raw_ci_logs_isolated(self):
+        self._assert_nested_tree_graph_mutation_isolated(
+            lambda e: e["raw_ci_runner_logs"].clear())
+
+    def test_portable_nested_tree_real_reviewer_still_non_authorizing(self):
+        self._assert_portable_tree_object_order_consistency_only()
+

@@ -1,0 +1,7 @@
+# DEC-1603 — Nested source reviewer cannot mutate caller Git tree evidence
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent one-commit tests/docs child of #1849 at `01ac9531fce7ca2b2a26be0e7e3205f7fa9f2c53`. Thirteen synthetic methods (**3,246 proposed source-defined tests**).
+
+The portable reviewer copies caller-provided nested evidence before calling the combined source checker. Mock a deliberately mutating downstream checker that clears snapshot inventories, deletes root entries, changes tree SHA/truncated flags, duplicates entries, clears flat Git nodes or raw CI logs, rewrites canonical source bytes, and tampers with compare/commit evidence. Across direct-memory, JSON-text and bounded stdin, assert three nested review invocations act on distinct copied evidence, caller graph remains *byte-for-byte value-equivalent*, no source paths are echoed and protected-original OS, exclusive server gate and annual permission remain false. Restore the real checker and confirm the original source-only fixture still passes. A synthetic mock verdict is **not authenticated security evidence**.
+
+Own exact-head Phase 3/full historical-general CI and qualified independent review required. Tests/docs only; no production/parser/budget/workflow/security/admission changes, protected originals/archives/artifacts, annual dispatch/retry, merging, deployment or trading. DEC-650/#820 and DEC-651/#821/#779 remain **BLOCKED**.
