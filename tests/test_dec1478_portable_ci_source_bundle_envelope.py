@@ -8947,3 +8947,48 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertIs(result["exclusive_server_dispatch_gate_proven"], False)
         self.assertIs(result["can_authorize_annual_run"], False)
 
+    def test_portable_verdict_shape_extra_status_field_refused(self):
+        self._assert_forged_tree_review_verdict_refused({"status": "success"})
+
+    def test_portable_verdict_shape_extra_approval_field_refused(self):
+        self._assert_forged_tree_review_verdict_refused({"annual_approved": True})
+
+    def test_portable_verdict_shape_extra_numeric_field_refused(self):
+        self._assert_forged_tree_review_verdict_refused({3: "private"})
+
+    def test_portable_verdict_shape_diagnostics_none_refused(self):
+        self._assert_forged_tree_review_verdict_refused({"diagnostics": None})
+
+    def test_portable_verdict_shape_diagnostics_integer_refused(self):
+        self._assert_forged_tree_review_verdict_refused({"diagnostics": 0})
+
+    def test_portable_verdict_shape_diagnostics_dict_refused(self):
+        self._assert_forged_tree_review_verdict_refused({"diagnostics": {"private": True}})
+
+    def test_portable_verdict_shape_diagnostics_frozenset_refused(self):
+        self._assert_forged_tree_review_verdict_refused({"diagnostics": frozenset(("TREE_CHAIN_TREE_OBJECT_UNREVIEWED",))})
+
+    def test_portable_verdict_shape_diagnostics_nested_tuple_refused(self):
+        self._assert_forged_tree_review_verdict_refused({"source_consistency": False, "diagnostics": (("TREE_CHAIN_TREE_OBJECT_UNREVIEWED",),)})
+
+    def test_portable_verdict_shape_diagnostics_string_subclass_refused(self):
+        self._assert_forged_tree_review_verdict_refused({"source_consistency": False, "diagnostics": (type("SyntheticStr", (str,), {})("TREE_CHAIN_TREE_OBJECT_UNREVIEWED"),)})
+
+    def test_portable_verdict_shape_source_consistency_string_refused(self):
+        self._assert_forged_tree_review_verdict_refused({"source_consistency": "true"})
+
+    def test_portable_verdict_shape_source_consistency_null_refused(self):
+        self._assert_forged_tree_review_verdict_refused({"source_consistency": None})
+
+    def test_portable_verdict_shape_diagnostics_unknown_harmless_refused(self):
+        self._assert_forged_tree_review_verdict_refused({"source_consistency": False, "diagnostics": ("TREE_CHAIN_MADE_UP",)})
+
+    def test_portable_verdict_shape_diagnostics_dotted_private_refused(self):
+        self._assert_forged_tree_review_verdict_refused({"source_consistency": False, "diagnostics": ("private.docs/sample.md",)})
+
+    def test_portable_verdict_shape_diagnostics_empty_and_failure_refused(self):
+        self._assert_forged_tree_review_verdict_refused({"source_consistency": False, "diagnostics": ()})
+
+    def test_portable_verdict_shape_clean_source_only_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
