@@ -11561,3 +11561,98 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_source_alphabet_clean_control(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+    def _assert_canonical_changed_source_drift_refused(self, path, changed):
+        import copy
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        initial = base64.b64decode(
+            self.envelope["changed_bytes_b64"][path], validate=True)
+        self.assertNotEqual(initial, changed)
+        nodes_before = copy.deepcopy(self.envelope["nodes"])
+        trees_before = copy.deepcopy(self.envelope["full_tree_snapshots"])
+        encoded = base64.b64encode(changed).decode("ascii")
+        self.assertEqual(base64.b64decode(encoded, validate=True), changed)
+        self.envelope["changed_bytes_b64"][path] = encoded
+        before = copy.deepcopy(self.envelope)
+        direct = self.verdict()
+        payload = json.dumps(self.envelope, sort_keys=True)
+        parsed = review_bundle_json_text(payload)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(payload), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(self.envelope, before)
+        self.assertEqual(self.envelope["nodes"], nodes_before)
+        self.assertEqual(self.envelope["full_tree_snapshots"], trees_before)
+        self.assertEqual(direct, parsed)
+        self.assertEqual(status, 2)
+        self.assertFalse(direct["source_consistency"])
+        self.assertTrue(direct["diagnostics"])
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"],
+                         list(direct["diagnostics"]))
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        self.assertNotIn("tests/sample.py", out.getvalue())
+        for result in (direct, emitted):
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_canonical_byte_drift_test_same_length_fail_refused(self):
+        self._assert_canonical_changed_source_drift_refused(
+            "tests/sample.py", b"fail\n")
+
+    def test_portable_canonical_byte_drift_test_same_length_caps_refused(self):
+        self._assert_canonical_changed_source_drift_refused(
+            "tests/sample.py", b"PASS\n")
+
+    def test_portable_canonical_byte_drift_test_cr_newline_refused(self):
+        self._assert_canonical_changed_source_drift_refused(
+            "tests/sample.py", b"pass\r")
+
+    def test_portable_canonical_byte_drift_test_truncated_refused(self):
+        self._assert_canonical_changed_source_drift_refused(
+            "tests/sample.py", b"pass")
+
+    def test_portable_canonical_byte_drift_test_extra_newline_refused(self):
+        self._assert_canonical_changed_source_drift_refused(
+            "tests/sample.py", b"pass\n\n")
+
+    def test_portable_canonical_byte_drift_test_null_terminator_refused(self):
+        self._assert_canonical_changed_source_drift_refused(
+            "tests/sample.py", b"pass\x00")
+
+    def test_portable_canonical_byte_drift_test_null_prefix_refused(self):
+        self._assert_canonical_changed_source_drift_refused(
+            "tests/sample.py", b"\x00pass")
+
+    def test_portable_canonical_byte_drift_docs_mixed_case_refused(self):
+        self._assert_canonical_changed_source_drift_refused(
+            "docs/sample.md", b"# Source-Only\n")
+
+    def test_portable_canonical_byte_drift_docs_cr_newline_refused(self):
+        self._assert_canonical_changed_source_drift_refused(
+            "docs/sample.md", b"# Source-only\r")
+
+    def test_portable_canonical_byte_drift_docs_truncated_refused(self):
+        self._assert_canonical_changed_source_drift_refused(
+            "docs/sample.md", b"# Source-only")
+
+    def test_portable_canonical_byte_drift_docs_extra_newline_refused(self):
+        self._assert_canonical_changed_source_drift_refused(
+            "docs/sample.md", b"# Source-only\n\n")
+
+    def test_portable_canonical_byte_drift_docs_utf8_bom_refused(self):
+        self._assert_canonical_changed_source_drift_refused(
+            "docs/sample.md", b"\xef\xbb\xbf# Source-only\n")
+
+    def test_portable_canonical_byte_drift_docs_null_terminator_refused(self):
+        self._assert_canonical_changed_source_drift_refused(
+            "docs/sample.md", b"# Source-only\x00")
+
+    def test_portable_canonical_byte_drift_docs_changed_marker_refused(self):
+        self._assert_canonical_changed_source_drift_refused(
+            "docs/sample.md", b"# Source-ledger\n")
+
+    def test_portable_canonical_byte_drift_clean_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
