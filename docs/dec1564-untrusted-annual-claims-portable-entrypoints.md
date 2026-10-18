@@ -1,0 +1,7 @@
+# DEC-1564 — Caller-supplied annual permission claims are never trusted
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact one-commit tests/docs child of #1810 at `00b6ebc9343d0e547431428f4b8e7448395f6ceb`. Twelve synthetic unittest methods and a three-entry-point assertion helper (**2,840 proposed source-defined tests**).
+
+Caller-supplied GitHub PR metadata, CI run metadata, job snapshots, compare/commit/tree records, merge checkout snapshots, Phase 3 index data, and raw CI log receipts can contain self-serving `can_authorize_annual_run` claims. Inject the claim at each layer, including the root envelope, then compare direct-memory, JSON-text and bounded stdin verdicts. The precise parser acceptance of unknown *nested* fields is not interpreted as authorization: every reviewed output must keep independent protected-original OS proof, exclusive server admission and annual execution permission false, and the stdout schema must not echo a private canary. Preserve the clean synthetic source-only control as a positive source-consistency fixture.
+
+Own exact-head Phase 3 and historical/general CI, plus independent qualified review, required. Tests/docs only, no production code, parser ceilings, workflow/security-control edits, protected originals, dispatch/retry, merge, deployment or trading. DEC-650/#820 independently witnessed original OS no-write and DEC-651/#821/#779 exclusive immutable 2023 run385/attempt1 admission remain BLOCKED.
