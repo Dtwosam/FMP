@@ -1,0 +1,7 @@
+# DEC-1642 — Schema identity is decoded-string exact, not visual similarity
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** One-commit tests/docs child of #1888 at `a94eec47e2d34dca9ddcffa205f59507f9e00f8b`. Seventeen synthetic methods (**3,812 proposed source-defined tests**).
+
+The offline source bundle schema is exactly `fmp-offline-source-bundle-v1`. Fourteen negative tests inject different version numbers, whitespace, case changes, NUL/newline suffixes, visually confusable Unicode or alternative words. Every such decoded string must fail `BUNDLE_SCHEMA_UNREVIEWED` before source review, with identical direct-memory, JSON-text and bounded stdin verdicts, no source echo and no protected annual authority. Two positive controls replace a character with its legal JSON `\\uXXXX` spelling, requiring exact decoded equality and unchanged, nonauthorizing source consistency. One untouched control confirms the original schema.
+
+These tests do not establish remote Git/CI evidence authentication, original protected OS witnesses, exclusive admission or annual run consent. Own exact-head Phase 3/full historical-general CI and independent qualified review required. Tests/docs only; no production/parser/resource budgets/workflow/security-control changes, protected original/archive/artifact access, annual dispatch/retry, merge, deployment or trading. DEC-650/#820 and DEC-651/#821/#779 remain **BLOCKED**.
