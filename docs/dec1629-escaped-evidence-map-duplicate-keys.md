@@ -1,0 +1,7 @@
+# DEC-1629 — Equivalent escaped JSON keys cannot shadow source/runner evidence maps
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** One-commit tests/docs child of #1875 at `dfab70d81ae9deabbad094921f93c887eb78eca3`. Fourteen new methods (**3,620 proposed source-defined methods**).
+
+Unicode-escaped JSON member names may decode to the *same* source- or runner-evidence key. Thirteen synthetic JSON payloads add a null first member and a following original-value member with a `\\uXXXX` alias inside run/job, checkout, CI log/receipt, source Base64, Git nodes, full tree snapshot, PR/compare/commit, Phase 3 or merge checkout records. A standard last-key-wins `json.loads` would collapse them to the original clean envelope; the strict portable parser must instead reject each as `BUNDLE_JSON_GRAMMAR_UNREVIEWED` before any source review. Verify bounded stdin parity, no private source-path echo and all annual authority flags false. One clean source-only control remains nonauthorizing.
+
+These are synthetic caller inputs, not authenticated GitHub evidence, independent protected original OS proof, or annual dispatch consent. Exact-head Phase 3/full historical-general CI and independent qualified review required. Tests/docs only; no production/parser/budgets/workflow/security control changes, protected original/archive/artifact access, annual run/retry, merge, deployment or trading. DEC-650/#820 and DEC-651/#821/#779 remain **BLOCKED**.

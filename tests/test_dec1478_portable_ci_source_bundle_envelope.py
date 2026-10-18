@@ -10960,3 +10960,89 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_run_key_clean_control_source_only(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+    def _assert_json_escaped_duplicate_in_category(self, category):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.assertIn(category, self.envelope)
+        entries = self.envelope[category]
+        self.assertIs(type(entries), dict)
+        key = next(iter(entries))
+        self.assertIs(type(key), str)
+        self.assertGreater(len(key), 0)
+        raw = json.dumps(self.envelope, sort_keys=True, separators=(",", ":"))
+        marker = json.dumps(category) + ":{"
+        self.assertEqual(raw.count(marker), 1)
+        before, after = raw.split(marker, 1)
+        needle = json.dumps(key) + ":"
+        self.assertIn(needle, after)
+        escape_key = ('"' + "\\u%04x" % ord(key[0]) + key[1:] + '"')
+        self.assertNotEqual(escape_key, json.dumps(key))
+        # The second member still has the original value: a permissive
+        # JSON decoder silently discards the preceding null alias.
+        encoded = before + marker + after.replace(
+            needle, needle + "null," + escape_key + ":", 1)
+        self.assertEqual(json.loads(encoded), self.envelope)
+        direct = self.verdict()
+        self.assertEqual(direct["diagnostics"], ())
+        self.assertTrue(direct["source_consistency"])
+        parsed = review_bundle_json_text(encoded)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(encoded), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(status, 2)
+        self.assertEqual(parsed["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+        self.assertFalse(parsed["source_consistency"])
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"],
+                         ["BUNDLE_JSON_GRAMMAR_UNREVIEWED"])
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        self.assertNotIn("tests/sample.py", out.getvalue())
+        for result in (parsed, emitted):
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_escaped_duplicate_jobs_by_run_refused(self):
+        self._assert_json_escaped_duplicate_in_category("jobs_by_run")
+
+    def test_portable_escaped_duplicate_checkout_by_run_refused(self):
+        self._assert_json_escaped_duplicate_in_category("checkout_by_run")
+
+    def test_portable_escaped_duplicate_raw_ci_runner_logs_refused(self):
+        self._assert_json_escaped_duplicate_in_category("raw_ci_runner_logs")
+
+    def test_portable_escaped_duplicate_raw_ci_log_receipts_refused(self):
+        self._assert_json_escaped_duplicate_in_category("raw_ci_log_receipts")
+
+    def test_portable_escaped_duplicate_changed_bytes_b64_refused(self):
+        self._assert_json_escaped_duplicate_in_category("changed_bytes_b64")
+
+    def test_portable_escaped_duplicate_ci_workflow_bytes_b64_refused(self):
+        self._assert_json_escaped_duplicate_in_category("ci_workflow_bytes_b64")
+
+    def test_portable_escaped_duplicate_nodes_refused(self):
+        self._assert_json_escaped_duplicate_in_category("nodes")
+
+    def test_portable_escaped_duplicate_full_tree_snapshots_refused(self):
+        self._assert_json_escaped_duplicate_in_category("full_tree_snapshots")
+
+    def test_portable_escaped_duplicate_pr_refused(self):
+        self._assert_json_escaped_duplicate_in_category("pr")
+
+    def test_portable_escaped_duplicate_compare_refused(self):
+        self._assert_json_escaped_duplicate_in_category("compare")
+
+    def test_portable_escaped_duplicate_commit_refused(self):
+        self._assert_json_escaped_duplicate_in_category("commit")
+
+    def test_portable_escaped_duplicate_phase3_evidence_snapshot_refused(self):
+        self._assert_json_escaped_duplicate_in_category("phase3_evidence_snapshot")
+
+    def test_portable_escaped_duplicate_merge_checkout_snapshot_refused(self):
+        self._assert_json_escaped_duplicate_in_category("merge_checkout_snapshot")
+
+
+    def test_portable_escaped_duplicate_map_clean_source_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
