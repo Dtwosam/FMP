@@ -1,0 +1,7 @@
+# DEC-1607 — Protected evidence flags must be literal Boolean false
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent one-commit tests/docs child of #1853 at `2b25d51cedb25bd677b77148bee3683541cbb5ff`. Eleven synthetic methods (**3,300 proposed source-defined tests**).
+
+A nested source reviewer must not encode proof or permission flags using merely falsy Python/JSON values. Even `0`, `null`, and `"false"` compare or behave similarly to `False` in some careless checks, but none is the **literal Boolean false** required for `independent_original_os_proof`, `exclusive_server_dispatch_gate_proven` and `can_authorize_annual_run`. A numeric-zero `source_consistency` claim is similarly rejected. Fake downstream results must fail closed at the portable ingress as `BUNDLE_RESULT_SHAPE_UNREVIEWED` through direct-memory, JSON text, bounded stdin, without caller graph mutation or source echo. A genuine clean control asserts identity with the literal False singleton for all protected claims.
+
+These are synthetic type-safety tests, not independently authenticated protected original OS, exclusive server admission or annual permission. Own exact-head Phase 3/general CI and qualified independent review required. Tests/docs only, no production/parser/limits/workflow/security/admission changes, protected originals/archives/artifacts, annual dispatch/retry, merging, deployment or trading. DEC-650/#820 and DEC-651/#821/#779 remain **BLOCKED**.
