@@ -4802,3 +4802,74 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(result["can_authorize_annual_run"])
 
+    def _json_document_with_duplicate_map_member(self, category, escape_alias=False):
+        raw = json.dumps(self.envelope, separators=(",", ":"))
+        existing = json.dumps(self.envelope[category], separators=(",", ":"))
+        key = next(iter(self.envelope[category]))
+        encoded_key = (('"\\u%04x%s"' % (ord(key[0]), key[1:]))
+                       if escape_alias else json.dumps(key))
+        duplicate = (existing[:-1] + "," + encoded_key + ":" +
+                     json.dumps(self.envelope[category][key],
+                                separators=(",", ":")) + "}")
+        needle = json.dumps(category) + ":" + existing
+        self.assertEqual(raw.count(needle), 1)
+        return raw.replace(needle, json.dumps(category) + ":" + duplicate, 1)
+
+    def test_valid_envelope_duplicate_schema_same_value_rejected(self):
+        raw = json.dumps(self.envelope, separators=(",", ":"))
+        raw = raw[:-1] + ',"schema":' + json.dumps(ENVELOPE_SCHEMA) + "}"
+        result = review_bundle_json_text(raw)
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_valid_envelope_duplicate_schema_escaped_key_rejected(self):
+        raw = json.dumps(self.envelope, separators=(",", ":"))
+        raw = raw[:-1] + ',"\\u0073chema":' + json.dumps(ENVELOPE_SCHEMA) + "}"
+        self.assertTrue(_json_lexical_object_budgets(raw))
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_valid_envelope_duplicate_runs_cannot_replace_provenance(self):
+        raw = json.dumps(self.envelope, separators=(",", ":"))
+        raw = raw[:-1] + ',"runs":[]}'
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_valid_envelope_duplicate_pr_inner_key_rejected(self):
+        raw = self._json_document_with_duplicate_map_member("pr")
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_valid_envelope_duplicate_pr_escaped_inner_key_rejected(self):
+        raw = self._json_document_with_duplicate_map_member(
+            "pr", escape_alias=True)
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_valid_envelope_duplicate_source_path_rejected(self):
+        raw = self._json_document_with_duplicate_map_member("changed_bytes_b64")
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_valid_envelope_duplicate_source_path_escaped_key_rejected(self):
+        raw = self._json_document_with_duplicate_map_member(
+            "changed_bytes_b64", escape_alias=True)
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_valid_envelope_duplicate_raw_ci_run_key_rejected(self):
+        raw = self._json_document_with_duplicate_map_member(
+            "raw_ci_runner_logs")
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_valid_envelope_cross_map_same_run_key_is_not_duplicate(self):
+        raw = json.dumps(self.envelope, separators=(",", ":"), sort_keys=True)
+        result = review_bundle_json_text(raw)
+        self.assertEqual(result["diagnostics"], ())
+        self.assertTrue(result["source_consistency"])
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
