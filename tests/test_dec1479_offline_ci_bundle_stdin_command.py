@@ -54,6 +54,61 @@ def _read_complete_bounded_stdin(input_stream):
         return None, "BUNDLE_STDIN_READ_UNREVIEWED"
 
 
+APPROVED_OUTPUT_DIAGNOSTICS = frozenset((
+    "BUNDLE_CATEGORY_TYPE_UNREVIEWED",
+    "BUNDLE_JSON_GRAMMAR_UNREVIEWED",
+    "BUNDLE_JSON_TEXT_UNREVIEWED",
+    "BUNDLE_JSON_UNICODE_UNREVIEWED",
+    "BUNDLE_KEY_INVENTORY_UNREVIEWED",
+    "BUNDLE_NESTED_EVIDENCE_UNREVIEWED",
+    "BUNDLE_OFFLINE_RESULT_SHAPE_UNREVIEWED",
+    "BUNDLE_OFFLINE_REVIEW_UNREVIEWED",
+    "BUNDLE_RAW_LOG_TEXT_OVERSIZE",
+    "BUNDLE_RAW_LOG_TEXT_UNREVIEWED",
+    "BUNDLE_RAW_LOG_UTF8_OVERSIZE",
+    "BUNDLE_RESULT_SHAPE_UNREVIEWED",
+    "BUNDLE_RUN_COLLECTION_OVERSIZE",
+    "BUNDLE_RUN_KEY_DUPLICATED",
+    "BUNDLE_RUN_KEY_UNREVIEWED",
+    "BUNDLE_RUN_MAP_OVERSIZE",
+    "BUNDLE_SCHEMA_UNREVIEWED",
+    "BUNDLE_SHAPE_UNREVIEWED",
+    "BUNDLE_SOURCE_B64_NONCANONICAL",
+    "BUNDLE_SOURCE_B64_UNREVIEWED",
+    "BUNDLE_SOURCE_BLOB_OVERSIZE",
+    "BUNDLE_SOURCE_CASE_COLLISION_UNREVIEWED",
+    "BUNDLE_SOURCE_CROSSMAP_COLLISION_UNREVIEWED",
+    "BUNDLE_SOURCE_MAP_OVERSIZE",
+    "BUNDLE_SOURCE_PATH_UNREVIEWED",
+    "BUNDLE_STDIN_ONLY_INVOCATION_REQUIRED",
+    "BUNDLE_STDIN_READ_UNREVIEWED",
+    "BUNDLE_STRUCTURE_BUDGET_UNREVIEWED",
+    "BUNDLE_TOTAL_RAW_LOG_OVERSIZE",
+    "BUNDLE_TOTAL_RAW_LOG_UTF8_OVERSIZE",
+    "BUNDLE_TOTAL_SOURCE_OVERSIZE",
+)) | envelope.REVIEWED_NESTED_DIAGNOSTICS
+
+
+def _reviewed_output_verdict_shape(verdict):
+    """Refuse mocked/untrusted verdict data before any JSON serialization."""
+    if type(verdict) is not dict or any(type(key) is not str for key in verdict):
+        return False
+    if set(verdict) != envelope.VERDICT_FIELDS:
+        return False
+    if (type(verdict["source_consistency"]) is not bool or
+            verdict["independent_original_os_proof"] is not False or
+            verdict["exclusive_server_dispatch_gate_proven"] is not False or
+            verdict["can_authorize_annual_run"] is not False):
+        return False
+    codes = verdict["diagnostics"]
+    if (type(codes) is not tuple or len(codes) > 256 or
+            any(type(code) is not str or
+                code not in APPROVED_OUTPUT_DIAGNOSTICS for code in codes)):
+        return False
+    return (verdict["source_consistency"] is (not codes) and
+            codes == tuple(sorted(set(codes))))
+
+
 def _emit_safe_verdict(verdict, output_stream):
     """Never claim a complete machine-readable result on failed delivery."""
     try:
@@ -90,6 +145,10 @@ def run_stdin_review(input_stream, output_stream):
                 IndexError, EOFError):
             # Never emit a traceback, exception message or source bytes.
             verdict = envelope.fail_closed("BUNDLE_OFFLINE_REVIEW_UNREVIEWED")
+    # A mocked/corrupted reviewer must not smuggle arbitrary fields,
+    # diagnostics or execution authorization through the final CLI output.
+    if not _reviewed_output_verdict_shape(verdict):
+        verdict = envelope.fail_closed("BUNDLE_OFFLINE_RESULT_SHAPE_UNREVIEWED")
     # Never echo supplied evidence. An incomplete verdict cannot
     # produce a success exit code.
     if not _emit_safe_verdict(verdict, output_stream):
@@ -1253,6 +1312,111 @@ class ExplicitStdinReviewIsNotAnnualWorkflowAdmission(unittest.TestCase):
         out = io.StringIO()
         rc = run_stdin_review(io.StringIO(json.dumps(self.bundle)), out)
         result = json.loads(out.getvalue())
+        self.assertEqual(rc, 0)
+        self.assertTrue(result["source_consistency"])
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+
+    def test_cli_rejects_true_annual_authorization_in_mocked_result(self):
+        from unittest.mock import patch
+        bad = envelope.fail_closed("BUNDLE_SHAPE_UNREVIEWED")
+        bad["can_authorize_annual_run"] = True
+        with patch.object(envelope, "review_bundle_json_text", return_value=bad):
+            rc, record = self.run_raw(json.dumps(self.bundle))
+        self.assertEqual(rc, 2)
+        self.assertFalse(record["can_authorize_annual_run"])
+        self.assertEqual(record["diagnostics"],
+                         ["BUNDLE_OFFLINE_RESULT_SHAPE_UNREVIEWED"])
+
+    def test_cli_rejects_mocked_independent_original_proof(self):
+        from unittest.mock import patch
+        bad = envelope.fail_closed("BUNDLE_SHAPE_UNREVIEWED")
+        bad["independent_original_os_proof"] = True
+        with patch.object(envelope, "review_bundle_json_text", return_value=bad):
+            rc, record = self.run_raw(json.dumps(self.bundle))
+        self.assertEqual(rc, 2)
+        self.assertFalse(record["independent_original_os_proof"])
+
+    def test_cli_rejects_mocked_exclusive_dispatch_gate(self):
+        from unittest.mock import patch
+        bad = envelope.fail_closed("BUNDLE_SHAPE_UNREVIEWED")
+        bad["exclusive_server_dispatch_gate_proven"] = True
+        with patch.object(envelope, "review_bundle_json_text", return_value=bad):
+            rc, record = self.run_raw(json.dumps(self.bundle))
+        self.assertEqual(rc, 2)
+        self.assertFalse(record["exclusive_server_dispatch_gate_proven"])
+
+    def test_cli_rejects_mocked_extra_key_without_echoing_it(self):
+        from unittest.mock import patch
+        bad = envelope.fail_closed("BUNDLE_SHAPE_UNREVIEWED")
+        bad["PRIVATE_RESULT_CANARY"] = "sensitive"
+        with patch.object(envelope, "review_bundle_json_text", return_value=bad):
+            rc, record = self.run_raw(json.dumps(self.bundle))
+        self.assertEqual(rc, 2)
+        self.assertEqual(record["diagnostics"],
+                         ["BUNDLE_OFFLINE_RESULT_SHAPE_UNREVIEWED"])
+        self.assertNotIn("PRIVATE_RESULT_CANARY", self.stdout.getvalue())
+
+    def test_cli_rejects_unknown_diagnostic_string_without_echo(self):
+        from unittest.mock import patch
+        bad = envelope.fail_closed("PRIVATE_DIAGNOSTIC_CANARY")
+        with patch.object(envelope, "review_bundle_json_text", return_value=bad):
+            rc, record = self.run_raw(json.dumps(self.bundle))
+        self.assertEqual(rc, 2)
+        self.assertEqual(record["diagnostics"],
+                         ["BUNDLE_OFFLINE_RESULT_SHAPE_UNREVIEWED"])
+        self.assertNotIn("PRIVATE_DIAGNOSTIC_CANARY", self.stdout.getvalue())
+
+    def test_cli_rejects_mocked_source_consistency_contradiction(self):
+        from unittest.mock import patch
+        bad = envelope.fail_closed("BUNDLE_SHAPE_UNREVIEWED")
+        bad["source_consistency"] = True
+        with patch.object(envelope, "review_bundle_json_text", return_value=bad):
+            rc, record = self.run_raw(json.dumps(self.bundle))
+        self.assertEqual(rc, 2)
+        self.assertFalse(record["source_consistency"])
+
+    def test_cli_rejects_mocked_missing_verdict_field(self):
+        from unittest.mock import patch
+        bad = envelope.fail_closed("BUNDLE_SHAPE_UNREVIEWED")
+        del bad["independent_original_os_proof"]
+        with patch.object(envelope, "review_bundle_json_text", return_value=bad):
+            rc, record = self.run_raw(json.dumps(self.bundle))
+        self.assertEqual(rc, 2)
+        self.assertEqual(record["diagnostics"],
+                         ["BUNDLE_OFFLINE_RESULT_SHAPE_UNREVIEWED"])
+
+    def test_cli_rejects_mocked_custom_dict_key_before_rehash(self):
+        from unittest.mock import patch
+        class Untrusted:
+            def __init__(self):
+                self.hashes = 0
+            def __hash__(self):
+                self.hashes += 1
+                return 28479
+            def __eq__(self, other):
+                raise AssertionError("no equality")
+        bad = envelope.fail_closed("BUNDLE_SHAPE_UNREVIEWED")
+        key = Untrusted()
+        bad[key] = "private"
+        key.hashes = 0
+        with patch.object(envelope, "review_bundle_json_text", return_value=bad):
+            rc, record = self.run_raw(json.dumps(self.bundle))
+        self.assertEqual(rc, 2)
+        self.assertEqual(key.hashes, 0)
+        self.assertFalse(record["can_authorize_annual_run"])
+
+    def test_cli_accepts_only_reviewed_known_negative_codes(self):
+        valid = envelope.fail_closed("BUNDLE_JSON_TEXT_UNREVIEWED")
+        self.assertTrue(_reviewed_output_verdict_shape(valid))
+        self.assertFalse(_reviewed_output_verdict_shape(
+            envelope.fail_closed("PRIVATE_CANARY")))
+
+    def test_cli_final_verdict_guard_preserves_clean_synthetic_source(self):
+        raw = json.dumps(self.bundle)
+        rc, result = self.run_raw(raw)
         self.assertEqual(rc, 0)
         self.assertTrue(result["source_consistency"])
         self.assertFalse(result["independent_original_os_proof"])
