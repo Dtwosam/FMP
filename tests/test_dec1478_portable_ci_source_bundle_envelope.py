@@ -6118,3 +6118,83 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self._assert_offline_review_no_external_action(review_via_stdin,
                                                        True)
 
+    def _assert_portable_preflight_does_not_call_nested_review(self, code):
+        from unittest.mock import patch
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          side_effect=AssertionError("must-not-review")) as nested:
+            verdict = self.verdict()
+        nested.assert_not_called()
+        self.assertEqual(verdict["diagnostics"], (code,))
+        self.assertFalse(verdict["source_consistency"])
+        self.assertFalse(verdict["independent_original_os_proof"])
+        self.assertFalse(verdict["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(verdict["can_authorize_annual_run"])
+
+    def test_preflight_root_extra_field_skips_nested_review(self):
+        self.envelope["can_authorize_annual_run"] = True
+        self._assert_portable_preflight_does_not_call_nested_review(
+            "BUNDLE_KEY_INVENTORY_UNREVIEWED")
+
+    def test_preflight_wrong_schema_skips_nested_review(self):
+        self.envelope["schema"] = "unreviewed-schema"
+        self._assert_portable_preflight_does_not_call_nested_review(
+            "BUNDLE_SCHEMA_UNREVIEWED")
+
+    def test_preflight_wrong_runs_type_skips_nested_review(self):
+        self.envelope["runs"] = {}
+        self._assert_portable_preflight_does_not_call_nested_review(
+            "BUNDLE_CATEGORY_TYPE_UNREVIEWED")
+
+    def test_preflight_invalid_run_map_key_skips_nested_review(self):
+        self.envelope["jobs_by_run"]["08000"] = (
+            self.envelope["jobs_by_run"].pop("8000"))
+        self._assert_portable_preflight_does_not_call_nested_review(
+            "BUNDLE_RUN_KEY_UNREVIEWED")
+
+    def test_preflight_malformed_source_base64_skips_nested_review(self):
+        self.envelope["changed_bytes_b64"]["tests/sample.py"] = "not-base64%"
+        self._assert_portable_preflight_does_not_call_nested_review(
+            "BUNDLE_SOURCE_B64_UNREVIEWED")
+
+    def test_preflight_absolute_source_path_skips_nested_review(self):
+        self.envelope["changed_bytes_b64"][
+            "/private/synthetic.py"] = (
+            self.envelope["changed_bytes_b64"].pop("tests/sample.py"))
+        self._assert_portable_preflight_does_not_call_nested_review(
+            "BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_preflight_nul_in_raw_ci_log_skips_nested_review(self):
+        self.envelope["raw_ci_runner_logs"]["8001"] += "\x00"
+        self._assert_portable_preflight_does_not_call_nested_review(
+            "BUNDLE_RAW_LOG_TEXT_UNREVIEWED")
+
+    def test_preflight_source_case_alias_skips_nested_review(self):
+        self.envelope["changed_bytes_b64"]["TESTS/SAMPLE.PY"] = (
+            self.envelope["changed_bytes_b64"]["tests/sample.py"])
+        self._assert_portable_preflight_does_not_call_nested_review(
+            "BUNDLE_SOURCE_CASE_COLLISION_UNREVIEWED")
+
+    def test_preflight_source_workflow_map_overlap_skips_nested_review(self):
+        key = ".github/workflows/tests.yml"
+        self.envelope["changed_bytes_b64"][key] = (
+            self.envelope["ci_workflow_bytes_b64"][key])
+        self._assert_portable_preflight_does_not_call_nested_review(
+            "BUNDLE_SOURCE_CROSSMAP_COLLISION_UNREVIEWED")
+
+    def test_valid_preflight_invokes_nested_review_once_without_authority(self):
+        from unittest.mock import patch
+        clean = {
+            "source_consistency": True, "diagnostics": (),
+            "independent_original_os_proof": False,
+            "exclusive_server_dispatch_gate_proven": False,
+            "can_authorize_annual_run": False,
+        }
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          return_value=clean) as nested:
+            result = self.verdict()
+        nested.assert_called_once()
+        self.assertEqual(result, clean)
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
