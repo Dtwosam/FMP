@@ -11304,3 +11304,106 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_early_priority_clean_source_only(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+    def _assert_json_lexical_format_only(self, encoded, valid):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        parsed = review_bundle_json_text(encoded)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(encoded), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(status, 0 if valid else 2)
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        if valid:
+            self.assertEqual(json.loads(encoded), self.envelope)
+            self.assertEqual(parsed, self.verdict())
+            self.assertTrue(parsed["source_consistency"])
+            self.assertEqual(parsed["diagnostics"], ())
+            self.assertEqual(emitted["diagnostics"], [])
+        else:
+            self.assertFalse(parsed["source_consistency"])
+            self.assertEqual(parsed["diagnostics"],
+                             ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+            self.assertEqual(emitted["diagnostics"],
+                             ["BUNDLE_JSON_GRAMMAR_UNREVIEWED"])
+        self.assertNotIn("tests/sample.py", out.getvalue())
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        for result in (parsed, emitted):
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_json_spacing_compact_sorted_equivalent(self):
+        encoded = json.dumps(self.envelope, sort_keys=True, separators=(",", ":"))
+        self._assert_json_lexical_format_only(encoded, True)
+
+    def test_portable_json_spacing_default_serialization_equivalent(self):
+        encoded = json.dumps(self.envelope)
+        self._assert_json_lexical_format_only(encoded, True)
+
+    def test_portable_json_spacing_indent_two_equivalent(self):
+        encoded = json.dumps(self.envelope, indent=2)
+        self._assert_json_lexical_format_only(encoded, True)
+
+    def test_portable_json_spacing_indent_four_equivalent(self):
+        encoded = json.dumps(self.envelope, indent=4, sort_keys=True)
+        self._assert_json_lexical_format_only(encoded, True)
+
+    def test_portable_json_spacing_colon_comma_space_equivalent(self):
+        encoded = json.dumps(self.envelope, separators=(", ", ": "))
+        self._assert_json_lexical_format_only(encoded, True)
+
+    def test_portable_json_spacing_newline_separator_equivalent(self):
+        encoded = json.dumps(self.envelope, separators=(",\n", ": "))
+        self._assert_json_lexical_format_only(encoded, True)
+
+    def test_portable_json_spacing_unicode_as_is_equivalent(self):
+        encoded = json.dumps(self.envelope, ensure_ascii=False)
+        self._assert_json_lexical_format_only(encoded, True)
+
+    def test_portable_json_spacing_leading_space_equivalent(self):
+        encoded = " " + json.dumps(self.envelope)
+        self._assert_json_lexical_format_only(encoded, True)
+
+    def test_portable_json_spacing_trailing_tab_equivalent(self):
+        encoded = json.dumps(self.envelope) + "\t"
+        self._assert_json_lexical_format_only(encoded, True)
+
+    def test_portable_json_spacing_leading_newlines_equivalent(self):
+        encoded = "\n\r\t" + json.dumps(self.envelope)
+        self._assert_json_lexical_format_only(encoded, True)
+
+    def test_portable_json_spacing_trailing_crlf_equivalent(self):
+        encoded = json.dumps(self.envelope) + "\r\n"
+        self._assert_json_lexical_format_only(encoded, True)
+
+    def test_portable_json_spacing_top_level_newline_equivalent(self):
+        encoded = json.dumps(self.envelope).replace("{", "{\n", 1)
+        self._assert_json_lexical_format_only(encoded, True)
+
+    def test_portable_json_spacing_bom_prefix_refused(self):
+        encoded = "\ufeff" + json.dumps(self.envelope)
+        self._assert_json_lexical_format_only(encoded, False)
+
+    def test_portable_json_spacing_trailing_comma_refused(self):
+        encoded = json.dumps(self.envelope)[:-1] + ",}"
+        self._assert_json_lexical_format_only(encoded, False)
+
+    def test_portable_json_spacing_trailing_second_object_refused(self):
+        encoded = json.dumps(self.envelope) + "{}"
+        self._assert_json_lexical_format_only(encoded, False)
+
+    def test_portable_json_spacing_trailing_comment_refused(self):
+        encoded = json.dumps(self.envelope) + "/* private */"
+        self._assert_json_lexical_format_only(encoded, False)
+
+    def test_portable_json_spacing_trailing_raw_null_refused(self):
+        encoded = json.dumps(self.envelope) + "\x00"
+        self._assert_json_lexical_format_only(encoded, False)
+
+    def test_portable_json_spacing_invalid_nonbreaking_space_refused(self):
+        encoded = "\u00a0" + json.dumps(self.envelope)
+        self._assert_json_lexical_format_only(encoded, False)
+
+    def test_portable_json_spacing_clean_source_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
