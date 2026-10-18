@@ -10500,3 +10500,67 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
                     "can_authorize_annual_run"):
             self.assertIs(result[key], False)
 
+    def test_portable_private_code_diagnostic_none_refused(self):
+        self._assert_forged_tree_review_verdict_refused({
+            "source_consistency": False, "diagnostics": (None,)})
+
+    def test_portable_private_code_diagnostic_integer_refused(self):
+        self._assert_forged_tree_review_verdict_refused({
+            "source_consistency": False, "diagnostics": (0,)})
+
+    def test_portable_private_code_diagnostic_boolean_refused(self):
+        self._assert_forged_tree_review_verdict_refused({
+            "source_consistency": False, "diagnostics": (False,)})
+
+    def test_portable_private_code_diagnostic_bytes_refused(self):
+        self._assert_forged_tree_review_verdict_refused({
+            "source_consistency": False, "diagnostics": (b"TREE_CHAIN_TREE_OBJECT_UNREVIEWED",)})
+
+    def test_portable_private_code_diagnostic_list_refused(self):
+        self._assert_forged_tree_review_verdict_refused({
+            "source_consistency": False, "diagnostics": (["TREE_CHAIN_TREE_OBJECT_UNREVIEWED"],)})
+
+    def test_portable_private_code_diagnostic_dict_refused(self):
+        self._assert_forged_tree_review_verdict_refused({
+            "source_consistency": False, "diagnostics": ({"private": "x"},)})
+
+    def test_portable_private_code_diagnostic_tuple_refused(self):
+        self._assert_forged_tree_review_verdict_refused({
+            "source_consistency": False, "diagnostics": (("TREE_CHAIN_TREE_OBJECT_UNREVIEWED",),)})
+
+    def test_portable_private_code_diagnostic_empty_string_refused(self):
+        self._assert_forged_tree_review_verdict_refused({
+            "source_consistency": False, "diagnostics": ("",)})
+
+    def test_portable_private_code_diagnostic_unknown_name_refused(self):
+        self._assert_forged_tree_review_verdict_refused({
+            "source_consistency": False, "diagnostics": ("TREE_CHAIN_UNREVIEWED_PRIVATE",)})
+
+    def test_portable_private_code_diagnostic_embedded_path_refused(self):
+        self._assert_forged_tree_review_verdict_refused({
+            "source_consistency": False, "diagnostics": ("TREE_CHAIN_LEAF_BYTES_SHA_MISMATCH:docs/sample.md",)})
+
+    def test_portable_private_code_diagnostic_ansi_escape_refused(self):
+        self._assert_forged_tree_review_verdict_refused({
+            "source_consistency": False, "diagnostics": ("\x1b[31mTREE_CHAIN_LEAF_BYTES_SHA_MISMATCH",)})
+
+    def test_portable_private_code_diagnostic_newline_refused(self):
+        self._assert_forged_tree_review_verdict_refused({
+            "source_consistency": False, "diagnostics": ("TREE_CHAIN_LEAF_BYTES_SHA_MISMATCH\nPRIVATE",)})
+
+    def test_portable_private_code_diagnostic_zero_width_refused(self):
+        self._assert_forged_tree_review_verdict_refused({
+            "source_consistency": False, "diagnostics": ("TREE_CHAIN_\u200bTREE_OBJECT_UNREVIEWED",)})
+
+    def test_portable_private_code_diagnostic_unicode_direction_refused(self):
+        self._assert_forged_tree_review_verdict_refused({
+            "source_consistency": False, "diagnostics": ("\u202eTREE_CHAIN_TREE_OBJECT_UNREVIEWED",)})
+
+    def test_portable_private_code_diagnostic_lone_surrogate_refused(self):
+        self._assert_forged_tree_review_verdict_refused({
+            "source_consistency": False, "diagnostics": ("\ud800",)})
+
+    def test_portable_private_code_allowlisted_control_nonauthorizing(self):
+        self._assert_reviewed_nested_tree_failure_code_preserved(
+            ("TREE_CHAIN_TREE_OBJECT_UNREVIEWED",))
+
