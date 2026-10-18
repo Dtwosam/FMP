@@ -1424,5 +1424,79 @@ class ExplicitStdinReviewIsNotAnnualWorkflowAdmission(unittest.TestCase):
         self.assertFalse(result["can_authorize_annual_run"])
 
 
+    def test_cli_json_exact_total_object_members_is_not_array_overflow(self):
+        raw = "[" + ",".join('[{"k":1},{"k":1}]' for _ in range(
+            envelope.MAX_JSON_ARRAY_ITEMS)) + "]"
+        rc, result = self.run_raw(raw)
+        self.assertEqual(rc, 2)
+        self.assertEqual(result["diagnostics"], ["BUNDLE_SHAPE_UNREVIEWED"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_cli_json_one_extra_object_member_reports_safe_grammar(self):
+        raw = ("[" + '[{"k":1},{"k":1},{"k":1}],' +
+               ",".join('[{"k":1},{"k":1}]' for _ in range(
+                   envelope.MAX_JSON_ARRAY_ITEMS-1)) + "]")
+        rc, result = self.run_raw(raw)
+        self.assertEqual(rc, 2)
+        self.assertEqual(result["diagnostics"], ["BUNDLE_JSON_GRAMMAR_UNREVIEWED"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_cli_json_flat_array_over_limit_is_distinct_from_member_budget(self):
+        raw = "[" + ",".join('{"k":1}' for _ in range(
+            envelope.MAX_JSON_ARRAY_ITEMS+1)) + "]"
+        rc, result = self.run_raw(raw)
+        self.assertEqual(rc, 2)
+        self.assertEqual(result["diagnostics"], ["BUNDLE_JSON_GRAMMAR_UNREVIEWED"])
+        self.assertFalse(result["independent_original_os_proof"])
+
+    def test_cli_json_quoted_punctuation_is_not_structural(self):
+        canary = 'private-comma-canary:[,]{},:\\ "'
+        rc, result = self.run_raw(json.dumps([canary]))
+        self.assertEqual(rc, 2)
+        self.assertEqual(result["diagnostics"], ["BUNDLE_SHAPE_UNREVIEWED"])
+        self.assertNotIn(canary, self.stdout.getvalue())
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_cli_json_unicode_escape_forms_have_same_safe_shape(self):
+        for ensure_ascii in (True, False):
+            with self.subTest(ensure_ascii=ensure_ascii):
+                self.stdout = io.StringIO()
+                rc, result = self.run_raw(json.dumps(["🚀", "\u2028", '"\\'],
+                                                    ensure_ascii=ensure_ascii))
+                self.assertEqual(rc, 2)
+                self.assertEqual(result["diagnostics"], ["BUNDLE_SHAPE_UNREVIEWED"])
+                self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+
+    def test_cli_json_unknown_object_field_does_not_echo_secret_key(self):
+        rc, result = self.run_raw(json.dumps({"private-canary-secret": ["x"]}))
+        self.assertEqual(rc, 2)
+        self.assertEqual(result["diagnostics"],
+                         ["BUNDLE_KEY_INVENTORY_UNREVIEWED"])
+        self.assertNotIn("private-canary-secret", self.stdout.getvalue())
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_cli_json_trailing_private_data_is_safe_grammar_failure(self):
+        raw = json.dumps(["synthetic"]) + " private-trailing-canary"
+        rc, result = self.run_raw(raw)
+        self.assertEqual(rc, 2)
+        self.assertEqual(result["diagnostics"],
+                         ["BUNDLE_JSON_GRAMMAR_UNREVIEWED"])
+        self.assertNotIn("private-trailing-canary", self.stdout.getvalue())
+        self.assertFalse(result["source_consistency"])
+
+    def test_cli_json_serialization_variants_remain_consistency_only(self):
+        for opts in ({"sort_keys": True}, {"indent": 2},
+                     {"separators": (",", ":")}):
+            with self.subTest(options=opts):
+                self.stdout = io.StringIO()
+                rc, result = self.run_raw(json.dumps(self.bundle, **opts))
+                self.assertEqual(rc, 0)
+                self.assertTrue(result["source_consistency"])
+                self.assertEqual(result["diagnostics"], [])
+                self.assertFalse(result["independent_original_os_proof"])
+                self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+                self.assertFalse(result["can_authorize_annual_run"])
+
+
 if __name__ == "__main__":
     raise SystemExit(main())
