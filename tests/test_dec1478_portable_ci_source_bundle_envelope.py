@@ -11046,3 +11046,107 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_escaped_duplicate_map_clean_source_control(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+    def _mutate_unused_base64_pad_bits(self, path, mask):
+        alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+        payload = self.envelope["changed_bytes_b64"][path]
+        self.assertTrue(payload.endswith("="))
+        index = len(payload.rstrip("=")) - 1
+        ch = payload[index]
+        self.assertIn(ch, alpha)
+        self.assertIn(mask, (1, 2, 3))
+        replacement = alpha[alpha.index(ch) ^ mask]
+        forged = payload[:index] + replacement + payload[index + 1:]
+        self.assertNotEqual(forged, payload)
+        self.assertEqual(base64.b64decode(
+            forged, validate=True), base64.b64decode(
+                payload, validate=True))
+        self.envelope["changed_bytes_b64"][path] = forged
+
+    def _assert_noncanonical_pad_bits_rejected(self):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        direct = self.verdict()
+        encoded = json.dumps(self.envelope, sort_keys=True)
+        parsed = review_bundle_json_text(encoded)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(encoded), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(direct, parsed)
+        self.assertEqual(status, 2)
+        self.assertEqual(direct["diagnostics"],
+                         ("BUNDLE_SOURCE_B64_NONCANONICAL",))
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"],
+                         ["BUNDLE_SOURCE_B64_NONCANONICAL"])
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        for result in (direct, emitted):
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def _assert_escaped_base64_json_value_equivalent(self, path):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        source = self.envelope["changed_bytes_b64"][path]
+        self.assertGreater(len(source), 1)
+        raw = json.dumps(self.envelope, sort_keys=True, separators=(",", ":"))
+        needle = json.dumps(path) + ":" + json.dumps(source)
+        self.assertIn(needle, raw)
+        esc = '"\\u%04x' % ord(source[0]) + source[1:] + '"'
+        encoded = raw.replace(needle, json.dumps(path) + ":" + esc, 1)
+        self.assertEqual(json.loads(encoded), self.envelope)
+        direct = self.verdict()
+        parsed = review_bundle_json_text(encoded)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(encoded), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(direct, parsed)
+        self.assertTrue(direct["source_consistency"])
+        self.assertEqual(direct["diagnostics"], ())
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"], [])
+        self.assertTrue(emitted["source_consistency"])
+        for result in (direct, emitted):
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_pad_bit_tests_xor_1_refused(self):
+        self._mutate_unused_base64_pad_bits("tests/sample.py", 1)
+        self._assert_noncanonical_pad_bits_rejected()
+
+    def test_portable_pad_bit_tests_xor_2_refused(self):
+        self._mutate_unused_base64_pad_bits("tests/sample.py", 2)
+        self._assert_noncanonical_pad_bits_rejected()
+
+    def test_portable_pad_bit_tests_xor_3_refused(self):
+        self._mutate_unused_base64_pad_bits("tests/sample.py", 3)
+        self._assert_noncanonical_pad_bits_rejected()
+
+    def test_portable_pad_bit_docs_xor_1_refused(self):
+        self._mutate_unused_base64_pad_bits("docs/sample.md", 1)
+        self._assert_noncanonical_pad_bits_rejected()
+
+    def test_portable_pad_bit_docs_xor_2_refused(self):
+        self._mutate_unused_base64_pad_bits("docs/sample.md", 2)
+        self._assert_noncanonical_pad_bits_rejected()
+
+    def test_portable_pad_bit_docs_xor_3_refused(self):
+        self._mutate_unused_base64_pad_bits("docs/sample.md", 3)
+        self._assert_noncanonical_pad_bits_rejected()
+
+    def test_portable_pad_bit_json_escape_tests_equivalent(self):
+        self._assert_escaped_base64_json_value_equivalent("tests/sample.py")
+
+    def test_portable_pad_bit_json_escape_docs_equivalent(self):
+        self._assert_escaped_base64_json_value_equivalent("docs/sample.md")
+
+    def test_portable_pad_bit_both_source_values_refused(self):
+        self._mutate_unused_base64_pad_bits("tests/sample.py", 1)
+        self._mutate_unused_base64_pad_bits("docs/sample.md", 3)
+        self._assert_noncanonical_pad_bits_rejected()
+
+    def test_portable_pad_bit_clean_source_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
