@@ -10039,3 +10039,109 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_corrected_compound_clean_fixture_remains_nonauthorizing(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+    def _assert_portable_compound_receipt_tree_safe_refusal(self):
+        """Public result need only be a deterministic safe refusal, not raw nested codes."""
+        import io
+        import copy
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        before = copy.deepcopy(self.envelope)
+        direct = self.verdict()
+        raw = json.dumps(self.envelope, sort_keys=True)
+        parsed = review_bundle_json_text(raw)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(raw), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(self.envelope, before)
+        self.assertEqual(direct, parsed)
+        self.assertEqual(status, 2)
+        self.assertFalse(direct["source_consistency"])
+        self.assertTrue(direct["diagnostics"])
+        self.assertEqual(direct["diagnostics"],
+                         tuple(sorted(set(direct["diagnostics"]))))
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"],
+                         list(direct["diagnostics"]))
+        self.assertNotIn("tests/sample.py", out.getvalue())
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        self.assertNotIn("synthetic_private", out.getvalue())
+        for result in (direct, emitted):
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_receipt_tree_missing_phase3_receipt_docs_exec_safe_refusal(self):
+        self.envelope["raw_ci_log_receipts"].pop("8000")
+        self._portable_snapshot_leaf("docs")["mode"] = "100755"
+        self._assert_portable_compound_receipt_tree_safe_refusal()
+
+    def test_portable_receipt_tree_missing_historical_receipt_tests_exec_safe_refusal(self):
+        self.envelope["raw_ci_log_receipts"].pop("8001")
+        self._portable_snapshot_leaf("tests")["mode"] = "100755"
+        self._assert_portable_compound_receipt_tree_safe_refusal()
+
+    def test_portable_receipt_tree_missing_phase3_receipt_docs_sha_safe_refusal(self):
+        self.envelope["raw_ci_log_receipts"].pop("8000")
+        self._portable_snapshot_leaf("docs")["sha"] = "a"*40
+        self._assert_portable_compound_receipt_tree_safe_refusal()
+
+    def test_portable_receipt_tree_missing_historical_receipt_tests_sha_safe_refusal(self):
+        self.envelope["raw_ci_log_receipts"].pop("8001")
+        self._portable_snapshot_leaf("tests")["sha"] = "b"*40
+        self._assert_portable_compound_receipt_tree_safe_refusal()
+
+    def test_portable_receipt_tree_wrong_phase3_receipt_job_docs_parent_safe_refusal(self):
+        self.envelope["raw_ci_log_receipts"]["8000"]["job_id"] = self.envelope["raw_ci_log_receipts"]["8001"]["job_id"]
+        root = self.envelope["full_tree_snapshots"][self.envelope["commit"]["tree"]["sha"]]
+        next(e for e in root["tree"] if e["path"] == "docs")["mode"] = "120000"
+        self._assert_portable_compound_receipt_tree_safe_refusal()
+
+    def test_portable_receipt_tree_wrong_historical_receipt_job_flat_test_mode_safe_refusal(self):
+        self.envelope["raw_ci_log_receipts"]["8001"]["job_id"] = self.envelope["raw_ci_log_receipts"]["8000"]["job_id"]
+        self.envelope["nodes"]["tests/sample.py"]["mode"] = "120000"
+        self._assert_portable_compound_receipt_tree_safe_refusal()
+
+    def test_portable_receipt_tree_wrong_phase3_receipt_sha_docs_path_safe_refusal(self):
+        self.envelope["raw_ci_log_receipts"]["8000"]["text_sha256"] = "f"*64
+        self._portable_snapshot_leaf("docs")["path"] = "changed.md"
+        self._assert_portable_compound_receipt_tree_safe_refusal()
+
+    def test_portable_receipt_tree_wrong_historical_receipt_sha_tests_path_safe_refusal(self):
+        self.envelope["raw_ci_log_receipts"]["8001"]["text_sha256"] = "f"*64
+        self._portable_snapshot_leaf("tests")["path"] = "changed.py"
+        self._assert_portable_compound_receipt_tree_safe_refusal()
+
+    def test_portable_receipt_tree_wrong_phase3_receipt_length_docs_mode_safe_refusal(self):
+        self.envelope["raw_ci_log_receipts"]["8000"]["byte_count"] += 1
+        self._portable_snapshot_leaf("docs")["mode"] = "100755"
+        self._assert_portable_compound_receipt_tree_safe_refusal()
+
+    def test_portable_receipt_tree_wrong_historical_receipt_length_tests_mode_safe_refusal(self):
+        self.envelope["raw_ci_log_receipts"]["8001"]["byte_count"] += 1
+        self._portable_snapshot_leaf("tests")["mode"] = "100755"
+        self._assert_portable_compound_receipt_tree_safe_refusal()
+
+    def test_portable_receipt_tree_phase3_receipt_extra_field_docs_sha_safe_refusal(self):
+        self.envelope["raw_ci_log_receipts"]["8000"]["synthetic_private"] = "approval"
+        self._portable_snapshot_leaf("docs")["sha"] = "a"*40
+        self._assert_portable_compound_receipt_tree_safe_refusal()
+
+    def test_portable_receipt_tree_historical_receipt_extra_field_tests_sha_safe_refusal(self):
+        self.envelope["raw_ci_log_receipts"]["8001"]["synthetic_private"] = "approval"
+        self._portable_snapshot_leaf("tests")["sha"] = "a"*40
+        self._assert_portable_compound_receipt_tree_safe_refusal()
+
+    def test_portable_receipt_tree_mutation_order_parity_safe_refusal(self):
+        import copy
+        original = copy.deepcopy(self.envelope)
+        self.envelope["raw_ci_log_receipts"].pop("8000")
+        self._portable_snapshot_leaf("docs")["mode"] = "120000"
+        first = self.verdict()
+        self.envelope = copy.deepcopy(original)
+        self._portable_snapshot_leaf("docs")["mode"] = "120000"
+        self.envelope["raw_ci_log_receipts"].pop("8000")
+        self.assertEqual(first, self.verdict())
+        self._assert_portable_compound_receipt_tree_safe_refusal()
+
+    def test_portable_receipt_tree_clean_source_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
