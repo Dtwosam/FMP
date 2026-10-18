@@ -1,0 +1,7 @@
+# DEC-1614 — Nested Git tree evidence rejects Python subclass trap objects
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent one-commit tests/docs child of #1860 at `3f3023ac6379f0aa585199809bc743303a92c56f`. Fourteen new methods (**3,398 proposed source-defined methods**).
+
+Direct-memory portable review must reject unexpected Python container/scalar subclasses **before** an untrusted object can run custom iteration, comparison, hashing or access hooks. Put trap subclasses into full-tree root/child objects and arrays, entry dictionaries and path/SHA strings, flat node objects, Base64 payloads, raw CI logs, numeric compare fields and run records. Every mutant must fail `BUNDLE_STRUCTURE_BUDGET_UNREVIEWED` without evaluating the trap methods, and all protected original OS, exclusive dispatch and annual-run approval fields remain false. These thirteen tests target direct-memory input exclusively because custom Python subclasses are not valid JSON value types; one clean JSON/direct/stdin control remains nonauthorizing.
+
+This tests offline input defensiveness, not provider-authenticated GitHub evidence, protected annual execution or independent originals. Exact-head Phase 3/full historical-general CI and qualified independent review required. Tests/docs only; no production/parser/limits/workflow/security controls, protected originals/archives/artifacts, annual execution/retry, merge, deployment or trading. DEC-650/#820 and DEC-651/#821/#779 remain **BLOCKED**.
