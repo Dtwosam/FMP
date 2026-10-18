@@ -9698,3 +9698,99 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_subclass_trap_clean_control(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+    def _assert_unpaired_surrogate_tree_json_refused(self):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        raw = json.dumps(self.envelope, ensure_ascii=True, sort_keys=True)
+        self.assertIn("\\ud800", raw)
+        parsed = review_bundle_json_text(raw)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(raw), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(status, 2)
+        self.assertEqual(parsed["diagnostics"],
+                         ("BUNDLE_JSON_UNICODE_UNREVIEWED",))
+        self.assertEqual(emitted["diagnostics"],
+                         list(parsed["diagnostics"]))
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        direct = self.verdict()
+        self.assertFalse(direct["source_consistency"])
+        self.assertFalse(parsed["source_consistency"])
+        self.assertNotIn("tests/sample.py", out.getvalue())
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        for result in (direct, parsed, emitted):
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_tree_surrogate_root_snapshot_map_key_refused(self):
+        trees = self.envelope["full_tree_snapshots"]
+        root = self.envelope["commit"]["tree"]["sha"]
+        trees["\ud800"] = trees.pop(root)
+        self._assert_unpaired_surrogate_tree_json_refused()
+
+    def test_portable_tree_surrogate_child_snapshot_map_key_refused(self):
+        trees, _, sha = self._portable_snapshot_parent_child("docs")
+        trees["\ud800"] = trees.pop(sha)
+        self._assert_unpaired_surrogate_tree_json_refused()
+
+    def test_portable_tree_surrogate_root_snapshot_self_sha_refused(self):
+        sha = self.envelope["commit"]["tree"]["sha"]
+        self.envelope["full_tree_snapshots"][sha]["sha"] = "\ud800"
+        self._assert_unpaired_surrogate_tree_json_refused()
+
+    def test_portable_tree_surrogate_child_snapshot_self_sha_refused(self):
+        trees, _, sha = self._portable_snapshot_parent_child("tests")
+        trees[sha]["sha"] = "\ud800"
+        self._assert_unpaired_surrogate_tree_json_refused()
+
+    def test_portable_tree_surrogate_root_parent_path_refused(self):
+        sha = self.envelope["commit"]["tree"]["sha"]
+        self.envelope["full_tree_snapshots"][sha]["tree"][0]["path"] = "\ud800"
+        self._assert_unpaired_surrogate_tree_json_refused()
+
+    def test_portable_tree_surrogate_root_parent_blob_sha_refused(self):
+        sha = self.envelope["commit"]["tree"]["sha"]
+        self.envelope["full_tree_snapshots"][sha]["tree"][0]["sha"] = "\ud800"
+        self._assert_unpaired_surrogate_tree_json_refused()
+
+    def test_portable_tree_surrogate_docs_leaf_path_refused(self):
+        self._portable_snapshot_leaf("docs")["path"] = "\ud800"
+        self._assert_unpaired_surrogate_tree_json_refused()
+
+    def test_portable_tree_surrogate_tests_leaf_path_refused(self):
+        self._portable_snapshot_leaf("tests")["path"] = "\ud800"
+        self._assert_unpaired_surrogate_tree_json_refused()
+
+    def test_portable_tree_surrogate_docs_leaf_mode_refused(self):
+        self._portable_snapshot_leaf("docs")["mode"] = "\ud800"
+        self._assert_unpaired_surrogate_tree_json_refused()
+
+    def test_portable_tree_surrogate_tests_leaf_type_refused(self):
+        self._portable_snapshot_leaf("tests")["type"] = "\ud800"
+        self._assert_unpaired_surrogate_tree_json_refused()
+
+    def test_portable_tree_surrogate_root_truncated_marker_refused(self):
+        sha = self.envelope["commit"]["tree"]["sha"]
+        self.envelope["full_tree_snapshots"][sha]["truncated"] = "\ud800"
+        self._assert_unpaired_surrogate_tree_json_refused()
+
+    def test_portable_tree_surrogate_flat_node_type_refused(self):
+        self.envelope["nodes"]["docs/sample.md"]["type"] = "\ud800"
+        self._assert_unpaired_surrogate_tree_json_refused()
+
+    def test_portable_tree_surrogate_compare_filename_refused(self):
+        self.envelope["compare"]["files"][0]["filename"] = "\ud800"
+        self._assert_unpaired_surrogate_tree_json_refused()
+
+    def test_portable_tree_surrogate_changed_source_b64_refused(self):
+        self.envelope["changed_bytes_b64"]["docs/sample.md"] = "\ud800"
+        self._assert_unpaired_surrogate_tree_json_refused()
+
+    def test_portable_tree_surrogate_raw_ci_runner_log_refused(self):
+        self.envelope["raw_ci_runner_logs"]["8000"] = "\ud800"
+        self._assert_unpaired_surrogate_tree_json_refused()
+
+    def test_portable_tree_surrogate_clean_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+

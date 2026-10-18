@@ -1,0 +1,7 @@
+# DEC-1615 — JSON unpaired surrogates in Git tree/CI evidence fail at ingress
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent one-commit tests/docs child of #1861 at `4ef2bd7cbfe2c88ea5a43cb696ebcef009e15bd6`. Sixteen synthetic regression methods (**3,414 proposed source-defined methods**).
+
+Insert a lone UTF-16 high-surrogate code point using escaped JSON source text into Git root/child snapshot map keys, snapshot self-SHAs, parent/leaf paths, modes, entry SHAs, the `truncated` flag, flat node type, changed-file compare filename, canonical source Base64 payload, or raw CI log. Unicode-invalid JSON decoded strings must fail **before** nested evidence review with `BUNDLE_JSON_UNICODE_UNREVIEWED` through JSON-text and bounded stdin. Direct-memory input must also reject the malformed value, without assuming its preflight diagnostic is identical to the JSON grammar path. All results preserve false original OS, exclusive server gate and annual-run fields, with no caller source-path echo. A valid source-only control remains nonauthorizing.
+
+No independently authenticated GitHub or protected original OS/annual authority is established by synthetic evidence. Own exact-head Phase 3/historical general CI and qualified independent review required. Tests/docs only, no production/parser/resource-budget/workflow/security/admission changes, protected originals/archives/artifacts, annual dispatch/retry, merging, deployment or trading. DEC-650/#820 and DEC-651/#821/#779 remain **BLOCKED**.
