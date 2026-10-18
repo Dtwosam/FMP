@@ -1,0 +1,7 @@
+# DEC-1622 — Malformed tree source verdict must not depend on JSON dictionary insertion order
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent one-commit tests/docs child of #1868 at `75b2f362c62d2f2b42d2b32e7500f492eff893ec`. Fifteen synthetic methods (**3,508 proposed source-defined methods**).
+
+With a fixed, deliberate changed-source Git blob SHA mismatch, independently reverse insertion order of fourteen JSON object maps or record fields: the top-level envelope, complete tree snapshots and entry fields, flat nodes, Base64 source map, raw CI log/receipt maps, jobs and checkouts, PR and compare metadata. An irrelevant object permutation must not hide the reviewed `TREE_CHAIN_LEAF_BYTES_SHA_MISMATCH`, change the full direct-memory verdict, or differ from JSON-text and bounded stdin. Require deterministic fail-closed diagnostics, unchanged caller values, no source path echo and false protected annual run flags. Never reorder actual canonical Git **entry arrays**, which have semantic wire ordering. The positive control remains source-only.
+
+Synthetic caller evidence does not authenticate GitHub, protected original OS, or exclusive annual admission. Own exact-head Phase 3/historical-general CI and qualified independent review required. Tests/docs only; no production/parser/resource budget/workflow/security control changes, protected original/archive/artifact access, annual dispatch/retry, merge/deployment/trading. DEC-650/#820 and DEC-651/#821/#779 remain **BLOCKED**.
