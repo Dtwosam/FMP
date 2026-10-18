@@ -6691,10 +6691,11 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
 
     def test_canonical_raw_source_same_length_edit_fails_source_identity(self):
         self._assert_canonical_binary_source_mutation_rejected(
-            b"# source-only\n")
+            b"fail\n")
 
     def test_canonical_source_original_bytes_still_source_only(self):
-        expected = b"# Source-only\n"
+        # Match the committed synthetic baseline, not a presumed comment.
+        expected = b"pass\n"
         self.assertEqual(
             base64.b64decode(self.envelope["changed_bytes_b64"][
                 "tests/sample.py"], validate=True), expected)
@@ -6961,4 +6962,43 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertFalse(direct["independent_original_os_proof"])
         self.assertFalse(direct["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(direct["can_authorize_annual_run"])
+
+    def test_original_changed_source_fixture_has_expected_sha_bytes(self):
+        import hashlib
+        payload = base64.b64decode(self.envelope["changed_bytes_b64"][
+            "tests/sample.py"], validate=True)
+        self.assertEqual(payload, b"pass\n")
+        self.assertEqual(len(payload), 5)
+        self.assertEqual(hashlib.sha256(payload).hexdigest(),
+                         hashlib.sha256(b"pass\n").hexdigest())
+        self.assertEqual(self.verdict()["diagnostics"], ())
+        self.assertFalse(self.verdict()["can_authorize_annual_run"])
+
+    def test_real_fixture_crlf_edit_fails_reviewed_identity(self):
+        self._assert_canonical_binary_source_mutation_rejected(
+            b"pass\r\n")
+
+    def test_real_fixture_trailing_space_edit_fails_reviewed_identity(self):
+        self._assert_canonical_binary_source_mutation_rejected(
+            b"pass \n")
+
+    def test_real_fixture_bom_edit_fails_reviewed_identity(self):
+        self._assert_canonical_binary_source_mutation_rejected(
+            b"\xef\xbb\xbfpass\n")
+
+    def test_real_fixture_append_nul_edit_fails_reviewed_identity(self):
+        self._assert_canonical_binary_source_mutation_rejected(
+            b"pass\n\x00")
+
+    def test_real_fixture_same_length_uppercase_fails_reviewed_identity(self):
+        self._assert_canonical_binary_source_mutation_rejected(
+            b"PASS\n")
+
+    def test_real_fixture_same_length_keyword_edit_fails_reviewed_identity(self):
+        self._assert_canonical_binary_source_mutation_rejected(
+            b"fail\n")
+
+    def test_real_fixture_without_final_newline_fails_reviewed_identity(self):
+        self._assert_canonical_binary_source_mutation_rejected(
+            b"pass")
 
