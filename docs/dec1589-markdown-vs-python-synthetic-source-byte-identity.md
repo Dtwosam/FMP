@@ -1,0 +1,7 @@
+# DEC-1589 — Exact reviewed Markdown bytes are distinct from Python source bytes
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent tests/docs child of #1835 at `58da55d82de7d247e632f6753681bb843bf2cfd0`, ten synthetic unittest methods and source-identity parity helper (**3,059 proposed source-defined methods**).
+
+The CI source-evidence fixture has two changed repository files with **different** canonical contents: `tests/sample.py` holds `b"pass\\n"`, while `docs/sample.md` holds `b"# Source-only\\n"`. DEC-1587 corrected the erroneous assumption about the Python fixture. This draft pins the actual Markdown fixture and proves that even canonical Base64 representations of a same-length case edit, CRLF, UTF-8 BOM, trailing space, NUL suffix, empty bytes, a forged approval heading, missing final newline, or Unicode text must fail reviewed changed-file byte/tree identity. Check direct-memory, JSON-text and bounded stdin parity, no leaking caller content, and false original OS witness, exclusive protected server dispatch and annual permission.
+
+The intact source fixture demonstrates only **caller-supplied source consistency**, not independent GitHub authentication. Require own exact-head Phase 3/full historical-general CI and qualified independent review. Tests/docs only; no production/parser/budget, actual workflow, security-control or admission changes. DEC-650/#820 and DEC-651/#821/#779 remain BLOCKED. No protected originals/archives/artifacts, annual execution/retry, merge, deployment or trading.
