@@ -1,0 +1,9 @@
+# DEC-1544 — Defensively isolate caller-supplied evidence from nested mutations
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent, one-commit tests/docs child of #1790 at `82b639274ab7c5b2a93946cb75c9ef109acdc720`. Adds **nine synthetic unittest methods**, for **2,663 proposed source-defined methods**.
+
+The source-only envelope reviewer validates bounded plain Python evidence and then builds decoded argument maps for the nested composite. Some converted categories (PR data, runs, job item values, and tree snapshots) still reference the original caller dictionaries and lists. An unexpected downstream mutation can change the caller's own evidence, and successive reviews of the same input can become nondeterministic. Deep-copy the already type-checked/budgeted, decoded argument graph **at the narrow nested-review boundary**, and handle ordinary copy errors with existing sanitized `BUNDLE_NESTED_EVIDENCE_UNREVIEWED`. The input cannot supply custom classes or `__deepcopy__` hooks past the existing plain-type preflight. Preserve all parsing/size limits and never grant annual execution authority.
+
+Nine tests inject nested mutations to PR/runs/job/tree/source-byte maps, verify the input remains unchanged after nested errors, confirm a later clean review still passes, sanitize defensive-copy errors without invoking the composite, reject forged annual authorization, and preserve the source-only positive result. The copy is logical input isolation, **not** independent OS no-write protection for protected originals.
+
+Own exact-head Phase 3/full historical-general CI and independent qualified review required. DEC-650/#820 independently witnessed protected-original OS no-write and DEC-651/#821/#779 immutable exclusive protected 2023 run385/attempt1 GitHub server admission remain **BLOCKED**. No protected dispatch/retry, originals/archives/artifacts, installed workflow/security changes, merges, deployment or trading.
