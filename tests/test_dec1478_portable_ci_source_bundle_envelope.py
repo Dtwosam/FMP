@@ -440,7 +440,7 @@ def review_bundle_envelope(envelope):
                     return fail_closed("BUNDLE_RAW_LOG_TEXT_OVERSIZE")
                 if sum(len(log) for log in value.values()) > MAX_TOTAL_RAW_LOG_CHARS:
                     return fail_closed("BUNDLE_TOTAL_RAW_LOG_OVERSIZE")
-                total_utf8_bytes = 0
+                byte_counts = []
                 for log in value.values():
                     try:
                         byte_count = len(log.encode("utf-8"))
@@ -448,9 +448,9 @@ def review_bundle_envelope(envelope):
                         return fail_closed("BUNDLE_RAW_LOG_TEXT_UNREVIEWED")
                     if byte_count > MAX_RAW_LOG_UTF8_BYTES_PER_RUN:
                         return fail_closed("BUNDLE_RAW_LOG_UTF8_OVERSIZE")
-                    total_utf8_bytes += byte_count
-                    if total_utf8_bytes > MAX_TOTAL_RAW_LOG_UTF8_BYTES:
-                        return fail_closed("BUNDLE_TOTAL_RAW_LOG_UTF8_OVERSIZE")
+                    byte_counts.append(byte_count)
+                if sum(byte_counts) > MAX_TOTAL_RAW_LOG_UTF8_BYTES:
+                    return fail_closed("BUNDLE_TOTAL_RAW_LOG_UTF8_OVERSIZE")
                 if any("\x00" in log for log in value.values()):
                     return fail_closed("BUNDLE_RAW_LOG_TEXT_UNREVIEWED")
             for k in sorted(value):
@@ -4064,6 +4064,73 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         original = copy.deepcopy(self.envelope)
         result = self.verdict()
         self.assertEqual(self.envelope, original)
+        self.assertTrue(result["source_consistency"])
+        self.assertEqual(result["diagnostics"], ())
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_raw_ci_byte_error_precedence_ignores_map_order(self):
+        too_big = "🚀" * 500001
+        other = "🚀" * 400000
+        pairs = [("9101", other), ("9102", other),
+                 ("9103", other), ("9104", too_big)]
+        for ordering in (pairs, list(reversed(pairs))):
+            with self.subTest(ordering=[p[0] for p in ordering]):
+                self.envelope["raw_ci_runner_logs"] = dict(ordering)
+                self.assert_fails("BUNDLE_RAW_LOG_UTF8_OVERSIZE")
+
+    def test_raw_ci_multiple_valid_per_log_but_aggregate_over(self):
+        self.envelope["raw_ci_runner_logs"] = {
+            "9101": "🚀"*400000, "9102": "🚀"*400000,
+            "9103": "🚀"*400000}
+        self.assert_fails("BUNDLE_TOTAL_RAW_LOG_UTF8_OVERSIZE")
+
+    def test_raw_ci_aggregate_utf8_diagnostic_stable_under_reverse(self):
+        pairs = [("9101", "🚀"*400000), ("9102", "🚀"*400000),
+                 ("9103", "🚀"*400000)]
+        for ordering in (pairs, list(reversed(pairs))):
+            self.envelope["raw_ci_runner_logs"] = dict(ordering)
+            result = self.verdict()
+            self.assertEqual(result["diagnostics"],
+                             ("BUNDLE_TOTAL_RAW_LOG_UTF8_OVERSIZE",))
+
+    def test_raw_ci_individual_utf8_error_precedes_invalid_run_id(self):
+        self.envelope["raw_ci_runner_logs"] = {
+            "not-run-id": "🚀"*500001}
+        self.assert_fails("BUNDLE_RAW_LOG_UTF8_OVERSIZE")
+
+    def test_raw_ci_byte_guard_zero_length_strings_are_not_oversize(self):
+        self.envelope["raw_ci_runner_logs"] = {"9101": ""}
+        result = self.verdict()
+        self.assertNotIn("BUNDLE_RAW_LOG_UTF8_OVERSIZE", result["diagnostics"])
+        self.assertNotIn("BUNDLE_TOTAL_RAW_LOG_UTF8_OVERSIZE", result["diagnostics"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_raw_ci_utf8_error_never_echoes_private_log_bytes(self):
+        self.envelope["raw_ci_runner_logs"] = {
+            "9101": "private-canary" + "🚀"*500001}
+        result = self.verdict()
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_RAW_LOG_UTF8_OVERSIZE",))
+        self.assertNotIn("private-canary", repr(result))
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_raw_ci_utf8_error_keeps_both_authorization_gates_false(self):
+        self.envelope["raw_ci_runner_logs"] = {
+            "9101": "🚀"*500001}
+        result = self.verdict()
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_raw_ci_only_one_utf8_per_run_error_code_in_output(self):
+        self.envelope["raw_ci_runner_logs"] = {
+            "9101": "🚀"*500001, "9102": "🚀"*500001}
+        result = self.verdict()
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_RAW_LOG_UTF8_OVERSIZE",))
+
+    def test_order_invariant_raw_log_guard_preserves_clean_fixture(self):
+        result = self.verdict()
         self.assertTrue(result["source_consistency"])
         self.assertEqual(result["diagnostics"], ())
         self.assertFalse(result["can_authorize_annual_run"])
