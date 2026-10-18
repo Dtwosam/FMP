@@ -20,6 +20,7 @@ import test_dec1440_stacked_source_evidence_offline as composite
 
 ENVELOPE_SCHEMA = "fmp-offline-source-bundle-v1"
 MAX_TEXT_CHARS = 2_000_000
+MAX_JSON_TEXT_UTF8_BYTES = 2_000_000
 MAX_BLOB_BYTES = 1_000_000
 MAX_TOTAL_BLOB_BYTES = 4_000_000
 MAX_JSON_NESTING = 512
@@ -550,6 +551,11 @@ def review_bundle_json_text(text):
     """No external I/O: caller provides raw UTF-8-decoded JSON text."""
     if type(text) is not str or len(text) > MAX_TEXT_CHARS:
         return fail_closed("BUNDLE_JSON_TEXT_UNREVIEWED")
+    try:
+        if len(text.encode("utf-8")) > MAX_JSON_TEXT_UTF8_BYTES:
+            return fail_closed("BUNDLE_JSON_TEXT_UNREVIEWED")
+    except UnicodeError:
+        return fail_closed("BUNDLE_JSON_UNICODE_UNREVIEWED")
     if not _json_nesting_within_limit(text):
         return fail_closed("BUNDLE_JSON_GRAMMAR_UNREVIEWED")
     try:
@@ -3285,5 +3291,66 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertEqual(result["diagnostics"], ())
         self.assertFalse(result["independent_original_os_proof"])
         self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_utf8_json_text_exact_two_megabyte_string_reaches_shape(self):
+        raw = '"' + "x"*(MAX_JSON_TEXT_UTF8_BYTES-2) + '"'
+        self.assertEqual(len(raw.encode("utf-8")), MAX_JSON_TEXT_UTF8_BYTES)
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_SHAPE_UNREVIEWED",))
+
+    def test_utf8_json_text_one_byte_over_limit_refused(self):
+        raw = '"' + "x"*(MAX_JSON_TEXT_UTF8_BYTES-1) + '"'
+        self.assertEqual(len(raw.encode("utf-8")), MAX_JSON_TEXT_UTF8_BYTES+1)
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_JSON_TEXT_UNREVIEWED",))
+
+    def test_utf8_multibyte_json_text_exceeds_bytes_under_character_cap(self):
+        raw = '"' + "é"*1000000 + '"'
+        self.assertLess(len(raw), MAX_TEXT_CHARS)
+        self.assertGreater(len(raw.encode("utf-8")), MAX_JSON_TEXT_UTF8_BYTES)
+        result = review_bundle_json_text(raw)
+        self.assertEqual(result["diagnostics"], ("BUNDLE_JSON_TEXT_UNREVIEWED",))
+
+    def test_utf8_fourbyte_json_text_overflow_fails_closed(self):
+        raw = '"' + "🚀"*500000 + '"'
+        self.assertLess(len(raw), MAX_TEXT_CHARS)
+        self.assertGreater(len(raw.encode("utf-8")), MAX_JSON_TEXT_UTF8_BYTES)
+        result = review_bundle_json_text(raw)
+        self.assertEqual(result["diagnostics"], ("BUNDLE_JSON_TEXT_UNREVIEWED",))
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_utf8_input_lone_surrogate_is_safe_unicode_diagnostic(self):
+        raw = '{"value":"\ud800"}'
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_JSON_UNICODE_UNREVIEWED",))
+
+    def test_utf8_json_escaped_surrogate_keeps_postparse_diagnostic(self):
+        raw = '{"value":"\\ud800"}'
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_JSON_UNICODE_UNREVIEWED",))
+
+    def test_utf8_json_text_small_multilingual_shape_is_not_byte_refusal(self):
+        raw = json.dumps({"synthetic": "日本語 العربية 🚀"}, ensure_ascii=False)
+        result = review_bundle_json_text(raw)
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_KEY_INVENTORY_UNREVIEWED",))
+
+    def test_utf8_oversized_stdin_never_echoes_multibyte_evidence(self):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        raw = '{"private_canary":"' + "🚀"*500001 + '"}'
+        output = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(raw), output)
+        verdict = json.loads(output.getvalue())
+        self.assertEqual(status, 2)
+        self.assertEqual(verdict["diagnostics"], ["BUNDLE_JSON_TEXT_UNREVIEWED"])
+        self.assertNotIn("private_canary", output.getvalue())
+        self.assertFalse(verdict["can_authorize_annual_run"])
+
+    def test_utf8_text_byte_guard_preserves_synthetic_source_consistency(self):
+        result = review_bundle_json_text(json.dumps(self.envelope))
+        self.assertTrue(result["source_consistency"])
+        self.assertEqual(result["diagnostics"], ())
         self.assertFalse(result["can_authorize_annual_run"])
 
