@@ -4537,3 +4537,73 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(result["can_authorize_annual_run"])
 
+    def test_json_fault_precedence_char_cap_before_invalid_container(self):
+        raw = " " * (MAX_TEXT_CHARS + 1) + '{"unclosed":['
+        result = review_bundle_json_text(raw)
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_JSON_TEXT_UNREVIEWED",))
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_json_fault_precedence_utf8_cap_before_duplicate_key(self):
+        raw = '{"x":"'+ "🚀"*500001 + '","x":2}'
+        self.assertLess(len(raw), MAX_TEXT_CHARS)
+        self.assertGreater(len(raw.encode("utf-8")), MAX_TEXT_UTF8_BYTES)
+        result = review_bundle_json_text(raw)
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_JSON_TEXT_UNREVIEWED",))
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_json_fault_precedence_depth_guard_before_duplicate_key(self):
+        raw = "["*(MAX_JSON_NESTING+1) + '{"a":1,"a":2}' + "]"*(MAX_JSON_NESTING+1)
+        self.assertLess(len(raw), MAX_TEXT_CHARS)
+        self.assertFalse(_json_nesting_within_limit(raw))
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_json_fault_precedence_aggregate_array_before_key_inventory(self):
+        raw = '{"bad":[' + ",".join("[0,0,0,0]" for _ in range(
+            MAX_JSON_ARRAY_ITEMS)) + "]}"
+        self.assertFalse(_json_lexical_array_budgets(raw))
+        self.assertTrue(_json_lexical_object_budgets(raw))
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_json_fault_precedence_object_members_before_duplicate_hook(self):
+        raw = "{" + ",".join('"k%d":0'%i for i in range(
+            MAX_JSON_OBJECT_MEMBERS)) + ',"k0":1}'
+        self.assertFalse(_json_lexical_object_budgets(raw))
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_json_fault_precedence_duplicate_key_before_surrogate_walk(self):
+        raw = r'{"a":"\ud800","a":2}'
+        self.assertTrue(_json_lexical_object_budgets(raw))
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_json_fault_precedence_unicode_walk_before_envelope_inventory(self):
+        raw = r'{"unreviewed":"\ud800"}'
+        self.assertTrue(_json_lexical_object_budgets(raw))
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_JSON_UNICODE_UNREVIEWED",))
+
+    def test_json_fault_precedence_missing_envelope_keys_after_valid_parse(self):
+        raw = '{"unexpected":"synthetic"}'
+        self.assertTrue(_json_lexical_array_budgets(raw))
+        self.assertTrue(_json_lexical_object_budgets(raw))
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_KEY_INVENTORY_UNREVIEWED",))
+
+    def test_json_multifault_rejection_never_invokes_nested_source_review(self):
+        from unittest.mock import patch
+        raw = r'{"bad":{"a":1,"\u0061":2}}'
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          side_effect=AssertionError("nested review forbidden")) as nested:
+            result = review_bundle_json_text(raw)
+        nested.assert_not_called()
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
