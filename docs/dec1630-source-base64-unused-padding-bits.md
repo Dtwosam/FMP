@@ -1,0 +1,7 @@
+# DEC-1630 — Canonical Base64 rejects unused padding-bit aliases
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent one-commit tests/docs child of #1876 at `532af794fa833de6c85a3573d6b0e200b60c3516`. Ten new regression methods (**3,630 proposed source-defined methods**).
+
+RFC 4648 Base64 encoding has unused low bits in the last sextet when a payload needs `=` padding. Some strict-alphabet decoders still decode multiple distinct strings to the same bytes when these unused bits differ. Six tests deliberately toggle unused low bits in the canonically encoded Python and Markdown fixtures, first confirming the decoded bytes are identical, then requiring `BUNDLE_SOURCE_B64_NONCANONICAL` from direct-memory, JSON-text and stdin reviews. One combined test corrupts both source entries. Two positive controls JSON-escape an ordinary Base64 character: lexical `\\uXXXX` is permitted when decoded JSON and canonical Base64 content remain identical. The untouched control remains source-consistent only.
+
+Synthetic source bytes prove no provider Git object, protected original OS or annual run gate. Own exact-head Phase 3/general CI and qualified independent review required. Tests/docs only; no production/parser/resources/workflow/security-control changes, protected originals/archives/artifacts, annual dispatch/retry, merge/deployment or trading. DEC-650/#820 and DEC-651/#821/#779 remain **BLOCKED**.
