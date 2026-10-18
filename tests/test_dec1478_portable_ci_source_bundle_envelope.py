@@ -9065,3 +9065,114 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_root_binding_clean_control_source_only(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+    def _portable_apply_named_tree_fault(self, name):
+        if name == "tests_executable":
+            self._portable_snapshot_leaf("tests")["mode"] = "100755"
+        elif name == "docs_bad_sha":
+            self._portable_snapshot_leaf("docs")["sha"] = "a"*40
+        elif name == "tests_missing":
+            self._portable_snapshot_leaf("tests")["path"] = "other.py"
+        elif name == "docs_parent_symlink":
+            root = self.envelope["full_tree_snapshots"][self.envelope["commit"]["tree"]["sha"]]
+            next(e for e in root["tree"] if e["path"] == "docs")["mode"] = "120000"
+        elif name == "flat_docs_executable":
+            self.envelope["nodes"]["docs/sample.md"]["mode"] = "100755"
+        elif name == "orphan_tree":
+            self.envelope["full_tree_snapshots"]["f"*40] = {"sha": "f"*40, "truncated": False, "tree": []}
+        elif name == "docs_bad_hex":
+            self._portable_snapshot_leaf("docs")["sha"] = "g"*40
+        elif name == "tests_truncated":
+            trees, _, sha = self._portable_snapshot_parent_child("tests")
+            trees[sha]["truncated"] = True
+        else:
+            self.fail("unreviewed synthetic fault label")
+
+    def _assert_tree_fault_order_parity(self, first, second, codes):
+        before = copy.deepcopy(self.envelope)
+        self._portable_apply_named_tree_fault(first)
+        self._portable_apply_named_tree_fault(second)
+        expected = self.verdict()
+        self.envelope = copy.deepcopy(before)
+        self._portable_apply_named_tree_fault(second)
+        self._portable_apply_named_tree_fault(first)
+        self.assertEqual(self.verdict(), expected)
+        self._assert_portable_multiple_tree_faults(*codes)
+
+    def test_portable_fault_order_tests_executable_and_docs_bad_sha_stable(self):
+        self._assert_tree_fault_order_parity(
+            "tests_executable", "docs_bad_sha",
+            ("TREE_CHAIN_LEAF_NOT_REGULAR_BLOB", "TREE_CHAIN_LEAF_BYTES_SHA_MISMATCH"))
+
+    def test_portable_fault_order_tests_executable_and_docs_parent_symlink_stable(self):
+        self._assert_tree_fault_order_parity(
+            "tests_executable", "docs_parent_symlink",
+            ("TREE_CHAIN_LEAF_NOT_REGULAR_BLOB", "TREE_CHAIN_PARENT_NOT_REGULAR_TREE"))
+
+    def test_portable_fault_order_tests_executable_and_docs_bad_hex_stable(self):
+        self._assert_tree_fault_order_parity(
+            "tests_executable", "docs_bad_hex",
+            ("TREE_CHAIN_LEAF_NOT_REGULAR_BLOB", "TREE_CHAIN_ENTRY_SHA_UNREVIEWED"))
+
+    def test_portable_fault_order_tests_executable_and_orphan_tree_stable(self):
+        self._assert_tree_fault_order_parity(
+            "tests_executable", "orphan_tree",
+            ("TREE_CHAIN_LEAF_NOT_REGULAR_BLOB", "TREE_CHAIN_TREE_SNAPSHOT_INVENTORY_UNREVIEWED"))
+
+    def test_portable_fault_order_tests_executable_and_flat_docs_executable_stable(self):
+        self._assert_tree_fault_order_parity(
+            "tests_executable", "flat_docs_executable",
+            ("TREE_CHAIN_LEAF_NOT_REGULAR_BLOB", "GIT_TREE_LEAF_MODE_DRIFT"))
+
+    def test_portable_fault_order_docs_bad_sha_and_tests_missing_stable(self):
+        self._assert_tree_fault_order_parity(
+            "docs_bad_sha", "tests_missing",
+            ("TREE_CHAIN_LEAF_BYTES_SHA_MISMATCH", "TREE_CHAIN_ENTRY_CARDINALITY_UNREVIEWED"))
+
+    def test_portable_fault_order_docs_bad_sha_and_flat_docs_executable_stable(self):
+        self._assert_tree_fault_order_parity(
+            "docs_bad_sha", "flat_docs_executable",
+            ("TREE_CHAIN_LEAF_BYTES_SHA_MISMATCH", "GIT_TREE_LEAF_MODE_DRIFT"))
+
+    def test_portable_fault_order_docs_bad_sha_and_orphan_tree_stable(self):
+        self._assert_tree_fault_order_parity(
+            "docs_bad_sha", "orphan_tree",
+            ("TREE_CHAIN_LEAF_BYTES_SHA_MISMATCH", "TREE_CHAIN_TREE_SNAPSHOT_INVENTORY_UNREVIEWED"))
+
+    def test_portable_fault_order_docs_parent_symlink_and_tests_missing_stable(self):
+        self._assert_tree_fault_order_parity(
+            "docs_parent_symlink", "tests_missing",
+            ("TREE_CHAIN_PARENT_NOT_REGULAR_TREE", "TREE_CHAIN_ENTRY_CARDINALITY_UNREVIEWED"))
+
+    def test_portable_fault_order_docs_parent_symlink_and_flat_docs_executable_stable(self):
+        self._assert_tree_fault_order_parity(
+            "docs_parent_symlink", "flat_docs_executable",
+            ("TREE_CHAIN_PARENT_NOT_REGULAR_TREE", "GIT_TREE_LEAF_MODE_DRIFT"))
+
+    def test_portable_fault_order_docs_bad_hex_and_flat_docs_executable_stable(self):
+        self._assert_tree_fault_order_parity(
+            "docs_bad_hex", "flat_docs_executable",
+            ("TREE_CHAIN_ENTRY_SHA_UNREVIEWED", "GIT_TREE_LEAF_MODE_DRIFT"))
+
+    def test_portable_fault_order_docs_bad_hex_and_orphan_tree_stable(self):
+        self._assert_tree_fault_order_parity(
+            "docs_bad_hex", "orphan_tree",
+            ("TREE_CHAIN_ENTRY_SHA_UNREVIEWED", "TREE_CHAIN_TREE_SNAPSHOT_INVENTORY_UNREVIEWED"))
+
+    def test_portable_fault_order_orphan_tree_and_tests_missing_stable(self):
+        self._assert_tree_fault_order_parity(
+            "orphan_tree", "tests_missing",
+            ("TREE_CHAIN_TREE_SNAPSHOT_INVENTORY_UNREVIEWED", "TREE_CHAIN_ENTRY_CARDINALITY_UNREVIEWED"))
+
+    def test_portable_fault_order_tests_truncated_and_flat_docs_executable_stable(self):
+        self._assert_tree_fault_order_parity(
+            "tests_truncated", "flat_docs_executable",
+            ("TREE_CHAIN_TREE_OBJECT_UNREVIEWED", "GIT_TREE_LEAF_MODE_DRIFT"))
+
+    def test_portable_fault_order_tests_truncated_and_docs_bad_sha_stable(self):
+        self._assert_tree_fault_order_parity(
+            "tests_truncated", "docs_bad_sha",
+            ("TREE_CHAIN_TREE_OBJECT_UNREVIEWED", "TREE_CHAIN_LEAF_BYTES_SHA_MISMATCH"))
+
+    def test_portable_fault_order_clean_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
