@@ -134,6 +134,7 @@ def audit_published_window_schedule(windows):
     )
     audit = []
     previous_end = None
+    previous_start = None
     for row, expected in zip(windows, EXPECTED_SCORED_PERIODS):
         _require(
             type(row) is dict and type(row.get("window")) is str
@@ -153,8 +154,20 @@ def audit_published_window_schedule(windows):
         warmup_start = start - timedelta(days=7)
         warmup_end = start
         _require(
-            warmup_start < warmup_end and warmup_end <= start,
-            "published warm-up must end before scored context begins",
+            warmup_start < warmup_end and warmup_end == start,
+            "published warm-up must end before this window scores",
+        )
+        # Later windows' 7-day warmup lies within the previous quarter's
+        # calendar *scores*. It is context-only in the CURRENT window, not
+        # a globally unscored date range; neither claim verifies live bars.
+        overlaps_previous_scored_calendar = (
+            previous_start is not None
+            and max(previous_start, warmup_start)
+                < min(previous_end, warmup_end)
+        )
+        _require(
+            previous_start is None or overlaps_previous_scored_calendar,
+            "expected calendar-only overlap with preceding scored quarter",
         )
         audit.append({
             "window": row["window"],
@@ -163,9 +176,12 @@ def audit_published_window_schedule(windows):
             "reported_warmup_start_inclusive": warmup_start.isoformat(),
             "reported_warmup_end_exclusive": warmup_end.isoformat(),
             "warmup_calendar_days": 7,
-            "reported_warmup_is_not_a_scored_period": True,
+            "reported_warmup_excluded_from_this_windows_scores": True,
+            "warmup_calendar_overlaps_prior_scored_window":
+                overlaps_previous_scored_calendar,
             "actual_bars_and_no_leakage_not_reauthenticated": True,
         })
+        previous_start = start
         previous_end = end
     _require(
         audit[0]["scored_start_inclusive"] == "2025-01-01"
