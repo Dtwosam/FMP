@@ -151,6 +151,49 @@ class OfflineBlockerDiagnosticTests(unittest.TestCase):
             with self.assertRaises(FileNotFoundError):
                 RENDER(Path(d))
 
+
+    def test_unexpected_snapshot_authority_member_rejected(self):
+        self._tamper("admin_snapshot", lambda d: d.__setitem__(
+            "broker_execution_approved", True))
+
+    def test_unexpected_annual_authority_member_rejected(self):
+        self._tamper("annual", lambda d: d.__setitem__(
+            "allow_all_annual_workflows", True))
+
+    def test_missing_annual_flag_name_rejected_even_when_false(self):
+        self._tamper("annual", lambda d: d["authority_flags"].__setitem__(
+            "run385_authorized", False) or d["authority_flags"].__setitem__(
+            "secret_workflow_authorized", d["authority_flags"].pop(
+                "run385_executed")))
+
+    def test_extra_provisional_profit_metric_rejected(self):
+        self._tamper("economics", lambda d: d["reported_economic_measurements"].__setitem__(
+            "strategy_v1_live_return_forecast", "5%"))
+
+    def test_graph_order_or_skipped_shadow_prerequisite_rejected(self):
+        self._tamper("dependency", lambda d: d["nodes"][10].__setitem__(
+            "prerequisites", []))
+
+    def test_duplicate_review_category_still_blocked_rejected(self):
+        self._tamper("preregistration", lambda d: d["gates"][1].__setitem__(
+            "id", d["gates"][0]["id"]))
+
+    def test_unapproved_proof_with_extra_verified_key_rejected(self):
+        self._tamper("admin_snapshot", lambda d: d["external_proofs"][0].__setitem__(
+            "verified", True))
+
+    def test_remediation_route_hidden_authority_rejected(self):
+        self._tamper("admin_snapshot", lambda d: d["remediation_routes"][0].__setitem__(
+            "authorized", True))
+
+    def test_preregistration_extra_execution_flag_rejected(self):
+        self._tamper("preregistration", lambda d: d.__setitem__(
+            "allow_broker_orders", True))
+
+    def test_review_category_extra_signoff_booleans_rejected(self):
+        self._tamper("preregistration", lambda d: d["gates"][0].__setitem__(
+            "signed_off", True))
+
     def test_module_entrypoint_has_no_import_time_side_effects(self):
         self.assertIn("render_readiness", MOD)
         self.assertIn("main", MOD)
