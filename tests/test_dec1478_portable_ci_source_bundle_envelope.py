@@ -13911,3 +13911,127 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_escaped_scalar_value_clean_control(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+
+    def _assert_nested_duplicate_precedes_envelope_errors(self, category,
+                                                           outer_fault):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.assertIn(category, ("pr", "tree", "raw_ci_log_receipts",
+                                 "phase3_evidence_snapshot"))
+        self.assertIn(outer_fault, ("schema", "approval", "runs", "compare"))
+        clean = self._portable_top_level_members_json()
+        malformed_child = self._portable_json_subtree_with_duplicate(
+            self.envelope[category], (), False)
+        replacements = {
+            category: json.dumps(category) + ":" + malformed_child}
+        if outer_fault == "schema":
+            replacements["schema"] = '"schema":"forged-review-v999"'
+        elif outer_fault == "runs":
+            replacements["runs"] = '"runs":null'
+        elif outer_fault == "compare":
+            replacements["compare"] = '"compare":null'
+        encoded = self._portable_top_level_members_json(replacements)
+        if outer_fault == "approval":
+            encoded = (encoded[:-1] +
+                       ',"can_authorize_annual_run":true}')
+        self.assertNotEqual(encoded, clean)
+        # The malformed nested key alone is syntactically valid JSON.
+        # A permissive last-wins decoder reaches the later outer fault.
+        permissive = json.loads(encoded)
+        if outer_fault == "schema":
+            self.assertEqual(permissive["schema"], "forged-review-v999")
+        elif outer_fault == "approval":
+            self.assertTrue(permissive["can_authorize_annual_run"])
+        elif outer_fault == "runs":
+            self.assertIsNone(permissive["runs"])
+        elif outer_fault == "compare":
+            self.assertIsNone(permissive["compare"])
+        direct = self.verdict()
+        parsed = review_bundle_json_text(encoded)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(encoded), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(self._portable_top_level_members_json(), clean)
+        self.assertTrue(direct["source_consistency"])
+        self.assertEqual(direct["diagnostics"], ())
+        self.assertEqual(status, 2)
+        self.assertEqual(parsed["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"],
+                         ["BUNDLE_JSON_GRAMMAR_UNREVIEWED"])
+        self.assertNotIn("tests/sample.py", out.getvalue())
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        for result in (parsed, emitted):
+            self.assertFalse(result["source_consistency"])
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_nested_grammar_first_pr_schema(self):
+        self._assert_nested_duplicate_precedes_envelope_errors(
+            "pr", "schema")
+
+    def test_portable_nested_grammar_first_pr_approval(self):
+        self._assert_nested_duplicate_precedes_envelope_errors(
+            "pr", "approval")
+
+    def test_portable_nested_grammar_first_pr_runs(self):
+        self._assert_nested_duplicate_precedes_envelope_errors(
+            "pr", "runs")
+
+    def test_portable_nested_grammar_first_pr_compare(self):
+        self._assert_nested_duplicate_precedes_envelope_errors(
+            "pr", "compare")
+
+    def test_portable_nested_grammar_first_tree_schema(self):
+        self._assert_nested_duplicate_precedes_envelope_errors(
+            "tree", "schema")
+
+    def test_portable_nested_grammar_first_tree_approval(self):
+        self._assert_nested_duplicate_precedes_envelope_errors(
+            "tree", "approval")
+
+    def test_portable_nested_grammar_first_tree_runs(self):
+        self._assert_nested_duplicate_precedes_envelope_errors(
+            "tree", "runs")
+
+    def test_portable_nested_grammar_first_tree_compare(self):
+        self._assert_nested_duplicate_precedes_envelope_errors(
+            "tree", "compare")
+
+    def test_portable_nested_grammar_first_raw_ci_log_receipts_schema(self):
+        self._assert_nested_duplicate_precedes_envelope_errors(
+            "raw_ci_log_receipts", "schema")
+
+    def test_portable_nested_grammar_first_raw_ci_log_receipts_approval(self):
+        self._assert_nested_duplicate_precedes_envelope_errors(
+            "raw_ci_log_receipts", "approval")
+
+    def test_portable_nested_grammar_first_raw_ci_log_receipts_runs(self):
+        self._assert_nested_duplicate_precedes_envelope_errors(
+            "raw_ci_log_receipts", "runs")
+
+    def test_portable_nested_grammar_first_raw_ci_log_receipts_compare(self):
+        self._assert_nested_duplicate_precedes_envelope_errors(
+            "raw_ci_log_receipts", "compare")
+
+    def test_portable_nested_grammar_first_phase3_evidence_snapshot_schema(self):
+        self._assert_nested_duplicate_precedes_envelope_errors(
+            "phase3_evidence_snapshot", "schema")
+
+    def test_portable_nested_grammar_first_phase3_evidence_snapshot_approval(self):
+        self._assert_nested_duplicate_precedes_envelope_errors(
+            "phase3_evidence_snapshot", "approval")
+
+    def test_portable_nested_grammar_first_phase3_evidence_snapshot_runs(self):
+        self._assert_nested_duplicate_precedes_envelope_errors(
+            "phase3_evidence_snapshot", "runs")
+
+    def test_portable_nested_grammar_first_phase3_evidence_snapshot_compare(self):
+        self._assert_nested_duplicate_precedes_envelope_errors(
+            "phase3_evidence_snapshot", "compare")
+
+    def test_portable_nested_grammar_first_clean_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
