@@ -1,0 +1,7 @@
+# DEC-1712 — Invalid root inventory and schema must bypass nested evidence review
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** One-commit exact-parent tests/docs-only child of #1958 at `981d3487833ae78ac9048b02b0307d7f70b5fe41`.
+
+Adds **37 source-defined methods** (**5,816 proposed**). Six root-level early failures (missing schema inventory, forged approval key, wrong schema value, null required PR category, null runs category, extra root member) are crossed with six array-contained evidence dictionary paths, plus a clean control. These are syntactically valid JSON documents. Their exact fail-closed root diagnostics must agree across direct-memory, strict JSON and offline stdin review, **without invoking the composite nested reviewer**, verified using a patched guard. This distinguishes valid JSON shape/schema/type failures from syntax and Unicode errors.
+
+All tests use deep-copied caller-supplied synthetic evidence; the original remains immutable. Output has exact safe verdict fields and echoes no synthetic marker/source path or exception, with protected annual authority, original OS proof and exclusive server dispatch false. Own exact-head Phase 3/full historical/general CI and independent qualified review required. No parser/production/limits/workflow/security modifications, protected originals/archive/artifacts, annual execution/dispatch/retry, merge/deployment/trading. DEC-650/#820 and DEC-651/#821/#779 **BLOCKED**.
