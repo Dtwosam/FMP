@@ -370,6 +370,67 @@ EXPECTED_DAG_EDGES = [
     ]
 ]
 
+
+# Freeze evidence-requirement substance for the current unevaluated template.
+# A source-of-truth revision must be separately reviewed, not silently
+# interpreted as the same BLOCKED documentary packet.
+EXPECTED_ECONOMIC_GROUPS = {
+    "annual_catalogue_and_selection": [
+        "exact_frozen_year_identity",
+        "all_18_cells_per_annual_segment",
+        "failed_and_negative_pattern_inventory",
+        "pattern_search_budget_and_multiplicity",
+        "canonical_cross_year_pattern_identity",
+        "unseen_years_not_touched_as_future_final_test"
+    ],
+    "cross_year_failure_and_concentration": [
+        "recurrence_and_absent_years",
+        "sign_reversals_and_failure_years",
+        "year_by_pair_by_timeframe_support",
+        "winner_selection_and_search_volume",
+        "trade_count_and_independent_observation_support",
+        "year_and_session_return_concentration"
+    ],
+    "after_cost_economics": [
+        "bid_ask_price_side_and_spread",
+        "slippage_sensitivity",
+        "commission_and_rollover_when_relevant",
+        "net_expected_pnl_by_year",
+        "drawdown_and_tail_events",
+        "portfolio_correlated_usd_exposure",
+        "symbol_and_timeframe_contribution",
+        "adverse_cost_and_failure_scenarios"
+    ],
+    "prospective_follow_through": [
+        "exact_frozen_strategy_v1_identity",
+        "registered_entry_exit_no_trade_protocol",
+        "leakage_safe_signal_execution_timing",
+        "predeclared_live_shadow_no_order_policy",
+        "future_market_observations_not_looked_ahead",
+        "broker_demo_after_separate_review_only",
+        "phase10_and_phase11_separate_human_authorizations"
+    ]
+}
+EXPECTED_PREREG_EVIDENCE = {
+    "pre_registered_hypothesis_space": "pattern family lineage, all tested candidates and search count, registration date before strategy selection",
+    "time_safe_signal_and_execution": "signal known at prior permissible timestamp, bid/ask side, earliest fill, ambiguity policy",
+    "complete_annual_pattern_catalogue": "all 2015–2025 annual patterns and 2026 partial segment independently accepted before cross-year aggregation",
+    "negative_pattern_and_failure_years": "negative candidates, years without a recurrence, reversals and unfavorable regimes included",
+    "multiplicity_and_winner_selection": "predefined correction or honest uncertainty bound for all trials, researcher degrees of freedom disclosed",
+    "independence_and_uncertainty": "appropriate block or cluster resampling respecting serial dependence; interval for net expectancy",
+    "trade_support_and_pnl_concentration": "trade counts, effective sample size, winning-outlier concentration, by-year/by-pair decomposition",
+    "costs_under_adverse_conditions": "spread, slippage, commissions, financing, adverse cost distributions and break-even sensitivity",
+    "portfolio_usd_correlation_and_exposure": "cross-pair correlated USD risk, net/leverage, tail co-movement and overlap",
+    "drawdown_and_tail_risk": "worst episodes, loss runs, gap/rollover tail exposure, capital preservation under stress",
+    "execution_and_capacity": "market hours, order type, fill assumption, market impact, rejections, operational failure response",
+    "holdout_contamination_accounting": "document historical windows already seen by Phase7 and do not re-label as untouched final test",
+    "immutable_strategy_v1_spec": "exact rule version, entry exit/no-trade, risk sizing, freeze hash and selection decision",
+    "prospective_order_impossible_shadow": "separately approved read-only fresh quotes; forward record cannot place any order",
+    "separate_demo_live_decisions": "independent demo reconciliation, Phase10 review and explicit Phase11 real money authorization"
+}
+OBSERVED_PUBLIC_MAIN_SHA = "53e203133bbc141b2f48c7b8b8241d56b35166a3"
+OBSERVED_PUBLIC_DATE = "2026-10-19"
+
 def render_readiness(docs_root: Path) -> dict[str, object]:
     """Create a deterministic, permanently nonauthorizing OFFLINE report.
 
@@ -675,6 +736,24 @@ def render_readiness(docs_root: Path) -> dict[str, object]:
             in zip(snap["remediation_routes"], expected_claims)
         ),
         "do not weaken continuous-lock or separately amended immutable-ref path",
+    )
+
+
+    _require(
+        econ["required_evidence_groups"] == EXPECTED_ECONOMIC_GROUPS
+        and all(
+            gate["required_evidence"] == EXPECTED_PREREG_EVIDENCE[gate["id"]]
+            for gate in review["gates"]
+        ),
+        "annual, multiplicity, adverse-cost, risk and prospective evidence requirements changed",
+    )
+    _require(
+        snap["observed_date_utc"] == OBSERVED_PUBLIC_DATE
+        and annual["main_branch_last_public_observation"]["sha"]
+            == OBSERVED_PUBLIC_MAIN_SHA
+        and snap["public_observation"]["observed_main_sha"]
+            == OBSERVED_PUBLIC_MAIN_SHA,
+        "stale public snapshot identity cannot be replaced with a forged current SHA",
     )
 
     return {
