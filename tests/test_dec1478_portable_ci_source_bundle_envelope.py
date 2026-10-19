@@ -17912,3 +17912,234 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_array_valid_number_clean_control(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+
+    def _assert_json_primitive_defers_to_required_type(self, category,
+                                                       token):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.assertIn(category, REQUIRED)
+        self.assertIn(token, ("true", "false", "null"))
+        expected_value = json.loads(token)
+        self.assertTrue(expected_value is None or
+                        type(expected_value) is bool)
+        before = self._portable_top_level_members_json()
+        encoded = self._portable_top_level_members_json({
+            category: json.dumps(category) + ":" + token})
+        doc = json.loads(encoded)
+        self.assertIs(doc[category], expected_value)
+        self.assertNotEqual(encoded, before)
+        parsed = review_bundle_json_text(encoded)
+        diagnostic = ("BUNDLE_SCHEMA_UNREVIEWED" if category == "schema"
+                      else "BUNDLE_CATEGORY_TYPE_UNREVIEWED")
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(encoded), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(before, self._portable_top_level_members_json())
+        self.assertTrue(self.verdict()["source_consistency"])
+        self.assertEqual(status, 2)
+        self.assertEqual(parsed["diagnostics"], (diagnostic,))
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"], [diagnostic])
+        self.assertNotIn("tests/sample.py", out.getvalue())
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        for result in (parsed, emitted):
+            self.assertFalse(result["source_consistency"])
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_json_primitive_schema_true(self):
+        self._assert_json_primitive_defers_to_required_type(
+            "schema", "true")
+
+    def test_portable_json_primitive_schema_false(self):
+        self._assert_json_primitive_defers_to_required_type(
+            "schema", "false")
+
+    def test_portable_json_primitive_schema_null(self):
+        self._assert_json_primitive_defers_to_required_type(
+            "schema", "null")
+
+    def test_portable_json_primitive_pr_true(self):
+        self._assert_json_primitive_defers_to_required_type(
+            "pr", "true")
+
+    def test_portable_json_primitive_pr_false(self):
+        self._assert_json_primitive_defers_to_required_type(
+            "pr", "false")
+
+    def test_portable_json_primitive_pr_null(self):
+        self._assert_json_primitive_defers_to_required_type(
+            "pr", "null")
+
+    def test_portable_json_primitive_runs_true(self):
+        self._assert_json_primitive_defers_to_required_type(
+            "runs", "true")
+
+    def test_portable_json_primitive_runs_false(self):
+        self._assert_json_primitive_defers_to_required_type(
+            "runs", "false")
+
+    def test_portable_json_primitive_runs_null(self):
+        self._assert_json_primitive_defers_to_required_type(
+            "runs", "null")
+
+    def test_portable_json_primitive_jobs_by_run_true(self):
+        self._assert_json_primitive_defers_to_required_type(
+            "jobs_by_run", "true")
+
+    def test_portable_json_primitive_jobs_by_run_false(self):
+        self._assert_json_primitive_defers_to_required_type(
+            "jobs_by_run", "false")
+
+    def test_portable_json_primitive_jobs_by_run_null(self):
+        self._assert_json_primitive_defers_to_required_type(
+            "jobs_by_run", "null")
+
+    def test_portable_json_primitive_compare_true(self):
+        self._assert_json_primitive_defers_to_required_type(
+            "compare", "true")
+
+    def test_portable_json_primitive_compare_false(self):
+        self._assert_json_primitive_defers_to_required_type(
+            "compare", "false")
+
+    def test_portable_json_primitive_compare_null(self):
+        self._assert_json_primitive_defers_to_required_type(
+            "compare", "null")
+
+    def test_portable_json_primitive_commit_true(self):
+        self._assert_json_primitive_defers_to_required_type(
+            "commit", "true")
+
+    def test_portable_json_primitive_commit_false(self):
+        self._assert_json_primitive_defers_to_required_type(
+            "commit", "false")
+
+    def test_portable_json_primitive_commit_null(self):
+        self._assert_json_primitive_defers_to_required_type(
+            "commit", "null")
+
+    def test_portable_json_primitive_tree_true(self):
+        self._assert_json_primitive_defers_to_required_type(
+            "tree", "true")
+
+    def test_portable_json_primitive_tree_false(self):
+        self._assert_json_primitive_defers_to_required_type(
+            "tree", "false")
+
+    def test_portable_json_primitive_tree_null(self):
+        self._assert_json_primitive_defers_to_required_type(
+            "tree", "null")
+
+    def test_portable_json_primitive_nodes_true(self):
+        self._assert_json_primitive_defers_to_required_type(
+            "nodes", "true")
+
+    def test_portable_json_primitive_nodes_false(self):
+        self._assert_json_primitive_defers_to_required_type(
+            "nodes", "false")
+
+    def test_portable_json_primitive_nodes_null(self):
+        self._assert_json_primitive_defers_to_required_type(
+            "nodes", "null")
+
+    def test_portable_json_primitive_changed_bytes_b64_true(self):
+        self._assert_json_primitive_defers_to_required_type(
+            "changed_bytes_b64", "true")
+
+    def test_portable_json_primitive_changed_bytes_b64_false(self):
+        self._assert_json_primitive_defers_to_required_type(
+            "changed_bytes_b64", "false")
+
+    def test_portable_json_primitive_changed_bytes_b64_null(self):
+        self._assert_json_primitive_defers_to_required_type(
+            "changed_bytes_b64", "null")
+
+    def test_portable_json_primitive_ci_workflow_bytes_b64_true(self):
+        self._assert_json_primitive_defers_to_required_type(
+            "ci_workflow_bytes_b64", "true")
+
+    def test_portable_json_primitive_ci_workflow_bytes_b64_false(self):
+        self._assert_json_primitive_defers_to_required_type(
+            "ci_workflow_bytes_b64", "false")
+
+    def test_portable_json_primitive_ci_workflow_bytes_b64_null(self):
+        self._assert_json_primitive_defers_to_required_type(
+            "ci_workflow_bytes_b64", "null")
+
+    def test_portable_json_primitive_full_tree_snapshots_true(self):
+        self._assert_json_primitive_defers_to_required_type(
+            "full_tree_snapshots", "true")
+
+    def test_portable_json_primitive_full_tree_snapshots_false(self):
+        self._assert_json_primitive_defers_to_required_type(
+            "full_tree_snapshots", "false")
+
+    def test_portable_json_primitive_full_tree_snapshots_null(self):
+        self._assert_json_primitive_defers_to_required_type(
+            "full_tree_snapshots", "null")
+
+    def test_portable_json_primitive_merge_checkout_snapshot_true(self):
+        self._assert_json_primitive_defers_to_required_type(
+            "merge_checkout_snapshot", "true")
+
+    def test_portable_json_primitive_merge_checkout_snapshot_false(self):
+        self._assert_json_primitive_defers_to_required_type(
+            "merge_checkout_snapshot", "false")
+
+    def test_portable_json_primitive_merge_checkout_snapshot_null(self):
+        self._assert_json_primitive_defers_to_required_type(
+            "merge_checkout_snapshot", "null")
+
+    def test_portable_json_primitive_checkout_by_run_true(self):
+        self._assert_json_primitive_defers_to_required_type(
+            "checkout_by_run", "true")
+
+    def test_portable_json_primitive_checkout_by_run_false(self):
+        self._assert_json_primitive_defers_to_required_type(
+            "checkout_by_run", "false")
+
+    def test_portable_json_primitive_checkout_by_run_null(self):
+        self._assert_json_primitive_defers_to_required_type(
+            "checkout_by_run", "null")
+
+    def test_portable_json_primitive_phase3_evidence_snapshot_true(self):
+        self._assert_json_primitive_defers_to_required_type(
+            "phase3_evidence_snapshot", "true")
+
+    def test_portable_json_primitive_phase3_evidence_snapshot_false(self):
+        self._assert_json_primitive_defers_to_required_type(
+            "phase3_evidence_snapshot", "false")
+
+    def test_portable_json_primitive_phase3_evidence_snapshot_null(self):
+        self._assert_json_primitive_defers_to_required_type(
+            "phase3_evidence_snapshot", "null")
+
+    def test_portable_json_primitive_raw_ci_runner_logs_true(self):
+        self._assert_json_primitive_defers_to_required_type(
+            "raw_ci_runner_logs", "true")
+
+    def test_portable_json_primitive_raw_ci_runner_logs_false(self):
+        self._assert_json_primitive_defers_to_required_type(
+            "raw_ci_runner_logs", "false")
+
+    def test_portable_json_primitive_raw_ci_runner_logs_null(self):
+        self._assert_json_primitive_defers_to_required_type(
+            "raw_ci_runner_logs", "null")
+
+    def test_portable_json_primitive_raw_ci_log_receipts_true(self):
+        self._assert_json_primitive_defers_to_required_type(
+            "raw_ci_log_receipts", "true")
+
+    def test_portable_json_primitive_raw_ci_log_receipts_false(self):
+        self._assert_json_primitive_defers_to_required_type(
+            "raw_ci_log_receipts", "false")
+
+    def test_portable_json_primitive_raw_ci_log_receipts_null(self):
+        self._assert_json_primitive_defers_to_required_type(
+            "raw_ci_log_receipts", "null")
+
+    def test_portable_json_primitive_clean_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
