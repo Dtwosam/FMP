@@ -1,0 +1,118 @@
+{
+  "schema": "fmp_phase8a_sourceonly_readiness_not_authorizing_v1",
+  "decision": "DEC-1726",
+  "description": "Historical provenance labels and unresolved gate inventory; no real-time observation or execution authority.",
+  "capture_date": "2026-10-19",
+  "live_administration_evidence_verified": false,
+  "live_annual_run_385_inventory_verified": false,
+  "main_branch_last_public_observation": {
+    "sha": "53e203133bbc141b2f48c7b8b8241d56b35166a3",
+    "protected": false,
+    "is_current_at_action_time": false,
+    "proves_exclusive_no_bypass_lock": false
+  },
+  "previous_annual_freeze": {
+    "segment": "2022",
+    "run_number": 384,
+    "run_id": 37663157285,
+    "source_provenance": "HISTORICALLY_ACCEPTED_NOT_REAUTHENTICATED_FOR_DISPATCH"
+  },
+  "yearly_catalogue_status": [
+    {
+      "segment": "2015",
+      "research_evidence": "HISTORICALLY_FROZEN",
+      "promotion_eligible": false
+    },
+    {
+      "segment": "2016",
+      "research_evidence": "HISTORICALLY_FROZEN",
+      "promotion_eligible": false
+    },
+    {
+      "segment": "2017",
+      "research_evidence": "HISTORICALLY_FROZEN",
+      "promotion_eligible": false
+    },
+    {
+      "segment": "2018",
+      "research_evidence": "HISTORICALLY_FROZEN",
+      "promotion_eligible": false
+    },
+    {
+      "segment": "2019",
+      "research_evidence": "HISTORICALLY_FROZEN",
+      "promotion_eligible": false
+    },
+    {
+      "segment": "2020",
+      "research_evidence": "HISTORICALLY_FROZEN",
+      "promotion_eligible": false
+    },
+    {
+      "segment": "2021",
+      "research_evidence": "HISTORICALLY_FROZEN",
+      "promotion_eligible": false
+    },
+    {
+      "segment": "2022",
+      "research_evidence": "HISTORICALLY_FROZEN",
+      "promotion_eligible": false
+    },
+    {
+      "segment": "2023",
+      "research_evidence": "BLOCKED_UNVERIFIED_CURRENT_RUN_INVENTORY",
+      "promotion_eligible": false,
+      "expected_run_number": 385,
+      "expected_attempt": 1
+    },
+    {
+      "segment": "2024",
+      "research_evidence": "BLOCKED_NO_AUTHORIZED_PRIOR_2023_FREEZE",
+      "promotion_eligible": false
+    },
+    {
+      "segment": "2025",
+      "research_evidence": "BLOCKED_NO_AUTHORIZED_PRIOR_2024_FREEZE",
+      "promotion_eligible": false
+    },
+    {
+      "segment": "2026_YTD_TO_2026_08_20",
+      "research_evidence": "BLOCKED_NO_AUTHORIZED_PRIOR_2025_FREEZE",
+      "promotion_eligible": false
+    }
+  ],
+  "next_protected_segment": "2023",
+  "required_external_gates": [
+    "independent_admin_no_bypass_lock_continuity",
+    "independent_reviewed_ref_sha_workflow_runtime_identity",
+    "installed_precheckout_preinstall_preaccess_three_job_gates",
+    "actual_privileged_runner_os_isolation_and_publisher_witness",
+    "fresh_authoritative_annual_run_inventory",
+    "separate_human_one_shot_2023_run385_attempt1_decision"
+  ],
+  "external_gate_status": "BLOCKED",
+  "economic_evidence": "PHASE7_HISTORICAL_BENCHMARK_ONLY",
+  "phase8a_strategy_v1_frozen": false,
+  "phase8a_economic_edge_proven": false,
+  "fresh_prospective_shadow_accepted": false,
+  "demo_trading_approved": false,
+  "live_trading_approved": false,
+  "authority_flags": {
+    "annual_workflow_dispatch_authorized": false,
+    "protected_history_access_authorized": false,
+    "run385_authorized": false,
+    "run385_executed": false,
+    "retry_or_rerun_authorized": false,
+    "later_years_research_authorized": false,
+    "cross_year_synthesis_authorized": false,
+    "strategy_promotion_authorized": false,
+    "phase8b_authorized": false,
+    "broker_mutation_authorized": false,
+    "demo_orders_authorized": false,
+    "real_money_authorized": false,
+    "live_orders_authorized": false,
+    "trading_authorized": false
+  },
+  "authorized_actions": [],
+  "caveat": "All entries are source-only retrospective labels. New authenticated independent evidence, exact-head review and explicit human approvals are required; this JSON can never authorize any execution."
+}
