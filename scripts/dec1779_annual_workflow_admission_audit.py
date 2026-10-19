@@ -223,6 +223,118 @@ def inspect_installed_cell_matrix(source_text):
     }
 
 
+
+def inspect_pregate_step_payloads(source_text):
+    """Inspect step payloads, not labels. No runtime or security attestation."""
+    jobs = extract_job_steps(source_text)
+    observations = {}
+    for job in EXPECTED_JOBS:
+        block = jobs[job]["source"]
+        sections = {}
+        matches = list(re.finditer(r"^      - name: ([^\n]+)\n",
+                                   block, re.MULTILINE))
+        for i, match in enumerate(matches):
+            end = matches[i+1].start() if i+1 < len(matches) else len(block)
+            _require(match[1] not in sections,
+                     "duplicate command payload name: " + job)
+            sections[match[1]] = block[match.end():end]
+        _require(tuple(sections) == tuple(jobs[job]["steps"]),
+                 "top-level steps/payload parsing mismatch: " + job)
+        checkout = sections["Checkout"]
+        python = sections["Set up Python"]
+        install = sections["Install pinned annual catalogue runtime"]
+        branch = sections["Require exact merged main manual dispatch"]
+        gate = sections[EXACT_GATE_STEP[job]]
+        _require(
+            "        uses: actions/checkout@v6\n" in checkout
+            and "        uses: actions/setup-python@v6\n" in python
+            and '          python-version: "3.12.14"\n' in python,
+            "historical checkout/setup command changed: " + job,
+        )
+        _require(
+            "        run: python -m pip install -r "
+            "requirements/exp061-discovery-run.txt -e .\n" in install,
+            "historic unguarded install payload changed: " + job,
+        )
+        _require(
+            '          test "$GITHUB_EVENT_NAME" = "workflow_dispatch"' in branch
+            and '          test "$GITHUB_REF" = "refs/heads/main"' in branch,
+            "historic main branch/test guard payload changed: " + job,
+        )
+        _require(
+            "          python scripts/phase8a_annual_pattern_catalogue.py "
+            "require-execution \\\n" in gate
+            and "--annual-segment-label" in gate
+            and "--code-commit" in gate
+            and "$GITHUB_SHA" in gate,
+            "historic in-run execution guard command/arguments changed: " + job,
+        )
+        _require(
+            "permissions:\n  contents: read\n  actions: read\n" in source_text,
+            "historical workflow top-level permissions changed",
+        )
+        names = jobs[job]["steps"]
+        _require(names.index("Checkout") < names.index(
+            "Require exact merged main manual dispatch") < names.index(
+            "Install pinned annual catalogue runtime") < names.index(
+            EXACT_GATE_STEP[job]),
+            "historic pre-gate command ordering changed",
+        )
+        observed = [
+            {"name": "Checkout", "payload": "actions/checkout@v6",
+             "zero_based_step_index": names.index("Checkout")},
+            {"name": "Set up Python",
+             "payload": "actions/setup-python@v6 (Python 3.12.14)",
+             "zero_based_step_index": names.index("Set up Python")},
+            {"name": "Install pinned annual catalogue runtime",
+             "payload": "python -m pip install -r "
+                        "requirements/exp061-discovery-run.txt -e .",
+             "zero_based_step_index": names.index(
+                 "Install pinned annual catalogue runtime")},
+        ]
+        if job == "annual_preflight":
+            fetch = sections["Fetch exact accepted EXP-044 source snapshots"]
+            validation = sections["Validate exact accepted EXP-044 source snapshots"]
+            _require(
+                all(
+                    'gh api "repos/$GITHUB_REPOSITORY/actions/runs/'
+                    + run + '"' in fetch
+                    for run in ("35867307338", "35876715434")
+                )
+                and "GH_TOKEN:" in fetch and "github.token" in fetch
+                and fetch.count("          gh api ") == 4,
+                "historical preflight metadata fetch operation changed",
+            )
+            _require(
+                "          python scripts/phase8a_annual_pattern_catalogue.py "
+                "preflight \\\n" in validation,
+                "historical preflight source validation changed",
+            )
+            _require(
+                names.index("Fetch exact accepted EXP-044 source snapshots")
+                < names.index("Validate exact accepted EXP-044 source snapshots")
+                < names.index(EXACT_GATE_STEP[job]),
+                "source preflight network access unexpectedly reordered",
+            )
+            observed.extend((
+                {"name": "Fetch exact accepted EXP-044 source snapshots",
+                 "payload": "four gh api calls for two historical runs/artifact lists",
+                 "zero_based_step_index": names.index(
+                     "Fetch exact accepted EXP-044 source snapshots")},
+                {"name": "Validate exact accepted EXP-044 source snapshots",
+                 "payload": "phase8a_annual_pattern_catalogue.py preflight",
+                 "zero_based_step_index": names.index(
+                     "Validate exact accepted EXP-044 source snapshots")},
+            ))
+        observations[job] = {
+            "actual_pregate_setup_and_read_payloads": sorted(
+                observed, key=lambda item: item["zero_based_step_index"]),
+            "static_source_only_not_actual_runner_trace": True,
+            "no_early_admission_or_immutable_server_ref_proven": True,
+        }
+    return observations
+
+
 def report_blocked_admission(path=WORKFLOW):
     source = read_offline_source(path)
     actual = hashlib.sha1(
@@ -233,6 +345,7 @@ def report_blocked_admission(path=WORKFLOW):
     decoded = source.decode("utf-8")
     result = classify_reviewed_step_order(decoded)
     matrix = inspect_installed_cell_matrix(decoded)
+    pregate = inspect_pregate_step_payloads(decoded)
     return {
         "schema": "fmp_dec1779_offline_workflow_step_order_v1",
         "disposition": "BLOCKED_NOT_EXECUTABLE_AND_NOT_ADMIN_ATTESTED",
@@ -241,6 +354,7 @@ def report_blocked_admission(path=WORKFLOW):
         "source_sha_and_live_ref_at_dispatch_not_authenticated": True,
         "observed_jobs": result,
         "historical_matrix_inventory": matrix,
+        "historical_pregate_payloads": pregate,
         "job_count": 3,
         "installed_workflow_requires_main": True,
         "precheckout_admission_proven": False,
