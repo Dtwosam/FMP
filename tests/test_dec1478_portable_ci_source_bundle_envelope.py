@@ -12928,3 +12928,87 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_integer_overdigits_clean_control(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+    def _assert_invalid_json_nonfinite_number_refused(self, category, literal):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.assertIn(category, REQUIRED)
+        raw = json.dumps(self.envelope, sort_keys=True,
+                         separators=(",", ":"))
+        needle = json.dumps(category) + ":" + json.dumps(
+            self.envelope[category], sort_keys=True,
+            separators=(",", ":"))
+        self.assertEqual(raw.count(needle), 1)
+        encoded = raw.replace(needle,
+                              json.dumps(category) + ":" + literal, 1)
+        self.assertNotEqual(encoded, raw)
+        direct = self.verdict()
+        parsed = review_bundle_json_text(encoded)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(encoded), out)
+        emitted = json.loads(out.getvalue())
+        self.assertTrue(direct["source_consistency"])
+        self.assertEqual(direct["diagnostics"], ())
+        self.assertEqual(status, 2)
+        self.assertEqual(parsed["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"],
+                         ["BUNDLE_JSON_GRAMMAR_UNREVIEWED"])
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        for result in (parsed, emitted):
+            self.assertFalse(result["source_consistency"])
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_json_nonfinite_pr_nan_refused(self):
+        self._assert_invalid_json_nonfinite_number_refused(
+            "pr", "NaN")
+
+    def test_portable_json_nonfinite_compare_infinity_refused(self):
+        self._assert_invalid_json_nonfinite_number_refused(
+            "compare", "Infinity")
+
+    def test_portable_json_nonfinite_commit_negative_infinity_refused(self):
+        self._assert_invalid_json_nonfinite_number_refused(
+            "commit", "-Infinity")
+
+    def test_portable_json_nonfinite_runs_nan_refused(self):
+        self._assert_invalid_json_nonfinite_number_refused(
+            "runs", "NaN")
+
+    def test_portable_json_nonfinite_tree_positive_exp_overflow_refused(self):
+        self._assert_invalid_json_nonfinite_number_refused(
+            "tree", "1e309")
+
+    def test_portable_json_nonfinite_nodes_negative_exp_overflow_refused(self):
+        self._assert_invalid_json_nonfinite_number_refused(
+            "nodes", "-1e309")
+
+    def test_portable_json_nonfinite_changed_b64_overflow_refused(self):
+        self._assert_invalid_json_nonfinite_number_refused(
+            "changed_bytes_b64", "9.99e999")
+
+    def test_portable_json_nonfinite_workflow_overflow_refused(self):
+        self._assert_invalid_json_nonfinite_number_refused(
+            "ci_workflow_bytes_b64", "-9.99e999")
+
+    def test_portable_json_nonfinite_snapshots_nonfinite_refused(self):
+        self._assert_invalid_json_nonfinite_number_refused(
+            "full_tree_snapshots", "NaN")
+
+    def test_portable_json_nonfinite_raw_logs_nonfinite_refused(self):
+        self._assert_invalid_json_nonfinite_number_refused(
+            "raw_ci_runner_logs", "Infinity")
+
+    def test_portable_json_nonfinite_raw_receipts_nonfinite_refused(self):
+        self._assert_invalid_json_nonfinite_number_refused(
+            "raw_ci_log_receipts", "-Infinity")
+
+    def test_portable_json_nonfinite_phase3_negative_overflow_refused(self):
+        self._assert_invalid_json_nonfinite_number_refused(
+            "phase3_evidence_snapshot", "-1e999")
+
+    def test_portable_json_nonfinite_clean_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
