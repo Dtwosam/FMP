@@ -132,6 +132,60 @@ class Phase7CostStressHistoricalReplayTests(unittest.TestCase):
         self.assertEqual(result["allowed_actions"], [])
 
 
+    def test_frozen_phase7_reader_rejects_symlink_to_valid_document(self):
+        with tempfile.TemporaryDirectory() as folder:
+            alias = Path(folder) / "old-evidence.md"
+            try:
+                alias.symlink_to(ORIGINAL)
+            except (OSError, NotImplementedError):
+                self.skipTest("symlinks unavailable in this environment")
+            with self.assertRaises(OSError):
+                REPLAY(alias)
+
+    def test_phase7_source_reader_rejects_special_fifo_without_hanging(self):
+        import os
+        if not hasattr(os, "mkfifo"):
+            self.skipTest("FIFO unavailable in this environment")
+        with tempfile.TemporaryDirectory() as folder:
+            fifo = Path(folder) / "named-pipe.md"
+            os.mkfifo(fifo)
+            with self.assertRaises(ValueError):
+                REPLAY(fifo)
+
+    def test_phase7_source_reader_rejects_oversized_document(self):
+        with tempfile.TemporaryDirectory() as folder:
+            large = Path(folder) / "large.md"
+            large.write_bytes(b" " * (MODULE["MAX_PHASE7_DOCUMENT_BYTES"] + 1))
+            with self.assertRaises(ValueError):
+                REPLAY(large)
+
+    def test_phase7_source_reader_rejects_empty_document(self):
+        with tempfile.TemporaryDirectory() as folder:
+            empty = Path(folder) / "empty.md"
+            empty.write_bytes(b"")
+            with self.assertRaises(ValueError):
+                REPLAY(empty)
+
+    def test_phase7_replay_does_not_change_frozen_file(self):
+        before = ORIGINAL.read_bytes()
+        result = REPLAY()
+        self.assertEqual(ORIGINAL.read_bytes(), before)
+        self.assertEqual(result["status"], "RETROSPECTIVE_DIAGNOSTIC_NOT_EXECUTION_AUTHORITY")
+
+    def test_phase7_cli_symlink_input_exits_two_without_stdout(self):
+        with tempfile.TemporaryDirectory() as folder:
+            alias = Path(folder) / "old-evidence.md"
+            try:
+                alias.symlink_to(ORIGINAL)
+            except (OSError, NotImplementedError):
+                self.skipTest("symlinks unavailable in this environment")
+            stdout, stderr = io.StringIO(), io.StringIO()
+            with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+                code = MODULE["main"](["--phase7-document", str(alias)])
+            self.assertEqual(code, 2)
+            self.assertEqual(stdout.getvalue(), "")
+            self.assertIn("BLOCKED:", stderr.getvalue())
+
     def test_cli_returns_nonzero_even_with_correct_historical_report(self):
         stdout, stderr = io.StringIO(), io.StringIO()
         with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
