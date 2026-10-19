@@ -13655,3 +13655,126 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_valid_nested_escape_clean_control(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+
+    def _portable_json_subtree_with_escaped_key(self, node, path,
+                                                escape_last):
+        if not path:
+            self.assertIs(type(node), dict)
+            names = sorted(key for key in node
+                           if type(key) is str and key)
+            self.assertTrue(names)
+            chosen = names[0]
+            index = -1 if escape_last else 0
+            quoted = json.dumps(chosen)
+            alias = ('"' + chosen[:index] +
+                     "\\u%04x" % ord(chosen[index]) +
+                     ("" if escape_last else chosen[1:]) + '"')
+            if escape_last:
+                alias = ('"' + chosen[:-1] +
+                         "\\u%04x" % ord(chosen[-1]) + '"')
+            self.assertNotEqual(alias, quoted)
+            return "{" + ",".join(
+                (alias if key == chosen else json.dumps(key)) + ":" +
+                json.dumps(value, sort_keys=True, separators=(",", ":"))
+                for key, value in sorted(node.items())) + "}"
+        head, rest = path[0], path[1:]
+        if type(node) is dict:
+            self.assertIn(head, node)
+            return "{" + ",".join(
+                json.dumps(key) + ":" +
+                (self._portable_json_subtree_with_escaped_key(
+                    value, rest, escape_last) if key == head else
+                 json.dumps(value, sort_keys=True, separators=(",", ":")))
+                for key, value in sorted(node.items())) + "}"
+        self.assertIs(type(node), list)
+        self.assertIs(type(head), int)
+        self.assertGreaterEqual(head, 0)
+        self.assertLess(head, len(node))
+        return "[" + ",".join(
+            (self._portable_json_subtree_with_escaped_key(
+                value, rest, escape_last) if idx == head else
+             json.dumps(value, sort_keys=True, separators=(",", ":")))
+            for idx, value in enumerate(node)) + "]"
+
+    def _assert_valid_escaped_array_object_key(self, category, path,
+                                               escape_last):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        raw = self._portable_top_level_members_json()
+        child = self._portable_json_subtree_with_escaped_key(
+            self.envelope[category], path, escape_last)
+        encoded = self._portable_top_level_members_json({
+            category: json.dumps(category) + ":" + child})
+        self.assertNotEqual(encoded, raw)
+        self.assertEqual(json.loads(encoded), self.envelope)
+        self.assertEqual(self._portable_top_level_members_json(), raw)
+        direct = self.verdict()
+        parsed = review_bundle_json_text(encoded)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(encoded), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(parsed, direct)
+        self.assertTrue(parsed["source_consistency"])
+        self.assertEqual(parsed["diagnostics"], ())
+        self.assertEqual(status, 0)
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertTrue(emitted["source_consistency"])
+        self.assertEqual(emitted["diagnostics"], [])
+        self.assertNotIn("tests/sample.py", out.getvalue())
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        for result in (direct, parsed, emitted):
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_array_escaped_runs_first(self):
+        self._assert_valid_escaped_array_object_key(
+            "runs", (0,), False)
+
+    def test_portable_array_escaped_runs_last(self):
+        self._assert_valid_escaped_array_object_key(
+            "runs", (0,), True)
+
+    def test_portable_array_escaped_comparison_files_first(self):
+        self._assert_valid_escaped_array_object_key(
+            "compare", ("files", 0), False)
+
+    def test_portable_array_escaped_comparison_files_last(self):
+        self._assert_valid_escaped_array_object_key(
+            "compare", ("files", 0), True)
+
+    def test_portable_array_escaped_run_jobs_first(self):
+        self._assert_valid_escaped_array_object_key(
+            "jobs_by_run", (sorted(self.envelope["jobs_by_run"])[0], 0), False)
+
+    def test_portable_array_escaped_run_jobs_last(self):
+        self._assert_valid_escaped_array_object_key(
+            "jobs_by_run", (sorted(self.envelope["jobs_by_run"])[0], 0), True)
+
+    def test_portable_array_escaped_phase3_scenarios_first(self):
+        self._assert_valid_escaped_array_object_key(
+            "phase3_evidence_snapshot", ("index", "scenarios", 0), False)
+
+    def test_portable_array_escaped_phase3_scenarios_last(self):
+        self._assert_valid_escaped_array_object_key(
+            "phase3_evidence_snapshot", ("index", "scenarios", 0), True)
+
+    def test_portable_array_escaped_full_tree_entries_first(self):
+        self._assert_valid_escaped_array_object_key(
+            "full_tree_snapshots", (sorted(self.envelope["full_tree_snapshots"])[0], "tree", 0), False)
+
+    def test_portable_array_escaped_full_tree_entries_last(self):
+        self._assert_valid_escaped_array_object_key(
+            "full_tree_snapshots", (sorted(self.envelope["full_tree_snapshots"])[0], "tree", 0), True)
+
+    def test_portable_array_escaped_merge_parents_first(self):
+        self._assert_valid_escaped_array_object_key(
+            "merge_checkout_snapshot", ("merge_commit", "parents", 0), False)
+
+    def test_portable_array_escaped_merge_parents_last(self):
+        self._assert_valid_escaped_array_object_key(
+            "merge_checkout_snapshot", ("merge_commit", "parents", 0), True)
+
+    def test_portable_array_escaped_clean_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
