@@ -423,6 +423,82 @@ class Phase7CostStressHistoricalReplayTests(unittest.TestCase):
             lineage["stage1_survivor_zip_sha256"],
             "d9950ceb37188761a3460df7b4ab75463cdf1c19ce42634d910d33bae3f8c8bb")
 
+
+    def test_published_2025_2026_schedule_is_consecutive(self):
+        report = REPLAY()
+        audit = report["published_historical_window_schedule"]
+        self.assertEqual(len(audit), 7)
+        self.assertEqual(audit[0]["scored_start_inclusive"], "2025-01-01")
+        self.assertEqual(audit[-1]["scored_end_exclusive"], "2026-08-21")
+        for earlier, later in zip(audit, audit[1:]):
+            self.assertEqual(
+                earlier["scored_end_exclusive"],
+                later["scored_start_inclusive"],
+            )
+
+    def test_warmup_uses_seven_calendar_days_without_scoring_it(self):
+        report = REPLAY()
+        audit = report["published_historical_window_schedule"]
+        self.assertEqual(
+            audit[0]["reported_warmup_start_inclusive"], "2024-12-25")
+        self.assertEqual(
+            audit[-1]["reported_warmup_start_inclusive"], "2026-06-24")
+        self.assertTrue(all(
+            row["warmup_calendar_days"] == 7
+            and row["reported_warmup_end_exclusive"]
+                == row["scored_start_inclusive"]
+            and row["reported_warmup_is_not_a_scored_period"] is True
+            for row in audit
+        ))
+
+    def test_window_schedule_rejects_gapped_second_quarter(self):
+        import copy
+        sample = copy.deepcopy(REPLAY()["historical_0_2_pip_windows"])
+        sample[1]["scored_range"] = (
+            "2025-04-02 to 2025-07-01 exclusive")
+        with self.assertRaisesRegex(ValueError, "period cutoffs"):
+            MODULE["audit_published_window_schedule"](sample)
+
+    def test_window_schedule_rejects_overlapping_quarter(self):
+        import copy
+        sample = copy.deepcopy(REPLAY()["historical_0_2_pip_windows"])
+        sample[1]["scored_range"] = (
+            "2025-03-31 to 2025-07-01 exclusive")
+        with self.assertRaisesRegex(ValueError, "period cutoffs"):
+            MODULE["audit_published_window_schedule"](sample)
+
+    def test_window_schedule_rejects_late_partial_2026_cutoff(self):
+        import copy
+        sample = copy.deepcopy(REPLAY()["historical_0_2_pip_windows"])
+        sample[-1]["scored_range"] = (
+            "2026-07-01 to 2026-08-22 exclusive")
+        with self.assertRaisesRegex(ValueError, "period cutoffs"):
+            MODULE["audit_published_window_schedule"](sample)
+
+    def test_window_schedule_rejects_reordered_or_removed_windows(self):
+        import copy
+        rows = copy.deepcopy(REPLAY()["historical_0_2_pip_windows"])
+        swapped = rows[:]
+        swapped[2], swapped[3] = swapped[3], swapped[2]
+        with self.assertRaisesRegex(ValueError, "identity/order"):
+            MODULE["audit_published_window_schedule"](swapped)
+        with self.assertRaisesRegex(ValueError, "exactly seven"):
+            MODULE["audit_published_window_schedule"](rows[:-1])
+
+    def test_window_schedule_is_not_a_bar_by_bar_no_leakage_witness(self):
+        report = REPLAY()
+        self.assertIs(
+            report["historic_schedule_is_documentary_not_data_leakage_witness"],
+            True,
+        )
+        self.assertTrue(all(
+            item["actual_bars_and_no_leakage_not_reauthenticated"] is True
+            for item in report["published_historical_window_schedule"]
+        ))
+        self.assertIs(report["phase8a_strategy_v1_edge_proven"], False)
+        self.assertIs(report["broker_order_authorized"], False)
+        self.assertEqual(report["allowed_actions"], [])
+
     def test_cli_returns_nonzero_even_with_correct_historical_report(self):
         stdout, stderr = io.StringIO(), io.StringIO()
         with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):

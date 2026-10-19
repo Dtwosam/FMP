@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 from decimal import Decimal, ROUND_HALF_UP
+from datetime import date, timedelta
 import hashlib
 from itertools import combinations
 import json
@@ -105,6 +106,73 @@ def _read_frozen_phase7_regular_file(path):
     finally:
         for directory_fd in reversed(dirs):
             os.close(directory_fd)
+
+
+
+# The exact period boundaries are documentary observations, not queries for
+# market bars; validation cannot show that a historical runner observed them.
+EXPECTED_SCORED_PERIODS = (
+    ("2025-Q1", "2025-01-01", "2025-04-01"),
+    ("2025-Q2", "2025-04-01", "2025-07-01"),
+    ("2025-Q3", "2025-07-01", "2025-10-01"),
+    ("2025-Q4", "2025-10-01", "2026-01-01"),
+    ("2026-Q1", "2026-01-01", "2026-04-01"),
+    ("2026-Q2", "2026-04-01", "2026-07-01"),
+    ("2026-partial-Q3", "2026-07-01", "2026-08-21"),
+)
+
+
+def audit_published_window_schedule(windows):
+    """Verify documentary period partitions and derive seven-day warm-ups.
+
+    This does not inspect actual training data, labels, scored predictions or
+    bar timestamps; it must not be called evidence of leak-free execution.
+    """
+    _require(
+        type(windows) is list and len(windows) == len(EXPECTED_SCORED_PERIODS),
+        "expected exactly seven published consecutive Phase7 periods",
+    )
+    audit = []
+    previous_end = None
+    for row, expected in zip(windows, EXPECTED_SCORED_PERIODS):
+        _require(
+            type(row) is dict and type(row.get("window")) is str
+            and type(row.get("scored_range")) is str
+            and row["window"] == expected[0],
+            "published Phase7 window identity/order changed",
+        )
+        start = date.fromisoformat(expected[1])
+        end = date.fromisoformat(expected[2])
+        expected_range = f"{expected[1]} to {expected[2]} exclusive"
+        _require(
+            row["scored_range"] == expected_range
+            and start < end
+            and (previous_end is None or start == previous_end),
+            "scored period cutoffs are missing, changed, overlapping or gapped",
+        )
+        warmup_start = start - timedelta(days=7)
+        warmup_end = start
+        _require(
+            warmup_start < warmup_end and warmup_end <= start,
+            "published warm-up must end before scored context begins",
+        )
+        audit.append({
+            "window": row["window"],
+            "scored_start_inclusive": start.isoformat(),
+            "scored_end_exclusive": end.isoformat(),
+            "reported_warmup_start_inclusive": warmup_start.isoformat(),
+            "reported_warmup_end_exclusive": warmup_end.isoformat(),
+            "warmup_calendar_days": 7,
+            "reported_warmup_is_not_a_scored_period": True,
+            "actual_bars_and_no_leakage_not_reauthenticated": True,
+        })
+        previous_end = end
+    _require(
+        audit[0]["scored_start_inclusive"] == "2025-01-01"
+        and audit[-1]["scored_end_exclusive"] == "2026-08-21",
+        "exact historical Stage2 coverage changed",
+    )
+    return audit
 
 
 def replay_phase7_cost_evidence(doc_path: Path = PHASE7_DOC) -> dict[str, object]:
@@ -295,6 +363,7 @@ def replay_phase7_cost_evidence(doc_path: Path = PHASE7_DOC) -> dict[str, object
             "historic_profit_factor": str(factor),
             "historic_max_drawdown_pct": str(drawdown),
         })
+    historical_schedule = audit_published_window_schedule(windows)
     _require(sum(w["trades"] for w in windows) == 199,
              "historical windows must reconcile to all 199 trades")
     ret_total = sum(
@@ -436,6 +505,8 @@ def replay_phase7_cost_evidence(doc_path: Path = PHASE7_DOC) -> dict[str, object
         "historical_1_0_pip_return_and_profit_factor_below_zero_or_one": True,
         "no_unreported_slippage_or_per_window_costs_inferred": True,
         "historical_0_2_pip_windows": windows,
+        "published_historical_window_schedule": historical_schedule,
+        "historic_schedule_is_documentary_not_data_leakage_witness": True,
         "historical_negative_windows": [w["window"] for w in negatives],
         "historical_positive_window_count": len(positives),
         "historical_window_trade_count": sum(w["trades"] for w in windows),
