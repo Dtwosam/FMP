@@ -13090,3 +13090,109 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_float_length_clean_control(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+    def _assert_duplicate_top_category_null_last_refused(self, category):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.assertIn(category, REQUIRED)
+        raw = json.dumps(self.envelope, sort_keys=True,
+                         separators=(",", ":"))
+        original = json.dumps(category)
+        self.assertEqual(raw.count(original + ":"), 1)
+        escaped = ('"' + "\\u%04x" % ord(category[0]) +
+                   category[1:] + '"')
+        self.assertNotEqual(escaped, original)
+        # The untrusted alias comes AFTER the real category. Last-key-wins
+        # decoding would poison the category with null; it must instead
+        # reject the duplicate at JSON grammar ingress.
+        value_prefix = original + ":"
+        marker = value_prefix + json.dumps(
+            self.envelope[category], sort_keys=True,
+            separators=(",", ":"))
+        self.assertEqual(raw.count(marker), 1)
+        encoded = raw.replace(marker, marker + "," + escaped + ":null", 1)
+        self.assertIsNone(json.loads(encoded)[category])
+        self.assertTrue(self.verdict()["source_consistency"])
+        parsed = review_bundle_json_text(encoded)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(encoded), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(status, 2)
+        self.assertEqual(parsed["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"],
+                         ["BUNDLE_JSON_GRAMMAR_UNREVIEWED"])
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        for result in (parsed, emitted):
+            self.assertFalse(result["source_consistency"])
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_null_last_duplicate_schema_refused(self):
+        self._assert_duplicate_top_category_null_last_refused(
+            "schema")
+
+    def test_portable_null_last_duplicate_pr_refused(self):
+        self._assert_duplicate_top_category_null_last_refused(
+            "pr")
+
+    def test_portable_null_last_duplicate_runs_refused(self):
+        self._assert_duplicate_top_category_null_last_refused(
+            "runs")
+
+    def test_portable_null_last_duplicate_jobs_by_run_refused(self):
+        self._assert_duplicate_top_category_null_last_refused(
+            "jobs_by_run")
+
+    def test_portable_null_last_duplicate_compare_refused(self):
+        self._assert_duplicate_top_category_null_last_refused(
+            "compare")
+
+    def test_portable_null_last_duplicate_commit_refused(self):
+        self._assert_duplicate_top_category_null_last_refused(
+            "commit")
+
+    def test_portable_null_last_duplicate_tree_refused(self):
+        self._assert_duplicate_top_category_null_last_refused(
+            "tree")
+
+    def test_portable_null_last_duplicate_nodes_refused(self):
+        self._assert_duplicate_top_category_null_last_refused(
+            "nodes")
+
+    def test_portable_null_last_duplicate_changed_bytes_b64_refused(self):
+        self._assert_duplicate_top_category_null_last_refused(
+            "changed_bytes_b64")
+
+    def test_portable_null_last_duplicate_ci_workflow_bytes_b64_refused(self):
+        self._assert_duplicate_top_category_null_last_refused(
+            "ci_workflow_bytes_b64")
+
+    def test_portable_null_last_duplicate_full_tree_snapshots_refused(self):
+        self._assert_duplicate_top_category_null_last_refused(
+            "full_tree_snapshots")
+
+    def test_portable_null_last_duplicate_merge_checkout_snapshot_refused(self):
+        self._assert_duplicate_top_category_null_last_refused(
+            "merge_checkout_snapshot")
+
+    def test_portable_null_last_duplicate_checkout_by_run_refused(self):
+        self._assert_duplicate_top_category_null_last_refused(
+            "checkout_by_run")
+
+    def test_portable_null_last_duplicate_phase3_evidence_snapshot_refused(self):
+        self._assert_duplicate_top_category_null_last_refused(
+            "phase3_evidence_snapshot")
+
+    def test_portable_null_last_duplicate_raw_ci_runner_logs_refused(self):
+        self._assert_duplicate_top_category_null_last_refused(
+            "raw_ci_runner_logs")
+
+    def test_portable_null_last_duplicate_raw_ci_log_receipts_refused(self):
+        self._assert_duplicate_top_category_null_last_refused(
+            "raw_ci_log_receipts")
+
+    def test_portable_null_last_duplicate_clean_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
