@@ -268,6 +268,48 @@ class Phase7CostStressHistoricalReplayTests(unittest.TestCase):
                              "RETROSPECTIVE_DIAGNOSTIC_NOT_EXECUTION_AUTHORITY")
 
 
+    def test_leave_one_out_excludes_each_published_period_once(self):
+        report = REPLAY()
+        rows = report["historical_0_2_pip_leave_one_out"]
+        self.assertEqual(len(rows), 7)
+        self.assertEqual(
+            [r["excluded_historical_window"] for r in rows],
+            [w["window"] for w in report["historical_0_2_pip_windows"]])
+
+    def test_removing_strongest_window_leaves_only_small_positive_pnl(self):
+        row = REPLAY()["historical_0_2_pip_leave_one_out_min"]
+        self.assertEqual(row["excluded_historical_window"], "2025-Q4")
+        self.assertEqual(row["remaining_rounded_window_pnl_usd"], "82.88")
+
+    def test_removing_two_strongest_windows_turns_retro_result_negative(self):
+        row = REPLAY()["historical_0_2_pip_leave_two_out_min"]
+        self.assertEqual(
+            row["excluded_historical_windows"], ["2025-Q2", "2025-Q4"])
+        self.assertEqual(row["remaining_rounded_window_pnl_usd"], "-591.29")
+
+    def test_all_twenty_one_historical_two_window_exclusions_are_exhaustive(self):
+        report = REPLAY()
+        combos = report["historical_0_2_pip_leave_two_out"]
+        self.assertEqual(len(combos), 21)
+        self.assertEqual(
+            len({tuple(row["excluded_historical_windows"]) for row in combos}),
+            21)
+        self.assertEqual(
+            sum(Decimal(row["remaining_rounded_window_pnl_usd"]) < 0
+                for row in combos), 5)
+        self.assertEqual(
+            report["historical_0_2_pip_negative_after_two_exclusions_count"],
+            5)
+
+    def test_exclusion_arithmetic_is_not_a_confidence_interval_or_strategy(self):
+        report = REPLAY()
+        self.assertIs(
+            report["historical_window_exclusion_is_not_statistical_validation"],
+            True)
+        self.assertIs(report["phase8a_strategy_v1_edge_proven"], False)
+        self.assertIsNone(report["forward_profit_claim"])
+        self.assertEqual(report["allowed_actions"], [])
+
     def test_cli_returns_nonzero_even_with_correct_historical_report(self):
         stdout, stderr = io.StringIO(), io.StringIO()
         with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
