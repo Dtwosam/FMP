@@ -682,12 +682,136 @@ def render_readiness(docs_root: Path) -> dict[str, object]:
     }
 
 
+
+def render_human_review_markdown(report: dict[str, object]) -> str:
+    """Format the BLOCKED documentary report for offline independent review.
+
+    This is a read-only rendering of an already validated offline report, not
+    a collected signoff, readiness score, permission or dispatch instruction.
+    """
+    _require(
+        type(report) is dict
+        and report.get("mode") == "OFFLINE_SOURCE_ONLY_NOT_A_GATE_OR_ATTESTATION"
+        and report.get("documentary_status") == "BLOCKED"
+        and report.get("allows_protected_run") is False
+        and report.get("allows_broker_actions") is False
+        and report.get("allows_shadow") is False
+        and report.get("allows_demo") is False
+        and report.get("allows_live_trading") is False
+        and report.get("current_main_verified") is False
+        and report.get("current_rulesets_and_os_verified") is False
+        and report.get("fresh_run_inventory_verified") is False
+        and report.get("no_actions_were_performed") is True,
+        "a human-readable review must never display READY or execution authority",
+    )
+    expected_identity = {
+        "segment": "2023", "run_number": 385,
+        "attempt_number": 1, "authorization": "BLOCKED",
+    }
+    _require(report.get("one_shot_run_identity") == expected_identity,
+             "review must preserve exact blocked one-shot identity")
+    proofs = report.get("missing_external_proofs")
+    _require(
+        type(proofs) is list
+        and proofs == [
+            {"id": proof, "review_role": role, "status": "MISSING"}
+            for proof, role in zip(PROOFS, OWNERS)
+        ],
+        "only the eight actually missing, independently reviewed proofs may appear",
+    )
+    stages = report.get("blocked_downstream_stages")
+    _require(stages == list(STAGES), "all downstream stages must remain blocked")
+    _require(report.get("strategy_v1_profit") is None,
+             "unproven profit cannot be displayed as a live result")
+    hashes = report.get("source_sha256")
+    _require(
+        isinstance(hashes, dict)
+        and tuple(hashes) == tuple(FILES)
+        and all(
+            isinstance(value, str)
+            and len(value) == 64
+            and all(ch in "0123456789abcdef" for ch in value)
+            for value in hashes.values()
+        ),
+        "invalid source identities cannot appear on the review sheet",
+    )
+    observed = report.get("source_observation_date_utc")
+    main_sha = report.get("source_main_sha")
+    _require(
+        observed == "2026-10-19"
+        and isinstance(main_sha, str)
+        and len(main_sha) == 40
+        and all(c in "0123456789abcdef" for c in main_sha),
+        "stale source identity must remain explicit and syntactically valid",
+    )
+    out = [
+        "# Phase 8A — independent human review handoff",
+        "",
+        "**Documentary status: BLOCKED — NOT AUTHORIZED.**",
+        "",
+        "This report was generated from five source-only documents with no "
+        "network, broker, GitHub mutation or protected annual data access. "
+        "It is **not** current repository protection, privileged runner, "
+        "reviewer-signoff or fresh one-shot run-inventory evidence.",
+        "",
+        f"**Public source observation (stale):** {observed}, "
+        f"\`main\` at \`{main_sha}\`. "
+        "This is not proof of the SHA at any future dispatch.",
+        "**Next protected year:** 2023 / annual run 385 / attempt 1; "
+        "**execution and retry: BLOCKED**.",
+        "",
+        "## Required independent evidence — all missing",
+        "",
+        "| Required proof | Independent review role | Current state |",
+        "| --- | --- | --- |",
+    ]
+    for proof in proofs:
+        out.append(f"| \`{proof['id']}\` | "
+                   f"{proof['review_role']} | **MISSING** |")
+    out.extend([
+        "",
+        "## Downstream work also blocked",
+        "",
+    ])
+    for stage in stages:
+        out.append(f"- \`{stage}\` — BLOCKED")
+    out.extend([
+        "",
+        "## Original source fingerprints",
+        "",
+        "SHA-256 values identify the *source documents*, "
+        "not the independently authenticated live security controls.",
+        "",
+    ])
+    for key in FILES:
+        out.append(f"- \`{FILES[key]}\`: \`sha256:{hashes[key]}\`")
+    out.extend([
+        "",
+        "## Human-only next decision",
+        "",
+        "Independent administrators/security reviewers must first establish "
+        "a continuous no-bypass main lock, or independently approve and test "
+        "a distinct immutable-ref amendment; then verify installed three-job "
+        "and privileged OS isolation, the fresh unique annual-run inventory, "
+        "and finally record a separate one-shot run385/attempt1 decision.",
+        "",
+        "**No action is authorized by this handoff.** "
+        "No annual dispatch or retry, cross-year strategy synthesis, "
+        "shadow, demo, live orders or real-money activity.",
+        "",
+    ])
+    return "\n".join(out)
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(
         description="Offline UNAUTHORIZED Phase8A blocker report; no dispatch")
     parser.add_argument(
         "--docs-root", type=Path,
         default=Path(__file__).resolve().parents[1] / "docs")
+    parser.add_argument(
+        "--format", choices=("json", "markdown"), default="json",
+        help="Output read-only BLOCKED review report in JSON or Markdown")
     args = parser.parse_args(argv)
     try:
         result = render_readiness(args.docs_root)
@@ -695,7 +819,10 @@ def main(argv=None):
         print("BLOCKED: source evidence cannot be trusted: " + str(exc),
               file=sys.stderr)
         return 2
-    print(json.dumps(result, indent=2, sort_keys=True, ensure_ascii=False))
+    if args.format == "markdown":
+        print(render_human_review_markdown(result), end="")
+    else:
+        print(json.dumps(result, indent=2, sort_keys=True, ensure_ascii=False))
     return 0  # Reporting succeeded; NOT an action authorization.
 
 

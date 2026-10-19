@@ -287,6 +287,99 @@ class OfflineBlockerDiagnosticTests(unittest.TestCase):
             "remediation_routes"][0].__setitem__(
                 "required_claim", "branch protection is enabled"))
 
+
+    def test_markdown_review_is_stable_and_permanently_blocked(self):
+        result = RENDER(self.docs)
+        format_review = MOD["render_human_review_markdown"]
+        md = format_review(result)
+        self.assertEqual(md, format_review(RENDER(self.docs)))
+        self.assertIn("**Documentary status: BLOCKED — NOT AUTHORIZED.**", md)
+        self.assertIn("annual run 385 / attempt 1", md)
+        self.assertIn("**No action is authorized by this handoff.**", md)
+        self.assertEqual(md.count("| **MISSING** |"), 8)
+        self.assertNotIn("gh workflow run ", md)
+
+    def test_markdown_lists_each_distinct_required_proof(self):
+        rendered = MOD["render_human_review_markdown"](RENDER(self.docs))
+        for proof in MOD["PROOFS"]:
+            with self.subTest(proof=proof):
+                self.assertEqual(rendered.count("\`" + proof + "\`"), 1)
+
+    def test_markdown_carries_all_five_source_fingerprints(self):
+        report = RENDER(self.docs)
+        rendered = MOD["render_human_review_markdown"](report)
+        for name in FILES:
+            with self.subTest(name=name):
+                self.assertIn("sha256:" + report["source_sha256"][name], rendered)
+
+    def test_markdown_reports_eight_downstream_blocks(self):
+        rendered = MOD["render_human_review_markdown"](RENDER(self.docs))
+        for stage in MOD["STAGES"]:
+            with self.subTest(stage=stage):
+                self.assertIn("\`" + stage + "\` — BLOCKED", rendered)
+
+    def test_markdown_rejects_any_forged_unblocked_or_live_claim(self):
+        base = RENDER(self.docs)
+        fmt = MOD["render_human_review_markdown"]
+        for field, value in (
+            ("documentary_status", "READY"),
+            ("allows_protected_run", True),
+            ("allows_live_trading", 0),
+            ("current_main_verified", True),
+            ("fresh_run_inventory_verified", True),
+            ("strategy_v1_profit", 100.0),
+        ):
+            with self.subTest(field=field):
+                modified = copy.deepcopy(base)
+                modified[field] = value
+                with self.assertRaises(FAILURE):
+                    fmt(modified)
+
+    def test_markdown_rejects_missing_human_proof_rows(self):
+        result = RENDER(self.docs)
+        result["missing_external_proofs"].pop()
+        with self.assertRaises(FAILURE):
+            MOD["render_human_review_markdown"](result)
+
+    def test_markdown_rejects_a_fabricated_human_signoff(self):
+        result = RENDER(self.docs)
+        result["missing_external_proofs"][0]["status"] = "PASS"
+        with self.assertRaises(FAILURE):
+            MOD["render_human_review_markdown"](result)
+
+    def test_markdown_rejects_omitted_downstream_gate(self):
+        result = RENDER(self.docs)
+        result["blocked_downstream_stages"].pop()
+        with self.assertRaises(FAILURE):
+            MOD["render_human_review_markdown"](result)
+
+    def test_markdown_fails_closed_on_untrusted_source_hash(self):
+        result = RENDER(self.docs)
+        result["source_sha256"]["annual"] = "0" * 63 + "G"
+        with self.assertRaises(FAILURE):
+            MOD["render_human_review_markdown"](result)
+
+    def test_markdown_cli_stdout_is_a_read_only_non_permission_handoff(self):
+        import contextlib
+        import io
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            status = MOD["main"]([
+                "--docs-root", str(self.docs), "--format", "markdown"])
+        self.assertEqual(status, 0)
+        self.assertIn("NOT AUTHORIZED", output.getvalue())
+        self.assertNotIn('"documentary_status":', output.getvalue())
+
+    def test_json_cli_default_preserves_deterministic_machine_consumption(self):
+        import contextlib
+        import io
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            status = MOD["main"](["--docs-root", str(self.docs)])
+        self.assertEqual(status, 0)
+        self.assertEqual(json.loads(output.getvalue()), RENDER(self.docs))
+
+
     def test_module_entrypoint_has_no_import_time_side_effects(self):
         self.assertIn("render_readiness", MOD)
         self.assertIn("main", MOD)
