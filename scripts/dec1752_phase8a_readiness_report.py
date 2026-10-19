@@ -526,6 +526,123 @@ def render_readiness(docs_root: Path) -> dict[str, object]:
         "every source must deny executable actions",
     )
 
+
+    # The summary is not trustworthy if a later annual year has silently
+    # been marked frozen while only the 2023 identity remains blocked.
+    expected_years = [
+        *[(str(year), "HISTORICALLY_FROZEN") for year in range(2015, 2023)],
+        ("2023", "BLOCKED_UNVERIFIED_CURRENT_RUN_INVENTORY"),
+        ("2024", "BLOCKED_NO_AUTHORIZED_PRIOR_2023_FREEZE"),
+        ("2025", "BLOCKED_NO_AUTHORIZED_PRIOR_2024_FREEZE"),
+        ("2026_YTD_TO_2026_08_20",
+         "BLOCKED_NO_AUTHORIZED_PRIOR_2025_FREEZE"),
+    ]
+    catalogue = annual["yearly_catalogue_status"]
+    _require(len(catalogue) == len(expected_years),
+             "annual inventory must include exactly 2015–2025 and partial 2026")
+    for number, (item, expected) in enumerate(zip(catalogue, expected_years)):
+        expected_fields = {"segment", "research_evidence", "promotion_eligible"}
+        if number == 8:
+            expected_fields.update(("expected_run_number", "expected_attempt"))
+        _require(
+            isinstance(item, dict)
+            and set(item) == expected_fields
+            and item["segment"] == expected[0]
+            and item["research_evidence"] == expected[1]
+            and item["promotion_eligible"] is False,
+            "annual year identity, freeze claim, or promotion eligibility changed",
+        )
+    _require(
+        annual["next_protected_segment"] == "2023"
+        and annual["previous_annual_freeze"]["run_id"] == 37663157285
+        and annual["previous_annual_freeze"]["source_provenance"]
+            == "HISTORICALLY_ACCEPTED_NOT_REAUTHENTICATED_FOR_DISPATCH"
+        and annual["economic_evidence"] == "PHASE7_HISTORICAL_BENCHMARK_ONLY"
+        and all(annual[k] is False for k in (
+            "phase8a_strategy_v1_frozen",
+            "phase8a_economic_edge_proven",
+            "fresh_prospective_shadow_accepted",
+            "demo_trading_approved",
+            "live_trading_approved",
+        )),
+        "historical annual predecessor must not imply an economic or trading gate",
+    )
+    _require(
+        annual["required_external_gates"] == [
+            "independent_admin_no_bypass_lock_continuity",
+            "independent_reviewed_ref_sha_workflow_runtime_identity",
+            "installed_precheckout_preinstall_preaccess_three_job_gates",
+            "actual_privileged_runner_os_isolation_and_publisher_witness",
+            "fresh_authoritative_annual_run_inventory",
+            "separate_human_one_shot_2023_run385_attempt1_decision",
+        ],
+        "the six prerequisite classes for run385 cannot be removed",
+    )
+    _require(
+        econ["research_method"] == "ANNUAL_DISCOVERY_FIRST_DEC268_DEC469"
+        and econ["phase"] == "PHASE8A_BLOCKED_AT_2023_RUN385"
+        and econ["annual_series"]["full_year_series_frozen"] is False
+        and econ["human_approved_action"] is None,
+        "economic method, annual completion or human action cannot be forged",
+    )
+    _require(
+        review["type"] == "RESEARCH_REVIEW_TEMPLATE_NONAUTHORIZING"
+        and review["predefined_thresholds_documented"] is False
+        and review["current_disposition"] == "MORE_INDEPENDENT_EVIDENCE_REQUIRED"
+        and review["possible_dispositions"] == [
+            "REJECT", "MORE_INDEPENDENT_EVIDENCE_REQUIRED",
+            "RESEARCHER_REVIEW_AFTER_ANNUAL_FREEZE",
+        ],
+        "the unevaluated Strategy V1 template is not a retrospective PASS",
+    )
+    known = review["known_historical_context"]
+    _require(
+        set(known) == {
+            "source", "not_phase8a_strategy_v1_results",
+            "reported_phase7_net_return_pct_by_slippage_pips",
+            "live_return_forecast",
+        }
+        and known["source"] == "docs/phase7-walk-forward-evidence.md"
+        and known["not_phase8a_strategy_v1_results"] is True
+        and known["live_return_forecast"] is None
+        and known["reported_phase7_net_return_pct_by_slippage_pips"] == {
+            "0.2": "0.757266", "0.5": "0.262176",
+            "1.0": "-0.562118",
+        },
+        "Phase7 cost benchmark cannot be relabelled as StrategyV1 economics",
+    )
+    public = snap["public_observation"]
+    _require(
+        public["main_ref"] == "refs/heads/main"
+        and type(public["repo_rulesets_count"]) is int
+        and public["repo_rulesets_count"] == 0
+        and public["main_branch_protected"] is annual[
+            "main_branch_last_public_observation"]["protected"]
+        and annual["main_branch_last_public_observation"][
+            "proves_exclusive_no_bypass_lock"] is False,
+        "a public protection snapshot does not prove a continuous exclusive lock",
+    )
+    expected_claims = (
+        ("ADMIN_EXCLUSIVE_CONTINUOUS_MAIN_LOCK",
+         ("complete server-side dispatch", "bypass actors",
+          "deletion/recreation")),
+        ("SEPARATELY_APPROVED_IMMUTABLE_REF_CODE_AMENDMENT",
+         ("source-of-truth amendment",
+          "fully retested installed workflow/runtime")),
+    )
+    _require(
+        len(snap["remediation_routes"]) == len(expected_claims)
+        and all(
+            route["id"] == expected_id
+            and isinstance(route["required_claim"], str)
+            and all(fragment in route["required_claim"]
+                    for fragment in required)
+            for route, (expected_id, required)
+            in zip(snap["remediation_routes"], expected_claims)
+        ),
+        "do not weaken continuous-lock or separately amended immutable-ref path",
+    )
+
     return {
         "schema": "fmp_dec1752_offline_blocker_diagnostic_v1",
         "decision": "DEC-1752",

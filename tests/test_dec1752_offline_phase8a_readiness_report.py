@@ -194,6 +194,99 @@ class OfflineBlockerDiagnosticTests(unittest.TestCase):
         self._tamper("preregistration", lambda d: d["gates"][0].__setitem__(
             "signed_off", True))
 
+
+    def test_2024_frozen_without_2023_dispatched_is_rejected(self):
+        self._tamper("annual", lambda d: d["yearly_catalogue_status"][9].__setitem__(
+            "research_evidence", "HISTORICALLY_FROZEN"))
+
+    def test_2025_promotion_eligibility_cannot_flip(self):
+        self._tamper("annual", lambda d: d["yearly_catalogue_status"][10].__setitem__(
+            "promotion_eligible", True))
+
+    def test_2026_partial_segment_cannot_disappear(self):
+        self._tamper("annual", lambda d: d["yearly_catalogue_status"].pop())
+
+    def test_duplicate_reordered_historical_segment_is_detected(self):
+        self._tamper("annual", lambda d: d["yearly_catalogue_status"][1].__setitem__(
+            "segment", "2015"))
+
+    def test_historical_frozen_segment_must_not_become_promotable(self):
+        self._tamper("annual", lambda d: d["yearly_catalogue_status"][0].__setitem__(
+            "promotion_eligible", True))
+
+    def test_forged_2022_predecessor_run_id_rejected(self):
+        self._tamper("annual", lambda d: d["previous_annual_freeze"].__setitem__(
+            "run_id", 37663157286))
+
+    def test_claims_2022_predecessor_reauthenticated_rejected(self):
+        self._tamper("annual", lambda d: d["previous_annual_freeze"].__setitem__(
+            "source_provenance", "FRESHLY_AUTHENTICATED_FOR_DISPATCH"))
+
+    def test_2023_external_admin_prerequisite_cannot_disappear(self):
+        self._tamper("annual", lambda d: d["required_external_gates"].pop(0))
+
+    def test_2023_separate_action_prerequisite_cannot_disappear(self):
+        self._tamper("annual", lambda d: d["required_external_gates"].pop())
+
+    def test_strategy_v1_claim_while_annual_blocked_rejected(self):
+        self._tamper("annual", lambda d: d.__setitem__(
+            "phase8a_strategy_v1_frozen", True))
+
+    def test_economic_no_longer_annual_first_rejected(self):
+        self._tamper("economics", lambda d: d.__setitem__(
+            "research_method", "STRATEGY_FIRST"))
+
+    def test_economic_full_annual_series_forge_rejected(self):
+        self._tamper("economics", lambda d: d["annual_series"].__setitem__(
+            "full_year_series_frozen", True))
+
+    def test_forged_human_approved_economic_action_rejected(self):
+        self._tamper("economics", lambda d: d.__setitem__(
+            "human_approved_action", "approved"))
+
+    def test_preregistration_claims_threshold_pass_rejected(self):
+        self._tamper("preregistration", lambda d: d.__setitem__(
+            "current_disposition", "RESEARCHER_REVIEW_AFTER_ANNUAL_FREEZE"))
+
+    def test_preregistration_negative_disposition_must_remain(self):
+        self._tamper("preregistration", lambda d: d["possible_dispositions"].remove(
+            "REJECT"))
+
+    def test_phase7_cost_sensitive_negative_return_not_laundered(self):
+        self._tamper("preregistration", lambda d: d[
+            "known_historical_context"]["reported_phase7_net_return_pct_by_slippage_pips"].__setitem__(
+                "1.0", "0.562118"))
+
+    def test_phase7_is_not_phase8a_strategy_v1_oos_rejected(self):
+        self._tamper("preregistration", lambda d: d[
+            "known_historical_context"].__setitem__(
+                "not_phase8a_strategy_v1_results", False))
+
+    def test_forecast_not_substituted_for_unproven_profit(self):
+        self._tamper("preregistration", lambda d: d[
+            "known_historical_context"].__setitem__(
+                "live_return_forecast", "10 percent"))
+
+    def test_stale_main_protected_flag_cannot_be_forged_in_annual(self):
+        self._tamper("annual", lambda d: d[
+            "main_branch_last_public_observation"].__setitem__(
+                "protected", True))
+
+    def test_zero_repo_rulesets_is_not_a_boolean_flag(self):
+        self._tamper("admin_snapshot", lambda d: d[
+            "public_observation"].__setitem__(
+                "repo_rulesets_count", False))
+
+    def test_immutable_remediation_route_retains_separate_amendment(self):
+        self._tamper("admin_snapshot", lambda d: d[
+            "remediation_routes"][1].__setitem__(
+                "required_claim", "all clear"))
+
+    def test_continuous_main_lock_route_mentions_bypass_paths(self):
+        self._tamper("admin_snapshot", lambda d: d[
+            "remediation_routes"][0].__setitem__(
+                "required_claim", "branch protection is enabled"))
+
     def test_module_entrypoint_has_no_import_time_side_effects(self):
         self.assertIn("render_readiness", MOD)
         self.assertIn("main", MOD)
