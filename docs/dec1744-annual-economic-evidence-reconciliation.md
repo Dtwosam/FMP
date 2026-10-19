@@ -1,0 +1,9 @@
+# DEC-1744 — Three-source annual/Strategy V1 evidence boundary reconciliation
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** One-commit exact-parent tests/docs-only child of #1990 at `cce2a69f549e3b1f5cd5ee301f82483af0fea870`.
+
+Adds **14 source-defined methods** (**6,137 proposed**) reconciling three standalone, **nonauthorizing** documents already created under DEC-1726 (annual research ledger), DEC-1739 (economic evidence before prospective shadow) and DEC-1742 (blocked 14-stage approval dependency graph). Strict JSON object decoding rejects hidden duplicate member names. The checks preserve consistent 2022 run384 historical predecessor; still-blocked 2023/run385/attempt1 identity with exact integer types; 2024–2026 unapproved research; missing fresh admin/runner and run-inventory proofs; all source-only authority flags false; all six Phase 8A Strategy V1 economics fields `null`, not fabricated profit or zero; explicit cross-year research before Strategy V1, order-impossible prospective shadow before demo, distinct Phase10 and Phase11 approval; and empty action lists across all three documents.
+
+The check blocks **documentary contradiction**, not real or prospective trading. A PASS is not independent GitHub effective administration/no-bypass evidence, privileged runner isolation, the actual unconsumed one-shot run state, historical/forward strategy economics, broker execution safety or permission to trade.
+
+Source-only tests/docs; no runtime/parser/workflow/security changes, protected originals/archives/artifacts, annual dispatch/retry, GitHub ref/tag/ruleset mutation, Strategy V1 promotion, demo/live orders or trading. Own exact-head Phase3/full historical-general CI and independent qualified review required. Issue #779 and DEC-650/#820 and DEC-651/#821 remain **BLOCKED**.
