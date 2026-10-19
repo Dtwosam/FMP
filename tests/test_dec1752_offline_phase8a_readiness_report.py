@@ -467,6 +467,55 @@ class OfflineBlockerDiagnosticTests(unittest.TestCase):
         self.assertIn("**Documentary status: BLOCKED", md)
 
 
+
+    def test_economic_review_rejects_missing_slippage_sensitivity(self):
+        self._tamper("economics", lambda d: d['required_evidence_groups']['after_cost_economics'].remove('slippage_sensitivity'))
+
+    def test_economic_review_rejects_missing_failure_years(self):
+        self._tamper("economics", lambda d: d['required_evidence_groups']['cross_year_failure_and_concentration'].remove('sign_reversals_and_failure_years'))
+
+    def test_economic_review_rejects_missing_multiplicity(self):
+        self._tamper("economics", lambda d: d['required_evidence_groups']['annual_catalogue_and_selection'].remove('pattern_search_budget_and_multiplicity'))
+
+    def test_economic_review_rejects_missing_nonqualifiers(self):
+        self._tamper("economics", lambda d: d['required_evidence_groups']['annual_catalogue_and_selection'].remove('failed_and_negative_pattern_inventory'))
+
+    def test_economic_review_rejects_missing_holdout_disclosure(self):
+        self._tamper("economics", lambda d: d['required_evidence_groups']['annual_catalogue_and_selection'].remove('unseen_years_not_touched_as_future_final_test'))
+
+    def test_economic_review_rejects_missing_commission(self):
+        self._tamper("economics", lambda d: d['required_evidence_groups']['after_cost_economics'].remove('commission_and_rollover_when_relevant'))
+
+    def test_economic_review_rejects_missing_drawdown_tail(self):
+        self._tamper("economics", lambda d: d['required_evidence_groups']['after_cost_economics'].remove('drawdown_and_tail_events'))
+
+    def test_economic_review_rejects_missing_portfolio_correlation(self):
+        self._tamper("economics", lambda d: d['required_evidence_groups']['after_cost_economics'].remove('portfolio_correlated_usd_exposure'))
+
+    def test_economic_review_rejects_missing_shadow_no_order(self):
+        self._tamper("economics", lambda d: d['required_evidence_groups']['prospective_follow_through'].remove('predeclared_live_shadow_no_order_policy'))
+
+    def test_economic_review_rejects_missing_phase11_human_gate(self):
+        self._tamper("economics", lambda d: d['required_evidence_groups']['prospective_follow_through'].remove('phase10_and_phase11_separate_human_authorizations'))
+
+    def test_economic_review_rejects_hidden_reordered_economic_requirement(self):
+        self._tamper("economics", lambda d: d['required_evidence_groups']['after_cost_economics'].reverse())
+
+    def test_economic_review_rejects_weakened_prereg_cost_proof(self):
+        self._tamper("preregistration", lambda d: d['gates'][7].__setitem__('required_evidence', 'profitable results'))
+
+    def test_economic_review_rejects_weakened_prereg_multiplicity(self):
+        self._tamper("preregistration", lambda d: d['gates'][4].__setitem__('required_evidence', 'choose the best'))
+
+    def test_economic_review_rejects_weakened_prereg_oos(self):
+        self._tamper("preregistration", lambda d: d['gates'][11].__setitem__('required_evidence', 'historical returns'))
+
+    def test_economic_review_rejects_weakened_no_orders(self):
+        self._tamper("preregistration", lambda d: d['gates'][13].__setitem__('required_evidence', 'go live fast'))
+
+    def test_economic_review_rejects_falsified_observation_date(self):
+        self._tamper("admin_snapshot", lambda d: d.__setitem__('observed_date_utc', '2026-10-20'))
+
     def test_module_entrypoint_has_no_import_time_side_effects(self):
         self.assertIn("render_readiness", MOD)
         self.assertIn("main", MOD)
