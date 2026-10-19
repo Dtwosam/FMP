@@ -16168,3 +16168,276 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
                 seen.add(node.name)
         self.assertGreater(len(seen), 2000)
 
+
+    def _assert_malformed_json_key_escape_in_category(self, category,
+                                                      variant):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.assertIn(category, DICT_KEYS)
+        malformed_suffix = {
+            "unknown": "q", "hex": "x00",
+            "nondigit": "u00G0", "short": "u12",
+        }
+        self.assertIn(variant, malformed_suffix)
+        original = self._portable_top_level_members_json()
+        child = json.dumps(self.envelope[category], sort_keys=True,
+                           separators=(",", ":"))
+        self.assertTrue(child.startswith("{") and child.endswith("}"))
+        self.assertNotEqual(child, "{}")
+        # In contrast to DEC-1672's *values*, this invalid backslash
+        # sequence belongs to the name of a nested JSON member.
+        bad_name = '"unreviewed_' + chr(92) + malformed_suffix[variant] + '"'
+        encoded = self._portable_top_level_members_json({
+            category: json.dumps(category) + ":" +
+                      child[:-1] + "," + bad_name + ":null}"})
+        with self.assertRaises(json.JSONDecodeError):
+            json.loads(encoded)
+        direct = self.verdict()
+        parsed = review_bundle_json_text(encoded)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(encoded), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(original, self._portable_top_level_members_json())
+        self.assertTrue(direct["source_consistency"])
+        self.assertEqual(direct["diagnostics"], ())
+        self.assertEqual(status, 2)
+        self.assertEqual(parsed["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"],
+                         ["BUNDLE_JSON_GRAMMAR_UNREVIEWED"])
+        self.assertNotIn("tests/sample.py", out.getvalue())
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        for result in (parsed, emitted):
+            self.assertFalse(result["source_consistency"])
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_bad_key_escape_pr_unknown(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "pr", "unknown")
+
+    def test_portable_bad_key_escape_pr_hex(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "pr", "hex")
+
+    def test_portable_bad_key_escape_pr_nondigit(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "pr", "nondigit")
+
+    def test_portable_bad_key_escape_pr_short(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "pr", "short")
+
+    def test_portable_bad_key_escape_jobs_by_run_unknown(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "jobs_by_run", "unknown")
+
+    def test_portable_bad_key_escape_jobs_by_run_hex(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "jobs_by_run", "hex")
+
+    def test_portable_bad_key_escape_jobs_by_run_nondigit(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "jobs_by_run", "nondigit")
+
+    def test_portable_bad_key_escape_jobs_by_run_short(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "jobs_by_run", "short")
+
+    def test_portable_bad_key_escape_compare_unknown(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "compare", "unknown")
+
+    def test_portable_bad_key_escape_compare_hex(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "compare", "hex")
+
+    def test_portable_bad_key_escape_compare_nondigit(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "compare", "nondigit")
+
+    def test_portable_bad_key_escape_compare_short(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "compare", "short")
+
+    def test_portable_bad_key_escape_commit_unknown(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "commit", "unknown")
+
+    def test_portable_bad_key_escape_commit_hex(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "commit", "hex")
+
+    def test_portable_bad_key_escape_commit_nondigit(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "commit", "nondigit")
+
+    def test_portable_bad_key_escape_commit_short(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "commit", "short")
+
+    def test_portable_bad_key_escape_tree_unknown(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "tree", "unknown")
+
+    def test_portable_bad_key_escape_tree_hex(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "tree", "hex")
+
+    def test_portable_bad_key_escape_tree_nondigit(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "tree", "nondigit")
+
+    def test_portable_bad_key_escape_tree_short(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "tree", "short")
+
+    def test_portable_bad_key_escape_nodes_unknown(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "nodes", "unknown")
+
+    def test_portable_bad_key_escape_nodes_hex(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "nodes", "hex")
+
+    def test_portable_bad_key_escape_nodes_nondigit(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "nodes", "nondigit")
+
+    def test_portable_bad_key_escape_nodes_short(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "nodes", "short")
+
+    def test_portable_bad_key_escape_changed_bytes_b64_unknown(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "changed_bytes_b64", "unknown")
+
+    def test_portable_bad_key_escape_changed_bytes_b64_hex(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "changed_bytes_b64", "hex")
+
+    def test_portable_bad_key_escape_changed_bytes_b64_nondigit(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "changed_bytes_b64", "nondigit")
+
+    def test_portable_bad_key_escape_changed_bytes_b64_short(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "changed_bytes_b64", "short")
+
+    def test_portable_bad_key_escape_ci_workflow_bytes_b64_unknown(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "ci_workflow_bytes_b64", "unknown")
+
+    def test_portable_bad_key_escape_ci_workflow_bytes_b64_hex(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "ci_workflow_bytes_b64", "hex")
+
+    def test_portable_bad_key_escape_ci_workflow_bytes_b64_nondigit(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "ci_workflow_bytes_b64", "nondigit")
+
+    def test_portable_bad_key_escape_ci_workflow_bytes_b64_short(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "ci_workflow_bytes_b64", "short")
+
+    def test_portable_bad_key_escape_full_tree_snapshots_unknown(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "full_tree_snapshots", "unknown")
+
+    def test_portable_bad_key_escape_full_tree_snapshots_hex(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "full_tree_snapshots", "hex")
+
+    def test_portable_bad_key_escape_full_tree_snapshots_nondigit(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "full_tree_snapshots", "nondigit")
+
+    def test_portable_bad_key_escape_full_tree_snapshots_short(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "full_tree_snapshots", "short")
+
+    def test_portable_bad_key_escape_merge_checkout_snapshot_unknown(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "merge_checkout_snapshot", "unknown")
+
+    def test_portable_bad_key_escape_merge_checkout_snapshot_hex(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "merge_checkout_snapshot", "hex")
+
+    def test_portable_bad_key_escape_merge_checkout_snapshot_nondigit(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "merge_checkout_snapshot", "nondigit")
+
+    def test_portable_bad_key_escape_merge_checkout_snapshot_short(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "merge_checkout_snapshot", "short")
+
+    def test_portable_bad_key_escape_checkout_by_run_unknown(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "checkout_by_run", "unknown")
+
+    def test_portable_bad_key_escape_checkout_by_run_hex(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "checkout_by_run", "hex")
+
+    def test_portable_bad_key_escape_checkout_by_run_nondigit(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "checkout_by_run", "nondigit")
+
+    def test_portable_bad_key_escape_checkout_by_run_short(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "checkout_by_run", "short")
+
+    def test_portable_bad_key_escape_phase3_evidence_snapshot_unknown(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "phase3_evidence_snapshot", "unknown")
+
+    def test_portable_bad_key_escape_phase3_evidence_snapshot_hex(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "phase3_evidence_snapshot", "hex")
+
+    def test_portable_bad_key_escape_phase3_evidence_snapshot_nondigit(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "phase3_evidence_snapshot", "nondigit")
+
+    def test_portable_bad_key_escape_phase3_evidence_snapshot_short(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "phase3_evidence_snapshot", "short")
+
+    def test_portable_bad_key_escape_raw_ci_runner_logs_unknown(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "raw_ci_runner_logs", "unknown")
+
+    def test_portable_bad_key_escape_raw_ci_runner_logs_hex(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "raw_ci_runner_logs", "hex")
+
+    def test_portable_bad_key_escape_raw_ci_runner_logs_nondigit(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "raw_ci_runner_logs", "nondigit")
+
+    def test_portable_bad_key_escape_raw_ci_runner_logs_short(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "raw_ci_runner_logs", "short")
+
+    def test_portable_bad_key_escape_raw_ci_log_receipts_unknown(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "raw_ci_log_receipts", "unknown")
+
+    def test_portable_bad_key_escape_raw_ci_log_receipts_hex(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "raw_ci_log_receipts", "hex")
+
+    def test_portable_bad_key_escape_raw_ci_log_receipts_nondigit(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "raw_ci_log_receipts", "nondigit")
+
+    def test_portable_bad_key_escape_raw_ci_log_receipts_short(self):
+        self._assert_malformed_json_key_escape_in_category(
+            "raw_ci_log_receipts", "short")
+
+    def test_portable_bad_key_escape_clean_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
