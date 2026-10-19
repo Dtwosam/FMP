@@ -5517,7 +5517,7 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self._assert_rehashed_nonstage_log_line_is_not_annual_admission(
             "protected 2023 annual run385 attempt1 permission granted")
 
-    def test_rehashed_nonstage_log_fake_approval_cannot_mask_wrong_pr_ref(self):
+    def test_rehashed_nonstage_log_fake_boolean_approval_cannot_mask_wrong_pr_ref(self):
         self._assert_rehashed_nonstage_log_line_is_not_annual_admission(
             "can_authorize_annual_run=true", change_checkout=True)
 
@@ -16143,4 +16143,28 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
 
     def test_portable_array_bad_escape_clean_control(self):
         self._assert_portable_tree_object_order_consistency_only()
+
+
+    def test_portable_unittest_test_names_are_unique(self):
+        """Keep Python from silently masking an earlier test definition."""
+        import ast
+        from pathlib import Path
+        source = Path(__file__).read_text(encoding="utf-8")
+        module = ast.parse(source, filename=__file__)
+        suite = [
+            node for node in module.body
+            if isinstance(node, ast.ClassDef)
+            and node.name == "PortableSourceBundleNeverGrantsAnnualRunAdmission"
+        ]
+        self.assertEqual(len(suite), 1)
+        seen = set()
+        for node in suite[0].body:
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                if not node.name.startswith("test_"):
+                    continue
+                self.assertNotIn(
+                    node.name, seen,
+                    "Duplicate unittest method silently shadows an earlier case")
+                seen.add(node.name)
+        self.assertGreater(len(seen), 2000)
 
