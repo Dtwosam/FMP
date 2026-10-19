@@ -125,25 +125,43 @@ MAX_SOURCE_DOC_BYTES = 1024 * 1024
 
 
 def _read_regular_nofollow(path):
-    """Read only one bounded, regular, non-symlink evidence packet.
+    """Open every ancestor directory and the leaf with O_NOFOLLOW.
 
-    No protected file path is discovered by this routine. A caller explicitly
-    selects the offline source root; data and permissions are never changed.
+    Directory FDs prevent a symlink in a parent component from changing the
+    selected documentary root. The leaf must be a bounded regular file.
     """
-    if not all(hasattr(os, flag) for flag in ("O_NOFOLLOW", "O_NONBLOCK")):
-        raise InvalidDocumentaryState("OS lacks required fail-closed no-follow semantics")
-    flags = os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK
+    required = ("O_DIRECTORY", "O_NOFOLLOW", "O_NONBLOCK")
+    if any(not hasattr(os, name) for name in required) or (
+        os.open not in os.supports_dir_fd
+    ):
+        raise InvalidDocumentaryState("OS lacks fail-closed directory FD/no-follow support")
+    absolute = Path(os.path.abspath(os.fspath(path)))
+    directory_flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_NONBLOCK
+    leaf_flags = os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK
     if hasattr(os, "O_CLOEXEC"):
-        flags |= os.O_CLOEXEC
-    with os.fdopen(os.open(path, flags), "rb") as handle:
-        info = os.fstat(handle.fileno())
-        _require(stat.S_ISREG(info.st_mode), "evidence packet is not a regular file")
-        _require(0 < info.st_size <= MAX_SOURCE_DOC_BYTES,
-                 "evidence packet size exceeds the bounded source-only contract")
-        payload = handle.read(MAX_SOURCE_DOC_BYTES + 1)
-        _require(len(payload) == info.st_size,
-                 "evidence packet size changed during the read")
-    return payload
+        directory_flags |= os.O_CLOEXEC
+        leaf_flags |= os.O_CLOEXEC
+    dirs = []
+    try:
+        root_fd = os.open(absolute.anchor, directory_flags)
+        dirs.append(root_fd)
+        for component in absolute.parts[1:-1]:
+            dirs.append(os.open(component, directory_flags, dir_fd=dirs[-1]))
+        with os.fdopen(
+            os.open(absolute.name, leaf_flags, dir_fd=dirs[-1]), "rb"
+        ) as handle:
+            info = os.fstat(handle.fileno())
+            _require(stat.S_ISREG(info.st_mode),
+                     "evidence packet is not a regular file")
+            _require(0 < info.st_size <= MAX_SOURCE_DOC_BYTES,
+                     "evidence packet size exceeds the bounded source-only contract")
+            payload = handle.read(MAX_SOURCE_DOC_BYTES + 1)
+            _require(len(payload) == info.st_size,
+                     "evidence packet size changed during the read")
+        return payload
+    finally:
+        for directory_fd in reversed(dirs):
+            os.close(directory_fd)
 
 
 def _read_packets(root):

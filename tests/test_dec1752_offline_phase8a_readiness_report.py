@@ -734,6 +734,50 @@ class OfflineBlockerDiagnosticTests(unittest.TestCase):
             self.assertIn("reviewed SHA-256 manifest", err.getvalue())
 
 
+    def test_source_reader_rejects_symlinked_parent_directory(self):
+        with tempfile.TemporaryDirectory() as root:
+            from pathlib import Path
+            real = Path(root) / "real-docs"
+            real.mkdir()
+            for filename in FILES.values():
+                (real / filename).write_bytes((self.docs / filename).read_bytes())
+            alias = Path(root) / "symlinked-docs"
+            try:
+                alias.symlink_to(real, target_is_directory=True)
+            except (NotImplementedError, OSError):
+                self.skipTest("directory symlinks unavailable")
+            with self.assertRaises(OSError):
+                RENDER(alias)
+
+    def test_cli_parent_symlink_does_not_produce_a_trusted_packet(self):
+        import contextlib
+        import io
+        with tempfile.TemporaryDirectory() as root:
+            real = Path(root) / "real-docs"
+            real.mkdir()
+            for filename in FILES.values():
+                (real / filename).write_bytes((self.docs / filename).read_bytes())
+            alias = Path(root) / "alias"
+            try:
+                alias.symlink_to(real, target_is_directory=True)
+            except (NotImplementedError, OSError):
+                self.skipTest("directory symlinks unavailable")
+            stdout, stderr = io.StringIO(), io.StringIO()
+            with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+                code = MOD["main"](["--docs-root", str(alias)])
+            self.assertEqual(code, 2)
+            self.assertEqual(stdout.getvalue(), "")
+            self.assertIn("BLOCKED:", stderr.getvalue())
+
+    def test_real_directory_file_descriptor_read_stays_blocked(self):
+        with tempfile.TemporaryDirectory() as root:
+            folder = Path(root) / "real"
+            folder.mkdir()
+            for filename in FILES.values():
+                (folder / filename).write_bytes((self.docs / filename).read_bytes())
+            self.assertEqual(RENDER(folder)["documentary_status"], "BLOCKED")
+
+
     def test_module_entrypoint_has_no_import_time_side_effects(self):
         self.assertIn("render_readiness", MOD)
         self.assertIn("main", MOD)

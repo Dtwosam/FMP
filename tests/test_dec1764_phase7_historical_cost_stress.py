@@ -227,6 +227,47 @@ class Phase7CostStressHistoricalReplayTests(unittest.TestCase):
         self.assertEqual(report["allowed_actions"], [])
 
 
+    def test_phase7_parent_directory_symlink_is_rejected(self):
+        with tempfile.TemporaryDirectory() as root:
+            folder = Path(root) / "real"
+            folder.mkdir()
+            copied = folder / "phase7.md"
+            copied.write_bytes(ORIGINAL.read_bytes())
+            alias = Path(root) / "alias"
+            try:
+                alias.symlink_to(folder, target_is_directory=True)
+            except (NotImplementedError, OSError):
+                self.skipTest("directory symlinks unavailable")
+            with self.assertRaises(OSError):
+                REPLAY(alias / copied.name)
+
+    def test_phase7_parent_symlink_cli_returns_no_report(self):
+        with tempfile.TemporaryDirectory() as root:
+            folder = Path(root) / "real"
+            folder.mkdir()
+            (folder / "evidence.md").write_bytes(ORIGINAL.read_bytes())
+            alias = Path(root) / "alias"
+            try:
+                alias.symlink_to(folder, target_is_directory=True)
+            except (NotImplementedError, OSError):
+                self.skipTest("directory symlinks unavailable")
+            stdout, stderr = io.StringIO(), io.StringIO()
+            with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+                code = MODULE["main"](["--phase7-document", str(alias / "evidence.md")])
+            self.assertEqual(code, 2)
+            self.assertEqual(stdout.getvalue(), "")
+            self.assertIn("BLOCKED:", stderr.getvalue())
+
+    def test_phase7_real_subdirectory_is_accepted_at_retro_exit_three(self):
+        with tempfile.TemporaryDirectory() as root:
+            folder = Path(root) / "real"
+            folder.mkdir()
+            copied = folder / "phase7.md"
+            copied.write_bytes(ORIGINAL.read_bytes())
+            self.assertEqual(REPLAY(copied)["status"],
+                             "RETROSPECTIVE_DIAGNOSTIC_NOT_EXECUTION_AUTHORITY")
+
+
     def test_cli_returns_nonzero_even_with_correct_historical_report(self):
         stdout, stderr = io.StringIO(), io.StringIO()
         with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
