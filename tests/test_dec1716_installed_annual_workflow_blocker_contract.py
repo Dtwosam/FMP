@@ -6,6 +6,7 @@ This test intentionally needs a separately reviewed rebaseline if workflow chang
 from __future__ import annotations
 
 import hashlib
+import os
 from pathlib import Path
 import re
 import unittest
@@ -60,6 +61,10 @@ def _steps(job_source: str) -> list[str]:
             if match]
 
 
+@unittest.skipIf(
+    os.environ.get("FMP_PREINSTALL_SNAPSHOT") == "1",
+    "DEC-1716 requires installed annual workflow source excluded by preinstall snapshot",
+)
 class InstalledAnnualWorkflowBlockerContractTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
