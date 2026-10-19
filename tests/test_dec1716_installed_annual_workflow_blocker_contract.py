@@ -86,7 +86,7 @@ class InstalledAnnualWorkflowBlockerContractTests(unittest.TestCase):
 
     def test_read_only_github_job_permissions_are_not_a_ref_lock(self):
         before_jobs = self.source.split("\njobs:\n", 1)[0]
-        self.assertIn("permissions:\\n  contents: read\\n  actions: read", before_jobs)
+        self.assertIn("permissions:\n  contents: read\n  actions: read", before_jobs)
         self.assertNotIn("contents: write", before_jobs)
         self.assertNotIn("actions: write", before_jobs)
 
