@@ -1,0 +1,173 @@
+"""DEC-1764: replay *published Phase 7* adverse-slippage evidence offline.
+
+This historical artifact has no market-data reads, broker integration, strategy
+selection, forward performance claim, or execution authorization. An estimated
+interpolation zero is NOT a live quote, observed break-even or trading gate.
+"""
+from __future__ import annotations
+
+import argparse
+from decimal import Decimal, ROUND_HALF_UP
+import hashlib
+import json
+from pathlib import Path
+import re
+import sys
+
+
+PHASE7_DOC = Path(__file__).resolve().parents[1] / "docs" / "phase7-walk-forward-evidence.md"
+FROZEN_GIT_BLOB_SHA1 = "c1d8fe7f71681f2e06b472c77525a4dd800c896f"
+PIPS = ("0.2", "0.5", "1.0")
+EXPECTED_NET_RETURN_PCT = ("0.757266", "0.262176", "-0.562118")
+EXPECTED_PNL_USD = ("757.27", "262.18", "-562.12")
+EXPECTED_EXPECTANCY_USD = ("3.8054", "1.3175", "-2.8247")
+EXPECTED_PROFIT_FACTOR = ("1.062731", "1.021310", "0.955760")
+PHASE7_RUN = "35015277625"
+STAGE2_SHA = "a1f8a0466463c79fdbceb9d6ebad9e3ea809474d"
+
+
+def _require(ok, reason):
+    if not ok:
+        raise ValueError(reason)
+
+
+def _signed_decimal(text, suffix=""):
+    _require(isinstance(text, str), "numeric source must be string")
+    if suffix:
+        _require(text.endswith(suffix), "expected numeric unit " + suffix)
+        text = text[:-len(suffix)]
+    text = text.replace("$", "")
+    try:
+        value = Decimal(text)
+    except Exception as exc:
+        raise ValueError("invalid source numeric value") from exc
+    _require(value.is_finite(), "non-finite historic metric")
+    return value
+
+
+def replay_phase7_cost_evidence(doc_path: Path = PHASE7_DOC) -> dict[str, object]:
+    raw = Path(doc_path).read_bytes()
+    _require(0 < len(raw) < 65536, "unexpected phase7 evidence document size")
+    blob = hashlib.sha1(
+        b"blob " + str(len(raw)).encode("ascii") + b"\0" + raw
+    ).hexdigest()
+    _require(blob == FROZEN_GIT_BLOB_SHA1,
+             "historic phase7 source differs from reviewed Git blob")
+    text = raw.decode("utf-8")
+    for required in (
+        "**Experiment:** `EXP-20260915-008`",
+        "**Stage 2 code SHA:** `" + STAGE2_SHA + "`",
+        "run `" + PHASE7_RUN + "`",
+        "**Candidate:** USDJPY 15m `session_breakout`",
+        "**Final Stage 2 status:** `PHASE7_PROMOTE_TO_SHADOW_DESIGN`",
+        "The 1.0-pip diagnostic is negative",
+    ):
+        _require(required in text, "frozen historical evidence identity changed")
+
+    rows = [
+        line for line in text.splitlines()
+        if re.match(r"^\| (0\.2|0\.5|1\.0) pips \|", line)
+    ]
+    _require(len(rows) == 3, "historical cost table missing or duplicated")
+    observations = []
+    for index, line in enumerate(rows):
+        cols = [item.strip() for item in line.strip("|").split("|")]
+        _require(len(cols) == 9 and cols[0] == PIPS[index] + " pips",
+                 "wrong historical cost table identity/order")
+        net_pct = _signed_decimal(cols[1], "%")
+        pnl_usd = _signed_decimal(cols[2])
+        _require(re.fullmatch(r"[0-9]+", cols[3]) is not None,
+                 "trade count must be an integer")
+        trades = int(cols[3])
+        expectancy = _signed_decimal(cols[4])
+        profit_factor = _signed_decimal(cols[5])
+        max_dd_pct = _signed_decimal(cols[6], "%")
+        positive_windows = cols[7]
+        positive_share_pct = _signed_decimal(cols[8], "%")
+        _require(
+            net_pct == Decimal(EXPECTED_NET_RETURN_PCT[index])
+            and pnl_usd == Decimal(EXPECTED_PNL_USD[index])
+            and trades == 199
+            and expectancy == Decimal(EXPECTED_EXPECTANCY_USD[index])
+            and profit_factor == Decimal(EXPECTED_PROFIT_FACTOR[index])
+            and max_dd_pct >= 0
+            and positive_windows in {"5 of 7", "4 of 7"}
+            and 0 <= positive_share_pct <= 100,
+            "published Phase 7 source values changed",
+        )
+        observations.append({
+            "adverse_slippage_pips": str(Decimal(PIPS[index])),
+            "historical_net_return_pct": str(net_pct),
+            "historical_net_pnl_usd": str(pnl_usd),
+            "trades": trades,
+            "historical_expectancy_per_trade_usd": str(expectancy),
+            "historical_profit_factor": str(profit_factor),
+            "max_independent_window_drawdown_pct": str(max_dd_pct),
+            "positive_windows": positive_windows,
+            "max_positive_window_share_pct": str(positive_share_pct),
+        })
+
+    # Simple interpolation of two reported retrospective table endpoints.
+    # Not a new empirical run or a usable predictive execution threshold.
+    left = Decimal(PIPS[1])
+    right = Decimal(PIPS[2])
+    left_result = Decimal(EXPECTED_NET_RETURN_PCT[1])
+    right_result = Decimal(EXPECTED_NET_RETURN_PCT[2])
+    _require(left_result > 0 > right_result, "no historical sign reversal")
+    zero = left + (Decimal(0) - left_result) * (
+        right - left) / (right_result - left_result)
+    _require(left < zero < right, "interpolated crossing outside observed bracket")
+    slope01 = (Decimal(EXPECTED_NET_RETURN_PCT[1])
+               - Decimal(EXPECTED_NET_RETURN_PCT[0])) / (
+                   Decimal(PIPS[1]) - Decimal(PIPS[0]))
+    slope12 = (right_result - left_result) / (right - left)
+    _require(slope01 < 0 and slope12 < 0,
+             "historical cost sensitivity must not be presented as improving")
+
+    return {
+        "schema": "fmp_dec1764_phase7_offline_cost_stress_replay_v1",
+        "status": "RETROSPECTIVE_DIAGNOSTIC_NOT_EXECUTION_AUTHORITY",
+        "source_file": "docs/phase7-walk-forward-evidence.md",
+        "source_git_blob_sha1": blob,
+        "phase7_stage2_run": int(PHASE7_RUN),
+        "phase7_stage2_code_sha": STAGE2_SHA,
+        "historic_candidate": "USDJPY 15m session_breakout",
+        "observations": observations,
+        "historical_slippage_sign_reversal_bracket_pips": ["0.5", "1.0"],
+        "linear_zero_interpolation_pips_not_observed": str(
+            zero.quantize(Decimal("0.000001"), rounding=ROUND_HALF_UP)),
+        "historical_return_slope_pct_points_per_pip": [
+            str(slope01), str(slope12)
+        ],
+        "caveat": "The interpolated zero is illustrative arithmetic between "
+                  "historical published aggregate points, not an observed "
+                  "fill-cost threshold, forecast, forward return, executable "
+                  "strategy or approval; the Phase 7 result is not Strategy V1.",
+        "phase8a_strategy_v1_edge_proven": False,
+        "phase8a_strategy_v1_frozen": False,
+        "forward_profit_claim": None,
+        "protected_2023_run385_authorized": False,
+        "shadow_or_demo_approved": False,
+        "broker_order_authorized": False,
+        "live_trading_authorized": False,
+        "allowed_actions": [],
+    }
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(
+        description="Offline historical Phase 7 cost stress replay; never authorization")
+    parser.add_argument("--phase7-document", type=Path, default=PHASE7_DOC)
+    args = parser.parse_args(argv)
+    try:
+        report = replay_phase7_cost_evidence(args.phase7_document)
+    except (ValueError, OSError, UnicodeError, TypeError) as exc:
+        print("BLOCKED: historic evidence could not be verified: " + str(exc),
+              file=sys.stderr)
+        return 2
+    print(json.dumps(report, sort_keys=True, indent=2))
+    return 3  # RETROSPECTIVE ONLY: nonzero to prevent shell gate confusion.
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
