@@ -17406,15 +17406,15 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         elif fault == "runs":
             replacements["runs"] = '"runs":null'
         if fault == "inventory":
-            # Rebuild without schema at the root, retaining every other
-            # original evidence member and the malformed number.
-            encoded = "{" + ",".join(
-                value for key, value in (
-                    (key, replacements.get(
+            # Omit the schema member before joining root fields. Keep
+            # numeric-grammar invalidity independent of inventory failure.
+            members = []
+            for key, item in sorted(self.envelope.items()):
+                if key != "schema":
+                    members.append(replacements.get(
                         key, json.dumps(key) + ":" + json.dumps(
                             item, sort_keys=True, separators=(",", ":"))))
-                    for key, item in sorted(self.envelope.items()))
-                ) if key != "schema") + "}"
+            encoded = "{" + ",".join(members) + "}"
         else:
             encoded = self._portable_top_level_members_json(replacements)
             if fault == "approval":
