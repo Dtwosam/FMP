@@ -63,6 +63,40 @@ OWNERS = (
 )
 
 
+
+# Each review requirement is an independent externally attested fact. These
+# descriptions are REVIEW REQUESTS, not executable verification/approval code.
+PROOF_ACCEPTANCE_CRITERIA = {
+    "effective_github_admin_and_inherited_ruleset_inventory":
+        "Independent effective repo, organization and enterprise protection/ruleset "
+        "scope; enumerated push, merge, force, delete, bypass, admin and Actions "
+        "write actors with as-of provenance",
+    "exclusive_continuous_ref_lock_and_no_bypass":
+        "Authenticated no-bypass immutable main identity across reviewed SHA "
+        "check, submission, server ref resolution, run record and audit; "
+        "include deletion/recreation and concurrent authorized writers",
+    "independent_reviewed_source_sha_workflow_identity":
+        "Exact independently reviewed source commit, installed workflow blob, "
+        "runtime SHA, approved identity and decision provenance tied together",
+    "installed_three_job_precheckout_preinstall_preaccess_enforcement":
+        "Effective fail-closed checks before source checkout, install or protected "
+        "access for preflight, all 18 cells and freeze jobs on real installed runtime",
+    "privileged_runner_os_isolation_and_publisher_witness":
+        "Real runner UID/caps/mount and alias isolation, cwd and FD0-2 boundaries, "
+        "credential inheritance, external publisher write authority, failure cleanup "
+        "and non-skipped adversarial OS verification",
+    "frozen_dec609_dec610_provenance_reauthentication":
+        "Independent DEC-609/610 frozen code, checkpoint run/artifact manifest, "
+        "checksums and immutable predecessor 2022 freeze provenance",
+    "fresh_complete_authoritative_one_shot_annual_run_inventory":
+        "Independently authenticated full workflow dispatch/run-attempt inventory "
+        "showing unchanged ten-run history and no consumed run385 or later run, "
+        "reverified immediately before a separately authorized action",
+    "separate_2023_run385_attempt1_human_execution_decision":
+        "Separate specific human decision for 2023 run385 attempt1 only, after all "
+        "prior external witnesses and rollback/irreversible no-retry review",
+}
+
 class InvalidDocumentaryState(ValueError):
     """Offline inputs changed or are insufficient: never infer approval."""
 
@@ -710,6 +744,17 @@ def render_human_review_markdown(report: dict[str, object]) -> str:
     }
     _require(report.get("one_shot_run_identity") == expected_identity,
              "review must preserve exact blocked one-shot identity")
+    _require(
+        tuple(PROOF_ACCEPTANCE_CRITERIA) == PROOFS
+        and all(
+            isinstance(detail, str)
+            and bool(detail.strip())
+            and "|" not in detail
+            and "gh workflow run " not in detail
+            for detail in PROOF_ACCEPTANCE_CRITERIA.values()
+        ),
+        "review criteria must describe all independent witnesses and no dispatch",
+    )
     proofs = report.get("missing_external_proofs")
     _require(
         type(proofs) is list
@@ -762,12 +807,13 @@ def render_human_review_markdown(report: dict[str, object]) -> str:
         "",
         "## Required independent evidence — all missing",
         "",
-        "| Required proof | Independent review role | Current state |",
-        "| --- | --- | --- |",
+        "| Required proof | Independent review role | Required independent evidence | Current state |",
+        "| --- | --- | --- | --- |",
     ]
     for proof in proofs:
         out.append(f"| `{proof['id']}` | "
-                   f"{proof['review_role']} | **MISSING** |")
+                   f"{proof['review_role']} | "
+                   f"{PROOF_ACCEPTANCE_CRITERIA[proof['id']]} | **MISSING** |")
     out.extend([
         "",
         "## Downstream work also blocked",
