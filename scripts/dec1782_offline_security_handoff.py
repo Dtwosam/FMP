@@ -117,6 +117,8 @@ def compile_blocked_handoff(docs_root=DOCS, workflow=WORKFLOW):
         "documentary_packet_source_sha256": documentary["source_sha256"],
         "installed_workflow_historical_git_blob_sha1":
             installed["historical_source_git_blob_sha1"],
+        "installed_workflow_historical_source_sha256":
+            installed["historical_source_sha256"],
         "installed_workflow_historical_fixture_only":
             installed["installed_workflow_file_absent_from_ci_not_an_attestation"],
         "eight_missing_independent_proofs": proofs,
@@ -215,6 +217,8 @@ def format_blocked_handoff_markdown(report):
         f"{report['source_main_sha_not_current_dispatch_ref']}",
         f"Installed workflow historical Git blob SHA-1: "
         f"{report['installed_workflow_historical_git_blob_sha1']}",
+        f"Installed workflow historical source SHA-256: "
+        f"{report['installed_workflow_historical_source_sha256']}",
     ])
     for key, sha in report["documentary_packet_source_sha256"].items():
         entries.append(f"{key}: sha256:{sha}")

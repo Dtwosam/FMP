@@ -137,6 +137,14 @@ class Phase8AConsolidatedSourceOnlyHandoffTests(unittest.TestCase):
             self.assertEqual(out.getvalue(), "")
             self.assertIn("BLOCKED:", err.getvalue())
 
+
+    def test_human_handoff_includes_independent_workflow_sha256(self):
+        report = BUILD()
+        self.assertEqual(
+            report["installed_workflow_historical_source_sha256"],
+            "a61fa663b42a680e3ce08f82d7e42f410a30c801d37a19cc82fdb5f8d6fbb29f")
+        self.assertFalse(report["protected_2023_run385_authorized"])
+
     def test_consolidated_handoff_never_invokes_external_permission_or_trading(self):
         report = BUILD()
         self.assertIs(report["no_external_actions_performed"], True)

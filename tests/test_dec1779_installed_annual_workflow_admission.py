@@ -327,6 +327,30 @@ class InstalledAnnualWorkflowNonAdmissionTests(unittest.TestCase):
         self.assertFalse(report["annual_research_dispatch_authorized"])
         self.assertEqual(report["allowed_actions"], [])
 
+
+    def test_fixture_has_independent_source_sha256_pin(self):
+        report = REPORT()
+        self.assertEqual(
+            report["historical_source_sha256"],
+            "a61fa663b42a680e3ce08f82d7e42f410a30c801d37a19cc82fdb5f8d6fbb29f",
+        )
+        self.assertEqual(
+            MOD["EXPECTED_HISTORICAL_WORKFLOW_SHA256"],
+            report["historical_source_sha256"],
+        )
+
+    def test_sha256_detects_altered_fixture_when_sha1_check_stubbed(self):
+        from unittest import mock
+        with tempfile.TemporaryDirectory() as dirname:
+            target = Path(dirname) / "modified-historical-workflow.yml"
+            target.write_bytes(WORKFLOW.read_bytes() + b"\n# changed after review\n")
+            with mock.patch.object(MOD["hashlib"], "sha1") as sha1_mock:
+                sha1_mock.return_value.hexdigest.return_value = (
+                    MOD["EXPECTED_GIT_BLOB_SHA1"])
+                with self.assertRaisesRegex(
+                        MOD["InvalidStaticEvidence"], "SHA-256 did not match"):
+                    REPORT(target)
+
     def test_no_workflow_dispatch_or_broker_is_needed(self):
         report = REPORT()
         self.assertIn("Independent administrator/security", report["next_external_review"])
