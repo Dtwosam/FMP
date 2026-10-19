@@ -15551,3 +15551,154 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_array_raw_control_clean_control(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+
+    def _assert_valid_array_control_escape_equivalent(self, category,
+                                                      path, control):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        before = self._portable_top_level_members_json()
+        modified = copy.deepcopy(self.envelope)
+        target = modified[category]
+        for segment in path:
+            target = target[segment]
+        self.assertIs(type(target), dict)
+        if control == "nul_key":
+            target["synthetic_" + chr(0) + "_key"] = None
+            spelling = "\\u0000"
+        elif control == "newline_value":
+            target["synthetic_value"] = "left" + chr(10) + "right"
+            spelling = "\\n"
+        elif control == "carriage_key":
+            target["synthetic_" + chr(13) + "_key"] = None
+            spelling = "\\r"
+        else:
+            self.assertEqual(control, "tab_value")
+            target["synthetic_value"] = "left" + chr(9) + "right"
+            spelling = "\\t"
+        encoded = json.dumps(modified, sort_keys=True,
+                             separators=(",", ":"), ensure_ascii=True)
+        self.assertIn(spelling, encoded)
+        self.assertEqual(json.loads(encoded), modified)
+        direct = review_bundle_envelope(modified)
+        parsed = review_bundle_json_text(encoded)
+        self.assertEqual(direct, parsed)
+        self.assertNotIn("BUNDLE_JSON_GRAMMAR_UNREVIEWED",
+                         parsed["diagnostics"])
+        self.assertNotIn("BUNDLE_JSON_UNICODE_UNREVIEWED",
+                         parsed["diagnostics"])
+        self.assertEqual(before, self._portable_top_level_members_json())
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(encoded), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(status, 0 if direct["source_consistency"] else 2)
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["source_consistency"],
+                         direct["source_consistency"])
+        self.assertEqual(emitted["diagnostics"],
+                         list(direct["diagnostics"]))
+        self.assertNotIn("tests/sample.py", out.getvalue())
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        for result in (direct, parsed, emitted):
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_array_escaped_control_runs_nul_key(self):
+        self._assert_valid_array_control_escape_equivalent(
+            "runs", (0,), "nul_key")
+
+    def test_portable_array_escaped_control_runs_newline_value(self):
+        self._assert_valid_array_control_escape_equivalent(
+            "runs", (0,), "newline_value")
+
+    def test_portable_array_escaped_control_runs_carriage_key(self):
+        self._assert_valid_array_control_escape_equivalent(
+            "runs", (0,), "carriage_key")
+
+    def test_portable_array_escaped_control_runs_tab_value(self):
+        self._assert_valid_array_control_escape_equivalent(
+            "runs", (0,), "tab_value")
+
+    def test_portable_array_escaped_control_comparison_files_nul_key(self):
+        self._assert_valid_array_control_escape_equivalent(
+            "compare", ("files", 0), "nul_key")
+
+    def test_portable_array_escaped_control_comparison_files_newline_value(self):
+        self._assert_valid_array_control_escape_equivalent(
+            "compare", ("files", 0), "newline_value")
+
+    def test_portable_array_escaped_control_comparison_files_carriage_key(self):
+        self._assert_valid_array_control_escape_equivalent(
+            "compare", ("files", 0), "carriage_key")
+
+    def test_portable_array_escaped_control_comparison_files_tab_value(self):
+        self._assert_valid_array_control_escape_equivalent(
+            "compare", ("files", 0), "tab_value")
+
+    def test_portable_array_escaped_control_run_jobs_nul_key(self):
+        self._assert_valid_array_control_escape_equivalent(
+            "jobs_by_run", (sorted(self.envelope["jobs_by_run"])[0], 0), "nul_key")
+
+    def test_portable_array_escaped_control_run_jobs_newline_value(self):
+        self._assert_valid_array_control_escape_equivalent(
+            "jobs_by_run", (sorted(self.envelope["jobs_by_run"])[0], 0), "newline_value")
+
+    def test_portable_array_escaped_control_run_jobs_carriage_key(self):
+        self._assert_valid_array_control_escape_equivalent(
+            "jobs_by_run", (sorted(self.envelope["jobs_by_run"])[0], 0), "carriage_key")
+
+    def test_portable_array_escaped_control_run_jobs_tab_value(self):
+        self._assert_valid_array_control_escape_equivalent(
+            "jobs_by_run", (sorted(self.envelope["jobs_by_run"])[0], 0), "tab_value")
+
+    def test_portable_array_escaped_control_phase3_scenarios_nul_key(self):
+        self._assert_valid_array_control_escape_equivalent(
+            "phase3_evidence_snapshot", ("index", "scenarios", 0), "nul_key")
+
+    def test_portable_array_escaped_control_phase3_scenarios_newline_value(self):
+        self._assert_valid_array_control_escape_equivalent(
+            "phase3_evidence_snapshot", ("index", "scenarios", 0), "newline_value")
+
+    def test_portable_array_escaped_control_phase3_scenarios_carriage_key(self):
+        self._assert_valid_array_control_escape_equivalent(
+            "phase3_evidence_snapshot", ("index", "scenarios", 0), "carriage_key")
+
+    def test_portable_array_escaped_control_phase3_scenarios_tab_value(self):
+        self._assert_valid_array_control_escape_equivalent(
+            "phase3_evidence_snapshot", ("index", "scenarios", 0), "tab_value")
+
+    def test_portable_array_escaped_control_full_tree_entries_nul_key(self):
+        self._assert_valid_array_control_escape_equivalent(
+            "full_tree_snapshots", (sorted(self.envelope["full_tree_snapshots"])[0], "tree", 0), "nul_key")
+
+    def test_portable_array_escaped_control_full_tree_entries_newline_value(self):
+        self._assert_valid_array_control_escape_equivalent(
+            "full_tree_snapshots", (sorted(self.envelope["full_tree_snapshots"])[0], "tree", 0), "newline_value")
+
+    def test_portable_array_escaped_control_full_tree_entries_carriage_key(self):
+        self._assert_valid_array_control_escape_equivalent(
+            "full_tree_snapshots", (sorted(self.envelope["full_tree_snapshots"])[0], "tree", 0), "carriage_key")
+
+    def test_portable_array_escaped_control_full_tree_entries_tab_value(self):
+        self._assert_valid_array_control_escape_equivalent(
+            "full_tree_snapshots", (sorted(self.envelope["full_tree_snapshots"])[0], "tree", 0), "tab_value")
+
+    def test_portable_array_escaped_control_merge_parents_nul_key(self):
+        self._assert_valid_array_control_escape_equivalent(
+            "merge_checkout_snapshot", ("merge_commit", "parents", 0), "nul_key")
+
+    def test_portable_array_escaped_control_merge_parents_newline_value(self):
+        self._assert_valid_array_control_escape_equivalent(
+            "merge_checkout_snapshot", ("merge_commit", "parents", 0), "newline_value")
+
+    def test_portable_array_escaped_control_merge_parents_carriage_key(self):
+        self._assert_valid_array_control_escape_equivalent(
+            "merge_checkout_snapshot", ("merge_commit", "parents", 0), "carriage_key")
+
+    def test_portable_array_escaped_control_merge_parents_tab_value(self):
+        self._assert_valid_array_control_escape_equivalent(
+            "merge_checkout_snapshot", ("merge_commit", "parents", 0), "tab_value")
+
+    def test_portable_array_escaped_control_clean_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
