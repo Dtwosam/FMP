@@ -431,6 +431,59 @@ EXPECTED_PREREG_EVIDENCE = {
 OBSERVED_PUBLIC_MAIN_SHA = "53e203133bbc141b2f48c7b8b8241d56b35166a3"
 OBSERVED_PUBLIC_DATE = "2026-10-19"
 
+
+# Close the exact inner source shape as well as the top level. A packet that
+# adds a hidden 'authorized' member is no longer the reviewed packet, even if
+# every older field still says BLOCKED. These are documentation checks only.
+EXPECTED_NESTED_SHAPES = {
+    "annual_main": [
+        "sha",
+        "protected",
+        "is_current_at_action_time",
+        "proves_exclusive_no_bypass_lock"
+    ],
+    "annual_predecessor": [
+        "segment",
+        "run_number",
+        "run_id",
+        "source_provenance"
+    ],
+    "economic_series": [
+        "historical_last_segment",
+        "historical_last_run_number",
+        "next_protected_segment",
+        "next_protected_run_number",
+        "next_attempt",
+        "independent_fresh_inventory_present",
+        "full_year_series_frozen"
+    ],
+    "admin_public": [
+        "main_ref",
+        "observed_main_sha",
+        "main_branch_protected",
+        "repo_rulesets_count",
+        "independent_admin_scope_verified",
+        "inherited_org_ruleset_scope_verified",
+        "proof_of_effective_exclusive_lock",
+        "observation_current_at_future_action_time"
+    ],
+    "admin_historical": [
+        "historical_freeze_segment",
+        "historical_freeze_run",
+        "historical_freeze_run_id",
+        "independently_reauthenticated_for_future_dispatch"
+    ],
+    "admin_one_shot": [
+        "segment",
+        "run_number",
+        "attempt_number",
+        "dispatch_authorized",
+        "run_inventory_currently_independently_verified",
+        "run_385_unconsumed_currently_independently_proven",
+        "retry_authorized"
+    ]
+}
+
 def render_readiness(docs_root: Path) -> dict[str, object]:
     """Create a deterministic, permanently nonauthorizing OFFLINE report.
 
@@ -444,6 +497,21 @@ def render_readiness(docs_root: Path) -> dict[str, object]:
     graph = docs["dependency"]
     review = docs["preregistration"]
     snap = docs["admin_snapshot"]
+    _nested = {
+        "annual_main": annual["main_branch_last_public_observation"],
+        "annual_predecessor": annual["previous_annual_freeze"],
+        "economic_series": econ["annual_series"],
+        "admin_public": snap["public_observation"],
+        "admin_historical": snap["historical_provenance"],
+        "admin_one_shot": snap["next_protected_action"],
+    }
+    for record_name, record in _nested.items():
+        _require(
+            type(record) is dict
+            and set(record) == set(EXPECTED_NESTED_SHAPES[record_name]),
+            "unreviewed nested source shape in " + record_name,
+        )
+
 
     for key, packet in docs.items():
         _require(

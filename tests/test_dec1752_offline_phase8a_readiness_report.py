@@ -516,6 +516,57 @@ class OfflineBlockerDiagnosticTests(unittest.TestCase):
     def test_economic_review_rejects_falsified_observation_date(self):
         self._tamper("admin_snapshot", lambda d: d.__setitem__('observed_date_utc', '2026-10-20'))
 
+
+    def test_schema_rejects_nested_annual_main_extra_authority(self):
+        def mutate(d):
+            d['main_branch_last_public_observation']['exclusive_main_lock_passed'] = True
+        self._tamper("annual", mutate)
+
+    def test_schema_rejects_nested_annual_predecessor_fake_authority(self):
+        def mutate(d):
+            d['previous_annual_freeze']['authorizes_2023_dispatch'] = True
+        self._tamper("annual", mutate)
+
+    def test_schema_rejects_nested_economic_series_hidden_pnl(self):
+        def mutate(d):
+            d['annual_series']['strategy_v1_live_profit'] = 5.0
+        self._tamper("economics", mutate)
+
+    def test_schema_rejects_nested_admin_public_hidden_bypass(self):
+        def mutate(d):
+            d['public_observation']['all_bypass_principals_blocked'] = True
+        self._tamper("admin_snapshot", mutate)
+
+    def test_schema_rejects_nested_admin_historical_fake_attestation(self):
+        def mutate(d):
+            d['historical_provenance']['witness_signoff'] = 'APPROVED'
+        self._tamper("admin_snapshot", mutate)
+
+    def test_schema_rejects_nested_admin_one_shot_hidden_dispatch(self):
+        def mutate(d):
+            d['next_protected_action']['allow_dispatch_run385'] = True
+        self._tamper("admin_snapshot", mutate)
+
+    def test_schema_rejects_nested_admin_one_shot_hidden_broker(self):
+        def mutate(d):
+            d['next_protected_action']['allow_broker_order'] = True
+        self._tamper("admin_snapshot", mutate)
+
+    def test_schema_rejects_nested_annual_predecessor_removed_provenance(self):
+        def mutate(d):
+            d['previous_annual_freeze'].pop('source_provenance')
+        self._tamper("annual", mutate)
+
+    def test_schema_rejects_nested_economic_series_removed_block(self):
+        def mutate(d):
+            d['annual_series'].pop('independent_fresh_inventory_present')
+        self._tamper("economics", mutate)
+
+    def test_schema_rejects_nested_admin_public_removed_safety(self):
+        def mutate(d):
+            d['public_observation'].pop('proof_of_effective_exclusive_lock')
+        self._tamper("admin_snapshot", mutate)
+
     def test_module_entrypoint_has_no_import_time_side_effects(self):
         self.assertIn("render_readiness", MOD)
         self.assertIn("main", MOD)
