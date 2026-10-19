@@ -13236,3 +13236,116 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_null_last_duplicate_clean_control(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+
+    def _assert_nested_json_key_alias_duplicate_refused(self, category):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.assertIn(category, DICT_KEYS)
+        inner = self.envelope[category]
+        self.assertIs(type(inner), dict)
+        candidates = sorted(
+            key for key in inner if type(key) is str and key)
+        self.assertTrue(candidates)
+        target = candidates[0]
+        spelled = json.dumps(target)
+        escaped = ('"' + "\\u%04x" % ord(target[0]) +
+                   target[1:] + '"')
+        self.assertNotEqual(spelled, escaped)
+        members = []
+        for key, value in sorted(inner.items()):
+            value_json = json.dumps(
+                value, sort_keys=True, separators=(",", ":"))
+            if key == target:
+                members.append(spelled + ":null")
+                members.append(escaped + ":" + value_json)
+            else:
+                members.append(json.dumps(key) + ":" + value_json)
+        category_value_json = "{" + ",".join(members) + "}"
+        clean = self._portable_top_level_members_json()
+        encoded = self._portable_top_level_members_json({
+            category: json.dumps(category) + ":" + category_value_json
+        })
+        # Permissive last-key-wins decoding silently restores the
+        # clean root envelope; the strict decoder must not.
+        self.assertNotEqual(encoded, clean)
+        self.assertEqual(json.loads(encoded), json.loads(clean))
+        direct = self.verdict()
+        parsed = review_bundle_json_text(encoded)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(encoded), out)
+        emitted = json.loads(out.getvalue())
+        self.assertTrue(direct["source_consistency"])
+        self.assertEqual(direct["diagnostics"], ())
+        self.assertEqual(status, 2)
+        self.assertEqual(parsed["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"],
+                         ["BUNDLE_JSON_GRAMMAR_UNREVIEWED"])
+        self.assertNotIn("tests/sample.py", out.getvalue())
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        for result in (parsed, emitted):
+            self.assertFalse(result["source_consistency"])
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_nested_duplicate_pr_refused(self):
+        self._assert_nested_json_key_alias_duplicate_refused(
+            "pr")
+
+    def test_portable_nested_duplicate_jobs_by_run_refused(self):
+        self._assert_nested_json_key_alias_duplicate_refused(
+            "jobs_by_run")
+
+    def test_portable_nested_duplicate_compare_refused(self):
+        self._assert_nested_json_key_alias_duplicate_refused(
+            "compare")
+
+    def test_portable_nested_duplicate_commit_refused(self):
+        self._assert_nested_json_key_alias_duplicate_refused(
+            "commit")
+
+    def test_portable_nested_duplicate_tree_refused(self):
+        self._assert_nested_json_key_alias_duplicate_refused(
+            "tree")
+
+    def test_portable_nested_duplicate_nodes_refused(self):
+        self._assert_nested_json_key_alias_duplicate_refused(
+            "nodes")
+
+    def test_portable_nested_duplicate_changed_bytes_b64_refused(self):
+        self._assert_nested_json_key_alias_duplicate_refused(
+            "changed_bytes_b64")
+
+    def test_portable_nested_duplicate_ci_workflow_bytes_b64_refused(self):
+        self._assert_nested_json_key_alias_duplicate_refused(
+            "ci_workflow_bytes_b64")
+
+    def test_portable_nested_duplicate_full_tree_snapshots_refused(self):
+        self._assert_nested_json_key_alias_duplicate_refused(
+            "full_tree_snapshots")
+
+    def test_portable_nested_duplicate_merge_checkout_snapshot_refused(self):
+        self._assert_nested_json_key_alias_duplicate_refused(
+            "merge_checkout_snapshot")
+
+    def test_portable_nested_duplicate_checkout_by_run_refused(self):
+        self._assert_nested_json_key_alias_duplicate_refused(
+            "checkout_by_run")
+
+    def test_portable_nested_duplicate_phase3_evidence_snapshot_refused(self):
+        self._assert_nested_json_key_alias_duplicate_refused(
+            "phase3_evidence_snapshot")
+
+    def test_portable_nested_duplicate_raw_ci_runner_logs_refused(self):
+        self._assert_nested_json_key_alias_duplicate_refused(
+            "raw_ci_runner_logs")
+
+    def test_portable_nested_duplicate_raw_ci_log_receipts_refused(self):
+        self._assert_nested_json_key_alias_duplicate_refused(
+            "raw_ci_log_receipts")
+
+    def test_portable_nested_duplicate_clean_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
