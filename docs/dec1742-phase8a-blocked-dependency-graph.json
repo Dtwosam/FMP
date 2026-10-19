@@ -1,0 +1,136 @@
+{
+  "schema": "fmp_dec1742_source_only_blocked_dependency_graph_v1",
+  "decision": "DEC-1742",
+  "captured_as_of": "2026-10-19",
+  "provenance": "STATIC_DOCUMENTARY_DEPENDENCIES_NO_CURRENT_ADMIN_ORIGINAL_OS_ATTESTATION",
+  "last_frozen_historical_segment": "2022",
+  "next_protected_segment": "2023",
+  "next_expected_run_number": 385,
+  "next_expected_attempt": 1,
+  "nodes": [
+    {
+      "id": "admin_exclusive_no_bypass_lock",
+      "prerequisites": [],
+      "status": "BLOCKED",
+      "verified_current_evidence": false,
+      "authorizes_execution": false
+    },
+    {
+      "id": "independent_approved_sha_workflow_runtime",
+      "prerequisites": [],
+      "status": "BLOCKED",
+      "verified_current_evidence": false,
+      "authorizes_execution": false
+    },
+    {
+      "id": "installed_three_job_preaccess_admission",
+      "prerequisites": [],
+      "status": "BLOCKED",
+      "verified_current_evidence": false,
+      "authorizes_execution": false
+    },
+    {
+      "id": "privileged_runner_os_isolation",
+      "prerequisites": [],
+      "status": "BLOCKED",
+      "verified_current_evidence": false,
+      "authorizes_execution": false
+    },
+    {
+      "id": "fresh_authoritative_annual_inventory",
+      "prerequisites": [],
+      "status": "BLOCKED",
+      "verified_current_evidence": false,
+      "authorizes_execution": false
+    },
+    {
+      "id": "separate_2023_run385_one_shot_decision",
+      "prerequisites": [
+        "admin_exclusive_no_bypass_lock",
+        "independent_approved_sha_workflow_runtime",
+        "installed_three_job_preaccess_admission",
+        "privileged_runner_os_isolation",
+        "fresh_authoritative_annual_inventory"
+      ],
+      "status": "BLOCKED",
+      "verified_current_evidence": false,
+      "authorizes_execution": false
+    },
+    {
+      "id": "accepted_2023_run385_freeze",
+      "prerequisites": [
+        "separate_2023_run385_one_shot_decision"
+      ],
+      "status": "BLOCKED",
+      "verified_current_evidence": false,
+      "authorizes_execution": false
+    },
+    {
+      "id": "accepted_remaining_annual_freezes",
+      "prerequisites": [
+        "accepted_2023_run385_freeze"
+      ],
+      "status": "BLOCKED",
+      "verified_current_evidence": false,
+      "authorizes_execution": false
+    },
+    {
+      "id": "cross_year_pattern_economics",
+      "prerequisites": [
+        "accepted_remaining_annual_freezes"
+      ],
+      "status": "BLOCKED",
+      "verified_current_evidence": false,
+      "authorizes_execution": false
+    },
+    {
+      "id": "strategy_v1_freeze",
+      "prerequisites": [
+        "cross_year_pattern_economics"
+      ],
+      "status": "BLOCKED",
+      "verified_current_evidence": false,
+      "authorizes_execution": false
+    },
+    {
+      "id": "prospective_order_impossible_shadow",
+      "prerequisites": [
+        "strategy_v1_freeze"
+      ],
+      "status": "BLOCKED",
+      "verified_current_evidence": false,
+      "authorizes_execution": false
+    },
+    {
+      "id": "fixed_version_demo_review",
+      "prerequisites": [
+        "prospective_order_impossible_shadow"
+      ],
+      "status": "BLOCKED",
+      "verified_current_evidence": false,
+      "authorizes_execution": false
+    },
+    {
+      "id": "phase10_live_readiness_approval",
+      "prerequisites": [
+        "fixed_version_demo_review"
+      ],
+      "status": "BLOCKED",
+      "verified_current_evidence": false,
+      "authorizes_execution": false
+    },
+    {
+      "id": "separate_phase11_real_money_approval",
+      "prerequisites": [
+        "phase10_live_readiness_approval"
+      ],
+      "status": "BLOCKED",
+      "verified_current_evidence": false,
+      "authorizes_execution": false
+    }
+  ],
+  "already_authorized_actions": [],
+  "live_strategy_v1_profit_evidence": null,
+  "external_authorization_established": false,
+  "note": "Graph edges are proposed order constraints, not validated security controls or permission. No annual run or broker action may be derived from this JSON."
+}
