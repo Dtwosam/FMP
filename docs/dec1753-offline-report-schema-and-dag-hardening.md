@@ -1,0 +1,9 @@
+# DEC-1753 — Close the offline Phase 8A diagnostic to schema and DAG tampering
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** One-commit exact-parent child of #1999, head built from `1b69bc3c13729476231db84e8869e386c84b93db`. The DEC-1752 offline report is a **BLOCKED-only static document diagnostic**. It must not evolve into an implicit external authority or protected annual execution gate.
+
+The diagnostic now rejects hidden/extra top-level fields across all five source packets, missing or renamed annual authority flags, extra fabricated Strategy V1 metric members, extra preregistration evidence/signoff attributes, out-of-order/duplicate evidence category identities, hidden administrator proof approval keys, extra route authorities, duplicate/changed dependency nodes or missing DAG prerequisite edges. This strengthens it against the case where a document still says `BLOCKED` but gains an unreviewed permission-looking field.
+
+Adds **10 tests** (**6327 proposed cumulative**) in the existing DEC-1752 test module. The existing clean report remains deterministic, still prints only `BLOCKED`, still verifies five source hashes, and provides no network access, protected year read, broker connection or dispatch capability. Source schema expansion requires separate independent review; this diagnostic will **fail closed**, not infer authorization.
+
+Issue #779, #820 and #821 and 2023/run385/attempt1 remain blocked; admin no-bypass lock, three-job admission, privileged runner isolation, fresh one-shot inventory and separate human action are still absent/unverified. No production trading/workflow/security changes, source/private data, annual dispatch/retries, Phase8B, broker/demo/live orders or trading. Exact-head Phase3/full historical-general CI and qualified independent review required.

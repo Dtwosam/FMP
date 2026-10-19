@@ -98,6 +98,244 @@ def _read_packets(root):
     return packets, fingerprints
 
 
+
+# v1 evidence schemas are closed to unexpected authority-looking extensions.
+# Any schema change needs separate review; this report can never grant authority.
+EXPECTED_TOP_LEVEL = {
+    "annual": [
+        "schema",
+        "decision",
+        "description",
+        "capture_date",
+        "live_administration_evidence_verified",
+        "live_annual_run_385_inventory_verified",
+        "main_branch_last_public_observation",
+        "previous_annual_freeze",
+        "yearly_catalogue_status",
+        "next_protected_segment",
+        "required_external_gates",
+        "external_gate_status",
+        "economic_evidence",
+        "phase8a_strategy_v1_frozen",
+        "phase8a_economic_edge_proven",
+        "fresh_prospective_shadow_accepted",
+        "demo_trading_approved",
+        "live_trading_approved",
+        "authority_flags",
+        "authorized_actions",
+        "caveat"
+    ],
+    "economics": [
+        "schema",
+        "decision",
+        "provenance",
+        "research_method",
+        "phase",
+        "annual_series",
+        "required_evidence_groups",
+        "reported_economic_measurements",
+        "all_years_accepted",
+        "cross_year_comparison_authorized",
+        "strategy_v1_frozen",
+        "phase8b_shadow_approved",
+        "demo_approved",
+        "phase10_approved",
+        "live_real_money_approved",
+        "has_forward_profit_evidence",
+        "human_approved_action",
+        "allowed_execution_actions",
+        "caveat"
+    ],
+    "dependency": [
+        "schema",
+        "decision",
+        "captured_as_of",
+        "provenance",
+        "last_frozen_historical_segment",
+        "next_protected_segment",
+        "next_expected_run_number",
+        "next_expected_attempt",
+        "nodes",
+        "already_authorized_actions",
+        "live_strategy_v1_profit_evidence",
+        "external_authorization_established",
+        "note"
+    ],
+    "preregistration": [
+        "schema",
+        "date",
+        "decision",
+        "type",
+        "method",
+        "source_segments_historical_through",
+        "next_one_shot_segment",
+        "next_run_number",
+        "attempt_number",
+        "protected_annual_execution_authorized",
+        "annual_catalogues_complete",
+        "cross_year_analysis_permitted",
+        "strategy_v1_selected",
+        "strategy_v1_frozen",
+        "profitability_accepted",
+        "prospective_shadow_authorized",
+        "demo_order_authorized",
+        "live_trading_authorized",
+        "candidate_strategy_identity",
+        "profitability_measurements",
+        "market_data_read_by_packet",
+        "gates",
+        "predefined_thresholds_documented",
+        "rationale",
+        "known_historical_context",
+        "possible_dispositions",
+        "current_disposition",
+        "allowed_actions",
+        "caveat"
+    ],
+    "admin_snapshot": [
+        "schema",
+        "decision",
+        "kind",
+        "observed_date_utc",
+        "public_observation",
+        "historical_provenance",
+        "next_protected_action",
+        "remediation_routes",
+        "external_proofs",
+        "downstream_gate_state",
+        "measured_strategy_v1_profit",
+        "candidate_strategy_identity",
+        "approved_actions",
+        "release_status",
+        "one_shot_annual_action_authorized",
+        "broker_action_authorized",
+        "trading_authorized",
+        "snapshot_authorizes_anything",
+        "caveat"
+    ]
+}
+EXPECTED_ANNUAL_FLAGS = [
+    "annual_workflow_dispatch_authorized",
+    "protected_history_access_authorized",
+    "run385_authorized",
+    "run385_executed",
+    "retry_or_rerun_authorized",
+    "later_years_research_authorized",
+    "cross_year_synthesis_authorized",
+    "strategy_promotion_authorized",
+    "phase8b_authorized",
+    "broker_mutation_authorized",
+    "demo_orders_authorized",
+    "real_money_authorized",
+    "live_orders_authorized",
+    "trading_authorized"
+]
+EXPECTED_ECONOMIC_METRICS = [
+    "strategy_v1_net_return",
+    "strategy_v1_expected_value",
+    "strategy_v1_drawdown",
+    "strategy_v1_cost_sensitivity",
+    "strategy_v1_out_of_sample_years",
+    "strategy_v1_forward_shadow_return"
+]
+EXPECTED_RESEARCH_CATEGORIES = [
+    "pre_registered_hypothesis_space",
+    "time_safe_signal_and_execution",
+    "complete_annual_pattern_catalogue",
+    "negative_pattern_and_failure_years",
+    "multiplicity_and_winner_selection",
+    "independence_and_uncertainty",
+    "trade_support_and_pnl_concentration",
+    "costs_under_adverse_conditions",
+    "portfolio_usd_correlation_and_exposure",
+    "drawdown_and_tail_risk",
+    "execution_and_capacity",
+    "holdout_contamination_accounting",
+    "immutable_strategy_v1_spec",
+    "prospective_order_impossible_shadow",
+    "separate_demo_live_decisions"
+]
+EXPECTED_DAG_EDGES = [
+    [
+        "admin_exclusive_no_bypass_lock",
+        []
+    ],
+    [
+        "independent_approved_sha_workflow_runtime",
+        []
+    ],
+    [
+        "installed_three_job_preaccess_admission",
+        []
+    ],
+    [
+        "privileged_runner_os_isolation",
+        []
+    ],
+    [
+        "fresh_authoritative_annual_inventory",
+        []
+    ],
+    [
+        "separate_2023_run385_one_shot_decision",
+        [
+            "admin_exclusive_no_bypass_lock",
+            "independent_approved_sha_workflow_runtime",
+            "installed_three_job_preaccess_admission",
+            "privileged_runner_os_isolation",
+            "fresh_authoritative_annual_inventory"
+        ]
+    ],
+    [
+        "accepted_2023_run385_freeze",
+        [
+            "separate_2023_run385_one_shot_decision"
+        ]
+    ],
+    [
+        "accepted_remaining_annual_freezes",
+        [
+            "accepted_2023_run385_freeze"
+        ]
+    ],
+    [
+        "cross_year_pattern_economics",
+        [
+            "accepted_remaining_annual_freezes"
+        ]
+    ],
+    [
+        "strategy_v1_freeze",
+        [
+            "cross_year_pattern_economics"
+        ]
+    ],
+    [
+        "prospective_order_impossible_shadow",
+        [
+            "strategy_v1_freeze"
+        ]
+    ],
+    [
+        "fixed_version_demo_review",
+        [
+            "prospective_order_impossible_shadow"
+        ]
+    ],
+    [
+        "phase10_live_readiness_approval",
+        [
+            "fixed_version_demo_review"
+        ]
+    ],
+    [
+        "separate_phase11_real_money_approval",
+        [
+            "phase10_live_readiness_approval"
+        ]
+    ]
+]
+
 def render_readiness(docs_root: Path) -> dict[str, object]:
     """Create a deterministic, permanently nonauthorizing OFFLINE report.
 
@@ -111,6 +349,45 @@ def render_readiness(docs_root: Path) -> dict[str, object]:
     graph = docs["dependency"]
     review = docs["preregistration"]
     snap = docs["admin_snapshot"]
+
+    for key, packet in docs.items():
+        _require(
+            set(packet) == set(EXPECTED_TOP_LEVEL[key]),
+            "unexpected or removed top-level documentary members in " + key,
+        )
+    _require(
+        set(annual["authority_flags"]) == set(EXPECTED_ANNUAL_FLAGS)
+        and set(econ["reported_economic_measurements"]) == set(EXPECTED_ECONOMIC_METRICS),
+        "annual authority flag / economic metric identity mismatch",
+    )
+    _require(
+        [gate["id"] for gate in review["gates"]] == EXPECTED_RESEARCH_CATEGORIES
+        and all(set(gate) == {
+            "id", "required_evidence", "status", "evidence_ref", "signoff"
+        } and isinstance(gate["required_evidence"], str)
+              and bool(gate["required_evidence"].strip())
+              for gate in review["gates"]),
+        "required strategy review categories or evidence fields changed",
+    )
+    _require(
+        [(node["id"], node["prerequisites"]) for node in graph["nodes"]]
+        == [(edge[0], edge[1]) for edge in EXPECTED_DAG_EDGES]
+        and all(set(node) == {
+            "id", "prerequisites", "status",
+            "verified_current_evidence", "authorizes_execution"
+        } for node in graph["nodes"]),
+        "graph has unexpected or bypassed ordered dependencies",
+    )
+    _require(
+        all(set(proof) == {
+            "id", "status", "evidence_ref", "reviewer_signoff"
+        } for proof in snap["external_proofs"])
+        and all(set(route) == {
+            "id", "status", "selected",
+            "independently_reviewed", "required_claim"
+        } for route in snap["remediation_routes"]),
+        "snapshot has unexpected evidence/route approval members",
+    )
 
     _require(
         tuple(docs[key]["decision"] for key in FILES) == DECISIONS,
