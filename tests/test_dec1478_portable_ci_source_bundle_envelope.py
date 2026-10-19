@@ -16607,3 +16607,426 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_bad_array_key_escape_clean_control(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+
+    def _assert_unreviewed_json_number_lexeme(self, category, token):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.assertIn(category, REQUIRED)
+        self.assertIn(token, ("01", "+1", "-.", ".5", "1.", "1e"))
+        clean = self._portable_top_level_members_json()
+        # A single required root category value is replaced, leaving
+        # all other evidence intact. These tokens are illegal JSON.
+        encoded = self._portable_top_level_members_json({
+            category: json.dumps(category) + ":" + token})
+        self.assertNotEqual(encoded, clean)
+        with self.assertRaises(json.JSONDecodeError):
+            json.loads(encoded)
+        direct = self.verdict()
+        parsed = review_bundle_json_text(encoded)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(encoded), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(clean, self._portable_top_level_members_json())
+        self.assertTrue(direct["source_consistency"])
+        self.assertEqual(direct["diagnostics"], ())
+        self.assertEqual(status, 2)
+        self.assertEqual(parsed["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"],
+                         ["BUNDLE_JSON_GRAMMAR_UNREVIEWED"])
+        self.assertNotIn("tests/sample.py", out.getvalue())
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        for result in (parsed, emitted):
+            self.assertFalse(result["source_consistency"])
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_bad_numeric_schema_leading_zero(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "schema", "01")
+
+    def test_portable_bad_numeric_schema_plus(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "schema", "+1")
+
+    def test_portable_bad_numeric_schema_incomplete_negative_decimal(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "schema", "-.")
+
+    def test_portable_bad_numeric_schema_missing_integer(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "schema", ".5")
+
+    def test_portable_bad_numeric_schema_missing_fraction(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "schema", "1.")
+
+    def test_portable_bad_numeric_schema_missing_exponent(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "schema", "1e")
+
+    def test_portable_bad_numeric_pr_leading_zero(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "pr", "01")
+
+    def test_portable_bad_numeric_pr_plus(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "pr", "+1")
+
+    def test_portable_bad_numeric_pr_incomplete_negative_decimal(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "pr", "-.")
+
+    def test_portable_bad_numeric_pr_missing_integer(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "pr", ".5")
+
+    def test_portable_bad_numeric_pr_missing_fraction(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "pr", "1.")
+
+    def test_portable_bad_numeric_pr_missing_exponent(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "pr", "1e")
+
+    def test_portable_bad_numeric_runs_leading_zero(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "runs", "01")
+
+    def test_portable_bad_numeric_runs_plus(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "runs", "+1")
+
+    def test_portable_bad_numeric_runs_incomplete_negative_decimal(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "runs", "-.")
+
+    def test_portable_bad_numeric_runs_missing_integer(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "runs", ".5")
+
+    def test_portable_bad_numeric_runs_missing_fraction(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "runs", "1.")
+
+    def test_portable_bad_numeric_runs_missing_exponent(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "runs", "1e")
+
+    def test_portable_bad_numeric_jobs_by_run_leading_zero(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "jobs_by_run", "01")
+
+    def test_portable_bad_numeric_jobs_by_run_plus(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "jobs_by_run", "+1")
+
+    def test_portable_bad_numeric_jobs_by_run_incomplete_negative_decimal(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "jobs_by_run", "-.")
+
+    def test_portable_bad_numeric_jobs_by_run_missing_integer(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "jobs_by_run", ".5")
+
+    def test_portable_bad_numeric_jobs_by_run_missing_fraction(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "jobs_by_run", "1.")
+
+    def test_portable_bad_numeric_jobs_by_run_missing_exponent(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "jobs_by_run", "1e")
+
+    def test_portable_bad_numeric_compare_leading_zero(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "compare", "01")
+
+    def test_portable_bad_numeric_compare_plus(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "compare", "+1")
+
+    def test_portable_bad_numeric_compare_incomplete_negative_decimal(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "compare", "-.")
+
+    def test_portable_bad_numeric_compare_missing_integer(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "compare", ".5")
+
+    def test_portable_bad_numeric_compare_missing_fraction(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "compare", "1.")
+
+    def test_portable_bad_numeric_compare_missing_exponent(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "compare", "1e")
+
+    def test_portable_bad_numeric_commit_leading_zero(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "commit", "01")
+
+    def test_portable_bad_numeric_commit_plus(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "commit", "+1")
+
+    def test_portable_bad_numeric_commit_incomplete_negative_decimal(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "commit", "-.")
+
+    def test_portable_bad_numeric_commit_missing_integer(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "commit", ".5")
+
+    def test_portable_bad_numeric_commit_missing_fraction(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "commit", "1.")
+
+    def test_portable_bad_numeric_commit_missing_exponent(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "commit", "1e")
+
+    def test_portable_bad_numeric_tree_leading_zero(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "tree", "01")
+
+    def test_portable_bad_numeric_tree_plus(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "tree", "+1")
+
+    def test_portable_bad_numeric_tree_incomplete_negative_decimal(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "tree", "-.")
+
+    def test_portable_bad_numeric_tree_missing_integer(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "tree", ".5")
+
+    def test_portable_bad_numeric_tree_missing_fraction(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "tree", "1.")
+
+    def test_portable_bad_numeric_tree_missing_exponent(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "tree", "1e")
+
+    def test_portable_bad_numeric_nodes_leading_zero(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "nodes", "01")
+
+    def test_portable_bad_numeric_nodes_plus(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "nodes", "+1")
+
+    def test_portable_bad_numeric_nodes_incomplete_negative_decimal(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "nodes", "-.")
+
+    def test_portable_bad_numeric_nodes_missing_integer(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "nodes", ".5")
+
+    def test_portable_bad_numeric_nodes_missing_fraction(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "nodes", "1.")
+
+    def test_portable_bad_numeric_nodes_missing_exponent(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "nodes", "1e")
+
+    def test_portable_bad_numeric_changed_bytes_b64_leading_zero(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "changed_bytes_b64", "01")
+
+    def test_portable_bad_numeric_changed_bytes_b64_plus(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "changed_bytes_b64", "+1")
+
+    def test_portable_bad_numeric_changed_bytes_b64_incomplete_negative_decimal(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "changed_bytes_b64", "-.")
+
+    def test_portable_bad_numeric_changed_bytes_b64_missing_integer(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "changed_bytes_b64", ".5")
+
+    def test_portable_bad_numeric_changed_bytes_b64_missing_fraction(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "changed_bytes_b64", "1.")
+
+    def test_portable_bad_numeric_changed_bytes_b64_missing_exponent(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "changed_bytes_b64", "1e")
+
+    def test_portable_bad_numeric_ci_workflow_bytes_b64_leading_zero(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "ci_workflow_bytes_b64", "01")
+
+    def test_portable_bad_numeric_ci_workflow_bytes_b64_plus(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "ci_workflow_bytes_b64", "+1")
+
+    def test_portable_bad_numeric_ci_workflow_bytes_b64_incomplete_negative_decimal(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "ci_workflow_bytes_b64", "-.")
+
+    def test_portable_bad_numeric_ci_workflow_bytes_b64_missing_integer(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "ci_workflow_bytes_b64", ".5")
+
+    def test_portable_bad_numeric_ci_workflow_bytes_b64_missing_fraction(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "ci_workflow_bytes_b64", "1.")
+
+    def test_portable_bad_numeric_ci_workflow_bytes_b64_missing_exponent(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "ci_workflow_bytes_b64", "1e")
+
+    def test_portable_bad_numeric_full_tree_snapshots_leading_zero(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "full_tree_snapshots", "01")
+
+    def test_portable_bad_numeric_full_tree_snapshots_plus(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "full_tree_snapshots", "+1")
+
+    def test_portable_bad_numeric_full_tree_snapshots_incomplete_negative_decimal(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "full_tree_snapshots", "-.")
+
+    def test_portable_bad_numeric_full_tree_snapshots_missing_integer(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "full_tree_snapshots", ".5")
+
+    def test_portable_bad_numeric_full_tree_snapshots_missing_fraction(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "full_tree_snapshots", "1.")
+
+    def test_portable_bad_numeric_full_tree_snapshots_missing_exponent(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "full_tree_snapshots", "1e")
+
+    def test_portable_bad_numeric_merge_checkout_snapshot_leading_zero(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "merge_checkout_snapshot", "01")
+
+    def test_portable_bad_numeric_merge_checkout_snapshot_plus(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "merge_checkout_snapshot", "+1")
+
+    def test_portable_bad_numeric_merge_checkout_snapshot_incomplete_negative_decimal(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "merge_checkout_snapshot", "-.")
+
+    def test_portable_bad_numeric_merge_checkout_snapshot_missing_integer(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "merge_checkout_snapshot", ".5")
+
+    def test_portable_bad_numeric_merge_checkout_snapshot_missing_fraction(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "merge_checkout_snapshot", "1.")
+
+    def test_portable_bad_numeric_merge_checkout_snapshot_missing_exponent(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "merge_checkout_snapshot", "1e")
+
+    def test_portable_bad_numeric_checkout_by_run_leading_zero(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "checkout_by_run", "01")
+
+    def test_portable_bad_numeric_checkout_by_run_plus(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "checkout_by_run", "+1")
+
+    def test_portable_bad_numeric_checkout_by_run_incomplete_negative_decimal(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "checkout_by_run", "-.")
+
+    def test_portable_bad_numeric_checkout_by_run_missing_integer(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "checkout_by_run", ".5")
+
+    def test_portable_bad_numeric_checkout_by_run_missing_fraction(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "checkout_by_run", "1.")
+
+    def test_portable_bad_numeric_checkout_by_run_missing_exponent(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "checkout_by_run", "1e")
+
+    def test_portable_bad_numeric_phase3_evidence_snapshot_leading_zero(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "phase3_evidence_snapshot", "01")
+
+    def test_portable_bad_numeric_phase3_evidence_snapshot_plus(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "phase3_evidence_snapshot", "+1")
+
+    def test_portable_bad_numeric_phase3_evidence_snapshot_incomplete_negative_decimal(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "phase3_evidence_snapshot", "-.")
+
+    def test_portable_bad_numeric_phase3_evidence_snapshot_missing_integer(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "phase3_evidence_snapshot", ".5")
+
+    def test_portable_bad_numeric_phase3_evidence_snapshot_missing_fraction(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "phase3_evidence_snapshot", "1.")
+
+    def test_portable_bad_numeric_phase3_evidence_snapshot_missing_exponent(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "phase3_evidence_snapshot", "1e")
+
+    def test_portable_bad_numeric_raw_ci_runner_logs_leading_zero(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "raw_ci_runner_logs", "01")
+
+    def test_portable_bad_numeric_raw_ci_runner_logs_plus(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "raw_ci_runner_logs", "+1")
+
+    def test_portable_bad_numeric_raw_ci_runner_logs_incomplete_negative_decimal(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "raw_ci_runner_logs", "-.")
+
+    def test_portable_bad_numeric_raw_ci_runner_logs_missing_integer(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "raw_ci_runner_logs", ".5")
+
+    def test_portable_bad_numeric_raw_ci_runner_logs_missing_fraction(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "raw_ci_runner_logs", "1.")
+
+    def test_portable_bad_numeric_raw_ci_runner_logs_missing_exponent(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "raw_ci_runner_logs", "1e")
+
+    def test_portable_bad_numeric_raw_ci_log_receipts_leading_zero(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "raw_ci_log_receipts", "01")
+
+    def test_portable_bad_numeric_raw_ci_log_receipts_plus(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "raw_ci_log_receipts", "+1")
+
+    def test_portable_bad_numeric_raw_ci_log_receipts_incomplete_negative_decimal(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "raw_ci_log_receipts", "-.")
+
+    def test_portable_bad_numeric_raw_ci_log_receipts_missing_integer(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "raw_ci_log_receipts", ".5")
+
+    def test_portable_bad_numeric_raw_ci_log_receipts_missing_fraction(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "raw_ci_log_receipts", "1.")
+
+    def test_portable_bad_numeric_raw_ci_log_receipts_missing_exponent(self):
+        self._assert_unreviewed_json_number_lexeme(
+            "raw_ci_log_receipts", "1e")
+
+    def test_portable_bad_numeric_clean_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
