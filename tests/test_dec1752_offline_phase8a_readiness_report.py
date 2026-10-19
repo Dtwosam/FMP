@@ -432,6 +432,41 @@ class OfflineBlockerDiagnosticTests(unittest.TestCase):
             self.assertIn("BLOCKED:", err.getvalue())
 
 
+
+    def test_human_review_criteria_cover_every_missing_external_proof(self):
+        criteria = MOD["PROOF_ACCEPTANCE_CRITERIA"]
+        self.assertEqual(tuple(criteria), MOD["PROOFS"])
+        self.assertTrue(all(isinstance(value, str) and value.strip()
+                            for value in criteria.values()))
+
+    def test_human_review_sheet_has_explicit_independent_acceptance_evidence(self):
+        md = MOD["render_human_review_markdown"](RENDER(self.docs))
+        self.assertIn("| Required independent evidence |", md)
+        self.assertIn("organization and enterprise protection", md)
+        self.assertIn("server ref resolution", md)
+        self.assertIn("all 18 cells and freeze jobs", md)
+        self.assertIn("UID/caps/mount and alias isolation", md)
+        self.assertIn("immutable predecessor 2022 freeze", md)
+        self.assertIn("no consumed run385 or later run", md)
+        self.assertIn("rollback/irreversible no-retry", md)
+        self.assertEqual(md.count("| **MISSING** |"), 8)
+
+    def test_human_review_evidence_descriptions_do_not_grant_action(self):
+        md = MOD["render_human_review_markdown"](RENDER(self.docs))
+        self.assertNotIn("gh workflow run ", md)
+        self.assertNotIn("Authorization: PASS", md)
+        self.assertIn("**No action is authorized by this handoff.**", md)
+        self.assertIn("**execution and retry: BLOCKED**", md)
+
+    def test_evidence_acceptance_criteria_are_not_dynamic_signoffs(self):
+        report = RENDER(self.docs)
+        self.assertTrue(all(row["status"] == "MISSING"
+                            for row in report["missing_external_proofs"]))
+        self.assertFalse(report["allows_protected_run"])
+        md = MOD["render_human_review_markdown"](report)
+        self.assertIn("**Documentary status: BLOCKED", md)
+
+
     def test_module_entrypoint_has_no_import_time_side_effects(self):
         self.assertIn("render_readiness", MOD)
         self.assertIn("main", MOD)
