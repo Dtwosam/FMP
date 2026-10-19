@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 from decimal import Decimal, ROUND_HALF_UP
 import hashlib
+from itertools import combinations
 import json
 import os
 from pathlib import Path
@@ -248,6 +249,58 @@ def replay_phase7_cost_evidence(doc_path: Path = PHASE7_DOC) -> dict[str, object
         largest_positive_pnl / positive_pnl * Decimal(100)
     ).quantize(Decimal("0.001"), rounding=ROUND_HALF_UP)
 
+    # Deterministic removal sensitivity on published rounded 0.2-pip window
+    # PnLs. No resampling distribution, significance, inferred independence,
+    # cost interpolation per window, forecast, or trading decision is implied.
+    original_window_net = observed_net_pnl
+    drop_one = [
+        {
+            "excluded_historical_window": row["window"],
+            "remaining_rounded_window_pnl_usd": str(
+                original_window_net - Decimal(row["historic_net_pnl_usd"])
+            ),
+        }
+        for row in windows
+    ]
+    drop_two = [
+        {
+            "excluded_historical_windows": [left["window"], right["window"]],
+            "remaining_rounded_window_pnl_usd": str(
+                original_window_net
+                - Decimal(left["historic_net_pnl_usd"])
+                - Decimal(right["historic_net_pnl_usd"])
+            ),
+        }
+        for left, right in combinations(windows, 2)
+    ]
+    _require(
+        len(drop_one) == 7
+        and len(drop_two) == 21,
+        "all historical window exclusion combinations must be preserved",
+    )
+    worst_pair = min(
+        drop_two,
+        key=lambda row: Decimal(row["remaining_rounded_window_pnl_usd"]),
+    )
+    single_worst = min(
+        drop_one,
+        key=lambda row: Decimal(row["remaining_rounded_window_pnl_usd"]),
+    )
+    pair_loss_count = sum(
+        Decimal(row["remaining_rounded_window_pnl_usd"]) < 0
+        for row in drop_two
+    )
+    _require(
+        worst_pair["excluded_historical_windows"] == ["2025-Q2", "2025-Q4"]
+        and Decimal(worst_pair["remaining_rounded_window_pnl_usd"])
+            == Decimal("-591.29")
+        and single_worst["excluded_historical_window"] == "2025-Q4"
+        and Decimal(single_worst["remaining_rounded_window_pnl_usd"])
+            == Decimal("82.88")
+        and pair_loss_count == 5,
+        "historical cost-window exclusion concentration changed",
+    )
+
     # Simple interpolation of two reported retrospective table endpoints.
     # Not a new empirical run or a usable predictive execution threshold.
     left = Decimal(PIPS[1])
@@ -290,6 +343,12 @@ def replay_phase7_cost_evidence(doc_path: Path = PHASE7_DOC) -> dict[str, object
             "independent_starting_equity_per_window_usd": "100000",
             "not_a_compounded_portfolio_return": True,
         },
+        "historical_0_2_pip_leave_one_out": drop_one,
+        "historical_0_2_pip_leave_two_out": drop_two,
+        "historical_0_2_pip_leave_one_out_min": single_worst,
+        "historical_0_2_pip_leave_two_out_min": worst_pair,
+        "historical_0_2_pip_negative_after_two_exclusions_count": pair_loss_count,
+        "historical_window_exclusion_is_not_statistical_validation": True,
         "historical_slippage_sign_reversal_bracket_pips": ["0.5", "1.0"],
         "linear_zero_interpolation_pips_not_observed": str(
             zero.quantize(Decimal("0.000001"), rounding=ROUND_HALF_UP)),
