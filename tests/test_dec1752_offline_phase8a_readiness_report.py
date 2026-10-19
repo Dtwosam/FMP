@@ -303,7 +303,7 @@ class OfflineBlockerDiagnosticTests(unittest.TestCase):
         rendered = MOD["render_human_review_markdown"](RENDER(self.docs))
         for proof in MOD["PROOFS"]:
             with self.subTest(proof=proof):
-                self.assertEqual(rendered.count("\`" + proof + "\`"), 1)
+                self.assertEqual(rendered.count("`" + proof + "`"), 1)
 
     def test_markdown_carries_all_five_source_fingerprints(self):
         report = RENDER(self.docs)
@@ -316,7 +316,7 @@ class OfflineBlockerDiagnosticTests(unittest.TestCase):
         rendered = MOD["render_human_review_markdown"](RENDER(self.docs))
         for stage in MOD["STAGES"]:
             with self.subTest(stage=stage):
-                self.assertIn("\`" + stage + "\` — BLOCKED", rendered)
+                self.assertIn("`" + stage + "` — BLOCKED", rendered)
 
     def test_markdown_rejects_any_forged_unblocked_or_live_claim(self):
         base = RENDER(self.docs)
@@ -378,6 +378,58 @@ class OfflineBlockerDiagnosticTests(unittest.TestCase):
             status = MOD["main"](["--docs-root", str(self.docs)])
         self.assertEqual(status, 0)
         self.assertEqual(json.loads(output.getvalue()), RENDER(self.docs))
+
+
+
+    def test_markdown_real_backticks_are_not_backslash_escaped(self):
+        markdown = MOD["render_human_review_markdown"](RENDER(self.docs))
+        tick = chr(96)
+        self.assertIn(tick + "main" + tick, markdown)
+        self.assertIn(tick + "annual_2023" + tick + " — BLOCKED", markdown)
+        self.assertNotIn(chr(92) + tick, markdown)
+
+    def test_markdown_source_digest_is_printable_code_span(self):
+        markdown = MOD["render_human_review_markdown"](RENDER(self.docs))
+        tick = chr(96)
+        self.assertIn(tick + "sha256:", markdown)
+        self.assertIn(
+            tick + "dec1750-phase8a-admin-blocker-evidence-snapshot.json" + tick,
+            markdown)
+
+    def test_markdown_cli_missing_source_fails_closed_without_stdout(self):
+        import contextlib
+        import io
+        with tempfile.TemporaryDirectory() as dirname:
+            out, err = io.StringIO(), io.StringIO()
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                exit_code = MOD["main"]([
+                    "--docs-root", dirname, "--format", "markdown"])
+            self.assertEqual(exit_code, 2)
+            self.assertEqual(out.getvalue(), "")
+            self.assertIn("BLOCKED: source evidence cannot be trusted",
+                          err.getvalue())
+
+    def test_markdown_cli_forged_annual_year_fails_closed_without_stdout(self):
+        import contextlib
+        import io
+        with tempfile.TemporaryDirectory() as dirname:
+            root = Path(dirname)
+            for filename in FILES.values():
+                (root / filename).write_bytes(
+                    (self.docs / filename).read_bytes())
+            target = root / FILES["annual"]
+            packet = json.loads(target.read_text(encoding="utf-8"))
+            packet["yearly_catalogue_status"][9][
+                "research_evidence"] = "HISTORICALLY_FROZEN"
+            target.write_text(
+                json.dumps(packet, sort_keys=True) + "\n", encoding="utf-8")
+            out, err = io.StringIO(), io.StringIO()
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                exit_code = MOD["main"]([
+                    "--docs-root", dirname, "--format", "markdown"])
+            self.assertEqual(exit_code, 2)
+            self.assertEqual(out.getvalue(), "")
+            self.assertIn("BLOCKED:", err.getvalue())
 
 
     def test_module_entrypoint_has_no_import_time_side_effects(self):

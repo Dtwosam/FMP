@@ -755,7 +755,7 @@ def render_human_review_markdown(report: dict[str, object]) -> str:
         "reviewer-signoff or fresh one-shot run-inventory evidence.",
         "",
         f"**Public source observation (stale):** {observed}, "
-        f"\`main\` at \`{main_sha}\`. "
+        f"`main` at `{main_sha}`. "
         "This is not proof of the SHA at any future dispatch.",
         "**Next protected year:** 2023 / annual run 385 / attempt 1; "
         "**execution and retry: BLOCKED**.",
@@ -766,7 +766,7 @@ def render_human_review_markdown(report: dict[str, object]) -> str:
         "| --- | --- | --- |",
     ]
     for proof in proofs:
-        out.append(f"| \`{proof['id']}\` | "
+        out.append(f"| `{proof['id']}` | "
                    f"{proof['review_role']} | **MISSING** |")
     out.extend([
         "",
@@ -774,7 +774,7 @@ def render_human_review_markdown(report: dict[str, object]) -> str:
         "",
     ])
     for stage in stages:
-        out.append(f"- \`{stage}\` — BLOCKED")
+        out.append(f"- `{stage}` — BLOCKED")
     out.extend([
         "",
         "## Original source fingerprints",
@@ -784,7 +784,7 @@ def render_human_review_markdown(report: dict[str, object]) -> str:
         "",
     ])
     for key in FILES:
-        out.append(f"- \`{FILES[key]}\`: \`sha256:{hashes[key]}\`")
+        out.append(f"- `{FILES[key]}`: `sha256:{hashes[key]}`")
     out.extend([
         "",
         "## Human-only next decision",
@@ -815,14 +815,16 @@ def main(argv=None):
     args = parser.parse_args(argv)
     try:
         result = render_readiness(args.docs_root)
+        if args.format == "markdown":
+            rendered = render_human_review_markdown(result)
+        else:
+            rendered = json.dumps(
+                result, indent=2, sort_keys=True, ensure_ascii=False)
     except (OSError, UnicodeError, ValueError, KeyError, TypeError) as exc:
         print("BLOCKED: source evidence cannot be trusted: " + str(exc),
               file=sys.stderr)
         return 2
-    if args.format == "markdown":
-        print(render_human_review_markdown(result), end="")
-    else:
-        print(json.dumps(result, indent=2, sort_keys=True, ensure_ascii=False))
+    print(rendered, end="" if args.format == "markdown" else "\n")
     return 0  # Reporting succeeded; NOT an action authorization.
 
 
