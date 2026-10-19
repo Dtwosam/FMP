@@ -20,6 +20,7 @@ import sys
 
 PHASE7_DOC = Path(__file__).resolve().parents[1] / "docs" / "phase7-walk-forward-evidence.md"
 FROZEN_GIT_BLOB_SHA1 = "c1d8fe7f71681f2e06b472c77525a4dd800c896f"
+FROZEN_PHASE7_DOC_SHA256 = "afe93d152e52c5a18b003967f97a411f2a1ac60dd54d913920536faa1863bb75"
 PIPS = ("0.2", "0.5", "1.0")
 EXPECTED_NET_RETURN_PCT = ("0.757266", "0.262176", "-0.562118")
 EXPECTED_PNL_USD = ("757.27", "262.18", "-562.12")
@@ -98,6 +99,11 @@ def replay_phase7_cost_evidence(doc_path: Path = PHASE7_DOC) -> dict[str, object
     ).hexdigest()
     _require(blob == FROZEN_GIT_BLOB_SHA1,
              "historic phase7 source differs from reviewed Git blob")
+    source_sha256 = hashlib.sha256(raw).hexdigest()
+    _require(
+        source_sha256 == FROZEN_PHASE7_DOC_SHA256,
+        "historic phase7 source differs from independently pinned SHA-256",
+    )
     text = raw.decode("utf-8")
     for required in (
         "**Experiment:** `EXP-20260915-008`",
@@ -386,6 +392,7 @@ def replay_phase7_cost_evidence(doc_path: Path = PHASE7_DOC) -> dict[str, object
         "status": "RETROSPECTIVE_DIAGNOSTIC_NOT_EXECUTION_AUTHORITY",
         "source_file": "docs/phase7-walk-forward-evidence.md",
         "source_git_blob_sha1": blob,
+        "source_document_sha256": source_sha256,
         "phase7_stage2_run": int(PHASE7_RUN),
         "phase7_stage2_code_sha": STAGE2_SHA,
         "historic_candidate": "USDJPY 15m session_breakout",

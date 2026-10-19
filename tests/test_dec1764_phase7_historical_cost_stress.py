@@ -355,6 +355,39 @@ class Phase7CostStressHistoricalReplayTests(unittest.TestCase):
         self.assertIs(result["live_trading_authorized"], False)
         self.assertEqual(result["allowed_actions"], [])
 
+    def test_historical_document_has_separate_pinned_sha256(self):
+        report = REPLAY()
+        self.assertEqual(
+            report["source_document_sha256"],
+            "afe93d152e52c5a18b003967f97a411f2a1ac60dd54d913920536faa1863bb75",
+        )
+        self.assertEqual(
+            MODULE["FROZEN_PHASE7_DOC_SHA256"],
+            report["source_document_sha256"],
+        )
+        self.assertNotEqual(
+            report["source_document_sha256"],
+            report["source_git_blob_sha1"],
+        )
+
+    def test_sha256_detects_edit_even_when_git_blob_check_is_stubbed(self):
+        from unittest import mock
+        with tempfile.TemporaryDirectory() as folder:
+            tampered = Path(folder) / "phase7.md"
+            tampered.write_bytes(ORIGINAL.read_bytes() + b"\nretrospective drift\n")
+            with mock.patch.object(MODULE["hashlib"], "sha1") as fake_sha1:
+                fake_sha1.return_value.hexdigest.return_value = (
+                    MODULE["FROZEN_GIT_BLOB_SHA1"])
+                with self.assertRaisesRegex(ValueError, "pinned SHA-256"):
+                    REPLAY(tampered)
+
+    def test_sha256_identity_does_not_claim_future_trade_authority(self):
+        report = REPLAY()
+        self.assertEqual(len(report["source_document_sha256"]), 64)
+        self.assertIs(report["protected_2023_run385_authorized"], False)
+        self.assertIs(report["live_trading_authorized"], False)
+        self.assertIsNone(report["forward_profit_claim"])
+
     def test_cli_returns_nonzero_even_with_correct_historical_report(self):
         stdout, stderr = io.StringIO(), io.StringIO()
         with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
