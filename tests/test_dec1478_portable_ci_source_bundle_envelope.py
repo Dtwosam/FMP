@@ -13549,3 +13549,109 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_array_nested_duplicate_clean_control(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+
+    def _assert_valid_escaped_nested_category_key_equivalent(self, category):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.assertIn(category, DICT_KEYS)
+        original = self.envelope[category]
+        self.assertIs(type(original), dict)
+        names = sorted(name for name in original
+                       if type(name) is str and name)
+        self.assertTrue(names)
+        target = names[0]
+        spelling = json.dumps(target)
+        alias = ('"' + "\\u%04x" % ord(target[0]) +
+                 target[1:] + '"')
+        self.assertNotEqual(spelling, alias)
+        child_members = []
+        for name, value in sorted(original.items()):
+            child_members.append(
+                (alias if name == target else json.dumps(name)) + ":" +
+                json.dumps(value, sort_keys=True, separators=(",", ":")))
+        nested_json = "{" + ",".join(child_members) + "}"
+        raw = self._portable_top_level_members_json()
+        encoded = self._portable_top_level_members_json({
+            category: json.dumps(category) + ":" + nested_json})
+        self.assertNotEqual(encoded, raw)
+        self.assertEqual(json.loads(encoded), self.envelope)
+        self.assertEqual(
+            json.dumps(self.envelope, sort_keys=True,
+                       separators=(",", ":")), raw)
+        direct = self.verdict()
+        parsed = review_bundle_json_text(encoded)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(encoded), out)
+        emitted = json.loads(out.getvalue())
+        self.assertTrue(direct["source_consistency"])
+        self.assertEqual(direct, parsed)
+        self.assertEqual(status, 0)
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"], [])
+        self.assertTrue(emitted["source_consistency"])
+        self.assertNotIn("tests/sample.py", out.getvalue())
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        for result in (direct, parsed, emitted):
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_valid_nested_escape_pr(self):
+        self._assert_valid_escaped_nested_category_key_equivalent(
+            "pr")
+
+    def test_portable_valid_nested_escape_jobs_by_run(self):
+        self._assert_valid_escaped_nested_category_key_equivalent(
+            "jobs_by_run")
+
+    def test_portable_valid_nested_escape_compare(self):
+        self._assert_valid_escaped_nested_category_key_equivalent(
+            "compare")
+
+    def test_portable_valid_nested_escape_commit(self):
+        self._assert_valid_escaped_nested_category_key_equivalent(
+            "commit")
+
+    def test_portable_valid_nested_escape_tree(self):
+        self._assert_valid_escaped_nested_category_key_equivalent(
+            "tree")
+
+    def test_portable_valid_nested_escape_nodes(self):
+        self._assert_valid_escaped_nested_category_key_equivalent(
+            "nodes")
+
+    def test_portable_valid_nested_escape_changed_bytes_b64(self):
+        self._assert_valid_escaped_nested_category_key_equivalent(
+            "changed_bytes_b64")
+
+    def test_portable_valid_nested_escape_ci_workflow_bytes_b64(self):
+        self._assert_valid_escaped_nested_category_key_equivalent(
+            "ci_workflow_bytes_b64")
+
+    def test_portable_valid_nested_escape_full_tree_snapshots(self):
+        self._assert_valid_escaped_nested_category_key_equivalent(
+            "full_tree_snapshots")
+
+    def test_portable_valid_nested_escape_merge_checkout_snapshot(self):
+        self._assert_valid_escaped_nested_category_key_equivalent(
+            "merge_checkout_snapshot")
+
+    def test_portable_valid_nested_escape_checkout_by_run(self):
+        self._assert_valid_escaped_nested_category_key_equivalent(
+            "checkout_by_run")
+
+    def test_portable_valid_nested_escape_phase3_evidence_snapshot(self):
+        self._assert_valid_escaped_nested_category_key_equivalent(
+            "phase3_evidence_snapshot")
+
+    def test_portable_valid_nested_escape_raw_ci_runner_logs(self):
+        self._assert_valid_escaped_nested_category_key_equivalent(
+            "raw_ci_runner_logs")
+
+    def test_portable_valid_nested_escape_raw_ci_log_receipts(self):
+        self._assert_valid_escaped_nested_category_key_equivalent(
+            "raw_ci_log_receipts")
+
+    def test_portable_valid_nested_escape_clean_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
