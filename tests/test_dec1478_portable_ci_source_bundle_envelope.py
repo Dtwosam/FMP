@@ -15228,3 +15228,159 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_raw_control_clean_control(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+
+    def _assert_valid_escaped_control_equivalent(self, category, in_key):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.assertIn(category, DICT_KEYS)
+        before = self._portable_top_level_members_json()
+        modified = copy.deepcopy(self.envelope)
+        if in_key:
+            modified[category]["synthetic" + chr(0) + "key"] = None
+        else:
+            modified[category]["__synthetic_control_value__"] = (
+                "left" + chr(10) + "right")
+        encoded = json.dumps(modified, sort_keys=True,
+                             separators=(",", ":"), ensure_ascii=True)
+        expected_spelling = "\\u0000" if in_key else "\\n"
+        self.assertIn(expected_spelling, encoded)
+        self.assertEqual(json.loads(encoded), modified)
+        direct = review_bundle_envelope(modified)
+        parsed = review_bundle_json_text(encoded)
+        self.assertEqual(parsed, direct)
+        self.assertNotIn("BUNDLE_JSON_GRAMMAR_UNREVIEWED",
+                         parsed["diagnostics"])
+        self.assertNotIn("BUNDLE_JSON_UNICODE_UNREVIEWED",
+                         parsed["diagnostics"])
+        self.assertEqual(self._portable_top_level_members_json(), before)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(encoded), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(status, 0 if direct["source_consistency"] else 2)
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["source_consistency"],
+                         direct["source_consistency"])
+        self.assertEqual(emitted["diagnostics"],
+                         list(direct["diagnostics"]))
+        self.assertNotIn("tests/sample.py", out.getvalue())
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        for result in (direct, parsed, emitted):
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_escaped_control_pr_nul_key(self):
+        self._assert_valid_escaped_control_equivalent(
+            "pr", True)
+
+    def test_portable_escaped_control_pr_newline_value(self):
+        self._assert_valid_escaped_control_equivalent(
+            "pr", False)
+
+    def test_portable_escaped_control_jobs_by_run_nul_key(self):
+        self._assert_valid_escaped_control_equivalent(
+            "jobs_by_run", True)
+
+    def test_portable_escaped_control_jobs_by_run_newline_value(self):
+        self._assert_valid_escaped_control_equivalent(
+            "jobs_by_run", False)
+
+    def test_portable_escaped_control_compare_nul_key(self):
+        self._assert_valid_escaped_control_equivalent(
+            "compare", True)
+
+    def test_portable_escaped_control_compare_newline_value(self):
+        self._assert_valid_escaped_control_equivalent(
+            "compare", False)
+
+    def test_portable_escaped_control_commit_nul_key(self):
+        self._assert_valid_escaped_control_equivalent(
+            "commit", True)
+
+    def test_portable_escaped_control_commit_newline_value(self):
+        self._assert_valid_escaped_control_equivalent(
+            "commit", False)
+
+    def test_portable_escaped_control_tree_nul_key(self):
+        self._assert_valid_escaped_control_equivalent(
+            "tree", True)
+
+    def test_portable_escaped_control_tree_newline_value(self):
+        self._assert_valid_escaped_control_equivalent(
+            "tree", False)
+
+    def test_portable_escaped_control_nodes_nul_key(self):
+        self._assert_valid_escaped_control_equivalent(
+            "nodes", True)
+
+    def test_portable_escaped_control_nodes_newline_value(self):
+        self._assert_valid_escaped_control_equivalent(
+            "nodes", False)
+
+    def test_portable_escaped_control_changed_bytes_b64_nul_key(self):
+        self._assert_valid_escaped_control_equivalent(
+            "changed_bytes_b64", True)
+
+    def test_portable_escaped_control_changed_bytes_b64_newline_value(self):
+        self._assert_valid_escaped_control_equivalent(
+            "changed_bytes_b64", False)
+
+    def test_portable_escaped_control_ci_workflow_bytes_b64_nul_key(self):
+        self._assert_valid_escaped_control_equivalent(
+            "ci_workflow_bytes_b64", True)
+
+    def test_portable_escaped_control_ci_workflow_bytes_b64_newline_value(self):
+        self._assert_valid_escaped_control_equivalent(
+            "ci_workflow_bytes_b64", False)
+
+    def test_portable_escaped_control_full_tree_snapshots_nul_key(self):
+        self._assert_valid_escaped_control_equivalent(
+            "full_tree_snapshots", True)
+
+    def test_portable_escaped_control_full_tree_snapshots_newline_value(self):
+        self._assert_valid_escaped_control_equivalent(
+            "full_tree_snapshots", False)
+
+    def test_portable_escaped_control_merge_checkout_snapshot_nul_key(self):
+        self._assert_valid_escaped_control_equivalent(
+            "merge_checkout_snapshot", True)
+
+    def test_portable_escaped_control_merge_checkout_snapshot_newline_value(self):
+        self._assert_valid_escaped_control_equivalent(
+            "merge_checkout_snapshot", False)
+
+    def test_portable_escaped_control_checkout_by_run_nul_key(self):
+        self._assert_valid_escaped_control_equivalent(
+            "checkout_by_run", True)
+
+    def test_portable_escaped_control_checkout_by_run_newline_value(self):
+        self._assert_valid_escaped_control_equivalent(
+            "checkout_by_run", False)
+
+    def test_portable_escaped_control_phase3_evidence_snapshot_nul_key(self):
+        self._assert_valid_escaped_control_equivalent(
+            "phase3_evidence_snapshot", True)
+
+    def test_portable_escaped_control_phase3_evidence_snapshot_newline_value(self):
+        self._assert_valid_escaped_control_equivalent(
+            "phase3_evidence_snapshot", False)
+
+    def test_portable_escaped_control_raw_ci_runner_logs_nul_key(self):
+        self._assert_valid_escaped_control_equivalent(
+            "raw_ci_runner_logs", True)
+
+    def test_portable_escaped_control_raw_ci_runner_logs_newline_value(self):
+        self._assert_valid_escaped_control_equivalent(
+            "raw_ci_runner_logs", False)
+
+    def test_portable_escaped_control_raw_ci_log_receipts_nul_key(self):
+        self._assert_valid_escaped_control_equivalent(
+            "raw_ci_log_receipts", True)
+
+    def test_portable_escaped_control_raw_ci_log_receipts_newline_value(self):
+        self._assert_valid_escaped_control_equivalent(
+            "raw_ci_log_receipts", False)
+
+    def test_portable_escaped_control_clean_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
