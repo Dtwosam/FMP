@@ -26,6 +26,21 @@ EXPECTED_NET_RETURN_PCT = ("0.757266", "0.262176", "-0.562118")
 EXPECTED_PNL_USD = ("757.27", "262.18", "-562.12")
 EXPECTED_EXPECTANCY_USD = ("3.8054", "1.3175", "-2.8247")
 EXPECTED_PROFIT_FACTOR = ("1.062731", "1.021310", "0.955760")
+
+# Historic documentary claims only; none of these artifacts are downloaded,
+# refreshed or independently reauthenticated by this static replay.
+HISTORIC_STAGE2_PROVENANCE = {
+    "stage1_survivor_artifact_id": "10414407590",
+    "stage1_survivor_zip_sha256": "d9950ceb37188761a3460df7b4ab75463cdf1c19ce42634d910d33bae3f8c8bb",
+    "phase2_processed_artifact_id": "10327600628",
+    "phase2_processed_zip_sha256": "6ee632b38d45a26dcc58be6d6c9555606605e356aee25b135c089b4969426b72",
+    "phase6_checkpoint_commit": "5d387b7ca93d04c498eb04c376e0dd92f1fe1953",
+    "stage2_result_artifact_id": "10414817824",
+    "stage2_result_zip_sha256": "2522bbfd22979fd753fb1f51d2bb0d1ada957090102712fffbfdf59fe345bad4",
+    "result_json_sha256": "ce7ef3f732bf2da7cd9c0df5e5d695dcdadd63e309c9428a6f572801fcb197b7",
+    "windows_json_sha256": "66a1d35b12b68a0762dd98cd6838a2befcaf57ef9ae43bce181241fe4d23a4f0",
+}
+
 PHASE7_RUN = "35015277625"
 STAGE2_SHA = "a1f8a0466463c79fdbceb9d6ebad9e3ea809474d"
 
@@ -114,6 +129,22 @@ def replay_phase7_cost_evidence(doc_path: Path = PHASE7_DOC) -> dict[str, object
         "The 1.0-pip diagnostic is negative",
     ):
         _require(required in text, "frozen historical evidence identity changed")
+
+    for historical_claim in (
+        "Stage 1 artifact `" + HISTORIC_STAGE2_PROVENANCE["stage1_survivor_artifact_id"]
+            + "`, ZIP SHA-256 `" + HISTORIC_STAGE2_PROVENANCE["stage1_survivor_zip_sha256"] + "`",
+        "Phase 2 USDJPY artifact `" + HISTORIC_STAGE2_PROVENANCE["phase2_processed_artifact_id"]
+            + "`, ZIP SHA-256 `" + HISTORIC_STAGE2_PROVENANCE["phase2_processed_zip_sha256"] + "`",
+        "`" + HISTORIC_STAGE2_PROVENANCE["phase6_checkpoint_commit"] + "`",
+        "artifact `" + HISTORIC_STAGE2_PROVENANCE["stage2_result_artifact_id"] + "`",
+        "ZIP SHA-256 is `" + HISTORIC_STAGE2_PROVENANCE["stage2_result_zip_sha256"] + "`",
+        "SHA-256 `" + HISTORIC_STAGE2_PROVENANCE["result_json_sha256"] + "`",
+        "SHA-256 `" + HISTORIC_STAGE2_PROVENANCE["windows_json_sha256"] + "`",
+    ):
+        _require(
+            historical_claim in text,
+            "frozen historical stage2 artifact lineage citation changed",
+        )
 
     rows = [
         line for line in text.splitlines()
@@ -395,6 +426,9 @@ def replay_phase7_cost_evidence(doc_path: Path = PHASE7_DOC) -> dict[str, object
         "source_document_sha256": source_sha256,
         "phase7_stage2_run": int(PHASE7_RUN),
         "phase7_stage2_code_sha": STAGE2_SHA,
+        "published_historic_artifact_lineage": dict(HISTORIC_STAGE2_PROVENANCE),
+        "historic_artifact_bytes_not_downloaded_or_reauthenticated": True,
+        "external_current_provenance_witness": None,
         "historic_candidate": "USDJPY 15m session_breakout",
         "observations": observations,
         "historical_aggregate_cost_step_changes": historical_cost_changes,
