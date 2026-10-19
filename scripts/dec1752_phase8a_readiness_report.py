@@ -511,6 +511,18 @@ EXPECTED_NESTED_SHAPES = {
     ]
 }
 
+
+# These exact source fingerprints are independent of caller-supplied packet
+# content. This reporter is a source-only CLOSED snapshot, not an approval
+# pipeline: a changed packet needs separate human review and a new contract.
+PINNED_SOURCE_SHA256 = {
+    "annual": "d4a37a19a20e5ae26145507afc072a9b9f7936e6c5ac57056a66b8461cbc523f",
+    "economics": "f5b7829869529188cfee0c7fda4c03de4cb357bfa84c92984645295591b6b70c",
+    "dependency": "04c7b11e07e2a38504cb24ac9bd38ba7eb0533cc6eba8010be2de05e08531d12",
+    "preregistration": "2e10b348e6e710d3e53c5af81047b6933acd0a0ba6468723a8cccdf8a940266c",
+    "admin_snapshot": "13b39af6e81e47e652ca9debcea821384efae6a22047640549948d743f49bc69"
+}
+
 def render_readiness(docs_root: Path) -> dict[str, object]:
     """Create a deterministic, permanently nonauthorizing OFFLINE report.
 
@@ -849,6 +861,13 @@ def render_readiness(docs_root: Path) -> dict[str, object]:
         and snap["public_observation"]["observed_main_sha"]
             == OBSERVED_PUBLIC_MAIN_SHA,
         "stale public snapshot identity cannot be replaced with a forged current SHA",
+    )
+
+    _require(
+        tuple(hashes) == tuple(PINNED_SOURCE_SHA256)
+        and all(hashes[key] == expected
+                for key, expected in PINNED_SOURCE_SHA256.items()),
+        "documentary source bytes differ from the reviewed SHA-256 manifest",
     )
 
     return {
