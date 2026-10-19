@@ -687,6 +687,53 @@ class OfflineBlockerDiagnosticTests(unittest.TestCase):
             self.assertIn("BLOCKED:", stderr.getvalue())
 
 
+
+    def test_source_fingerprints_match_explicit_review_manifest(self):
+        report = RENDER(self.docs)
+        expected = MOD["PINNED_SOURCE_SHA256"]
+        self.assertEqual(report["source_sha256"], expected)
+        self.assertEqual(tuple(expected), tuple(FILES))
+        self.assertTrue(all(len(h) == 64 for h in expected.values()))
+
+    def test_benign_annual_description_edit_is_still_an_unreviewed_packet(self):
+        self._tamper("annual", lambda d: d.__setitem__(
+            "description", d["description"] + " — editorial source drift"))
+
+    def test_benign_economic_caveat_edit_must_require_new_source_review(self):
+        self._tamper("economics", lambda d: d.__setitem__(
+            "caveat", d["caveat"] + " Rephrased without gate changes."))
+
+    def test_benign_dag_note_edit_is_rejected_by_source_fingerprint(self):
+        self._tamper("dependency", lambda d: d.__setitem__(
+            "note", d["note"] + " Editorial wording only."))
+
+    def test_benign_preregistration_rationale_edit_is_rejected(self):
+        self._tamper("preregistration", lambda d: d.__setitem__(
+            "rationale", d["rationale"] + " Source changed."))
+
+    def test_benign_admin_snapshot_caveat_edit_is_rejected(self):
+        self._tamper("admin_snapshot", lambda d: d.__setitem__(
+            "caveat", d["caveat"] + " Wording changed."))
+
+    def test_unreviewed_caveat_editorial_edit_cli_exits_two_without_stdout(self):
+        import contextlib
+        import io
+        with tempfile.TemporaryDirectory() as dirname:
+            root = Path(dirname)
+            for filename in FILES.values():
+                (root / filename).write_bytes((self.docs / filename).read_bytes())
+            target = root / FILES["admin_snapshot"]
+            packet = json.loads(target.read_text(encoding="utf-8"))
+            packet["caveat"] += " Previously unseen source words."
+            target.write_text(json.dumps(packet, sort_keys=True), encoding="utf-8")
+            out, err = io.StringIO(), io.StringIO()
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                code = MOD["main"](["--docs-root", dirname])
+            self.assertEqual(code, 2)
+            self.assertEqual(out.getvalue(), "")
+            self.assertIn("reviewed SHA-256 manifest", err.getvalue())
+
+
     def test_module_entrypoint_has_no_import_time_side_effects(self):
         self.assertIn("render_readiness", MOD)
         self.assertIn("main", MOD)
