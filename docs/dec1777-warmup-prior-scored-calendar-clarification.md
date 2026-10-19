@@ -1,0 +1,9 @@
+# DEC-1777 — Clarify historical warm-up vs preceding scored window calendar
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent child of #2023 at `2569abdd79b9174fef44d39e329f607c9801b025`.
+
+DEC-1775 labelled each seven-day warm-up as `reported_warmup_is_not_a_scored_period`. That wording was too broad. The source Stage2 protocol excludes the immediately preceding seven calendar days from the **current** window's scored results, but for windows after 2025 Q1 those days are normally part of the **preceding** quarter's scored interval. A warm-up period is context-only for the later quarter, **not globally unscored**. Confusing the two could hide the legitimate overlap of source context and earlier historical evaluation labels.
+
+This draft replaces the misleading field with `reported_warmup_excluded_from_this_windows_scores`, and explicitly computes `warmup_calendar_overlaps_prior_scored_window`. The first 2025-Q1 window has no preceding published Stage2 window; the next six have calendar overlaps, e.g. 2025-Q2 warm-up **2025-03-25 to 2025-04-01-exclusive** lies within the prior 2025-Q1 scored calendar. This **does not certify the market bars or labels were correctly segregated at actual execution**; no historical artifacts are reopened.
+
+Adds 3 targeted source-only tests (**6489 proposed cumulative**) to keep the calendar semantics and non-authority status explicit. The published Phase7 after-cost figures, Git SHA-1/SHA-256 pins, historic Stage2 workflow date cross-check, and actual security/trading permissions are unchanged. No protected annual 2023/run385/attempt1, Phase8A Strategy V1 edge claim, GitHub workflow/ref/ruleset changes, broker/demo/live orders or real-money trading. Issues #779/#820/#821 remain BLOCKED; own Phase3/full historical-general CI and independent review required.

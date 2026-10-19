@@ -447,7 +447,7 @@ class Phase7CostStressHistoricalReplayTests(unittest.TestCase):
             row["warmup_calendar_days"] == 7
             and row["reported_warmup_end_exclusive"]
                 == row["scored_start_inclusive"]
-            and row["reported_warmup_is_not_a_scored_period"] is True
+            and row["reported_warmup_excluded_from_this_windows_scores"] is True
             for row in audit
         ))
 
@@ -497,6 +497,39 @@ class Phase7CostStressHistoricalReplayTests(unittest.TestCase):
         ))
         self.assertIs(report["phase8a_strategy_v1_edge_proven"], False)
         self.assertIs(report["broker_order_authorized"], False)
+        self.assertEqual(report["allowed_actions"], [])
+
+    def test_seven_day_warmup_overlaps_prior_scored_calendar_for_later_quarters(self):
+        schedule = REPLAY()["published_historical_window_schedule"]
+        self.assertIs(
+            schedule[0]["warmup_calendar_overlaps_prior_scored_window"], False)
+        self.assertTrue(all(
+            row["warmup_calendar_overlaps_prior_scored_window"] is True
+            for row in schedule[1:]
+        ))
+        self.assertEqual(schedule[1]["reported_warmup_start_inclusive"],
+                         "2025-03-25")
+        self.assertEqual(schedule[1]["reported_warmup_end_exclusive"],
+                         "2025-04-01")
+        self.assertEqual(schedule[0]["scored_end_exclusive"], "2025-04-01")
+
+    def test_warmup_exclusion_is_current_window_only_not_global(self):
+        rows = REPLAY()["published_historical_window_schedule"]
+        for current in rows:
+            self.assertIs(
+                current["reported_warmup_excluded_from_this_windows_scores"],
+                True)
+            self.assertNotIn("reported_warmup_is_not_a_scored_period", current)
+            self.assertIs(current["actual_bars_and_no_leakage_not_reauthenticated"],
+                          True)
+
+    def test_warmup_calendar_overlap_is_not_live_leakage_evidence(self):
+        report = REPLAY()
+        self.assertIs(
+            report["historic_schedule_is_documentary_not_data_leakage_witness"],
+            True)
+        self.assertIsNone(report["external_current_provenance_witness"])
+        self.assertIs(report["phase8a_strategy_v1_edge_proven"], False)
         self.assertEqual(report["allowed_actions"], [])
 
     def test_cli_returns_nonzero_even_with_correct_historical_report(self):
