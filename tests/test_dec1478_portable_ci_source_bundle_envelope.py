@@ -14322,3 +14322,172 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_nested_duplicate_unicode_clean_control(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+
+    def _assert_nested_astral_unicode_alias_duplicate(self, category,
+                                                       null_last):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.assertIn(category, DICT_KEYS)
+        value = json.dumps(
+            self.envelope[category], sort_keys=True, separators=(",", ":"))
+        self.assertTrue(value.startswith("{"))
+        self.assertTrue(value.endswith("}"))
+        self.assertNotEqual(value, "{}")
+        # The lexical forms are different, but JSON decoding must make
+        # both spellings the very same supplementary-plane member name.
+        literal = '"' + chr(0x1F680) + '"'
+        escaped = '"\\ud83d\\ude80"'
+        self.assertNotEqual(literal, escaped)
+        self.assertEqual(json.loads(literal), json.loads(escaped))
+        extra = (
+            literal + ':{"synthetic_only":true},' + escaped + ':null'
+            if null_last else
+            escaped + ':null,' + literal + ':{"synthetic_only":true}')
+        malformed = value[:-1] + "," + extra + "}"
+        encoded = self._portable_top_level_members_json({
+            category: json.dumps(category) + ":" + malformed})
+        naive = json.loads(encoded)[category]
+        astral_key = json.loads(literal)
+        self.assertIn(astral_key, naive)
+        if null_last:
+            self.assertIsNone(naive[astral_key])
+        else:
+            self.assertEqual(naive[astral_key], {"synthetic_only": True})
+        clean_text = self._portable_top_level_members_json()
+        direct = self.verdict()
+        parsed = review_bundle_json_text(encoded)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(encoded), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(clean_text, self._portable_top_level_members_json())
+        self.assertTrue(direct["source_consistency"])
+        self.assertEqual(direct["diagnostics"], ())
+        self.assertEqual(status, 2)
+        self.assertEqual(parsed["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"],
+                         ["BUNDLE_JSON_GRAMMAR_UNREVIEWED"])
+        self.assertNotIn("tests/sample.py", out.getvalue())
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        for result in (parsed, emitted):
+            self.assertFalse(result["source_consistency"])
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_astral_duplicate_pr_null_first(self):
+        self._assert_nested_astral_unicode_alias_duplicate(
+            "pr", False)
+
+    def test_portable_astral_duplicate_pr_null_last(self):
+        self._assert_nested_astral_unicode_alias_duplicate(
+            "pr", True)
+
+    def test_portable_astral_duplicate_jobs_by_run_null_first(self):
+        self._assert_nested_astral_unicode_alias_duplicate(
+            "jobs_by_run", False)
+
+    def test_portable_astral_duplicate_jobs_by_run_null_last(self):
+        self._assert_nested_astral_unicode_alias_duplicate(
+            "jobs_by_run", True)
+
+    def test_portable_astral_duplicate_compare_null_first(self):
+        self._assert_nested_astral_unicode_alias_duplicate(
+            "compare", False)
+
+    def test_portable_astral_duplicate_compare_null_last(self):
+        self._assert_nested_astral_unicode_alias_duplicate(
+            "compare", True)
+
+    def test_portable_astral_duplicate_commit_null_first(self):
+        self._assert_nested_astral_unicode_alias_duplicate(
+            "commit", False)
+
+    def test_portable_astral_duplicate_commit_null_last(self):
+        self._assert_nested_astral_unicode_alias_duplicate(
+            "commit", True)
+
+    def test_portable_astral_duplicate_tree_null_first(self):
+        self._assert_nested_astral_unicode_alias_duplicate(
+            "tree", False)
+
+    def test_portable_astral_duplicate_tree_null_last(self):
+        self._assert_nested_astral_unicode_alias_duplicate(
+            "tree", True)
+
+    def test_portable_astral_duplicate_nodes_null_first(self):
+        self._assert_nested_astral_unicode_alias_duplicate(
+            "nodes", False)
+
+    def test_portable_astral_duplicate_nodes_null_last(self):
+        self._assert_nested_astral_unicode_alias_duplicate(
+            "nodes", True)
+
+    def test_portable_astral_duplicate_changed_bytes_b64_null_first(self):
+        self._assert_nested_astral_unicode_alias_duplicate(
+            "changed_bytes_b64", False)
+
+    def test_portable_astral_duplicate_changed_bytes_b64_null_last(self):
+        self._assert_nested_astral_unicode_alias_duplicate(
+            "changed_bytes_b64", True)
+
+    def test_portable_astral_duplicate_ci_workflow_bytes_b64_null_first(self):
+        self._assert_nested_astral_unicode_alias_duplicate(
+            "ci_workflow_bytes_b64", False)
+
+    def test_portable_astral_duplicate_ci_workflow_bytes_b64_null_last(self):
+        self._assert_nested_astral_unicode_alias_duplicate(
+            "ci_workflow_bytes_b64", True)
+
+    def test_portable_astral_duplicate_full_tree_snapshots_null_first(self):
+        self._assert_nested_astral_unicode_alias_duplicate(
+            "full_tree_snapshots", False)
+
+    def test_portable_astral_duplicate_full_tree_snapshots_null_last(self):
+        self._assert_nested_astral_unicode_alias_duplicate(
+            "full_tree_snapshots", True)
+
+    def test_portable_astral_duplicate_merge_checkout_snapshot_null_first(self):
+        self._assert_nested_astral_unicode_alias_duplicate(
+            "merge_checkout_snapshot", False)
+
+    def test_portable_astral_duplicate_merge_checkout_snapshot_null_last(self):
+        self._assert_nested_astral_unicode_alias_duplicate(
+            "merge_checkout_snapshot", True)
+
+    def test_portable_astral_duplicate_checkout_by_run_null_first(self):
+        self._assert_nested_astral_unicode_alias_duplicate(
+            "checkout_by_run", False)
+
+    def test_portable_astral_duplicate_checkout_by_run_null_last(self):
+        self._assert_nested_astral_unicode_alias_duplicate(
+            "checkout_by_run", True)
+
+    def test_portable_astral_duplicate_phase3_evidence_snapshot_null_first(self):
+        self._assert_nested_astral_unicode_alias_duplicate(
+            "phase3_evidence_snapshot", False)
+
+    def test_portable_astral_duplicate_phase3_evidence_snapshot_null_last(self):
+        self._assert_nested_astral_unicode_alias_duplicate(
+            "phase3_evidence_snapshot", True)
+
+    def test_portable_astral_duplicate_raw_ci_runner_logs_null_first(self):
+        self._assert_nested_astral_unicode_alias_duplicate(
+            "raw_ci_runner_logs", False)
+
+    def test_portable_astral_duplicate_raw_ci_runner_logs_null_last(self):
+        self._assert_nested_astral_unicode_alias_duplicate(
+            "raw_ci_runner_logs", True)
+
+    def test_portable_astral_duplicate_raw_ci_log_receipts_null_first(self):
+        self._assert_nested_astral_unicode_alias_duplicate(
+            "raw_ci_log_receipts", False)
+
+    def test_portable_astral_duplicate_raw_ci_log_receipts_null_last(self):
+        self._assert_nested_astral_unicode_alias_duplicate(
+            "raw_ci_log_receipts", True)
+
+    def test_portable_astral_duplicate_clean_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
