@@ -15069,3 +15069,162 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_array_double_fault_clean_control(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+
+    def _assert_raw_json_control_inside_category_refused(self, category,
+                                                         in_key):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.assertIn(category, DICT_KEYS)
+        clean = self._portable_top_level_members_json()
+        child = json.dumps(self.envelope[category], sort_keys=True,
+                           separators=(",", ":"))
+        self.assertTrue(child.startswith("{") and child.endswith("}"))
+        self.assertNotEqual(child, "{}")
+        # JSON strings must escape U+0000 and literal line feeds. These
+        # bytes are invalid even if the nested evidence is unreviewed.
+        if in_key:
+            control = '"synthetic_' + chr(0) + '_raw_key":null'
+            self.assertIn(chr(0), control)
+        else:
+            control = '"synthetic_raw_value":"one' + chr(10) + 'two"'
+            self.assertIn(chr(10), control)
+        malformed = child[:-1] + "," + control + "}"
+        encoded = self._portable_top_level_members_json({
+            category: json.dumps(category) + ":" + malformed})
+        with self.assertRaises(json.JSONDecodeError):
+            json.loads(encoded)
+        parsed = review_bundle_json_text(encoded)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(encoded), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(clean, self._portable_top_level_members_json())
+        self.assertTrue(self.verdict()["source_consistency"])
+        self.assertEqual(status, 2)
+        self.assertEqual(parsed["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"],
+                         ["BUNDLE_JSON_GRAMMAR_UNREVIEWED"])
+        self.assertNotIn("tests/sample.py", out.getvalue())
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        for result in (parsed, emitted):
+            self.assertFalse(result["source_consistency"])
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_raw_control_pr_key_refused(self):
+        self._assert_raw_json_control_inside_category_refused(
+            "pr", True)
+
+    def test_portable_raw_control_pr_value_refused(self):
+        self._assert_raw_json_control_inside_category_refused(
+            "pr", False)
+
+    def test_portable_raw_control_jobs_by_run_key_refused(self):
+        self._assert_raw_json_control_inside_category_refused(
+            "jobs_by_run", True)
+
+    def test_portable_raw_control_jobs_by_run_value_refused(self):
+        self._assert_raw_json_control_inside_category_refused(
+            "jobs_by_run", False)
+
+    def test_portable_raw_control_compare_key_refused(self):
+        self._assert_raw_json_control_inside_category_refused(
+            "compare", True)
+
+    def test_portable_raw_control_compare_value_refused(self):
+        self._assert_raw_json_control_inside_category_refused(
+            "compare", False)
+
+    def test_portable_raw_control_commit_key_refused(self):
+        self._assert_raw_json_control_inside_category_refused(
+            "commit", True)
+
+    def test_portable_raw_control_commit_value_refused(self):
+        self._assert_raw_json_control_inside_category_refused(
+            "commit", False)
+
+    def test_portable_raw_control_tree_key_refused(self):
+        self._assert_raw_json_control_inside_category_refused(
+            "tree", True)
+
+    def test_portable_raw_control_tree_value_refused(self):
+        self._assert_raw_json_control_inside_category_refused(
+            "tree", False)
+
+    def test_portable_raw_control_nodes_key_refused(self):
+        self._assert_raw_json_control_inside_category_refused(
+            "nodes", True)
+
+    def test_portable_raw_control_nodes_value_refused(self):
+        self._assert_raw_json_control_inside_category_refused(
+            "nodes", False)
+
+    def test_portable_raw_control_changed_bytes_b64_key_refused(self):
+        self._assert_raw_json_control_inside_category_refused(
+            "changed_bytes_b64", True)
+
+    def test_portable_raw_control_changed_bytes_b64_value_refused(self):
+        self._assert_raw_json_control_inside_category_refused(
+            "changed_bytes_b64", False)
+
+    def test_portable_raw_control_ci_workflow_bytes_b64_key_refused(self):
+        self._assert_raw_json_control_inside_category_refused(
+            "ci_workflow_bytes_b64", True)
+
+    def test_portable_raw_control_ci_workflow_bytes_b64_value_refused(self):
+        self._assert_raw_json_control_inside_category_refused(
+            "ci_workflow_bytes_b64", False)
+
+    def test_portable_raw_control_full_tree_snapshots_key_refused(self):
+        self._assert_raw_json_control_inside_category_refused(
+            "full_tree_snapshots", True)
+
+    def test_portable_raw_control_full_tree_snapshots_value_refused(self):
+        self._assert_raw_json_control_inside_category_refused(
+            "full_tree_snapshots", False)
+
+    def test_portable_raw_control_merge_checkout_snapshot_key_refused(self):
+        self._assert_raw_json_control_inside_category_refused(
+            "merge_checkout_snapshot", True)
+
+    def test_portable_raw_control_merge_checkout_snapshot_value_refused(self):
+        self._assert_raw_json_control_inside_category_refused(
+            "merge_checkout_snapshot", False)
+
+    def test_portable_raw_control_checkout_by_run_key_refused(self):
+        self._assert_raw_json_control_inside_category_refused(
+            "checkout_by_run", True)
+
+    def test_portable_raw_control_checkout_by_run_value_refused(self):
+        self._assert_raw_json_control_inside_category_refused(
+            "checkout_by_run", False)
+
+    def test_portable_raw_control_phase3_evidence_snapshot_key_refused(self):
+        self._assert_raw_json_control_inside_category_refused(
+            "phase3_evidence_snapshot", True)
+
+    def test_portable_raw_control_phase3_evidence_snapshot_value_refused(self):
+        self._assert_raw_json_control_inside_category_refused(
+            "phase3_evidence_snapshot", False)
+
+    def test_portable_raw_control_raw_ci_runner_logs_key_refused(self):
+        self._assert_raw_json_control_inside_category_refused(
+            "raw_ci_runner_logs", True)
+
+    def test_portable_raw_control_raw_ci_runner_logs_value_refused(self):
+        self._assert_raw_json_control_inside_category_refused(
+            "raw_ci_runner_logs", False)
+
+    def test_portable_raw_control_raw_ci_log_receipts_key_refused(self):
+        self._assert_raw_json_control_inside_category_refused(
+            "raw_ci_log_receipts", True)
+
+    def test_portable_raw_control_raw_ci_log_receipts_value_refused(self):
+        self._assert_raw_json_control_inside_category_refused(
+            "raw_ci_log_receipts", False)
+
+    def test_portable_raw_control_clean_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
