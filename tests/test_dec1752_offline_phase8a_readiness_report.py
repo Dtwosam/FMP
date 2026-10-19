@@ -879,6 +879,38 @@ class OfflineBlockerDiagnosticTests(unittest.TestCase):
             self.assertEqual(out.getvalue(), "")
             self.assertIn("reviewed SHA-256 manifest", err.getvalue())
 
+
+    def test_docs_reader_rejects_parent_traversal_alias_even_to_valid_documents(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            (root / "detour").mkdir()
+            documents = root / "documents"
+            documents.mkdir()
+            for name in FILES.values():
+                (documents / name).write_bytes((self.docs / name).read_bytes())
+            confusing = root / "detour" / ".." / "documents"
+            self.assertIn("..", confusing.parts)
+            with self.assertRaisesRegex(FAILURE, "ambiguous traversal"):
+                RENDER(confusing)
+
+    def test_docs_cli_does_not_report_success_on_parent_traversal(self):
+        import contextlib
+        import io
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            (root / "detour").mkdir()
+            docs = root / "docs"
+            docs.mkdir()
+            for name in FILES.values():
+                (docs / name).write_bytes((self.docs / name).read_bytes())
+            confusing = root / "detour" / ".." / "docs"
+            output, errors = io.StringIO(), io.StringIO()
+            with contextlib.redirect_stdout(output), contextlib.redirect_stderr(errors):
+                code = MOD["main"](["--docs-root", str(confusing)])
+            self.assertEqual(code, 2)
+            self.assertEqual(output.getvalue(), "")
+            self.assertIn("ambiguous traversal", errors.getvalue())
+
     def test_module_entrypoint_has_no_import_time_side_effects(self):
         self.assertIn("render_readiness", MOD)
         self.assertIn("main", MOD)
