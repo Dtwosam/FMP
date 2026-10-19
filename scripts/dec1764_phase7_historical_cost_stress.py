@@ -153,6 +153,69 @@ def replay_phase7_cost_evidence(doc_path: Path = PHASE7_DOC) -> dict[str, object
         })
 
 
+    # Observed aggregate cost ladder only: never infer individual trades,
+    # window-level costs, continuous slippage response or future fills.
+    required_window_status = ("5 of 7", "4 of 7", "4 of 7")
+    required_window_shares = ("35.061843", "39.223270", "49.394868")
+    required_max_dd = ("1.140640", "1.170046", "1.219045")
+    for index, row in enumerate(observations):
+        _require(
+            row["positive_windows"] == required_window_status[index]
+            and Decimal(row["max_positive_window_share_pct"])
+                == Decimal(required_window_shares[index])
+            and Decimal(row["max_independent_window_drawdown_pct"])
+                == Decimal(required_max_dd[index]),
+            "published aggregate cost-window risk evidence changed",
+        )
+    historical_cost_changes = []
+    for earlier, later in zip(observations, observations[1:]):
+        return_delta = (
+            Decimal(later["historical_net_return_pct"])
+            - Decimal(earlier["historical_net_return_pct"])
+        )
+        pnl_delta = (
+            Decimal(later["historical_net_pnl_usd"])
+            - Decimal(earlier["historical_net_pnl_usd"])
+        )
+        expectancy_delta = (
+            Decimal(later["historical_expectancy_per_trade_usd"])
+            - Decimal(earlier["historical_expectancy_per_trade_usd"])
+        )
+        dd_increase = (
+            Decimal(later["max_independent_window_drawdown_pct"])
+            - Decimal(earlier["max_independent_window_drawdown_pct"])
+        )
+        share_increase = (
+            Decimal(later["max_positive_window_share_pct"])
+            - Decimal(earlier["max_positive_window_share_pct"])
+        )
+        _require(
+            return_delta < 0 and pnl_delta < 0
+            and expectancy_delta < 0 and dd_increase > 0
+            and share_increase > 0,
+            "published adverse-cost stress cannot imply improved economics",
+        )
+        historical_cost_changes.append({
+            "from_reported_slippage_pips": earlier["adverse_slippage_pips"],
+            "to_reported_slippage_pips": later["adverse_slippage_pips"],
+            "observed_aggregate_return_change_percentage_points": str(return_delta),
+            "observed_aggregate_pnl_change_usd": str(pnl_delta),
+            "observed_expectancy_change_usd_per_trade": str(expectancy_delta),
+            "observed_max_window_dd_increase_percentage_points": str(dd_increase),
+            "observed_max_positive_window_share_change_percentage_points": str(
+                share_increase),
+        })
+    _require(
+        observations[0]["positive_windows"] == "5 of 7"
+        and observations[1]["positive_windows"] == "4 of 7"
+        and observations[2]["positive_windows"] == "4 of 7"
+        and Decimal(observations[1]["historical_net_return_pct"]) > 0
+        and Decimal(observations[2]["historical_net_return_pct"]) < 0
+        and Decimal(observations[1]["historical_profit_factor"]) > 1
+        and Decimal(observations[2]["historical_profit_factor"]) < 1,
+        "positive-window support falls and profit-factor/return sign reverses",
+    )
+
     # These are the published 0.2-pip benchmark subperiods, not fresh years
     # or independent prospective strategy tests. Retain losing windows.
     window_names = (
@@ -327,6 +390,10 @@ def replay_phase7_cost_evidence(doc_path: Path = PHASE7_DOC) -> dict[str, object
         "phase7_stage2_code_sha": STAGE2_SHA,
         "historic_candidate": "USDJPY 15m session_breakout",
         "observations": observations,
+        "historical_aggregate_cost_step_changes": historical_cost_changes,
+        "historical_profitable_window_count_by_reported_slippage": [5, 4, 4],
+        "historical_1_0_pip_return_and_profit_factor_below_zero_or_one": True,
+        "no_unreported_slippage_or_per_window_costs_inferred": True,
         "historical_0_2_pip_windows": windows,
         "historical_negative_windows": [w["window"] for w in negatives],
         "historical_positive_window_count": len(positives),

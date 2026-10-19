@@ -310,6 +310,51 @@ class Phase7CostStressHistoricalReplayTests(unittest.TestCase):
         self.assertIsNone(report["forward_profit_claim"])
         self.assertEqual(report["allowed_actions"], [])
 
+    def test_only_published_cost_scenarios_are_compared(self):
+        result = REPLAY()
+        rows = result["historical_aggregate_cost_step_changes"]
+        self.assertEqual(len(rows), 2)
+        self.assertEqual(
+            [(r["from_reported_slippage_pips"],
+              r["to_reported_slippage_pips"]) for r in rows],
+            [("0.2", "0.5"), ("0.5", "1.0")])
+        self.assertIs(
+            result["no_unreported_slippage_or_per_window_costs_inferred"], True)
+
+    def test_historical_aggregate_return_and_pnl_drop_as_slippage_rises(self):
+        rows = REPLAY()["historical_aggregate_cost_step_changes"]
+        self.assertEqual(
+            [r["observed_aggregate_return_change_percentage_points"]
+             for r in rows], ["-0.495090", "-0.824294"])
+        self.assertEqual(
+            [r["observed_aggregate_pnl_change_usd"] for r in rows],
+            ["-495.09", "-824.30"])
+
+    def test_historical_expectancy_drops_and_max_window_drawdown_rises(self):
+        rows = REPLAY()["historical_aggregate_cost_step_changes"]
+        self.assertEqual(
+            [r["observed_expectancy_change_usd_per_trade"] for r in rows],
+            ["-2.4879", "-4.1422"])
+        self.assertTrue(all(
+            Decimal(r["observed_max_window_dd_increase_percentage_points"]) > 0
+            for r in rows))
+
+    def test_positive_window_support_weakens_from_five_to_four(self):
+        result = REPLAY()
+        self.assertEqual(
+            result["historical_profitable_window_count_by_reported_slippage"],
+            [5, 4, 4])
+        self.assertIs(
+            result["historical_1_0_pip_return_and_profit_factor_below_zero_or_one"],
+            True)
+
+    def test_cost_ladder_is_historical_not_strategy_v1_authority(self):
+        result = REPLAY()
+        self.assertIs(result["phase8a_strategy_v1_edge_proven"], False)
+        self.assertIsNone(result["forward_profit_claim"])
+        self.assertIs(result["live_trading_authorized"], False)
+        self.assertEqual(result["allowed_actions"], [])
+
     def test_cli_returns_nonzero_even_with_correct_historical_report(self):
         stdout, stderr = io.StringIO(), io.StringIO()
         with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
