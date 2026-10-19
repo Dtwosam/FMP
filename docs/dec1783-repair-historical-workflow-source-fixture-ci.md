@@ -1,0 +1,11 @@
+# DEC-1783 — Repair historical/general CI: bundle exact reviewed workflow as an inert fixture
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent child of PR #2029 at `fbadcecfc0319cea6a40a0d15170c12ab822a5a7`.
+
+**Confirmed regression:** full historical/general run [39329670650](https://github.com/Dtwosam/FMP/actions/runs/39329670650) on PR #2027 failed **20 errors and 2 follow-on failures**. All reported failures stem from `FileNotFoundError` for `.github/workflows/phase8a-annual-pattern-catalogue.yml` inside the CI checkout: the installed workflow source was not materialized in that safe test environment. The local source audit attempted to read that unavailable path. Its status-3 success tests consequently received fail-closed exit 2. This is a fixture availability issue, **not proof that external main protection, early job admission or OS isolation succeeded or failed**.
+
+The repair includes the **exact 21,915-character reviewed historical workflow source** as `tests/fixtures/dec1779-historical-phase8a-annual-workflow.yml` under the ordinary test tree, **not under `.github/workflows`**. The fixture's git-blob SHA-1 is verified as `09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1`, identical to the original source from GitHub. DEC-1779/1780/1781 and the combined DEC-1782 offline handoff now read this pinned **inert snapshot** instead of relying on the installed-workflow file existing in CI. The report explicitly marks that it is **historical fixture evidence only, not a real installed workflow or current runner attestation**.
+
+Two additional tests (6538 cumulative proposed source-defined) enforce exact fixture blob identity and prohibit granting current admission or broker authority. All existing mutation tests can now edit the fixture copy in memory/temporary paths without a protected source read. Report success still means **BLOCKED / exit 3**; malformed/changed source is **exit 2 / no stdout**. Prior #2027 full CI failure remains failed; only a **new exact-head full CI** can validate this corrected stacked lineage.
+
+No changes to the real installed GitHub Actions workflow, repository rulesets/protection, ref/tag, job runner, market data, protected run385/attempt1, strategy economics, demo/live broker orders or trading. External #779/#820/#821 review and separate qualified human authorization still required.

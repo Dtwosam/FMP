@@ -13,7 +13,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 DOCS = ROOT / "docs"
-WORKFLOW = ROOT / ".github" / "workflows" / "phase8a-annual-pattern-catalogue.yml"
+WORKFLOW = ROOT / "tests" / "fixtures" / "dec1779-historical-phase8a-annual-workflow.yml"
 DOC_AUDIT = ROOT / "scripts" / "dec1752_phase8a_readiness_report.py"
 WORKFLOW_AUDIT = ROOT / "scripts" / "dec1779_annual_workflow_admission_audit.py"
 
@@ -117,6 +117,8 @@ def compile_blocked_handoff(docs_root=DOCS, workflow=WORKFLOW):
         "documentary_packet_source_sha256": documentary["source_sha256"],
         "installed_workflow_historical_git_blob_sha1":
             installed["historical_source_git_blob_sha1"],
+        "installed_workflow_historical_fixture_only":
+            installed["installed_workflow_file_absent_from_ci_not_an_attestation"],
         "eight_missing_independent_proofs": proofs,
         "blocked_downstream_stages": documentary["blocked_downstream_stages"],
         "installed_jobs_pregate_and_runtime_gate": {

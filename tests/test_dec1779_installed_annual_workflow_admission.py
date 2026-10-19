@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "dec1779_annual_workflow_admission_audit.py"
 MOD = runpy.run_path(str(SCRIPT))
 REPORT = MOD["report_blocked_admission"]
-WORKFLOW = ROOT / ".github" / "workflows" / "phase8a-annual-pattern-catalogue.yml"
+WORKFLOW = ROOT / "tests" / "fixtures" / "dec1779-historical-phase8a-annual-workflow.yml"
 
 
 class InstalledAnnualWorkflowNonAdmissionTests(unittest.TestCase):
@@ -300,6 +300,31 @@ class InstalledAnnualWorkflowNonAdmissionTests(unittest.TestCase):
         self.assertEqual(report["disposition"],
                          "BLOCKED_NOT_EXECUTABLE_AND_NOT_ADMIN_ATTESTED")
         self.assertFalse(report["protected_2023_run385_attempt1_authorized"])
+        self.assertEqual(report["allowed_actions"], [])
+
+
+    def test_workflow_is_a_pinned_offline_fixture_not_installed_ci_file(self):
+        import hashlib
+        fixture = WORKFLOW.read_bytes()
+        digest = hashlib.sha1(
+            b"blob " + str(len(fixture)).encode("ascii") + b"\0" + fixture
+        ).hexdigest()
+        self.assertEqual(digest, MOD["EXPECTED_GIT_BLOB_SHA1"])
+        self.assertTrue(
+            str(WORKFLOW).endswith(
+                "tests/fixtures/dec1779-historical-phase8a-annual-workflow.yml")
+        )
+        self.assertEqual(
+            REPORT()["source_material"],
+            "exact_git_blob_pinned_historical_fixture_not_live_workflow",
+        )
+
+    def test_snapshot_does_not_claim_current_workflow_or_ci_installation(self):
+        report = REPORT()
+        self.assertIs(
+            report["installed_workflow_file_absent_from_ci_not_an_attestation"],
+            True)
+        self.assertFalse(report["annual_research_dispatch_authorized"])
         self.assertEqual(report["allowed_actions"], [])
 
     def test_no_workflow_dispatch_or_broker_is_needed(self):

@@ -15,7 +15,7 @@ import runpy
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-WORKFLOW = ROOT / ".github" / "workflows" / "phase8a-annual-pattern-catalogue.yml"
+WORKFLOW = ROOT / "tests" / "fixtures" / "dec1779-historical-phase8a-annual-workflow.yml"
 EVIDENCE_READER = ROOT / "scripts" / "dec1752_phase8a_readiness_report.py"
 EXPECTED_GIT_BLOB_SHA1 = "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1"
 EXPECTED_JOBS = ("annual_preflight", "annual_cell", "annual_freeze")
@@ -350,6 +350,8 @@ def report_blocked_admission(path=WORKFLOW):
         "schema": "fmp_dec1779_offline_workflow_step_order_v1",
         "disposition": "BLOCKED_NOT_EXECUTABLE_AND_NOT_ADMIN_ATTESTED",
         "source_workflow": ".github/workflows/phase8a-annual-pattern-catalogue.yml",
+        "source_material": "exact_git_blob_pinned_historical_fixture_not_live_workflow",
+        "installed_workflow_file_absent_from_ci_not_an_attestation": True,
         "historical_source_git_blob_sha1": actual,
         "source_sha_and_live_ref_at_dispatch_not_authenticated": True,
         "observed_jobs": result,
