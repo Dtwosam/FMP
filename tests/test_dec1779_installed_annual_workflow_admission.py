@@ -218,6 +218,90 @@ class InstalledAnnualWorkflowNonAdmissionTests(unittest.TestCase):
         self.assertEqual(report["disposition"],
                          "BLOCKED_NOT_EXECUTABLE_AND_NOT_ADMIN_ATTESTED")
 
+
+    def test_pregate_commands_are_verified_not_only_step_names(self):
+        report = REPORT()
+        for job, item in report["historical_pregate_payloads"].items():
+            with self.subTest(job=job):
+                steps = item["actual_pregate_setup_and_read_payloads"]
+                self.assertEqual(steps[0]["payload"], "actions/checkout@v6")
+                self.assertTrue(any("pip install" in r["payload"]
+                                    for r in steps))
+                self.assertIs(item["static_source_only_not_actual_runner_trace"],
+                              True)
+
+    def test_preflight_network_calls_are_before_gate(self):
+        steps = REPORT()["historical_pregate_payloads"][
+            "annual_preflight"]["actual_pregate_setup_and_read_payloads"]
+        self.assertEqual([step["zero_based_step_index"] for step in steps],
+                         [0, 3, 4, 5, 6])
+        self.assertIn("four gh api calls", steps[3]["payload"])
+
+    def test_missing_checkout_action_payload_is_refused(self):
+        data = WORKFLOW.read_text(encoding="utf-8")
+        changed = data.replace("        uses: actions/checkout@v6",
+                               "        uses: some/unreviewed-checkout@v6", 1)
+        with self.assertRaisesRegex(
+                MOD["InvalidStaticEvidence"], "checkout/setup command"):
+            MOD["inspect_pregate_step_payloads"](changed)
+
+    def test_changed_unprotected_pip_install_payload_is_refused(self):
+        data = WORKFLOW.read_text(encoding="utf-8")
+        line = "run: python -m pip install -r requirements/exp061-discovery-run.txt -e ."
+        self.assertEqual(data.count(line), 3)
+        changed = data.replace(line, "run: pip install newest -e .", 1)
+        with self.assertRaisesRegex(
+                MOD["InvalidStaticEvidence"], "unguarded install payload"):
+            MOD["inspect_pregate_step_payloads"](changed)
+
+    def test_removed_main_ref_guard_command_is_refused(self):
+        data = WORKFLOW.read_text(encoding="utf-8")
+        expected = 'test "$GITHUB_REF" = "refs/heads/main"'
+        self.assertEqual(data.count(expected), 3)
+        changed = data.replace(expected, 'echo "main"', 1)
+        with self.assertRaisesRegex(
+                MOD["InvalidStaticEvidence"], "main branch/test guard"):
+            MOD["inspect_pregate_step_payloads"](changed)
+
+    def test_missing_gate_commit_argument_is_refused(self):
+        data = WORKFLOW.read_text(encoding="utf-8")
+        original = '            --code-commit "$GITHUB_SHA"'
+        self.assertEqual(data.count(original), 3)
+        changed = data.replace(
+            original, '            --code-commit "not-a-SHA"', 1)
+        with self.assertRaisesRegex(
+                MOD["InvalidStaticEvidence"], "guard command/arguments"):
+            MOD["inspect_pregate_step_payloads"](changed)
+
+    def test_preflight_missing_one_metadata_api_call_is_refused(self):
+        data = WORKFLOW.read_text(encoding="utf-8")
+        cmd = 'gh api "repos/$GITHUB_REPOSITORY/actions/runs/35867307338"'
+        self.assertIn(cmd, data)
+        changed = data.replace(cmd, "echo skipped-run-metadata", 1)
+        with self.assertRaisesRegex(
+                MOD["InvalidStaticEvidence"], "metadata fetch operation"):
+            MOD["inspect_pregate_step_payloads"](changed)
+
+    def test_preflight_missing_source_validation_is_refused(self):
+        data = WORKFLOW.read_text(encoding="utf-8")
+        cmd = "          python scripts/phase8a_annual_pattern_catalogue.py preflight \\"
+        self.assertIn(cmd, data)
+        changed = data.replace(cmd, "          echo omitted-preflight \\", 1)
+        with self.assertRaisesRegex(
+                MOD["InvalidStaticEvidence"], "source validation changed"):
+            MOD["inspect_pregate_step_payloads"](changed)
+
+    def test_reported_payloads_remain_non_authorizing_with_nonzero_cli(self):
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            status = MOD["main"]([])
+        self.assertEqual(status, 3)
+        report = json.loads(out.getvalue())
+        self.assertEqual(report["disposition"],
+                         "BLOCKED_NOT_EXECUTABLE_AND_NOT_ADMIN_ATTESTED")
+        self.assertFalse(report["protected_2023_run385_attempt1_authorized"])
+        self.assertEqual(report["allowed_actions"], [])
+
     def test_no_workflow_dispatch_or_broker_is_needed(self):
         report = REPORT()
         self.assertIn("Independent administrator/security", report["next_external_review"])
