@@ -103,7 +103,8 @@ class PreinstallSkipExecutableNegativeControls(unittest.TestCase):
             with self.subTest(mode=mode):
                 module = _load_in_mode(mode)
                 self.assertFalse(
-                    module.InstalledAnnualWorkflowBlockerContractTests.__unittest_skip__
+                    getattr(module.InstalledAnnualWorkflowBlockerContractTests,
+                            "__unittest_skip__", False)
                 )
 
     def test_synthetic_unsafe_original_ordering_is_recognized(self):
