@@ -17510,3 +17510,213 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_numeric_grammar_first_clean_control(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+
+    def _portable_array_invalid_number_at_path(self, node, path,
+                                               token):
+        self.assertIn(token, ("01", "+1", "-.", ".5", "1.", "1e"))
+        if not path:
+            self.assertIs(type(node), dict)
+            child = json.dumps(node, sort_keys=True, separators=(",", ":"))
+            self.assertTrue(child.startswith("{") and child.endswith("}"))
+            self.assertNotEqual(child, "{}")
+            return child[:-1] + ',"synthetic_number":' + token + "}"
+        head, tail = path[0], path[1:]
+        if type(node) is dict:
+            self.assertIn(head, node)
+            return "{" + ",".join(
+                json.dumps(key) + ":" +
+                (self._portable_array_invalid_number_at_path(
+                    value, tail, token) if key == head else
+                 json.dumps(value, sort_keys=True, separators=(",", ":")))
+                for key, value in sorted(node.items())) + "}"
+        self.assertIs(type(node), list)
+        self.assertIs(type(head), int)
+        self.assertGreaterEqual(head, 0)
+        self.assertLess(head, len(node))
+        return "[" + ",".join(
+            (self._portable_array_invalid_number_at_path(
+                value, tail, token) if index == head else
+             json.dumps(value, sort_keys=True, separators=(",", ":")))
+            for index, value in enumerate(node)) + "]"
+
+    def _assert_invalid_numeric_token_in_array_refused(self, category,
+                                                       path, token):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.assertIn(category, REQUIRED)
+        clean = self._portable_top_level_members_json()
+        child = self._portable_array_invalid_number_at_path(
+            self.envelope[category], path, token)
+        encoded = self._portable_top_level_members_json({
+            category: json.dumps(category) + ":" + child})
+        with self.assertRaises(json.JSONDecodeError):
+            json.loads(encoded)
+        direct = self.verdict()
+        parsed = review_bundle_json_text(encoded)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(encoded), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(clean, self._portable_top_level_members_json())
+        self.assertTrue(direct["source_consistency"])
+        self.assertEqual(direct["diagnostics"], ())
+        self.assertEqual(status, 2)
+        self.assertEqual(parsed["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"],
+                         ["BUNDLE_JSON_GRAMMAR_UNREVIEWED"])
+        self.assertNotIn("tests/sample.py", out.getvalue())
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        for result in (parsed, emitted):
+            self.assertFalse(result["source_consistency"])
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_array_bad_number_runs_leading_zero(self):
+        self._assert_invalid_numeric_token_in_array_refused(
+            "runs", (0,), "01")
+
+    def test_portable_array_bad_number_runs_plus(self):
+        self._assert_invalid_numeric_token_in_array_refused(
+            "runs", (0,), "+1")
+
+    def test_portable_array_bad_number_runs_incomplete_negative(self):
+        self._assert_invalid_numeric_token_in_array_refused(
+            "runs", (0,), "-.")
+
+    def test_portable_array_bad_number_runs_missing_integer(self):
+        self._assert_invalid_numeric_token_in_array_refused(
+            "runs", (0,), ".5")
+
+    def test_portable_array_bad_number_runs_missing_fraction(self):
+        self._assert_invalid_numeric_token_in_array_refused(
+            "runs", (0,), "1.")
+
+    def test_portable_array_bad_number_runs_missing_exponent(self):
+        self._assert_invalid_numeric_token_in_array_refused(
+            "runs", (0,), "1e")
+
+    def test_portable_array_bad_number_comparison_files_leading_zero(self):
+        self._assert_invalid_numeric_token_in_array_refused(
+            "compare", ("files", 0), "01")
+
+    def test_portable_array_bad_number_comparison_files_plus(self):
+        self._assert_invalid_numeric_token_in_array_refused(
+            "compare", ("files", 0), "+1")
+
+    def test_portable_array_bad_number_comparison_files_incomplete_negative(self):
+        self._assert_invalid_numeric_token_in_array_refused(
+            "compare", ("files", 0), "-.")
+
+    def test_portable_array_bad_number_comparison_files_missing_integer(self):
+        self._assert_invalid_numeric_token_in_array_refused(
+            "compare", ("files", 0), ".5")
+
+    def test_portable_array_bad_number_comparison_files_missing_fraction(self):
+        self._assert_invalid_numeric_token_in_array_refused(
+            "compare", ("files", 0), "1.")
+
+    def test_portable_array_bad_number_comparison_files_missing_exponent(self):
+        self._assert_invalid_numeric_token_in_array_refused(
+            "compare", ("files", 0), "1e")
+
+    def test_portable_array_bad_number_run_jobs_leading_zero(self):
+        self._assert_invalid_numeric_token_in_array_refused(
+            "jobs_by_run", (sorted(self.envelope["jobs_by_run"])[0], 0), "01")
+
+    def test_portable_array_bad_number_run_jobs_plus(self):
+        self._assert_invalid_numeric_token_in_array_refused(
+            "jobs_by_run", (sorted(self.envelope["jobs_by_run"])[0], 0), "+1")
+
+    def test_portable_array_bad_number_run_jobs_incomplete_negative(self):
+        self._assert_invalid_numeric_token_in_array_refused(
+            "jobs_by_run", (sorted(self.envelope["jobs_by_run"])[0], 0), "-.")
+
+    def test_portable_array_bad_number_run_jobs_missing_integer(self):
+        self._assert_invalid_numeric_token_in_array_refused(
+            "jobs_by_run", (sorted(self.envelope["jobs_by_run"])[0], 0), ".5")
+
+    def test_portable_array_bad_number_run_jobs_missing_fraction(self):
+        self._assert_invalid_numeric_token_in_array_refused(
+            "jobs_by_run", (sorted(self.envelope["jobs_by_run"])[0], 0), "1.")
+
+    def test_portable_array_bad_number_run_jobs_missing_exponent(self):
+        self._assert_invalid_numeric_token_in_array_refused(
+            "jobs_by_run", (sorted(self.envelope["jobs_by_run"])[0], 0), "1e")
+
+    def test_portable_array_bad_number_phase3_scenarios_leading_zero(self):
+        self._assert_invalid_numeric_token_in_array_refused(
+            "phase3_evidence_snapshot", ("index", "scenarios", 0), "01")
+
+    def test_portable_array_bad_number_phase3_scenarios_plus(self):
+        self._assert_invalid_numeric_token_in_array_refused(
+            "phase3_evidence_snapshot", ("index", "scenarios", 0), "+1")
+
+    def test_portable_array_bad_number_phase3_scenarios_incomplete_negative(self):
+        self._assert_invalid_numeric_token_in_array_refused(
+            "phase3_evidence_snapshot", ("index", "scenarios", 0), "-.")
+
+    def test_portable_array_bad_number_phase3_scenarios_missing_integer(self):
+        self._assert_invalid_numeric_token_in_array_refused(
+            "phase3_evidence_snapshot", ("index", "scenarios", 0), ".5")
+
+    def test_portable_array_bad_number_phase3_scenarios_missing_fraction(self):
+        self._assert_invalid_numeric_token_in_array_refused(
+            "phase3_evidence_snapshot", ("index", "scenarios", 0), "1.")
+
+    def test_portable_array_bad_number_phase3_scenarios_missing_exponent(self):
+        self._assert_invalid_numeric_token_in_array_refused(
+            "phase3_evidence_snapshot", ("index", "scenarios", 0), "1e")
+
+    def test_portable_array_bad_number_full_tree_entries_leading_zero(self):
+        self._assert_invalid_numeric_token_in_array_refused(
+            "full_tree_snapshots", (sorted(self.envelope["full_tree_snapshots"])[0], "tree", 0), "01")
+
+    def test_portable_array_bad_number_full_tree_entries_plus(self):
+        self._assert_invalid_numeric_token_in_array_refused(
+            "full_tree_snapshots", (sorted(self.envelope["full_tree_snapshots"])[0], "tree", 0), "+1")
+
+    def test_portable_array_bad_number_full_tree_entries_incomplete_negative(self):
+        self._assert_invalid_numeric_token_in_array_refused(
+            "full_tree_snapshots", (sorted(self.envelope["full_tree_snapshots"])[0], "tree", 0), "-.")
+
+    def test_portable_array_bad_number_full_tree_entries_missing_integer(self):
+        self._assert_invalid_numeric_token_in_array_refused(
+            "full_tree_snapshots", (sorted(self.envelope["full_tree_snapshots"])[0], "tree", 0), ".5")
+
+    def test_portable_array_bad_number_full_tree_entries_missing_fraction(self):
+        self._assert_invalid_numeric_token_in_array_refused(
+            "full_tree_snapshots", (sorted(self.envelope["full_tree_snapshots"])[0], "tree", 0), "1.")
+
+    def test_portable_array_bad_number_full_tree_entries_missing_exponent(self):
+        self._assert_invalid_numeric_token_in_array_refused(
+            "full_tree_snapshots", (sorted(self.envelope["full_tree_snapshots"])[0], "tree", 0), "1e")
+
+    def test_portable_array_bad_number_merge_parents_leading_zero(self):
+        self._assert_invalid_numeric_token_in_array_refused(
+            "merge_checkout_snapshot", ("merge_commit", "parents", 0), "01")
+
+    def test_portable_array_bad_number_merge_parents_plus(self):
+        self._assert_invalid_numeric_token_in_array_refused(
+            "merge_checkout_snapshot", ("merge_commit", "parents", 0), "+1")
+
+    def test_portable_array_bad_number_merge_parents_incomplete_negative(self):
+        self._assert_invalid_numeric_token_in_array_refused(
+            "merge_checkout_snapshot", ("merge_commit", "parents", 0), "-.")
+
+    def test_portable_array_bad_number_merge_parents_missing_integer(self):
+        self._assert_invalid_numeric_token_in_array_refused(
+            "merge_checkout_snapshot", ("merge_commit", "parents", 0), ".5")
+
+    def test_portable_array_bad_number_merge_parents_missing_fraction(self):
+        self._assert_invalid_numeric_token_in_array_refused(
+            "merge_checkout_snapshot", ("merge_commit", "parents", 0), "1.")
+
+    def test_portable_array_bad_number_merge_parents_missing_exponent(self):
+        self._assert_invalid_numeric_token_in_array_refused(
+            "merge_checkout_snapshot", ("merge_commit", "parents", 0), "1e")
+
+    def test_portable_array_bad_number_clean_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
