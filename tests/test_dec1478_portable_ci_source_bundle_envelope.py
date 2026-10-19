@@ -18143,3 +18143,124 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_json_primitive_clean_control(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+
+    def _assert_json_primitive_in_array_review_equivalent(self, category,
+                                                          path, token):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.assertIn(category, REQUIRED)
+        self.assertIn(token, ("true", "false", "null"))
+        before = self._portable_top_level_members_json()
+        copied = copy.deepcopy(self.envelope)
+        cursor = copied[category]
+        for segment in path:
+            cursor = cursor[segment]
+        self.assertIs(type(cursor), dict)
+        value = json.loads(token)
+        cursor["synthetic_primitive"] = value
+        encoded = json.dumps(copied, sort_keys=True,
+                             separators=(",", ":"))
+        decoded = json.loads(encoded)
+        target = decoded[category]
+        for segment in path:
+            target = target[segment]
+        self.assertIs(target["synthetic_primitive"], value)
+        direct = review_bundle_envelope(copied)
+        parsed = review_bundle_json_text(encoded)
+        self.assertEqual(direct, parsed)
+        self.assertNotIn("BUNDLE_JSON_GRAMMAR_UNREVIEWED",
+                         parsed["diagnostics"])
+        self.assertNotIn("BUNDLE_JSON_UNICODE_UNREVIEWED",
+                         parsed["diagnostics"])
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(encoded), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(before, self._portable_top_level_members_json())
+        self.assertEqual(status, 0 if direct["source_consistency"] else 2)
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["source_consistency"],
+                         direct["source_consistency"])
+        self.assertEqual(emitted["diagnostics"],
+                         list(direct["diagnostics"]))
+        self.assertNotIn("tests/sample.py", out.getvalue())
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        for result in (direct, parsed, emitted):
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_array_primitive_runs_true(self):
+        self._assert_json_primitive_in_array_review_equivalent(
+            "runs", (0,), "true")
+
+    def test_portable_array_primitive_runs_false(self):
+        self._assert_json_primitive_in_array_review_equivalent(
+            "runs", (0,), "false")
+
+    def test_portable_array_primitive_runs_null(self):
+        self._assert_json_primitive_in_array_review_equivalent(
+            "runs", (0,), "null")
+
+    def test_portable_array_primitive_comparison_files_true(self):
+        self._assert_json_primitive_in_array_review_equivalent(
+            "compare", ("files", 0), "true")
+
+    def test_portable_array_primitive_comparison_files_false(self):
+        self._assert_json_primitive_in_array_review_equivalent(
+            "compare", ("files", 0), "false")
+
+    def test_portable_array_primitive_comparison_files_null(self):
+        self._assert_json_primitive_in_array_review_equivalent(
+            "compare", ("files", 0), "null")
+
+    def test_portable_array_primitive_run_jobs_true(self):
+        self._assert_json_primitive_in_array_review_equivalent(
+            "jobs_by_run", (sorted(self.envelope["jobs_by_run"])[0], 0), "true")
+
+    def test_portable_array_primitive_run_jobs_false(self):
+        self._assert_json_primitive_in_array_review_equivalent(
+            "jobs_by_run", (sorted(self.envelope["jobs_by_run"])[0], 0), "false")
+
+    def test_portable_array_primitive_run_jobs_null(self):
+        self._assert_json_primitive_in_array_review_equivalent(
+            "jobs_by_run", (sorted(self.envelope["jobs_by_run"])[0], 0), "null")
+
+    def test_portable_array_primitive_phase3_scenarios_true(self):
+        self._assert_json_primitive_in_array_review_equivalent(
+            "phase3_evidence_snapshot", ("index", "scenarios", 0), "true")
+
+    def test_portable_array_primitive_phase3_scenarios_false(self):
+        self._assert_json_primitive_in_array_review_equivalent(
+            "phase3_evidence_snapshot", ("index", "scenarios", 0), "false")
+
+    def test_portable_array_primitive_phase3_scenarios_null(self):
+        self._assert_json_primitive_in_array_review_equivalent(
+            "phase3_evidence_snapshot", ("index", "scenarios", 0), "null")
+
+    def test_portable_array_primitive_full_tree_entries_true(self):
+        self._assert_json_primitive_in_array_review_equivalent(
+            "full_tree_snapshots", (sorted(self.envelope["full_tree_snapshots"])[0], "tree", 0), "true")
+
+    def test_portable_array_primitive_full_tree_entries_false(self):
+        self._assert_json_primitive_in_array_review_equivalent(
+            "full_tree_snapshots", (sorted(self.envelope["full_tree_snapshots"])[0], "tree", 0), "false")
+
+    def test_portable_array_primitive_full_tree_entries_null(self):
+        self._assert_json_primitive_in_array_review_equivalent(
+            "full_tree_snapshots", (sorted(self.envelope["full_tree_snapshots"])[0], "tree", 0), "null")
+
+    def test_portable_array_primitive_merge_parents_true(self):
+        self._assert_json_primitive_in_array_review_equivalent(
+            "merge_checkout_snapshot", ("merge_commit", "parents", 0), "true")
+
+    def test_portable_array_primitive_merge_parents_false(self):
+        self._assert_json_primitive_in_array_review_equivalent(
+            "merge_checkout_snapshot", ("merge_commit", "parents", 0), "false")
+
+    def test_portable_array_primitive_merge_parents_null(self):
+        self._assert_json_primitive_in_array_review_equivalent(
+            "merge_checkout_snapshot", ("merge_commit", "parents", 0), "null")
+
+    def test_portable_array_primitive_clean_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
