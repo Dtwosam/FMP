@@ -10,7 +10,9 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
+import stat
 import sys
 
 
@@ -119,10 +121,35 @@ def _require(condition, explanation):
         raise InvalidDocumentaryState(explanation)
 
 
+MAX_SOURCE_DOC_BYTES = 1024 * 1024
+
+
+def _read_regular_nofollow(path):
+    """Read only one bounded, regular, non-symlink evidence packet.
+
+    No protected file path is discovered by this routine. A caller explicitly
+    selects the offline source root; data and permissions are never changed.
+    """
+    if not all(hasattr(os, flag) for flag in ("O_NOFOLLOW", "O_NONBLOCK")):
+        raise InvalidDocumentaryState("OS lacks required fail-closed no-follow semantics")
+    flags = os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK
+    if hasattr(os, "O_CLOEXEC"):
+        flags |= os.O_CLOEXEC
+    with os.fdopen(os.open(path, flags), "rb") as handle:
+        info = os.fstat(handle.fileno())
+        _require(stat.S_ISREG(info.st_mode), "evidence packet is not a regular file")
+        _require(0 < info.st_size <= MAX_SOURCE_DOC_BYTES,
+                 "evidence packet size exceeds the bounded source-only contract")
+        payload = handle.read(MAX_SOURCE_DOC_BYTES + 1)
+        _require(len(payload) == info.st_size,
+                 "evidence packet size changed during the read")
+    return payload
+
+
 def _read_packets(root):
     packets, fingerprints = {}, {}
     for key, filename in FILES.items():
-        payload = (root / filename).read_bytes()
+        payload = _read_regular_nofollow(root / filename)
         fingerprints[key] = hashlib.sha256(payload).hexdigest()
         packets[key] = json.loads(
             payload.decode("utf-8"),
