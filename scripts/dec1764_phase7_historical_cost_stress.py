@@ -207,6 +207,34 @@ def replay_phase7_cost_evidence(doc_path: Path = PHASE7_DOC) -> dict[str, object
         "historical failure windows must remain visible",
     )
 
+
+    # Only the reported 0.2-pip seven-window PnLs permit this breakdown;
+    # do not attribute it to the 0.5/1.0 pip aggregates or to live trading.
+    positive_pnl = sum(
+        (Decimal(w["historic_net_pnl_usd"]) for w in positives),
+        Decimal("0"),
+    )
+    negative_pnl = sum(
+        (Decimal(w["historic_net_pnl_usd"]) for w in negatives),
+        Decimal("0"),
+    )
+    observed_net_pnl = positive_pnl + negative_pnl
+    _require(
+        positive_pnl > 0
+        and negative_pnl < 0
+        and observed_net_pnl == Decimal(EXPECTED_PNL_USD[0]),
+        "0.2-pip source window PnL must reconcile exactly to published net",
+    )
+    gross_loss_as_share_of_gross_gain = (
+        -negative_pnl / positive_pnl * Decimal(100)
+    ).quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
+    largest_positive_pnl = max(
+        Decimal(w["historic_net_pnl_usd"]) for w in positives
+    )
+    largest_positive_share = (
+        largest_positive_pnl / positive_pnl * Decimal(100)
+    ).quantize(Decimal("0.001"), rounding=ROUND_HALF_UP)
+
     # Simple interpolation of two reported retrospective table endpoints.
     # Not a new empirical run or a usable predictive execution threshold.
     left = Decimal(PIPS[1])
@@ -238,6 +266,17 @@ def replay_phase7_cost_evidence(doc_path: Path = PHASE7_DOC) -> dict[str, object
         "historical_positive_window_count": len(positives),
         "historical_window_trade_count": sum(w["trades"] for w in windows),
         "historical_window_returns_sum_pct": str(ret_total),
+
+        "historical_0_2_pip_pnl_attribution": {
+            "gross_positive_window_pnl_usd": str(positive_pnl),
+            "gross_negative_window_pnl_usd": str(negative_pnl),
+            "net_window_pnl_usd": str(observed_net_pnl),
+            "negative_pnl_as_pct_of_positive_pnl": str(gross_loss_as_share_of_gross_gain),
+            "largest_positive_window_pnl_usd": str(largest_positive_pnl),
+            "largest_positive_share_of_positive_pnl_pct": str(largest_positive_share),
+            "independent_starting_equity_per_window_usd": "100000",
+            "not_a_compounded_portfolio_return": True,
+        },
         "historical_slippage_sign_reversal_bracket_pips": ["0.5", "1.0"],
         "linear_zero_interpolation_pips_not_observed": str(
             zero.quantize(Decimal("0.000001"), rounding=ROUND_HALF_UP)),

@@ -186,6 +186,47 @@ class Phase7CostStressHistoricalReplayTests(unittest.TestCase):
             self.assertEqual(stdout.getvalue(), "")
             self.assertIn("BLOCKED:", stderr.getvalue())
 
+
+    def test_gross_positive_and_negative_window_pnl_sum_to_original_total(self):
+        attribution = REPLAY()["historical_0_2_pip_pnl_attribution"]
+        self.assertEqual(attribution["gross_positive_window_pnl_usd"], "1923.43")
+        self.assertEqual(attribution["gross_negative_window_pnl_usd"], "-1166.16")
+        self.assertEqual(attribution["net_window_pnl_usd"], "757.27")
+        self.assertEqual(
+            Decimal(attribution["gross_positive_window_pnl_usd"])
+            + Decimal(attribution["gross_negative_window_pnl_usd"]),
+            Decimal(attribution["net_window_pnl_usd"]),
+        )
+
+    def test_historical_losses_consumed_over_sixty_pct_of_winning_pnl(self):
+        attribution = REPLAY()["historical_0_2_pip_pnl_attribution"]
+        self.assertEqual(attribution["negative_pnl_as_pct_of_positive_pnl"],
+                         "60.6292")
+        self.assertGreater(
+            Decimal(attribution["negative_pnl_as_pct_of_positive_pnl"]),
+            Decimal("60"),
+        )
+
+    def test_largest_positive_window_and_independent_capital_are_explicit(self):
+        attribution = REPLAY()["historical_0_2_pip_pnl_attribution"]
+        self.assertEqual(attribution["largest_positive_window_pnl_usd"],
+                         "674.39")
+        self.assertEqual(attribution["largest_positive_share_of_positive_pnl_pct"],
+                         "35.062")
+        self.assertEqual(attribution["independent_starting_equity_per_window_usd"],
+                         "100000")
+        self.assertIs(attribution["not_a_compounded_portfolio_return"], True)
+
+    def test_source_only_attribution_does_not_grant_any_forward_profit(self):
+        report = REPLAY()
+        self.assertEqual(report["status"],
+                         "RETROSPECTIVE_DIAGNOSTIC_NOT_EXECUTION_AUTHORITY")
+        self.assertIsNone(report["forward_profit_claim"])
+        self.assertIs(report["phase8a_strategy_v1_edge_proven"], False)
+        self.assertIs(report["broker_order_authorized"], False)
+        self.assertEqual(report["allowed_actions"], [])
+
+
     def test_cli_returns_nonzero_even_with_correct_historical_report(self):
         stdout, stderr = io.StringIO(), io.StringIO()
         with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
