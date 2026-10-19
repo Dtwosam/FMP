@@ -50,10 +50,11 @@ class Phase8ACrossDocumentMutationNegativeControls(unittest.TestCase):
     def test_detects_phase8b_before_research_phase8a(self):
         self._assert_crossdocument_guard_rejects(
             "test_phase_order_is_consistent_with_human_approval",
-            lambda c: setattr(c, "build", c.build.replace(
-                "### Phase 8A — Multi-pair, multi-strategy portfolio research",
-                "### Phase 8C — Multi-pair, multi-strategy portfolio research",
-                1)))
+            lambda c: setattr(
+                c, "build",
+                c.build.replace("### Phase 8A", "### DEC1734_TEMP", 1)
+                .replace("### Phase 8B", "### Phase 8A", 1)
+                .replace("### DEC1734_TEMP", "### Phase 8B", 1)))
 
     def test_detects_removed_discovery_first_method(self):
         self._assert_crossdocument_guard_rejects(
