@@ -14901,3 +14901,171 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_array_unpaired_clean_control(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+
+    def _portable_array_two_fault_json(self, node, path,
+                                       bad_surrogate_key, extra_first):
+        if not path:
+            self.assertIs(type(node), dict)
+            duplicate_json = self._portable_json_subtree_with_duplicate(
+                node, (), False)
+            self.assertTrue(duplicate_json.startswith("{"))
+            self.assertTrue(duplicate_json.endswith("}"))
+            second = ('"\\ud800":null' if bad_surrogate_key else
+                      '"unexpected_surrogate":"\\udc00"')
+            fields = duplicate_json[1:-1]
+            self.assertTrue(fields)
+            if extra_first:
+                return "{" + second + "," + fields + "}"
+            return "{" + fields + "," + second + "}"
+        head, tail = path[0], path[1:]
+        if type(node) is dict:
+            self.assertIn(head, node)
+            return "{" + ",".join(
+                json.dumps(key) + ":" +
+                (self._portable_array_two_fault_json(
+                    value, tail, bad_surrogate_key, extra_first)
+                 if key == head else
+                 json.dumps(value, sort_keys=True, separators=(",", ":")))
+                for key, value in sorted(node.items())) + "}"
+        self.assertIs(type(node), list)
+        self.assertIs(type(head), int)
+        self.assertGreaterEqual(head, 0)
+        self.assertLess(head, len(node))
+        return "[" + ",".join(
+            (self._portable_array_two_fault_json(
+                value, tail, bad_surrogate_key, extra_first)
+             if index == head else
+             json.dumps(value, sort_keys=True, separators=(",", ":")))
+            for index, value in enumerate(node)) + "]"
+
+    def _assert_array_duplicate_before_unicode_error(self, category, path,
+                                                     bad_key, extra_first):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        before = self._portable_top_level_members_json()
+        replacement = self._portable_array_two_fault_json(
+            self.envelope[category], path, bad_key, extra_first)
+        encoded = self._portable_top_level_members_json({
+            category: json.dumps(category) + ":" + replacement})
+        naive = json.loads(encoded)
+        self.assertNotEqual(naive, self.envelope)
+        self.assertTrue(_has_unpaired_json_surrogate(naive))
+        self.assertTrue(self.verdict()["source_consistency"])
+        parsed = review_bundle_json_text(encoded)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(encoded), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(before, self._portable_top_level_members_json())
+        self.assertEqual(status, 2)
+        self.assertEqual(parsed["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"],
+                         ["BUNDLE_JSON_GRAMMAR_UNREVIEWED"])
+        self.assertNotIn("tests/sample.py", out.getvalue())
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        for result in (parsed, emitted):
+            self.assertFalse(result["source_consistency"])
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_array_double_fault_runs_surrogate_key_surrogate_first(self):
+        self._assert_array_duplicate_before_unicode_error(
+            "runs", (0,), True, True)
+
+    def test_portable_array_double_fault_runs_surrogate_key_duplicate_first(self):
+        self._assert_array_duplicate_before_unicode_error(
+            "runs", (0,), True, False)
+
+    def test_portable_array_double_fault_runs_surrogate_value_surrogate_first(self):
+        self._assert_array_duplicate_before_unicode_error(
+            "runs", (0,), False, True)
+
+    def test_portable_array_double_fault_runs_surrogate_value_duplicate_first(self):
+        self._assert_array_duplicate_before_unicode_error(
+            "runs", (0,), False, False)
+
+    def test_portable_array_double_fault_comparison_files_surrogate_key_surrogate_first(self):
+        self._assert_array_duplicate_before_unicode_error(
+            "compare", ("files", 0), True, True)
+
+    def test_portable_array_double_fault_comparison_files_surrogate_key_duplicate_first(self):
+        self._assert_array_duplicate_before_unicode_error(
+            "compare", ("files", 0), True, False)
+
+    def test_portable_array_double_fault_comparison_files_surrogate_value_surrogate_first(self):
+        self._assert_array_duplicate_before_unicode_error(
+            "compare", ("files", 0), False, True)
+
+    def test_portable_array_double_fault_comparison_files_surrogate_value_duplicate_first(self):
+        self._assert_array_duplicate_before_unicode_error(
+            "compare", ("files", 0), False, False)
+
+    def test_portable_array_double_fault_run_jobs_surrogate_key_surrogate_first(self):
+        self._assert_array_duplicate_before_unicode_error(
+            "jobs_by_run", (sorted(self.envelope["jobs_by_run"])[0], 0), True, True)
+
+    def test_portable_array_double_fault_run_jobs_surrogate_key_duplicate_first(self):
+        self._assert_array_duplicate_before_unicode_error(
+            "jobs_by_run", (sorted(self.envelope["jobs_by_run"])[0], 0), True, False)
+
+    def test_portable_array_double_fault_run_jobs_surrogate_value_surrogate_first(self):
+        self._assert_array_duplicate_before_unicode_error(
+            "jobs_by_run", (sorted(self.envelope["jobs_by_run"])[0], 0), False, True)
+
+    def test_portable_array_double_fault_run_jobs_surrogate_value_duplicate_first(self):
+        self._assert_array_duplicate_before_unicode_error(
+            "jobs_by_run", (sorted(self.envelope["jobs_by_run"])[0], 0), False, False)
+
+    def test_portable_array_double_fault_phase3_scenarios_surrogate_key_surrogate_first(self):
+        self._assert_array_duplicate_before_unicode_error(
+            "phase3_evidence_snapshot", ("index", "scenarios", 0), True, True)
+
+    def test_portable_array_double_fault_phase3_scenarios_surrogate_key_duplicate_first(self):
+        self._assert_array_duplicate_before_unicode_error(
+            "phase3_evidence_snapshot", ("index", "scenarios", 0), True, False)
+
+    def test_portable_array_double_fault_phase3_scenarios_surrogate_value_surrogate_first(self):
+        self._assert_array_duplicate_before_unicode_error(
+            "phase3_evidence_snapshot", ("index", "scenarios", 0), False, True)
+
+    def test_portable_array_double_fault_phase3_scenarios_surrogate_value_duplicate_first(self):
+        self._assert_array_duplicate_before_unicode_error(
+            "phase3_evidence_snapshot", ("index", "scenarios", 0), False, False)
+
+    def test_portable_array_double_fault_full_tree_entries_surrogate_key_surrogate_first(self):
+        self._assert_array_duplicate_before_unicode_error(
+            "full_tree_snapshots", (sorted(self.envelope["full_tree_snapshots"])[0], "tree", 0), True, True)
+
+    def test_portable_array_double_fault_full_tree_entries_surrogate_key_duplicate_first(self):
+        self._assert_array_duplicate_before_unicode_error(
+            "full_tree_snapshots", (sorted(self.envelope["full_tree_snapshots"])[0], "tree", 0), True, False)
+
+    def test_portable_array_double_fault_full_tree_entries_surrogate_value_surrogate_first(self):
+        self._assert_array_duplicate_before_unicode_error(
+            "full_tree_snapshots", (sorted(self.envelope["full_tree_snapshots"])[0], "tree", 0), False, True)
+
+    def test_portable_array_double_fault_full_tree_entries_surrogate_value_duplicate_first(self):
+        self._assert_array_duplicate_before_unicode_error(
+            "full_tree_snapshots", (sorted(self.envelope["full_tree_snapshots"])[0], "tree", 0), False, False)
+
+    def test_portable_array_double_fault_merge_parents_surrogate_key_surrogate_first(self):
+        self._assert_array_duplicate_before_unicode_error(
+            "merge_checkout_snapshot", ("merge_commit", "parents", 0), True, True)
+
+    def test_portable_array_double_fault_merge_parents_surrogate_key_duplicate_first(self):
+        self._assert_array_duplicate_before_unicode_error(
+            "merge_checkout_snapshot", ("merge_commit", "parents", 0), True, False)
+
+    def test_portable_array_double_fault_merge_parents_surrogate_value_surrogate_first(self):
+        self._assert_array_duplicate_before_unicode_error(
+            "merge_checkout_snapshot", ("merge_commit", "parents", 0), False, True)
+
+    def test_portable_array_double_fault_merge_parents_surrogate_value_duplicate_first(self):
+        self._assert_array_duplicate_before_unicode_error(
+            "merge_checkout_snapshot", ("merge_commit", "parents", 0), False, False)
+
+    def test_portable_array_double_fault_clean_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
