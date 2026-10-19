@@ -76,7 +76,12 @@ def _read_frozen_phase7_regular_file(path):
         and os.open in os.supports_dir_fd,
         "this OS does not provide fail-closed source directory admission",
     )
-    absolute = Path(os.path.abspath(os.fspath(path)))
+    original = Path(os.fspath(path))
+    _require(
+        ".." not in original.parts,
+        "ambiguous traversal in historical Phase7 documentary source path",
+    )
+    absolute = Path(os.path.abspath(os.fspath(original)))
     directory_flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_NONBLOCK
     file_flags = os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK
     if hasattr(os, "O_CLOEXEC"):

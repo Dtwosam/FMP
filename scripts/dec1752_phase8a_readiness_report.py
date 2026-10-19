@@ -135,7 +135,12 @@ def _read_regular_nofollow(path):
         os.open not in os.supports_dir_fd
     ):
         raise InvalidDocumentaryState("OS lacks fail-closed directory FD/no-follow support")
-    absolute = Path(os.path.abspath(os.fspath(path)))
+    original = Path(os.fspath(path))
+    _require(
+        ".." not in original.parts,
+        "ambiguous traversal in offline evidence document path",
+    )
+    absolute = Path(os.path.abspath(os.fspath(original)))
     directory_flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_NONBLOCK
     leaf_flags = os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK
     if hasattr(os, "O_CLOEXEC"):

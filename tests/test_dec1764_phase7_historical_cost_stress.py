@@ -532,6 +532,32 @@ class Phase7CostStressHistoricalReplayTests(unittest.TestCase):
         self.assertIs(report["phase8a_strategy_v1_edge_proven"], False)
         self.assertEqual(report["allowed_actions"], [])
 
+
+    def test_historical_reader_rejects_parent_traversal_source_alias(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            (root / "detour").mkdir()
+            target = root / "historical-phase7.md"
+            target.write_bytes(ORIGINAL.read_bytes())
+            confusing = root / "detour" / ".." / target.name
+            self.assertIn("..", confusing.parts)
+            with self.assertRaisesRegex(ValueError, "ambiguous traversal"):
+                REPLAY(confusing)
+
+    def test_historical_cli_rejects_parent_alias_without_stdout(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            (root / "detour").mkdir()
+            target = root / "historical-phase7.md"
+            target.write_bytes(ORIGINAL.read_bytes())
+            confusing = root / "detour" / ".." / target.name
+            stdout, stderr = io.StringIO(), io.StringIO()
+            with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+                code = MODULE["main"](["--phase7-document", str(confusing)])
+            self.assertEqual(code, 2)
+            self.assertEqual(stdout.getvalue(), "")
+            self.assertIn("ambiguous traversal", stderr.getvalue())
+
     def test_cli_returns_nonzero_even_with_correct_historical_report(self):
         stdout, stderr = io.StringIO(), io.StringIO()
         with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
