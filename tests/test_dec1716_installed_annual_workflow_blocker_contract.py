@@ -33,7 +33,7 @@ def _source() -> str:
 
 def _git_blob_sha(raw: bytes) -> str:
     return hashlib.sha1(b"blob " + str(len(raw)).encode("ascii") +
-                        b"\\x00" + raw).hexdigest()
+                        b"\x00" + raw).hexdigest()
 
 
 def _job_sections(source: str) -> dict[str, str]:
@@ -50,7 +50,7 @@ def _job_sections(source: str) -> dict[str, str]:
             current = None
         if current is not None:
             sections[current].append(line)
-    return {job: "\\n".join(lines) for job, lines in sections.items()}
+    return {job: "\n".join(lines) for job, lines in sections.items()}
 
 
 def _steps(job_source: str) -> list[str]:
@@ -80,7 +80,7 @@ class InstalledAnnualWorkflowBlockerContractTests(unittest.TestCase):
         self.assertIn("      previous_annual_freeze_run_id:", self.source)
 
     def test_read_only_github_job_permissions_are_not_a_ref_lock(self):
-        before_jobs = self.source.split("\\njobs:\\n", 1)[0]
+        before_jobs = self.source.split("\njobs:\n", 1)[0]
         self.assertIn("permissions:\\n  contents: read\\n  actions: read", before_jobs)
         self.assertNotIn("contents: write", before_jobs)
         self.assertNotIn("actions: write", before_jobs)
@@ -135,9 +135,9 @@ class InstalledAnnualWorkflowBlockerContractTests(unittest.TestCase):
 
     def test_exact_18_cell_matrix_inventory(self):
         block = self.jobs["annual_cell"]
-        symbols = re.findall(r"(?m)^          - symbol: (\\w+)$", block)
-        timeframes = re.findall(r"(?m)^            timeframe: (\\S+)$", block)
-        horizons = re.findall(r"(?m)^            horizon: (\\d+)$", block)
+        symbols = re.findall(r"(?m)^          - symbol: (\w+)$", block)
+        timeframes = re.findall(r"(?m)^            timeframe: (\S+)$", block)
+        horizons = re.findall(r"(?m)^            horizon: (\d+)$", block)
         self.assertEqual(len(symbols), 18)
         self.assertEqual(set(symbols), {"EURUSD", "GBPUSD", "USDJPY"})
         self.assertEqual(len(timeframes), 18)
