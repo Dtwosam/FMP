@@ -12267,3 +12267,93 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertEqual(self.envelope["schema"], ENVELOPE_SCHEMA)
         self._assert_portable_tree_object_order_consistency_only()
 
+    def _assert_mixed_required_key_inventory_refused(self, missing, extra, claim):
+        import io
+        import copy
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.assertIn(missing, REQUIRED)
+        self.assertNotIn(extra, REQUIRED)
+        self.envelope.pop(missing)
+        self.envelope[extra] = claim
+        original = copy.deepcopy(self.envelope)
+        direct = self.verdict()
+        raw = json.dumps(self.envelope, sort_keys=True)
+        parsed = review_bundle_json_text(raw)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(raw), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(self.envelope, original)
+        self.assertEqual(direct, parsed)
+        self.assertEqual(status, 2)
+        self.assertEqual(direct["diagnostics"],
+                         ("BUNDLE_KEY_INVENTORY_UNREVIEWED",))
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"],
+                         ["BUNDLE_KEY_INVENTORY_UNREVIEWED"])
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        for result in (direct, emitted):
+            self.assertFalse(result["source_consistency"])
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_inventory_mixed_no_pr_forged_approval_refused(self):
+        self._assert_mixed_required_key_inventory_refused(
+            "pr", "can_authorize_annual_run", True)
+
+    def test_portable_inventory_mixed_no_compare_extra_signature_refused(self):
+        self._assert_mixed_required_key_inventory_refused(
+            "compare", "synthetic_signature", "private")
+
+    def test_portable_inventory_mixed_no_commit_extra_schema_refused(self):
+        self._assert_mixed_required_key_inventory_refused(
+            "commit", "schema_v2", "private")
+
+    def test_portable_inventory_mixed_no_tree_extra_proof_refused(self):
+        self._assert_mixed_required_key_inventory_refused(
+            "tree", "independent_original_os_proof", True)
+
+    def test_portable_inventory_mixed_no_nodes_extra_gate_refused(self):
+        self._assert_mixed_required_key_inventory_refused(
+            "nodes", "exclusive_server_dispatch_gate_proven", True)
+
+    def test_portable_inventory_mixed_no_changed_bytes_extra_source_refused(self):
+        self._assert_mixed_required_key_inventory_refused(
+            "changed_bytes_b64", "source_override", "private")
+
+    def test_portable_inventory_mixed_no_ci_workflow_extra_raw_refused(self):
+        self._assert_mixed_required_key_inventory_refused(
+            "ci_workflow_bytes_b64", "raw_override", {})
+
+    def test_portable_inventory_mixed_no_snapshot_extra_receipt_refused(self):
+        self._assert_mixed_required_key_inventory_refused(
+            "full_tree_snapshots", "raw_receipt_override", {})
+
+    def test_portable_inventory_mixed_no_runs_extra_run_refused(self):
+        self._assert_mixed_required_key_inventory_refused(
+            "runs", "synthetic_run", {})
+
+    def test_portable_inventory_mixed_no_jobs_extra_dispatch_refused(self):
+        self._assert_mixed_required_key_inventory_refused(
+            "jobs_by_run", "dispatch_allowed", True)
+
+    def test_portable_inventory_mixed_no_raw_logs_extra_authority_refused(self):
+        self._assert_mixed_required_key_inventory_refused(
+            "raw_ci_runner_logs", "annual_authority", True)
+
+    def test_portable_inventory_mixed_no_raw_receipts_extra_token_refused(self):
+        self._assert_mixed_required_key_inventory_refused(
+            "raw_ci_log_receipts", "approval_token", "unreviewed")
+
+    def test_portable_inventory_mixed_no_checkout_extra_tags_refused(self):
+        self._assert_mixed_required_key_inventory_refused(
+            "checkout_by_run", "protected_tag", True)
+
+    def test_portable_inventory_mixed_no_phase3_extra_diagnostics_refused(self):
+        self._assert_mixed_required_key_inventory_refused(
+            "phase3_evidence_snapshot", "diagnostics", [])
+
+    def test_portable_inventory_mixed_clean_control(self):
+        self.assertEqual(set(self.envelope), REQUIRED)
+        self._assert_portable_tree_object_order_consistency_only()
+
