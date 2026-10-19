@@ -14203,3 +14203,122 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_nested_surrogate_clean_control(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+
+    def _assert_nested_duplicate_dominates_surrogate(self, category,
+                                                     extra_first, in_key):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.assertIn(category, ("pr", "tree", "raw_ci_log_receipts",
+                                 "phase3_evidence_snapshot"))
+        duplicated = self._portable_json_subtree_with_duplicate(
+            self.envelope[category], (), False)
+        self.assertTrue(duplicated.startswith("{"))
+        self.assertTrue(duplicated.endswith("}"))
+        extra = ('"\\ud800":null' if in_key else
+                 '"unexpected_unicode":"\\udc00"')
+        middle = duplicated[1:-1]
+        altered = ("{" + extra + "," + middle + "}" if extra_first else
+                   "{" + middle + "," + extra + "}")
+        encoded = self._portable_top_level_members_json({
+            category: json.dumps(category) + ":" + altered})
+        permissive = json.loads(encoded)[category]
+        if in_key:
+            self.assertTrue(any(
+                type(key) is str and any(
+                    0xD800 <= ord(ch) <= 0xDFFF for ch in key)
+                for key in permissive))
+        else:
+            self.assertTrue(0xD800 <= ord(
+                permissive["unexpected_unicode"]) <= 0xDFFF)
+        before = self._portable_top_level_members_json()
+        direct = self.verdict()
+        parsed = review_bundle_json_text(encoded)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(encoded), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(before, self._portable_top_level_members_json())
+        self.assertTrue(direct["source_consistency"])
+        self.assertEqual(direct["diagnostics"], ())
+        self.assertEqual(status, 2)
+        # A duplicate decoded member is a grammar defect. That
+        # rejection must precede the later surrogate walk.
+        self.assertEqual(parsed["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"],
+                         ["BUNDLE_JSON_GRAMMAR_UNREVIEWED"])
+        self.assertNotIn("tests/sample.py", out.getvalue())
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        for result in (parsed, emitted):
+            self.assertFalse(result["source_consistency"])
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_nested_duplicate_unicode_pr_surrogate_first_surrogate_key(self):
+        self._assert_nested_duplicate_dominates_surrogate(
+            "pr", True, True)
+
+    def test_portable_nested_duplicate_unicode_pr_surrogate_first_surrogate_value(self):
+        self._assert_nested_duplicate_dominates_surrogate(
+            "pr", True, False)
+
+    def test_portable_nested_duplicate_unicode_pr_duplicate_first_surrogate_key(self):
+        self._assert_nested_duplicate_dominates_surrogate(
+            "pr", False, True)
+
+    def test_portable_nested_duplicate_unicode_pr_duplicate_first_surrogate_value(self):
+        self._assert_nested_duplicate_dominates_surrogate(
+            "pr", False, False)
+
+    def test_portable_nested_duplicate_unicode_tree_surrogate_first_surrogate_key(self):
+        self._assert_nested_duplicate_dominates_surrogate(
+            "tree", True, True)
+
+    def test_portable_nested_duplicate_unicode_tree_surrogate_first_surrogate_value(self):
+        self._assert_nested_duplicate_dominates_surrogate(
+            "tree", True, False)
+
+    def test_portable_nested_duplicate_unicode_tree_duplicate_first_surrogate_key(self):
+        self._assert_nested_duplicate_dominates_surrogate(
+            "tree", False, True)
+
+    def test_portable_nested_duplicate_unicode_tree_duplicate_first_surrogate_value(self):
+        self._assert_nested_duplicate_dominates_surrogate(
+            "tree", False, False)
+
+    def test_portable_nested_duplicate_unicode_raw_ci_log_receipts_surrogate_first_surrogate_key(self):
+        self._assert_nested_duplicate_dominates_surrogate(
+            "raw_ci_log_receipts", True, True)
+
+    def test_portable_nested_duplicate_unicode_raw_ci_log_receipts_surrogate_first_surrogate_value(self):
+        self._assert_nested_duplicate_dominates_surrogate(
+            "raw_ci_log_receipts", True, False)
+
+    def test_portable_nested_duplicate_unicode_raw_ci_log_receipts_duplicate_first_surrogate_key(self):
+        self._assert_nested_duplicate_dominates_surrogate(
+            "raw_ci_log_receipts", False, True)
+
+    def test_portable_nested_duplicate_unicode_raw_ci_log_receipts_duplicate_first_surrogate_value(self):
+        self._assert_nested_duplicate_dominates_surrogate(
+            "raw_ci_log_receipts", False, False)
+
+    def test_portable_nested_duplicate_unicode_phase3_evidence_snapshot_surrogate_first_surrogate_key(self):
+        self._assert_nested_duplicate_dominates_surrogate(
+            "phase3_evidence_snapshot", True, True)
+
+    def test_portable_nested_duplicate_unicode_phase3_evidence_snapshot_surrogate_first_surrogate_value(self):
+        self._assert_nested_duplicate_dominates_surrogate(
+            "phase3_evidence_snapshot", True, False)
+
+    def test_portable_nested_duplicate_unicode_phase3_evidence_snapshot_duplicate_first_surrogate_key(self):
+        self._assert_nested_duplicate_dominates_surrogate(
+            "phase3_evidence_snapshot", False, True)
+
+    def test_portable_nested_duplicate_unicode_phase3_evidence_snapshot_duplicate_first_surrogate_value(self):
+        self._assert_nested_duplicate_dominates_surrogate(
+            "phase3_evidence_snapshot", False, False)
+
+    def test_portable_nested_duplicate_unicode_clean_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
