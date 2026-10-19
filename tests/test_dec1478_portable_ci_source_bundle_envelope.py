@@ -12357,3 +12357,73 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertEqual(set(self.envelope), REQUIRED)
         self._assert_portable_tree_object_order_consistency_only()
 
+    def test_portable_scalar_category_pr_null_refused(self):
+        self._assert_bad_required_category_type_refused(
+            "pr", None, "BUNDLE_CATEGORY_TYPE_UNREVIEWED")
+
+    def test_portable_scalar_category_pr_boolean_false_refused(self):
+        self._assert_bad_required_category_type_refused(
+            "pr", False, "BUNDLE_CATEGORY_TYPE_UNREVIEWED")
+
+    def test_portable_scalar_category_compare_numeric_zero_refused(self):
+        self._assert_bad_required_category_type_refused(
+            "compare", 0, "BUNDLE_CATEGORY_TYPE_UNREVIEWED")
+
+    def test_portable_scalar_category_compare_string_json_refused(self):
+        self._assert_bad_required_category_type_refused(
+            "compare", "{}", "BUNDLE_CATEGORY_TYPE_UNREVIEWED")
+
+    def test_portable_scalar_category_commit_empty_string_refused(self):
+        self._assert_bad_required_category_type_refused(
+            "commit", "", "BUNDLE_CATEGORY_TYPE_UNREVIEWED")
+
+    def test_portable_scalar_category_tree_numeric_one_refused(self):
+        self._assert_bad_required_category_type_refused(
+            "tree", 1, "BUNDLE_CATEGORY_TYPE_UNREVIEWED")
+
+    def test_portable_scalar_category_nodes_boolean_false_refused(self):
+        self._assert_bad_required_category_type_refused(
+            "nodes", False, "BUNDLE_CATEGORY_TYPE_UNREVIEWED")
+
+    def test_portable_scalar_category_full_tree_null_refused(self):
+        self._assert_bad_required_category_type_refused(
+            "full_tree_snapshots", None, "BUNDLE_CATEGORY_TYPE_UNREVIEWED")
+
+    def test_portable_scalar_category_source_b64_numeric_zero_refused(self):
+        self._assert_bad_required_category_type_refused(
+            "changed_bytes_b64", 0, "BUNDLE_CATEGORY_TYPE_UNREVIEWED")
+
+    def test_portable_scalar_category_ci_workflow_boolean_true_refused(self):
+        self._assert_bad_required_category_type_refused(
+            "ci_workflow_bytes_b64", True, "BUNDLE_CATEGORY_TYPE_UNREVIEWED")
+
+    def test_portable_scalar_category_merge_checkout_string_refused(self):
+        self._assert_bad_required_category_type_refused(
+            "merge_checkout_snapshot", "private", "BUNDLE_CATEGORY_TYPE_UNREVIEWED")
+
+    def test_portable_scalar_category_phase3_numeric_zero_refused(self):
+        self._assert_bad_required_category_type_refused(
+            "phase3_evidence_snapshot", 0, "BUNDLE_CATEGORY_TYPE_UNREVIEWED")
+
+    def test_portable_scalar_category_receipts_boolean_false_refused(self):
+        self._assert_bad_required_category_type_refused(
+            "raw_ci_log_receipts", False, "BUNDLE_CATEGORY_TYPE_UNREVIEWED")
+
+    def test_portable_scalar_category_runner_logs_null_refused(self):
+        self._assert_bad_required_category_type_refused(
+            "raw_ci_runner_logs", None, "BUNDLE_CATEGORY_TYPE_UNREVIEWED")
+
+    def test_portable_scalar_category_runs_null_refused(self):
+        self._assert_bad_required_category_type_refused(
+            "runs", None, "BUNDLE_CATEGORY_TYPE_UNREVIEWED")
+
+    def test_portable_scalar_category_runs_string_refused(self):
+        self._assert_bad_required_category_type_refused(
+            "runs", "[]", "BUNDLE_CATEGORY_TYPE_UNREVIEWED")
+
+    def test_portable_scalar_category_clean_control(self):
+        self.assertIs(type(self.envelope["runs"]), list)
+        for category in DICT_KEYS:
+            self.assertIs(type(self.envelope[category]), dict)
+        self._assert_portable_tree_object_order_consistency_only()
+
