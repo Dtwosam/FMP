@@ -85,6 +85,53 @@ class Phase7CostStressHistoricalReplayTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "reviewed Git blob"):
                 REPLAY(path)
 
+
+    def test_window_rollup_preserves_all_seven_retrospective_periods(self):
+        result = REPLAY()
+        rows = result["historical_0_2_pip_windows"]
+        self.assertEqual(len(rows), 7)
+        self.assertEqual(result["historical_window_trade_count"], 199)
+        self.assertEqual(
+            [w["window"] for w in rows],
+            ["2025-Q1", "2025-Q2", "2025-Q3", "2025-Q4",
+             "2026-Q1", "2026-Q2", "2026-partial-Q3"],
+        )
+
+    def test_2025_first_quarter_negative_is_not_erased(self):
+        row = REPLAY()["historical_0_2_pip_windows"][0]
+        self.assertEqual(row["window"], "2025-Q1")
+        self.assertEqual(row["historic_net_return_pct"], "-0.520185")
+        self.assertEqual(row["historic_net_pnl_usd"], "-520.18")
+
+    def test_2026_partial_quarter_loss_not_hidden_by_aggregate(self):
+        row = REPLAY()["historical_0_2_pip_windows"][-1]
+        self.assertEqual(row["window"], "2026-partial-Q3")
+        self.assertEqual(row["historic_net_return_pct"], "-0.645978")
+        self.assertEqual(row["historic_net_pnl_usd"], "-645.98")
+        self.assertEqual(row["trades"], 16)
+
+    def test_two_negative_periods_and_five_positive_are_retained(self):
+        result = REPLAY()
+        self.assertEqual(
+            result["historical_negative_windows"],
+            ["2025-Q1", "2026-partial-Q3"],
+        )
+        self.assertEqual(result["historical_positive_window_count"], 5)
+
+    def test_historic_0_2_pip_window_returns_reconcile_with_rounding(self):
+        result = REPLAY()
+        summed = Decimal(result["historical_window_returns_sum_pct"])
+        published = Decimal(result["observations"][0]["historical_net_return_pct"])
+        self.assertLessEqual(abs(summed - published), Decimal("0.00001"))
+
+    def test_both_losing_windows_are_retrospective_not_strategy_v1(self):
+        result = REPLAY()
+        self.assertEqual(result["historical_positive_window_count"], 5)
+        self.assertIs(result["phase8a_strategy_v1_edge_proven"], False)
+        self.assertIsNone(result["forward_profit_claim"])
+        self.assertEqual(result["allowed_actions"], [])
+
+
     def test_cli_returns_nonzero_even_with_correct_historical_report(self):
         stdout, stderr = io.StringIO(), io.StringIO()
         with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):

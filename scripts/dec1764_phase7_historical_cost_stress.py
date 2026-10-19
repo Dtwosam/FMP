@@ -107,6 +107,75 @@ def replay_phase7_cost_evidence(doc_path: Path = PHASE7_DOC) -> dict[str, object
             "max_positive_window_share_pct": str(positive_share_pct),
         })
 
+
+    # These are the published 0.2-pip benchmark subperiods, not fresh years
+    # or independent prospective strategy tests. Retain losing windows.
+    window_names = (
+        "2025-Q1", "2025-Q2", "2025-Q3", "2025-Q4",
+        "2026-Q1", "2026-Q2", "2026-partial-Q3",
+    )
+    window_lines = [
+        line for line in text.splitlines()
+        if re.match(
+            r"^\| (?:2025-Q[1-4]|2026-Q[12]|2026-partial-Q3) \|",
+            line,
+        )
+    ]
+    _require(len(window_lines) == len(window_names),
+             "published historical loss/win windows missing or duplicated")
+    windows = []
+    for index, line in enumerate(window_lines):
+        parts = [col.strip() for col in line.strip("|").split("|")]
+        _require(len(parts) == 8 and parts[0] == window_names[index],
+                 "Phase7 window identity, order or evidence columns changed")
+        _require(parts[1].endswith(" exclusive"),
+                 "Phase7 window cutoff cannot be changed")
+        ret = _signed_decimal(parts[2], "%")
+        pnl = _signed_decimal(parts[3])
+        _require(re.fullmatch(r"[0-9]+", parts[4]) is not None,
+                 "window trade count must be a real integer")
+        count = int(parts[4])
+        expectancy = _signed_decimal(parts[5])
+        factor = _signed_decimal(parts[6])
+        drawdown = _signed_decimal(parts[7], "%")
+        _require(count > 0 and drawdown >= 0 and factor >= 0,
+                 "bad Phase7 window performance evidence")
+        windows.append({
+            "window": parts[0],
+            "scored_range": parts[1],
+            "historic_net_return_pct": str(ret),
+            "historic_net_pnl_usd": str(pnl),
+            "trades": count,
+            "historic_expectancy_per_trade_usd": str(expectancy),
+            "historic_profit_factor": str(factor),
+            "historic_max_drawdown_pct": str(drawdown),
+        })
+    _require(sum(w["trades"] for w in windows) == 199,
+             "historical windows must reconcile to all 199 trades")
+    ret_total = sum(
+        (Decimal(w["historic_net_return_pct"]) for w in windows),
+        Decimal("0"))
+    # Source window/aggregate percentage values have published rounding.
+    _require(abs(ret_total - Decimal("0.757266")) <= Decimal("0.00001"),
+             "window returns do not reconcile with published aggregate")
+    negatives = [
+        w for w in windows
+        if Decimal(w["historic_net_return_pct"]) < 0
+    ]
+    positives = [
+        w for w in windows
+        if Decimal(w["historic_net_return_pct"]) > 0
+    ]
+    _require(
+        len(negatives) == 2
+        and len(positives) == 5
+        and [w["window"] for w in negatives]
+            == ["2025-Q1", "2026-partial-Q3"]
+        and Decimal(negatives[-1]["historic_net_return_pct"])
+            == Decimal("-0.645978"),
+        "historical failure windows must remain visible",
+    )
+
     # Simple interpolation of two reported retrospective table endpoints.
     # Not a new empirical run or a usable predictive execution threshold.
     left = Decimal(PIPS[1])
@@ -133,6 +202,11 @@ def replay_phase7_cost_evidence(doc_path: Path = PHASE7_DOC) -> dict[str, object
         "phase7_stage2_code_sha": STAGE2_SHA,
         "historic_candidate": "USDJPY 15m session_breakout",
         "observations": observations,
+        "historical_0_2_pip_windows": windows,
+        "historical_negative_windows": [w["window"] for w in negatives],
+        "historical_positive_window_count": len(positives),
+        "historical_window_trade_count": sum(w["trades"] for w in windows),
+        "historical_window_returns_sum_pct": str(ret_total),
         "historical_slippage_sign_reversal_bracket_pips": ["0.5", "1.0"],
         "linear_zero_interpolation_pips_not_observed": str(
             zero.quantize(Decimal("0.000001"), rounding=ROUND_HALF_UP)),
