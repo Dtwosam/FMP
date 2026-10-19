@@ -1,0 +1,116 @@
+{
+  "schema": "fmp_dec1750_phase8a_external_authority_blocker_snapshot_v1",
+  "decision": "DEC-1750",
+  "kind": "READ_ONLY_SOURCE_DOCUMENTATION_NOT_INDEPENDENT_ATTESTATION",
+  "observed_date_utc": "2026-10-19",
+  "public_observation": {
+    "main_ref": "refs/heads/main",
+    "observed_main_sha": "53e203133bbc141b2f48c7b8b8241d56b35166a3",
+    "main_branch_protected": false,
+    "repo_rulesets_count": 0,
+    "independent_admin_scope_verified": false,
+    "inherited_org_ruleset_scope_verified": false,
+    "proof_of_effective_exclusive_lock": false,
+    "observation_current_at_future_action_time": false
+  },
+  "historical_provenance": {
+    "historical_freeze_segment": "2022",
+    "historical_freeze_run": 384,
+    "historical_freeze_run_id": 37663157285,
+    "independently_reauthenticated_for_future_dispatch": false
+  },
+  "next_protected_action": {
+    "segment": "2023",
+    "run_number": 385,
+    "attempt_number": 1,
+    "dispatch_authorized": false,
+    "run_inventory_currently_independently_verified": false,
+    "run_385_unconsumed_currently_independently_proven": false,
+    "retry_authorized": false
+  },
+  "remediation_routes": [
+    {
+      "id": "ADMIN_EXCLUSIVE_CONTINUOUS_MAIN_LOCK",
+      "status": "BLOCKED",
+      "selected": false,
+      "independently_reviewed": false,
+      "required_claim": "exclusive main SHA/ref enforcement across the complete server-side dispatch including all bypass actors, deletion/recreation and concurrent authorised updates"
+    },
+    {
+      "id": "SEPARATELY_APPROVED_IMMUTABLE_REF_CODE_AMENDMENT",
+      "status": "BLOCKED",
+      "selected": false,
+      "independently_reviewed": false,
+      "required_claim": "separately reviewed source-of-truth amendment and fully retested installed workflow/runtime preserving one-shot identity"
+    }
+  ],
+  "external_proofs": [
+    {
+      "id": "effective_github_admin_and_inherited_ruleset_inventory",
+      "status": "MISSING",
+      "evidence_ref": null,
+      "reviewer_signoff": null
+    },
+    {
+      "id": "exclusive_continuous_ref_lock_and_no_bypass",
+      "status": "MISSING",
+      "evidence_ref": null,
+      "reviewer_signoff": null
+    },
+    {
+      "id": "independent_reviewed_source_sha_workflow_identity",
+      "status": "MISSING",
+      "evidence_ref": null,
+      "reviewer_signoff": null
+    },
+    {
+      "id": "installed_three_job_precheckout_preinstall_preaccess_enforcement",
+      "status": "MISSING",
+      "evidence_ref": null,
+      "reviewer_signoff": null
+    },
+    {
+      "id": "privileged_runner_os_isolation_and_publisher_witness",
+      "status": "MISSING",
+      "evidence_ref": null,
+      "reviewer_signoff": null
+    },
+    {
+      "id": "frozen_dec609_dec610_provenance_reauthentication",
+      "status": "MISSING",
+      "evidence_ref": null,
+      "reviewer_signoff": null
+    },
+    {
+      "id": "fresh_complete_authoritative_one_shot_annual_run_inventory",
+      "status": "MISSING",
+      "evidence_ref": null,
+      "reviewer_signoff": null
+    },
+    {
+      "id": "separate_2023_run385_attempt1_human_execution_decision",
+      "status": "MISSING",
+      "evidence_ref": null,
+      "reviewer_signoff": null
+    }
+  ],
+  "downstream_gate_state": {
+    "annual_2023": "BLOCKED",
+    "remaining_annual_years": "BLOCKED",
+    "cross_year_economics": "BLOCKED",
+    "strategy_v1": "BLOCKED",
+    "prospective_shadow": "BLOCKED",
+    "demo": "BLOCKED",
+    "phase10": "BLOCKED",
+    "phase11_real_money": "BLOCKED"
+  },
+  "measured_strategy_v1_profit": null,
+  "candidate_strategy_identity": null,
+  "approved_actions": [],
+  "release_status": "BLOCKED",
+  "one_shot_annual_action_authorized": false,
+  "broker_action_authorized": false,
+  "trading_authorized": false,
+  "snapshot_authorizes_anything": false,
+  "caveat": "Read-only historical public repository observations cannot prove future GitHub, OS or runner exclusivity, fresh annual inventory or human authorization. This packet cannot authorize any workflow dispatch or any trade."
+}
