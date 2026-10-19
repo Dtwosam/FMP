@@ -541,6 +541,20 @@ PINNED_SOURCE_SHA256 = {
     "admin_snapshot": "13b39af6e81e47e652ca9debcea821384efae6a22047640549948d743f49bc69"
 }
 
+def _blocked_stage_map_is_valid(states):
+    """JSON object ordering is not a security/phase property.
+
+    An exact set of named blocked stages is meaningful; serialization byte
+    identity is separately pinned by SHA-256 on the reviewed source file.
+    """
+    return (
+        type(states) is dict
+        and set(states) == set(STAGES)
+        and all(type(states[stage]) is str and states[stage] == "BLOCKED"
+                for stage in STAGES)
+    )
+
+
 def render_readiness(docs_root: Path) -> dict[str, object]:
     """Create a deterministic, permanently nonauthorizing OFFLINE report.
 
@@ -705,8 +719,7 @@ def render_readiness(docs_root: Path) -> dict[str, object]:
         "external proof entries must remain missing/unverified",
     )
     _require(
-        tuple(snap["downstream_gate_state"]) == STAGES
-        and all(snap["downstream_gate_state"][stage] == "BLOCKED" for stage in STAGES)
+        _blocked_stage_map_is_valid(snap["downstream_gate_state"])
         and len(graph["nodes"]) == 14
         and all(n["status"] == "BLOCKED"
                 and n["verified_current_evidence"] is False

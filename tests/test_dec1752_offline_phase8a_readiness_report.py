@@ -815,7 +815,7 @@ class OfflineBlockerDiagnosticTests(unittest.TestCase):
                             FAILURE, "reviewed SHA-256 manifest"):
                         RENDER(root)
 
-    def test_reordered_gate_map_remains_invalid_independently_of_hash(self):
+    def test_reordered_gate_map_is_semantically_blocked_but_new_bytes_unreviewed(self):
         with tempfile.TemporaryDirectory() as dirname:
             root = Path(dirname)
             for filename in FILES.values():
@@ -823,14 +823,61 @@ class OfflineBlockerDiagnosticTests(unittest.TestCase):
                     (self.docs / filename).read_bytes())
             path = root / FILES["admin_snapshot"]
             packet = json.loads(path.read_text(encoding="utf-8"))
-            self.assertEqual(tuple(packet["downstream_gate_state"]),
-                             MOD["STAGES"])
+            states = packet["downstream_gate_state"]
+            self.assertEqual(tuple(states), MOD["STAGES"])
+            reordered = dict(reversed(tuple(states.items())))
+            self.assertTrue(MOD["_blocked_stage_map_is_valid"](reordered))
+            packet["downstream_gate_state"] = reordered
             path.write_text(
-                json.dumps(packet, sort_keys=True) + "\n",
+                json.dumps(packet, indent=2, ensure_ascii=False) + "\n",
                 encoding="utf-8")
             with self.assertRaisesRegex(
-                    FAILURE, "required downstream gates"):
+                    FAILURE, "reviewed SHA-256 manifest"):
                 RENDER(root)
+
+    def test_stage_gate_semantics_allow_order_but_not_removed_names(self):
+        valid = {name: "BLOCKED" for name in reversed(MOD["STAGES"])}
+        self.assertTrue(MOD["_blocked_stage_map_is_valid"](valid))
+        removed = dict(valid)
+        del removed["demo"]
+        self.assertFalse(MOD["_blocked_stage_map_is_valid"](removed))
+        self.assertFalse(MOD["_blocked_stage_map_is_valid"](
+            {**valid, "unreviewed_extra_stage": "BLOCKED"}))
+
+    def test_stage_gate_semantics_deny_any_completed_or_wrong_type(self):
+        valid = {name: "BLOCKED" for name in MOD["STAGES"]}
+        self.assertTrue(MOD["_blocked_stage_map_is_valid"](valid))
+        for wrong in ("PASS", "AUTHORIZED", "READY", None, False, 0, []):
+            with self.subTest(value=wrong):
+                changed = {**valid, "annual_2023": wrong}
+                self.assertFalse(MOD["_blocked_stage_map_is_valid"](changed))
+
+    def test_stage_gate_semantics_reject_non_dict_sources(self):
+        self.assertFalse(MOD["_blocked_stage_map_is_valid"](
+            [(name, "BLOCKED") for name in MOD["STAGES"]]))
+        self.assertFalse(MOD["_blocked_stage_map_is_valid"](None))
+        self.assertFalse(MOD["_blocked_stage_map_is_valid"]("BLOCKED"))
+
+    def test_order_change_still_fails_cli_source_integrity_without_stdout(self):
+        import contextlib
+        import io
+        with tempfile.TemporaryDirectory() as dirname:
+            root = Path(dirname)
+            for filename in FILES.values():
+                (root / filename).write_bytes(
+                    (self.docs / filename).read_bytes())
+            path = root / FILES["admin_snapshot"]
+            packet = json.loads(path.read_text(encoding="utf-8"))
+            packet["downstream_gate_state"] = dict(reversed(
+                tuple(packet["downstream_gate_state"].items())))
+            path.write_text(json.dumps(packet, indent=2) + "\n",
+                            encoding="utf-8")
+            out, err = io.StringIO(), io.StringIO()
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                code = MOD["main"](["--docs-root", dirname])
+            self.assertEqual(code, 2)
+            self.assertEqual(out.getvalue(), "")
+            self.assertIn("reviewed SHA-256 manifest", err.getvalue())
 
     def test_module_entrypoint_has_no_import_time_side_effects(self):
         self.assertIn("render_readiness", MOD)
