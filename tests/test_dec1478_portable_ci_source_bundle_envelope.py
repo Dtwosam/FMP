@@ -13012,3 +13012,81 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_json_nonfinite_clean_control(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+    def _assert_json_float_length_edge(self, category, overlong):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.assertIn(category, REQUIRED)
+        raw = json.dumps(self.envelope, sort_keys=True,
+                         separators=(",", ":"))
+        needle = json.dumps(category) + ":" + json.dumps(
+            self.envelope[category], sort_keys=True,
+            separators=(",", ":"))
+        self.assertEqual(raw.count(needle), 1)
+        token = "0." + "0" * (
+            MAX_JSON_FLOAT_LITERAL_CHARS - 2 + (1 if overlong else 0))
+        self.assertEqual(len(token),
+                         MAX_JSON_FLOAT_LITERAL_CHARS + (
+                             1 if overlong else 0))
+        encoded = raw.replace(needle, json.dumps(category) + ":" + token, 1)
+        direct = self.verdict()
+        parsed = review_bundle_json_text(encoded)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(encoded), out)
+        emitted = json.loads(out.getvalue())
+        expected = ("BUNDLE_JSON_GRAMMAR_UNREVIEWED" if overlong
+                    else "BUNDLE_CATEGORY_TYPE_UNREVIEWED")
+        self.assertTrue(direct["source_consistency"])
+        self.assertEqual(direct["diagnostics"], ())
+        self.assertEqual(status, 2)
+        self.assertEqual(parsed["diagnostics"], (expected,))
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"], [expected])
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        for result in (parsed, emitted):
+            self.assertFalse(result["source_consistency"])
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_float_length_over_schema_refused(self):
+        self._assert_json_float_length_edge("schema", True)
+
+    def test_portable_float_length_over_pr_refused(self):
+        self._assert_json_float_length_edge("pr", True)
+
+    def test_portable_float_length_over_runs_refused(self):
+        self._assert_json_float_length_edge("runs", True)
+
+    def test_portable_float_length_over_compare_refused(self):
+        self._assert_json_float_length_edge("compare", True)
+
+    def test_portable_float_length_over_commit_refused(self):
+        self._assert_json_float_length_edge("commit", True)
+
+    def test_portable_float_length_over_tree_refused(self):
+        self._assert_json_float_length_edge("tree", True)
+
+    def test_portable_float_length_over_nodes_refused(self):
+        self._assert_json_float_length_edge("nodes", True)
+
+    def test_portable_float_length_over_changed_bytes_b64_refused(self):
+        self._assert_json_float_length_edge("changed_bytes_b64", True)
+
+    def test_portable_float_length_over_full_tree_snapshots_refused(self):
+        self._assert_json_float_length_edge("full_tree_snapshots", True)
+
+    def test_portable_float_length_over_raw_ci_log_receipts_refused(self):
+        self._assert_json_float_length_edge("raw_ci_log_receipts", True)
+
+    def test_portable_float_length_exact_limit_pr_typed_refusal(self):
+        self._assert_json_float_length_edge("pr", False)
+
+    def test_portable_float_length_exact_limit_runs_typed_refusal(self):
+        self._assert_json_float_length_edge("runs", False)
+
+    def test_portable_float_length_exact_limit_nodes_typed_refusal(self):
+        self._assert_json_float_length_edge("nodes", False)
+
+    def test_portable_float_length_clean_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
