@@ -12850,3 +12850,81 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_json_overdepth_clean_control(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+    def _assert_oversized_json_integer_refused(self, category, signed=False):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.assertIn(category, REQUIRED)
+        raw = json.dumps(self.envelope, sort_keys=True,
+                         separators=(",", ":"))
+        needle = json.dumps(category) + ":" + json.dumps(
+            self.envelope[category], sort_keys=True,
+            separators=(",", ":"))
+        self.assertEqual(raw.count(needle), 1)
+        literal = ("-" if signed else "") + (
+            "9" * (MAX_JSON_INTEGER_DIGITS + 1))
+        self.assertEqual(len(literal.lstrip("-")),
+                         MAX_JSON_INTEGER_DIGITS + 1)
+        encoded = raw.replace(needle, json.dumps(category) + ":" + literal, 1)
+        self.assertNotEqual(encoded, raw)
+        direct = self.verdict()
+        parsed = review_bundle_json_text(encoded)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(encoded), out)
+        emitted = json.loads(out.getvalue())
+        self.assertTrue(direct["source_consistency"])
+        self.assertEqual(direct["diagnostics"], ())
+        self.assertEqual(status, 2)
+        self.assertEqual(parsed["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"],
+                         ["BUNDLE_JSON_GRAMMAR_UNREVIEWED"])
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        for result in (parsed, emitted):
+            self.assertFalse(result["source_consistency"])
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_integer_overdigits_schema_refused(self):
+        self._assert_oversized_json_integer_refused("schema")
+
+    def test_portable_integer_overdigits_pr_refused(self):
+        self._assert_oversized_json_integer_refused("pr")
+
+    def test_portable_integer_overdigits_runs_refused(self):
+        self._assert_oversized_json_integer_refused("runs")
+
+    def test_portable_integer_overdigits_jobs_by_run_refused(self):
+        self._assert_oversized_json_integer_refused("jobs_by_run")
+
+    def test_portable_integer_overdigits_compare_refused(self):
+        self._assert_oversized_json_integer_refused("compare")
+
+    def test_portable_integer_overdigits_commit_refused(self):
+        self._assert_oversized_json_integer_refused("commit")
+
+    def test_portable_integer_overdigits_tree_refused(self):
+        self._assert_oversized_json_integer_refused("tree")
+
+    def test_portable_integer_overdigits_nodes_refused(self):
+        self._assert_oversized_json_integer_refused("nodes")
+
+    def test_portable_integer_overdigits_changed_bytes_b64_refused(self):
+        self._assert_oversized_json_integer_refused("changed_bytes_b64")
+
+    def test_portable_integer_overdigits_ci_workflow_bytes_b64_refused(self):
+        self._assert_oversized_json_integer_refused("ci_workflow_bytes_b64")
+
+    def test_portable_integer_overdigits_full_tree_snapshots_refused(self):
+        self._assert_oversized_json_integer_refused("full_tree_snapshots")
+
+    def test_portable_integer_overdigits_raw_ci_log_receipts_refused(self):
+        self._assert_oversized_json_integer_refused("raw_ci_log_receipts")
+
+    def test_portable_integer_overdigits_negative_refused(self):
+        self._assert_oversized_json_integer_refused("runs", signed=True)
+
+    def test_portable_integer_overdigits_clean_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
