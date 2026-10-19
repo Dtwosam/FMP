@@ -115,7 +115,7 @@ class Phase7HistoricalCostSensitivityAuditTests(unittest.TestCase):
     def test_phase7_outcome_authorizes_shadow_design_only(self):
         self.assertIn(
             "The authoritative Stage 2 status is therefore "
-            "\`PHASE7_PROMOTE_TO_SHADOW_DESIGN\`.",
+            "PHASE7_PROMOTE_TO_SHADOW_DESIGN.",
             self.source,
         )
         self.assertIn(
