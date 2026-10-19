@@ -12677,3 +12677,102 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_top_duplicate_clean_control(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+    def _assert_escaped_top_level_category_equivalent(self, category):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.assertIn(category, REQUIRED)
+        raw = json.dumps(self.envelope, sort_keys=True,
+                         separators=(",", ":"))
+        original = json.dumps(category)
+        self.assertEqual(raw.count(original + ":"), 1)
+        spelling = ('"' + "\\u%04x" % ord(category[0]) +
+                    category[1:] + '"')
+        self.assertNotEqual(original, spelling)
+        encoded = raw.replace(original + ":", spelling + ":", 1)
+        self.assertNotEqual(encoded, raw)
+        self.assertEqual(json.loads(encoded), self.envelope)
+        direct = self.verdict()
+        parsed = review_bundle_json_text(encoded)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(encoded), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(direct, parsed)
+        self.assertEqual(status, 0)
+        self.assertTrue(direct["source_consistency"])
+        self.assertEqual(direct["diagnostics"], ())
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertTrue(emitted["source_consistency"])
+        self.assertEqual(emitted["diagnostics"], [])
+        self.assertNotIn("tests/sample.py", out.getvalue())
+        for result in (direct, emitted):
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_top_escaped_schema_equivalent(self):
+        self._assert_escaped_top_level_category_equivalent(
+            "schema")
+
+    def test_portable_top_escaped_pr_equivalent(self):
+        self._assert_escaped_top_level_category_equivalent(
+            "pr")
+
+    def test_portable_top_escaped_runs_equivalent(self):
+        self._assert_escaped_top_level_category_equivalent(
+            "runs")
+
+    def test_portable_top_escaped_jobs_by_run_equivalent(self):
+        self._assert_escaped_top_level_category_equivalent(
+            "jobs_by_run")
+
+    def test_portable_top_escaped_compare_equivalent(self):
+        self._assert_escaped_top_level_category_equivalent(
+            "compare")
+
+    def test_portable_top_escaped_commit_equivalent(self):
+        self._assert_escaped_top_level_category_equivalent(
+            "commit")
+
+    def test_portable_top_escaped_tree_equivalent(self):
+        self._assert_escaped_top_level_category_equivalent(
+            "tree")
+
+    def test_portable_top_escaped_nodes_equivalent(self):
+        self._assert_escaped_top_level_category_equivalent(
+            "nodes")
+
+    def test_portable_top_escaped_changed_bytes_b64_equivalent(self):
+        self._assert_escaped_top_level_category_equivalent(
+            "changed_bytes_b64")
+
+    def test_portable_top_escaped_ci_workflow_bytes_b64_equivalent(self):
+        self._assert_escaped_top_level_category_equivalent(
+            "ci_workflow_bytes_b64")
+
+    def test_portable_top_escaped_full_tree_snapshots_equivalent(self):
+        self._assert_escaped_top_level_category_equivalent(
+            "full_tree_snapshots")
+
+    def test_portable_top_escaped_merge_checkout_snapshot_equivalent(self):
+        self._assert_escaped_top_level_category_equivalent(
+            "merge_checkout_snapshot")
+
+    def test_portable_top_escaped_checkout_by_run_equivalent(self):
+        self._assert_escaped_top_level_category_equivalent(
+            "checkout_by_run")
+
+    def test_portable_top_escaped_phase3_evidence_snapshot_equivalent(self):
+        self._assert_escaped_top_level_category_equivalent(
+            "phase3_evidence_snapshot")
+
+    def test_portable_top_escaped_raw_ci_runner_logs_equivalent(self):
+        self._assert_escaped_top_level_category_equivalent(
+            "raw_ci_runner_logs")
+
+    def test_portable_top_escaped_raw_ci_log_receipts_equivalent(self):
+        self._assert_escaped_top_level_category_equivalent(
+            "raw_ci_log_receipts")
+
+    def test_portable_top_escaped_clean_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
