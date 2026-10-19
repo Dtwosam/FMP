@@ -12573,6 +12573,43 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_schema_precedence_clean_control(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+    def _portable_top_level_members_json(self, replacements=None):
+        """Rewrite only JSON root members; nested evidence keys stay intact."""
+        replacements = {} if replacements is None else replacements
+        self.assertTrue(set(replacements).issubset(self.envelope))
+        members = []
+        for key, value in sorted(self.envelope.items()):
+            value_json = json.dumps(
+                value, sort_keys=True, separators=(",", ":"))
+            members.append(replacements.get(
+                key, json.dumps(key) + ":" + value_json))
+        return "{" + ",".join(members) + "}"
+
+    def test_portable_root_key_rewrite_keeps_nested_tree_members(self):
+        raw = json.dumps(self.envelope, sort_keys=True,
+                         separators=(",", ":"))
+        self.assertGreater(raw.count('"tree":'), 1)
+        self.assertEqual(raw, self._portable_top_level_members_json())
+        spelling = '"' + "\\u%04x" % ord("t") + 'ree"'
+        value = json.dumps(self.envelope["tree"], sort_keys=True,
+                           separators=(",", ":"))
+        encoded = self._portable_top_level_members_json(
+            {"tree": spelling + ":" + value})
+        self.assertEqual(json.loads(encoded), self.envelope)
+        self.assertEqual(encoded.count('"tree":'),
+                         raw.count('"tree":') - 1)
+
+    def test_portable_root_key_rewrite_keeps_input_unchanged(self):
+        before = json.dumps(self.envelope, sort_keys=True,
+                            separators=(",", ":"))
+        value = json.dumps(self.envelope["tree"], sort_keys=True,
+                           separators=(",", ":"))
+        self._portable_top_level_members_json(
+            {"tree": '"tree":null,"\\u0074ree":' + value})
+        self.assertEqual(
+            json.dumps(self.envelope, sort_keys=True,
+                       separators=(",", ":")), before)
+
     def _assert_escaped_top_level_category_duplicate_refused(self, category):
         import io
         import test_dec1479_offline_ci_bundle_stdin_command as cli
@@ -12580,14 +12617,16 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         raw = json.dumps(self.envelope, sort_keys=True,
                          separators=(",", ":"))
         name = json.dumps(category)
-        self.assertEqual(raw.count(name + ":"), 1)
+        self.assertEqual(raw, self._portable_top_level_members_json())
         escaped = ('"' + "\\u%04x" % ord(category[0]) +
                    category[1:] + '"')
         self.assertNotEqual(name, escaped)
         # A last-value-wins decoder would discard the first null and
         # reconstruct the original clean evidence dictionary.
-        encoded = raw.replace(name + ":",
-                              name + ":null," + escaped + ":", 1)
+        value = json.dumps(self.envelope[category], sort_keys=True,
+                           separators=(",", ":"))
+        encoded = self._portable_top_level_members_json(
+            {category: name + ":null," + escaped + ":" + value})
         self.assertEqual(json.loads(encoded), self.envelope)
         direct = self.verdict()
         parsed = review_bundle_json_text(encoded)
@@ -12684,11 +12723,14 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         raw = json.dumps(self.envelope, sort_keys=True,
                          separators=(",", ":"))
         original = json.dumps(category)
-        self.assertEqual(raw.count(original + ":"), 1)
+        self.assertEqual(raw, self._portable_top_level_members_json())
         spelling = ('"' + "\\u%04x" % ord(category[0]) +
                     category[1:] + '"')
         self.assertNotEqual(original, spelling)
-        encoded = raw.replace(original + ":", spelling + ":", 1)
+        value = json.dumps(self.envelope[category], sort_keys=True,
+                           separators=(",", ":"))
+        encoded = self._portable_top_level_members_json(
+            {category: spelling + ":" + value})
         self.assertNotEqual(encoded, raw)
         self.assertEqual(json.loads(encoded), self.envelope)
         direct = self.verdict()
@@ -13097,19 +13139,17 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         raw = json.dumps(self.envelope, sort_keys=True,
                          separators=(",", ":"))
         original = json.dumps(category)
-        self.assertEqual(raw.count(original + ":"), 1)
+        self.assertEqual(raw, self._portable_top_level_members_json())
         escaped = ('"' + "\\u%04x" % ord(category[0]) +
                    category[1:] + '"')
         self.assertNotEqual(escaped, original)
         # The untrusted alias comes AFTER the real category. Last-key-wins
         # decoding would poison the category with null; it must instead
         # reject the duplicate at JSON grammar ingress.
-        value_prefix = original + ":"
-        marker = value_prefix + json.dumps(
-            self.envelope[category], sort_keys=True,
-            separators=(",", ":"))
-        self.assertEqual(raw.count(marker), 1)
-        encoded = raw.replace(marker, marker + "," + escaped + ":null", 1)
+        value = json.dumps(self.envelope[category], sort_keys=True,
+                           separators=(",", ":"))
+        encoded = self._portable_top_level_members_json(
+            {category: original + ":" + value + "," + escaped + ":null"})
         self.assertIsNone(json.loads(encoded)[category])
         self.assertTrue(self.verdict()["source_consistency"])
         parsed = review_bundle_json_text(encoded)
