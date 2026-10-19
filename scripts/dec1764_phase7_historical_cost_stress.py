@@ -10,8 +10,10 @@ import argparse
 from decimal import Decimal, ROUND_HALF_UP
 import hashlib
 import json
+import os
 from pathlib import Path
 import re
+import stat
 import sys
 
 
@@ -45,9 +47,38 @@ def _signed_decimal(text, suffix=""):
     return value
 
 
+MAX_PHASE7_DOCUMENT_BYTES = 65535
+
+
+def _read_frozen_phase7_regular_file(path):
+    """Read a bounded historic Markdown file without symlinks or FIFO blocking."""
+    _require(
+        hasattr(os, "O_NOFOLLOW") and hasattr(os, "O_NONBLOCK"),
+        "this OS does not provide fail-closed source file admission",
+    )
+    flags = os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK
+    if hasattr(os, "O_CLOEXEC"):
+        flags |= os.O_CLOEXEC
+    with os.fdopen(os.open(path, flags), "rb") as handle:
+        opened = os.fstat(handle.fileno())
+        _require(
+            stat.S_ISREG(opened.st_mode),
+            "Phase7 evidence input must be a regular file",
+        )
+        _require(
+            0 < opened.st_size <= MAX_PHASE7_DOCUMENT_BYTES,
+            "Phase7 evidence input exceeds bounded source file limit",
+        )
+        payload = handle.read(MAX_PHASE7_DOCUMENT_BYTES + 1)
+        _require(
+            len(payload) == opened.st_size,
+            "Phase7 source changed length during a bounded read",
+        )
+        return payload
+
+
 def replay_phase7_cost_evidence(doc_path: Path = PHASE7_DOC) -> dict[str, object]:
-    raw = Path(doc_path).read_bytes()
-    _require(0 < len(raw) < 65536, "unexpected phase7 evidence document size")
+    raw = _read_frozen_phase7_regular_file(Path(doc_path))
     blob = hashlib.sha1(
         b"blob " + str(len(raw)).encode("ascii") + b"\0" + raw
     ).hexdigest()
