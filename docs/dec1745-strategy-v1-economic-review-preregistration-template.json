@@ -1,0 +1,150 @@
+{
+  "schema": "fmp_dec1745_strategy_v1_economic_review_preregistration_template_v1",
+  "date": "2026-10-19",
+  "decision": "DEC-1745",
+  "type": "RESEARCH_REVIEW_TEMPLATE_NONAUTHORIZING",
+  "method": "DEC-268_DEC-469_YEAR_BY_YEAR_ANNUAL_FIRST",
+  "source_segments_historical_through": "2022",
+  "next_one_shot_segment": "2023",
+  "next_run_number": 385,
+  "attempt_number": 1,
+  "protected_annual_execution_authorized": false,
+  "annual_catalogues_complete": false,
+  "cross_year_analysis_permitted": false,
+  "strategy_v1_selected": false,
+  "strategy_v1_frozen": false,
+  "profitability_accepted": false,
+  "prospective_shadow_authorized": false,
+  "demo_order_authorized": false,
+  "live_trading_authorized": false,
+  "candidate_strategy_identity": null,
+  "profitability_measurements": null,
+  "market_data_read_by_packet": false,
+  "gates": [
+    {
+      "id": "pre_registered_hypothesis_space",
+      "required_evidence": "pattern family lineage, all tested candidates and search count, registration date before strategy selection",
+      "status": "NOT_EVALUATED",
+      "evidence_ref": null,
+      "signoff": null
+    },
+    {
+      "id": "time_safe_signal_and_execution",
+      "required_evidence": "signal known at prior permissible timestamp, bid/ask side, earliest fill, ambiguity policy",
+      "status": "NOT_EVALUATED",
+      "evidence_ref": null,
+      "signoff": null
+    },
+    {
+      "id": "complete_annual_pattern_catalogue",
+      "required_evidence": "all 2015–2025 annual patterns and 2026 partial segment independently accepted before cross-year aggregation",
+      "status": "NOT_EVALUATED",
+      "evidence_ref": null,
+      "signoff": null
+    },
+    {
+      "id": "negative_pattern_and_failure_years",
+      "required_evidence": "negative candidates, years without a recurrence, reversals and unfavorable regimes included",
+      "status": "NOT_EVALUATED",
+      "evidence_ref": null,
+      "signoff": null
+    },
+    {
+      "id": "multiplicity_and_winner_selection",
+      "required_evidence": "predefined correction or honest uncertainty bound for all trials, researcher degrees of freedom disclosed",
+      "status": "NOT_EVALUATED",
+      "evidence_ref": null,
+      "signoff": null
+    },
+    {
+      "id": "independence_and_uncertainty",
+      "required_evidence": "appropriate block or cluster resampling respecting serial dependence; interval for net expectancy",
+      "status": "NOT_EVALUATED",
+      "evidence_ref": null,
+      "signoff": null
+    },
+    {
+      "id": "trade_support_and_pnl_concentration",
+      "required_evidence": "trade counts, effective sample size, winning-outlier concentration, by-year/by-pair decomposition",
+      "status": "NOT_EVALUATED",
+      "evidence_ref": null,
+      "signoff": null
+    },
+    {
+      "id": "costs_under_adverse_conditions",
+      "required_evidence": "spread, slippage, commissions, financing, adverse cost distributions and break-even sensitivity",
+      "status": "NOT_EVALUATED",
+      "evidence_ref": null,
+      "signoff": null
+    },
+    {
+      "id": "portfolio_usd_correlation_and_exposure",
+      "required_evidence": "cross-pair correlated USD risk, net/leverage, tail co-movement and overlap",
+      "status": "NOT_EVALUATED",
+      "evidence_ref": null,
+      "signoff": null
+    },
+    {
+      "id": "drawdown_and_tail_risk",
+      "required_evidence": "worst episodes, loss runs, gap/rollover tail exposure, capital preservation under stress",
+      "status": "NOT_EVALUATED",
+      "evidence_ref": null,
+      "signoff": null
+    },
+    {
+      "id": "execution_and_capacity",
+      "required_evidence": "market hours, order type, fill assumption, market impact, rejections, operational failure response",
+      "status": "NOT_EVALUATED",
+      "evidence_ref": null,
+      "signoff": null
+    },
+    {
+      "id": "holdout_contamination_accounting",
+      "required_evidence": "document historical windows already seen by Phase7 and do not re-label as untouched final test",
+      "status": "NOT_EVALUATED",
+      "evidence_ref": null,
+      "signoff": null
+    },
+    {
+      "id": "immutable_strategy_v1_spec",
+      "required_evidence": "exact rule version, entry exit/no-trade, risk sizing, freeze hash and selection decision",
+      "status": "NOT_EVALUATED",
+      "evidence_ref": null,
+      "signoff": null
+    },
+    {
+      "id": "prospective_order_impossible_shadow",
+      "required_evidence": "separately approved read-only fresh quotes; forward record cannot place any order",
+      "status": "NOT_EVALUATED",
+      "evidence_ref": null,
+      "signoff": null
+    },
+    {
+      "id": "separate_demo_live_decisions",
+      "required_evidence": "independent demo reconciliation, Phase10 review and explicit Phase11 real money authorization",
+      "status": "NOT_EVALUATED",
+      "evidence_ref": null,
+      "signoff": null
+    }
+  ],
+  "predefined_thresholds_documented": false,
+  "rationale": "Statistical/risk thresholds must be independently pre-registered before reviewing candidate economics; none are asserted as passed here.",
+  "known_historical_context": {
+    "source": "docs/phase7-walk-forward-evidence.md",
+    "not_phase8a_strategy_v1_results": true,
+    "reported_phase7_net_return_pct_by_slippage_pips": {
+      "0.2": "0.757266",
+      "0.5": "0.262176",
+      "1.0": "-0.562118"
+    },
+    "live_return_forecast": null
+  },
+  "possible_dispositions": [
+    "REJECT",
+    "MORE_INDEPENDENT_EVIDENCE_REQUIRED",
+    "RESEARCHER_REVIEW_AFTER_ANNUAL_FREEZE"
+  ],
+  "current_disposition": "MORE_INDEPENDENT_EVIDENCE_REQUIRED",
+  "allowed_actions": [],
+  "caveat": "No evidence collected or strategy approved. This document cannot authorize a protected-year read, annual dispatch, shadow execution, broker order, demo, deployment, or live trading."
+}
