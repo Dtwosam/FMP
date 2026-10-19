@@ -15976,3 +15976,171 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_invalid_escape_clean_control(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+
+    def _portable_array_malformed_escape_text(self, node, path,
+                                              variant):
+        bad = {
+            "unknown": "q",
+            "hex": "x00",
+            "nondigit": "u00G0",
+            "short": "u12",
+        }
+        self.assertIn(variant, bad)
+        if not path:
+            self.assertIs(type(node), dict)
+            child = json.dumps(node, sort_keys=True, separators=(",", ":"))
+            self.assertTrue(child.startswith("{") and child.endswith("}"))
+            self.assertNotEqual(child, "{}")
+            member = ('"synthetic_invalid_escape":"' + chr(92) +
+                      bad[variant] + '"')
+            return child[:-1] + "," + member + "}"
+        head, rest = path[0], path[1:]
+        if type(node) is dict:
+            self.assertIn(head, node)
+            return "{" + ",".join(
+                json.dumps(key) + ":" +
+                (self._portable_array_malformed_escape_text(
+                    value, rest, variant) if key == head else
+                 json.dumps(value, sort_keys=True, separators=(",", ":")))
+                for key, value in sorted(node.items())) + "}"
+        self.assertIs(type(node), list)
+        self.assertIs(type(head), int)
+        self.assertGreaterEqual(head, 0)
+        self.assertLess(head, len(node))
+        return "[" + ",".join(
+            (self._portable_array_malformed_escape_text(
+                value, rest, variant) if idx == head else
+             json.dumps(value, sort_keys=True, separators=(",", ":")))
+            for idx, value in enumerate(node)) + "]"
+
+    def _assert_bad_escape_array_evidence_refused(self, category, path,
+                                                 variant):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.assertIn(category, REQUIRED)
+        before = self._portable_top_level_members_json()
+        child = self._portable_array_malformed_escape_text(
+            self.envelope[category], path, variant)
+        encoded = self._portable_top_level_members_json({
+            category: json.dumps(category) + ":" + child})
+        with self.assertRaises(json.JSONDecodeError):
+            json.loads(encoded)
+        parsed = review_bundle_json_text(encoded)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(encoded), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(before, self._portable_top_level_members_json())
+        self.assertTrue(self.verdict()["source_consistency"])
+        self.assertEqual(status, 2)
+        self.assertEqual(parsed["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"],
+                         ["BUNDLE_JSON_GRAMMAR_UNREVIEWED"])
+        self.assertNotIn("tests/sample.py", out.getvalue())
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        for result in (parsed, emitted):
+            self.assertFalse(result["source_consistency"])
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_array_bad_escape_runs_unknown(self):
+        self._assert_bad_escape_array_evidence_refused(
+            "runs", (0,), "unknown")
+
+    def test_portable_array_bad_escape_runs_hex(self):
+        self._assert_bad_escape_array_evidence_refused(
+            "runs", (0,), "hex")
+
+    def test_portable_array_bad_escape_runs_nondigit(self):
+        self._assert_bad_escape_array_evidence_refused(
+            "runs", (0,), "nondigit")
+
+    def test_portable_array_bad_escape_runs_short(self):
+        self._assert_bad_escape_array_evidence_refused(
+            "runs", (0,), "short")
+
+    def test_portable_array_bad_escape_comparison_files_unknown(self):
+        self._assert_bad_escape_array_evidence_refused(
+            "compare", ("files", 0), "unknown")
+
+    def test_portable_array_bad_escape_comparison_files_hex(self):
+        self._assert_bad_escape_array_evidence_refused(
+            "compare", ("files", 0), "hex")
+
+    def test_portable_array_bad_escape_comparison_files_nondigit(self):
+        self._assert_bad_escape_array_evidence_refused(
+            "compare", ("files", 0), "nondigit")
+
+    def test_portable_array_bad_escape_comparison_files_short(self):
+        self._assert_bad_escape_array_evidence_refused(
+            "compare", ("files", 0), "short")
+
+    def test_portable_array_bad_escape_run_jobs_unknown(self):
+        self._assert_bad_escape_array_evidence_refused(
+            "jobs_by_run", (sorted(self.envelope["jobs_by_run"])[0], 0), "unknown")
+
+    def test_portable_array_bad_escape_run_jobs_hex(self):
+        self._assert_bad_escape_array_evidence_refused(
+            "jobs_by_run", (sorted(self.envelope["jobs_by_run"])[0], 0), "hex")
+
+    def test_portable_array_bad_escape_run_jobs_nondigit(self):
+        self._assert_bad_escape_array_evidence_refused(
+            "jobs_by_run", (sorted(self.envelope["jobs_by_run"])[0], 0), "nondigit")
+
+    def test_portable_array_bad_escape_run_jobs_short(self):
+        self._assert_bad_escape_array_evidence_refused(
+            "jobs_by_run", (sorted(self.envelope["jobs_by_run"])[0], 0), "short")
+
+    def test_portable_array_bad_escape_phase3_scenarios_unknown(self):
+        self._assert_bad_escape_array_evidence_refused(
+            "phase3_evidence_snapshot", ("index", "scenarios", 0), "unknown")
+
+    def test_portable_array_bad_escape_phase3_scenarios_hex(self):
+        self._assert_bad_escape_array_evidence_refused(
+            "phase3_evidence_snapshot", ("index", "scenarios", 0), "hex")
+
+    def test_portable_array_bad_escape_phase3_scenarios_nondigit(self):
+        self._assert_bad_escape_array_evidence_refused(
+            "phase3_evidence_snapshot", ("index", "scenarios", 0), "nondigit")
+
+    def test_portable_array_bad_escape_phase3_scenarios_short(self):
+        self._assert_bad_escape_array_evidence_refused(
+            "phase3_evidence_snapshot", ("index", "scenarios", 0), "short")
+
+    def test_portable_array_bad_escape_full_tree_entries_unknown(self):
+        self._assert_bad_escape_array_evidence_refused(
+            "full_tree_snapshots", (sorted(self.envelope["full_tree_snapshots"])[0], "tree", 0), "unknown")
+
+    def test_portable_array_bad_escape_full_tree_entries_hex(self):
+        self._assert_bad_escape_array_evidence_refused(
+            "full_tree_snapshots", (sorted(self.envelope["full_tree_snapshots"])[0], "tree", 0), "hex")
+
+    def test_portable_array_bad_escape_full_tree_entries_nondigit(self):
+        self._assert_bad_escape_array_evidence_refused(
+            "full_tree_snapshots", (sorted(self.envelope["full_tree_snapshots"])[0], "tree", 0), "nondigit")
+
+    def test_portable_array_bad_escape_full_tree_entries_short(self):
+        self._assert_bad_escape_array_evidence_refused(
+            "full_tree_snapshots", (sorted(self.envelope["full_tree_snapshots"])[0], "tree", 0), "short")
+
+    def test_portable_array_bad_escape_merge_parents_unknown(self):
+        self._assert_bad_escape_array_evidence_refused(
+            "merge_checkout_snapshot", ("merge_commit", "parents", 0), "unknown")
+
+    def test_portable_array_bad_escape_merge_parents_hex(self):
+        self._assert_bad_escape_array_evidence_refused(
+            "merge_checkout_snapshot", ("merge_commit", "parents", 0), "hex")
+
+    def test_portable_array_bad_escape_merge_parents_nondigit(self):
+        self._assert_bad_escape_array_evidence_refused(
+            "merge_checkout_snapshot", ("merge_commit", "parents", 0), "nondigit")
+
+    def test_portable_array_bad_escape_merge_parents_short(self):
+        self._assert_bad_escape_array_evidence_refused(
+            "merge_checkout_snapshot", ("merge_commit", "parents", 0), "short")
+
+    def test_portable_array_bad_escape_clean_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
