@@ -609,6 +609,84 @@ class OfflineBlockerDiagnosticTests(unittest.TestCase):
         self.assertIn("status **2**", guide)
         self.assertIn("never interprets a BLOCKED report", guide)
 
+    def test_source_reader_refuses_symlink_packets(self):
+        import os
+        with tempfile.TemporaryDirectory() as root:
+            folder = Path(root)
+            for filename in FILES.values():
+                (folder / filename).write_bytes((self.docs / filename).read_bytes())
+            path = folder / FILES["annual"]
+            renamed = folder / "original.json"
+            path.rename(renamed)
+            try:
+                path.symlink_to(renamed)
+            except (NotImplementedError, OSError):
+                self.skipTest("filesystem cannot create symlinks")
+            with self.assertRaises(OSError):
+                RENDER(folder)
+
+    def test_source_reader_rejects_fifo_without_waiting_for_a_writer(self):
+        import os
+        if not hasattr(os, "mkfifo"):
+            self.skipTest("FIFOs unavailable")
+        with tempfile.TemporaryDirectory() as root:
+            folder = Path(root)
+            for filename in FILES.values():
+                (folder / filename).write_bytes((self.docs / filename).read_bytes())
+            path = folder / FILES["admin_snapshot"]
+            path.unlink()
+            os.mkfifo(path)
+            with self.assertRaises(FAILURE):
+                RENDER(folder)
+
+    def test_source_reader_rejects_unbounded_regular_file(self):
+        with tempfile.TemporaryDirectory() as root:
+            folder = Path(root)
+            for filename in FILES.values():
+                (folder / filename).write_bytes((self.docs / filename).read_bytes())
+            (folder / FILES["economics"]).write_bytes(
+                b" " * (MOD["MAX_SOURCE_DOC_BYTES"] + 1))
+            with self.assertRaises(FAILURE):
+                RENDER(folder)
+
+    def test_source_reader_rejects_empty_json_before_parsing(self):
+        with tempfile.TemporaryDirectory() as root:
+            folder = Path(root)
+            for filename in FILES.values():
+                (folder / filename).write_bytes((self.docs / filename).read_bytes())
+            (folder / FILES["admin_snapshot"]).write_bytes(b"")
+            with self.assertRaises(FAILURE):
+                RENDER(folder)
+
+    def test_bounded_source_read_never_modifies_review_documents(self):
+        before = {name: (self.docs / name).read_bytes() for name in FILES.values()}
+        self.assertEqual(RENDER(self.docs)["documentary_status"], "BLOCKED")
+        after = {name: (self.docs / name).read_bytes() for name in FILES.values()}
+        self.assertEqual(before, after)
+
+    def test_symlinked_packet_cli_has_no_stdout_and_exit_two(self):
+        import contextlib
+        import io
+        import os
+        with tempfile.TemporaryDirectory() as root:
+            folder = Path(root)
+            for filename in FILES.values():
+                (folder / filename).write_bytes((self.docs / filename).read_bytes())
+            path = folder / FILES["preregistration"]
+            renamed = folder / "untrusted-destination.json"
+            path.rename(renamed)
+            try:
+                path.symlink_to(renamed)
+            except (NotImplementedError, OSError):
+                self.skipTest("filesystem cannot create symlinks")
+            stdout, stderr = io.StringIO(), io.StringIO()
+            with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+                exit_status = MOD["main"](["--docs-root", root])
+            self.assertEqual(exit_status, 2)
+            self.assertEqual(stdout.getvalue(), "")
+            self.assertIn("BLOCKED:", stderr.getvalue())
+
+
     def test_module_entrypoint_has_no_import_time_side_effects(self):
         self.assertIn("render_readiness", MOD)
         self.assertIn("main", MOD)
