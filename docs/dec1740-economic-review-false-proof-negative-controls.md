@@ -1,0 +1,9 @@
+# DEC-1740 — False profitability/approval claims fail evidence-review contract
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent one-commit tests/docs-only child of #1986 at `94fc8a520cc59a981718864915c3ccd50d0681ed`.
+
+Adds **19 source-defined test methods** (**6,083 proposed total**) that exercise the actual DEC-1739 economic evidence requirement guards against intentionally forged **deep-copy synthetic documentation**. Six candidate Strategy V1 metrics remain **unknown (`null`), not zero**: a numeric `0` is falsely precise without annual cross-year evidence and must fail the original test. Eight independent false approval states (all annual years, cross-year review, Strategy V1 freeze, Phase8B, demo, Phase10, Phase11 real money and claimed forward profit) must each fail. An attempted Boolean alias for one-shot run385 attempt integer 1, fabricated fresh annual run inventory, action inserted into empty approved-execution list, and replacement of annual discovery with peeking at future years must all be refused. One pristine control runs all twelve real original economic contract methods successfully.
+
+The negative-test mutation identity is checked via canonical JSON, not Python equality, so `1` and `true` remain distinguishable. All mutations are in memory; the original public source-only economic-review JSON is unchanged and has **no measured Phase8A returns**. This is a test of documentation gate semantics, not profitable strategy discovery, unseen final-test evidence, administrative no-bypass enforcement, host runner OS isolation, broker fill realism or run authority.
+
+Issue #779's 2023 annual one-shot remains **BLOCKED**. No installed workflow, parser/production/security, protected history, annual dispatch/retry, main/tag/ruleset mutation, broker/demo/live order, Strategy V1 promotion or trading. Exact-head Phase 3/full historical-general CI and independent qualified review required.
