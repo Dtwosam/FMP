@@ -13778,3 +13778,136 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_array_escaped_clean_control(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+
+    def _portable_escape_first_string_scalar(self, node):
+        if type(node) is str:
+            if node and ord(node[0]) < 128:
+                # Only lexical spelling changes: the decoded Unicode
+                # string remains byte-for-byte the same.
+                return ('"\\u%04x' % ord(node[0]) +
+                        json.dumps(node[1:])[1:]), True
+            return json.dumps(node), False
+        if type(node) is dict:
+            output = []
+            replaced = False
+            for key, value in sorted(node.items()):
+                if not replaced:
+                    encoded, did_replace = (
+                        self._portable_escape_first_string_scalar(value))
+                    replaced = did_replace
+                else:
+                    encoded = json.dumps(
+                        value, sort_keys=True, separators=(",", ":"))
+                output.append(json.dumps(key) + ":" + encoded)
+            return "{" + ",".join(output) + "}", replaced
+        if type(node) is list:
+            output = []
+            replaced = False
+            for value in node:
+                if not replaced:
+                    encoded, did_replace = (
+                        self._portable_escape_first_string_scalar(value))
+                    replaced = did_replace
+                else:
+                    encoded = json.dumps(
+                        value, sort_keys=True, separators=(",", ":"))
+                output.append(encoded)
+            return "[" + ",".join(output) + "]", replaced
+        return json.dumps(node, sort_keys=True,
+                          separators=(",", ":")), False
+
+    def _assert_escaped_nested_string_value_equivalent(self, category):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.assertIn(category, REQUIRED - frozenset(("schema",)))
+        clean = self._portable_top_level_members_json()
+        altered, found = self._portable_escape_first_string_scalar(
+            self.envelope[category])
+        self.assertTrue(found, category)
+        encoded = self._portable_top_level_members_json({
+            category: json.dumps(category) + ":" + altered})
+        self.assertNotEqual(encoded, clean)
+        self.assertEqual(json.loads(encoded), self.envelope)
+        self.assertEqual(self._portable_top_level_members_json(), clean)
+        direct = self.verdict()
+        parsed = review_bundle_json_text(encoded)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(encoded), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(direct, parsed)
+        self.assertEqual(direct["diagnostics"], ())
+        self.assertTrue(direct["source_consistency"])
+        self.assertEqual(status, 0)
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertTrue(emitted["source_consistency"])
+        self.assertEqual(emitted["diagnostics"], [])
+        self.assertNotIn("tests/sample.py", out.getvalue())
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        for result in (direct, parsed, emitted):
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_escaped_scalar_value_pr(self):
+        self._assert_escaped_nested_string_value_equivalent(
+            "pr")
+
+    def test_portable_escaped_scalar_value_runs(self):
+        self._assert_escaped_nested_string_value_equivalent(
+            "runs")
+
+    def test_portable_escaped_scalar_value_jobs_by_run(self):
+        self._assert_escaped_nested_string_value_equivalent(
+            "jobs_by_run")
+
+    def test_portable_escaped_scalar_value_compare(self):
+        self._assert_escaped_nested_string_value_equivalent(
+            "compare")
+
+    def test_portable_escaped_scalar_value_commit(self):
+        self._assert_escaped_nested_string_value_equivalent(
+            "commit")
+
+    def test_portable_escaped_scalar_value_tree(self):
+        self._assert_escaped_nested_string_value_equivalent(
+            "tree")
+
+    def test_portable_escaped_scalar_value_nodes(self):
+        self._assert_escaped_nested_string_value_equivalent(
+            "nodes")
+
+    def test_portable_escaped_scalar_value_changed_bytes_b64(self):
+        self._assert_escaped_nested_string_value_equivalent(
+            "changed_bytes_b64")
+
+    def test_portable_escaped_scalar_value_ci_workflow_bytes_b64(self):
+        self._assert_escaped_nested_string_value_equivalent(
+            "ci_workflow_bytes_b64")
+
+    def test_portable_escaped_scalar_value_full_tree_snapshots(self):
+        self._assert_escaped_nested_string_value_equivalent(
+            "full_tree_snapshots")
+
+    def test_portable_escaped_scalar_value_merge_checkout_snapshot(self):
+        self._assert_escaped_nested_string_value_equivalent(
+            "merge_checkout_snapshot")
+
+    def test_portable_escaped_scalar_value_checkout_by_run(self):
+        self._assert_escaped_nested_string_value_equivalent(
+            "checkout_by_run")
+
+    def test_portable_escaped_scalar_value_phase3_evidence_snapshot(self):
+        self._assert_escaped_nested_string_value_equivalent(
+            "phase3_evidence_snapshot")
+
+    def test_portable_escaped_scalar_value_raw_ci_runner_logs(self):
+        self._assert_escaped_nested_string_value_equivalent(
+            "raw_ci_runner_logs")
+
+    def test_portable_escaped_scalar_value_raw_ci_log_receipts(self):
+        self._assert_escaped_nested_string_value_equivalent(
+            "raw_ci_log_receipts")
+
+    def test_portable_escaped_scalar_value_clean_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
