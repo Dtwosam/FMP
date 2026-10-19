@@ -1018,7 +1018,7 @@ def main(argv=None):
               file=sys.stderr)
         return 2
     print(rendered, end="" if args.format == "markdown" else "\n")
-    return 0  # Reporting succeeded; NOT an action authorization.
+    return 3  # BLOCKED is NOT success: shell conditionals must fail closed.
 
 
 if __name__ == "__main__":

@@ -366,7 +366,7 @@ class OfflineBlockerDiagnosticTests(unittest.TestCase):
         with contextlib.redirect_stdout(output):
             status = MOD["main"]([
                 "--docs-root", str(self.docs), "--format", "markdown"])
-        self.assertEqual(status, 0)
+        self.assertEqual(status, 3)
         self.assertIn("NOT AUTHORIZED", output.getvalue())
         self.assertNotIn('"documentary_status":', output.getvalue())
 
@@ -376,7 +376,7 @@ class OfflineBlockerDiagnosticTests(unittest.TestCase):
         output = io.StringIO()
         with contextlib.redirect_stdout(output):
             status = MOD["main"](["--docs-root", str(self.docs)])
-        self.assertEqual(status, 0)
+        self.assertEqual(status, 3)
         self.assertEqual(json.loads(output.getvalue()), RENDER(self.docs))
 
 
@@ -566,6 +566,48 @@ class OfflineBlockerDiagnosticTests(unittest.TestCase):
         def mutate(d):
             d['public_observation'].pop('proof_of_effective_exclusive_lock')
         self._tamper("admin_snapshot", mutate)
+
+    def test_readable_and_json_blocked_reports_are_nonzero(self):
+        import contextlib
+        import io
+        for output_format in ("json", "markdown"):
+            with self.subTest(output_format=output_format):
+                out, err = io.StringIO(), io.StringIO()
+                with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                    result = MOD["main"]([
+                        "--docs-root", str(self.docs),
+                        "--format", output_format])
+                self.assertEqual(result, 3)
+                self.assertIn("BLOCKED", out.getvalue())
+                self.assertEqual(err.getvalue(), "")
+
+    def test_report_output_status_is_a_denial_not_an_action_greenlight(self):
+        import contextlib
+        import io
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            code = MOD["main"](["--docs-root", str(self.docs)])
+        self.assertNotEqual(code, 0)
+        self.assertEqual(code, 3)
+        self.assertIs(json.loads(out.getvalue())["allows_protected_run"], False)
+        self.assertIs(json.loads(out.getvalue())["allows_live_trading"], False)
+
+    def test_invalid_packet_still_uses_distinct_code_two_and_no_output(self):
+        import contextlib
+        import io
+        with tempfile.TemporaryDirectory() as root:
+            out, err = io.StringIO(), io.StringIO()
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                code = MOD["main"](["--docs-root", root])
+            self.assertEqual(code, 2)
+            self.assertEqual(out.getvalue(), "")
+            self.assertIn("BLOCKED:", err.getvalue())
+
+    def test_documentation_disallows_shell_greenlight_from_blocked_report(self):
+        guide = (ROOT / "docs" / "dec1752-offline-admin-readiness-diagnostic.md").read_text(encoding="utf-8")
+        self.assertIn("status **3**", guide)
+        self.assertIn("status **2**", guide)
+        self.assertIn("never interprets a BLOCKED report", guide)
 
     def test_module_entrypoint_has_no_import_time_side_effects(self):
         self.assertIn("render_readiness", MOD)
