@@ -17030,3 +17030,363 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_bad_numeric_clean_control(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+
+    def _assert_valid_json_number_defers_to_category_type(self, category,
+                                                          token):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.assertIn(category, REQUIRED)
+        self.assertIn(token, ("0", "-0", "1.0", "1e+0", "1E-0"))
+        number = json.loads(token)
+        self.assertIs(type(number), float if any(
+            char in token for char in ".eE") else int)
+        self.assertTrue(math.isfinite(number))
+        before = self._portable_top_level_members_json()
+        encoded = self._portable_top_level_members_json({
+            category: json.dumps(category) + ":" + token})
+        decoded = json.loads(encoded)
+        self.assertEqual(decoded[category], number)
+        self.assertNotEqual(encoded, before)
+        parsed = review_bundle_json_text(encoded)
+        expected = ("BUNDLE_SCHEMA_UNREVIEWED" if category == "schema"
+                    else "BUNDLE_CATEGORY_TYPE_UNREVIEWED")
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(encoded), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(before, self._portable_top_level_members_json())
+        self.assertTrue(self.verdict()["source_consistency"])
+        self.assertEqual(status, 2)
+        self.assertEqual(parsed["diagnostics"], (expected,))
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"], [expected])
+        self.assertNotIn("tests/sample.py", out.getvalue())
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        for result in (parsed, emitted):
+            self.assertFalse(result["source_consistency"])
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_valid_numeric_schema_zero(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "schema", "0")
+
+    def test_portable_valid_numeric_schema_negative_zero(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "schema", "-0")
+
+    def test_portable_valid_numeric_schema_decimal(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "schema", "1.0")
+
+    def test_portable_valid_numeric_schema_signed_exponent(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "schema", "1e+0")
+
+    def test_portable_valid_numeric_schema_uppercase_exponent(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "schema", "1E-0")
+
+    def test_portable_valid_numeric_pr_zero(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "pr", "0")
+
+    def test_portable_valid_numeric_pr_negative_zero(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "pr", "-0")
+
+    def test_portable_valid_numeric_pr_decimal(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "pr", "1.0")
+
+    def test_portable_valid_numeric_pr_signed_exponent(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "pr", "1e+0")
+
+    def test_portable_valid_numeric_pr_uppercase_exponent(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "pr", "1E-0")
+
+    def test_portable_valid_numeric_runs_zero(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "runs", "0")
+
+    def test_portable_valid_numeric_runs_negative_zero(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "runs", "-0")
+
+    def test_portable_valid_numeric_runs_decimal(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "runs", "1.0")
+
+    def test_portable_valid_numeric_runs_signed_exponent(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "runs", "1e+0")
+
+    def test_portable_valid_numeric_runs_uppercase_exponent(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "runs", "1E-0")
+
+    def test_portable_valid_numeric_jobs_by_run_zero(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "jobs_by_run", "0")
+
+    def test_portable_valid_numeric_jobs_by_run_negative_zero(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "jobs_by_run", "-0")
+
+    def test_portable_valid_numeric_jobs_by_run_decimal(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "jobs_by_run", "1.0")
+
+    def test_portable_valid_numeric_jobs_by_run_signed_exponent(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "jobs_by_run", "1e+0")
+
+    def test_portable_valid_numeric_jobs_by_run_uppercase_exponent(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "jobs_by_run", "1E-0")
+
+    def test_portable_valid_numeric_compare_zero(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "compare", "0")
+
+    def test_portable_valid_numeric_compare_negative_zero(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "compare", "-0")
+
+    def test_portable_valid_numeric_compare_decimal(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "compare", "1.0")
+
+    def test_portable_valid_numeric_compare_signed_exponent(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "compare", "1e+0")
+
+    def test_portable_valid_numeric_compare_uppercase_exponent(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "compare", "1E-0")
+
+    def test_portable_valid_numeric_commit_zero(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "commit", "0")
+
+    def test_portable_valid_numeric_commit_negative_zero(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "commit", "-0")
+
+    def test_portable_valid_numeric_commit_decimal(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "commit", "1.0")
+
+    def test_portable_valid_numeric_commit_signed_exponent(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "commit", "1e+0")
+
+    def test_portable_valid_numeric_commit_uppercase_exponent(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "commit", "1E-0")
+
+    def test_portable_valid_numeric_tree_zero(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "tree", "0")
+
+    def test_portable_valid_numeric_tree_negative_zero(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "tree", "-0")
+
+    def test_portable_valid_numeric_tree_decimal(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "tree", "1.0")
+
+    def test_portable_valid_numeric_tree_signed_exponent(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "tree", "1e+0")
+
+    def test_portable_valid_numeric_tree_uppercase_exponent(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "tree", "1E-0")
+
+    def test_portable_valid_numeric_nodes_zero(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "nodes", "0")
+
+    def test_portable_valid_numeric_nodes_negative_zero(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "nodes", "-0")
+
+    def test_portable_valid_numeric_nodes_decimal(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "nodes", "1.0")
+
+    def test_portable_valid_numeric_nodes_signed_exponent(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "nodes", "1e+0")
+
+    def test_portable_valid_numeric_nodes_uppercase_exponent(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "nodes", "1E-0")
+
+    def test_portable_valid_numeric_changed_bytes_b64_zero(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "changed_bytes_b64", "0")
+
+    def test_portable_valid_numeric_changed_bytes_b64_negative_zero(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "changed_bytes_b64", "-0")
+
+    def test_portable_valid_numeric_changed_bytes_b64_decimal(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "changed_bytes_b64", "1.0")
+
+    def test_portable_valid_numeric_changed_bytes_b64_signed_exponent(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "changed_bytes_b64", "1e+0")
+
+    def test_portable_valid_numeric_changed_bytes_b64_uppercase_exponent(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "changed_bytes_b64", "1E-0")
+
+    def test_portable_valid_numeric_ci_workflow_bytes_b64_zero(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "ci_workflow_bytes_b64", "0")
+
+    def test_portable_valid_numeric_ci_workflow_bytes_b64_negative_zero(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "ci_workflow_bytes_b64", "-0")
+
+    def test_portable_valid_numeric_ci_workflow_bytes_b64_decimal(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "ci_workflow_bytes_b64", "1.0")
+
+    def test_portable_valid_numeric_ci_workflow_bytes_b64_signed_exponent(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "ci_workflow_bytes_b64", "1e+0")
+
+    def test_portable_valid_numeric_ci_workflow_bytes_b64_uppercase_exponent(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "ci_workflow_bytes_b64", "1E-0")
+
+    def test_portable_valid_numeric_full_tree_snapshots_zero(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "full_tree_snapshots", "0")
+
+    def test_portable_valid_numeric_full_tree_snapshots_negative_zero(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "full_tree_snapshots", "-0")
+
+    def test_portable_valid_numeric_full_tree_snapshots_decimal(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "full_tree_snapshots", "1.0")
+
+    def test_portable_valid_numeric_full_tree_snapshots_signed_exponent(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "full_tree_snapshots", "1e+0")
+
+    def test_portable_valid_numeric_full_tree_snapshots_uppercase_exponent(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "full_tree_snapshots", "1E-0")
+
+    def test_portable_valid_numeric_merge_checkout_snapshot_zero(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "merge_checkout_snapshot", "0")
+
+    def test_portable_valid_numeric_merge_checkout_snapshot_negative_zero(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "merge_checkout_snapshot", "-0")
+
+    def test_portable_valid_numeric_merge_checkout_snapshot_decimal(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "merge_checkout_snapshot", "1.0")
+
+    def test_portable_valid_numeric_merge_checkout_snapshot_signed_exponent(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "merge_checkout_snapshot", "1e+0")
+
+    def test_portable_valid_numeric_merge_checkout_snapshot_uppercase_exponent(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "merge_checkout_snapshot", "1E-0")
+
+    def test_portable_valid_numeric_checkout_by_run_zero(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "checkout_by_run", "0")
+
+    def test_portable_valid_numeric_checkout_by_run_negative_zero(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "checkout_by_run", "-0")
+
+    def test_portable_valid_numeric_checkout_by_run_decimal(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "checkout_by_run", "1.0")
+
+    def test_portable_valid_numeric_checkout_by_run_signed_exponent(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "checkout_by_run", "1e+0")
+
+    def test_portable_valid_numeric_checkout_by_run_uppercase_exponent(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "checkout_by_run", "1E-0")
+
+    def test_portable_valid_numeric_phase3_evidence_snapshot_zero(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "phase3_evidence_snapshot", "0")
+
+    def test_portable_valid_numeric_phase3_evidence_snapshot_negative_zero(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "phase3_evidence_snapshot", "-0")
+
+    def test_portable_valid_numeric_phase3_evidence_snapshot_decimal(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "phase3_evidence_snapshot", "1.0")
+
+    def test_portable_valid_numeric_phase3_evidence_snapshot_signed_exponent(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "phase3_evidence_snapshot", "1e+0")
+
+    def test_portable_valid_numeric_phase3_evidence_snapshot_uppercase_exponent(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "phase3_evidence_snapshot", "1E-0")
+
+    def test_portable_valid_numeric_raw_ci_runner_logs_zero(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "raw_ci_runner_logs", "0")
+
+    def test_portable_valid_numeric_raw_ci_runner_logs_negative_zero(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "raw_ci_runner_logs", "-0")
+
+    def test_portable_valid_numeric_raw_ci_runner_logs_decimal(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "raw_ci_runner_logs", "1.0")
+
+    def test_portable_valid_numeric_raw_ci_runner_logs_signed_exponent(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "raw_ci_runner_logs", "1e+0")
+
+    def test_portable_valid_numeric_raw_ci_runner_logs_uppercase_exponent(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "raw_ci_runner_logs", "1E-0")
+
+    def test_portable_valid_numeric_raw_ci_log_receipts_zero(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "raw_ci_log_receipts", "0")
+
+    def test_portable_valid_numeric_raw_ci_log_receipts_negative_zero(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "raw_ci_log_receipts", "-0")
+
+    def test_portable_valid_numeric_raw_ci_log_receipts_decimal(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "raw_ci_log_receipts", "1.0")
+
+    def test_portable_valid_numeric_raw_ci_log_receipts_signed_exponent(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "raw_ci_log_receipts", "1e+0")
+
+    def test_portable_valid_numeric_raw_ci_log_receipts_uppercase_exponent(self):
+        self._assert_valid_json_number_defers_to_category_type(
+            "raw_ci_log_receipts", "1E-0")
+
+    def test_portable_valid_numeric_clean_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
