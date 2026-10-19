@@ -14035,3 +14035,171 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_nested_grammar_first_clean_control(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+
+    def _assert_nested_surrogate_precedes_category_review(self, category,
+                                                          in_key):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.assertIn(category, DICT_KEYS)
+        category_value = json.dumps(
+            self.envelope[category], sort_keys=True, separators=(",", ":"))
+        self.assertTrue(category_value.startswith("{"))
+        self.assertTrue(category_value.endswith("}"))
+        self.assertNotEqual(category_value, "{}")
+        # An extra nested field is itself outside the reviewed evidence
+        # shape, but the Unicode walk must refuse the lone surrogate first.
+        # It must never be echoed through a nested source diagnostic.
+        if in_key:
+            extra = '"\\ud800":null'
+        else:
+            extra = '"unreviewed_surrogate_value":"\\udc00"'
+        altered = category_value[:-1] + "," + extra + "}"
+        encoded = self._portable_top_level_members_json({
+            category: json.dumps(category) + ":" + altered})
+        self.assertNotEqual(encoded, self._portable_top_level_members_json())
+        naive = json.loads(encoded)[category]
+        if in_key:
+            self.assertTrue(any(
+                any(0xD800 <= ord(ch) <= 0xDFFF for ch in key)
+                for key in naive if type(key) is str))
+        else:
+            self.assertEqual(
+                len(naive["unreviewed_surrogate_value"]), 1)
+            self.assertTrue(0xD800 <= ord(
+                naive["unreviewed_surrogate_value"]) <= 0xDFFF)
+        clean = self.verdict()
+        parsed = review_bundle_json_text(encoded)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(encoded), out)
+        emitted = json.loads(out.getvalue())
+        self.assertTrue(clean["source_consistency"])
+        self.assertEqual(clean["diagnostics"], ())
+        self.assertEqual(status, 2)
+        self.assertEqual(parsed["diagnostics"],
+                         ("BUNDLE_JSON_UNICODE_UNREVIEWED",))
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"],
+                         ["BUNDLE_JSON_UNICODE_UNREVIEWED"])
+        self.assertNotIn("tests/sample.py", out.getvalue())
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        for result in (parsed, emitted):
+            self.assertFalse(result["source_consistency"])
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_nested_surrogate_pr_high_key(self):
+        self._assert_nested_surrogate_precedes_category_review(
+            "pr", True)
+
+    def test_portable_nested_surrogate_pr_low_value(self):
+        self._assert_nested_surrogate_precedes_category_review(
+            "pr", False)
+
+    def test_portable_nested_surrogate_jobs_by_run_high_key(self):
+        self._assert_nested_surrogate_precedes_category_review(
+            "jobs_by_run", True)
+
+    def test_portable_nested_surrogate_jobs_by_run_low_value(self):
+        self._assert_nested_surrogate_precedes_category_review(
+            "jobs_by_run", False)
+
+    def test_portable_nested_surrogate_compare_high_key(self):
+        self._assert_nested_surrogate_precedes_category_review(
+            "compare", True)
+
+    def test_portable_nested_surrogate_compare_low_value(self):
+        self._assert_nested_surrogate_precedes_category_review(
+            "compare", False)
+
+    def test_portable_nested_surrogate_commit_high_key(self):
+        self._assert_nested_surrogate_precedes_category_review(
+            "commit", True)
+
+    def test_portable_nested_surrogate_commit_low_value(self):
+        self._assert_nested_surrogate_precedes_category_review(
+            "commit", False)
+
+    def test_portable_nested_surrogate_tree_high_key(self):
+        self._assert_nested_surrogate_precedes_category_review(
+            "tree", True)
+
+    def test_portable_nested_surrogate_tree_low_value(self):
+        self._assert_nested_surrogate_precedes_category_review(
+            "tree", False)
+
+    def test_portable_nested_surrogate_nodes_high_key(self):
+        self._assert_nested_surrogate_precedes_category_review(
+            "nodes", True)
+
+    def test_portable_nested_surrogate_nodes_low_value(self):
+        self._assert_nested_surrogate_precedes_category_review(
+            "nodes", False)
+
+    def test_portable_nested_surrogate_changed_bytes_b64_high_key(self):
+        self._assert_nested_surrogate_precedes_category_review(
+            "changed_bytes_b64", True)
+
+    def test_portable_nested_surrogate_changed_bytes_b64_low_value(self):
+        self._assert_nested_surrogate_precedes_category_review(
+            "changed_bytes_b64", False)
+
+    def test_portable_nested_surrogate_ci_workflow_bytes_b64_high_key(self):
+        self._assert_nested_surrogate_precedes_category_review(
+            "ci_workflow_bytes_b64", True)
+
+    def test_portable_nested_surrogate_ci_workflow_bytes_b64_low_value(self):
+        self._assert_nested_surrogate_precedes_category_review(
+            "ci_workflow_bytes_b64", False)
+
+    def test_portable_nested_surrogate_full_tree_snapshots_high_key(self):
+        self._assert_nested_surrogate_precedes_category_review(
+            "full_tree_snapshots", True)
+
+    def test_portable_nested_surrogate_full_tree_snapshots_low_value(self):
+        self._assert_nested_surrogate_precedes_category_review(
+            "full_tree_snapshots", False)
+
+    def test_portable_nested_surrogate_merge_checkout_snapshot_high_key(self):
+        self._assert_nested_surrogate_precedes_category_review(
+            "merge_checkout_snapshot", True)
+
+    def test_portable_nested_surrogate_merge_checkout_snapshot_low_value(self):
+        self._assert_nested_surrogate_precedes_category_review(
+            "merge_checkout_snapshot", False)
+
+    def test_portable_nested_surrogate_checkout_by_run_high_key(self):
+        self._assert_nested_surrogate_precedes_category_review(
+            "checkout_by_run", True)
+
+    def test_portable_nested_surrogate_checkout_by_run_low_value(self):
+        self._assert_nested_surrogate_precedes_category_review(
+            "checkout_by_run", False)
+
+    def test_portable_nested_surrogate_phase3_evidence_snapshot_high_key(self):
+        self._assert_nested_surrogate_precedes_category_review(
+            "phase3_evidence_snapshot", True)
+
+    def test_portable_nested_surrogate_phase3_evidence_snapshot_low_value(self):
+        self._assert_nested_surrogate_precedes_category_review(
+            "phase3_evidence_snapshot", False)
+
+    def test_portable_nested_surrogate_raw_ci_runner_logs_high_key(self):
+        self._assert_nested_surrogate_precedes_category_review(
+            "raw_ci_runner_logs", True)
+
+    def test_portable_nested_surrogate_raw_ci_runner_logs_low_value(self):
+        self._assert_nested_surrogate_precedes_category_review(
+            "raw_ci_runner_logs", False)
+
+    def test_portable_nested_surrogate_raw_ci_log_receipts_high_key(self):
+        self._assert_nested_surrogate_precedes_category_review(
+            "raw_ci_log_receipts", True)
+
+    def test_portable_nested_surrogate_raw_ci_log_receipts_low_value(self):
+        self._assert_nested_surrogate_precedes_category_review(
+            "raw_ci_log_receipts", False)
+
+    def test_portable_nested_surrogate_clean_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
