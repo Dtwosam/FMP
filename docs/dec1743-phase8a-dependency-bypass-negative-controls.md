@@ -1,0 +1,9 @@
+# DEC-1743 — Fail-closed dependency bypass mutation tests
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** One-commit exact-parent tests/docs child of #1989 at `37893abda137b5eb86f7ba17b9a2b843009b2913`.
+
+Adds **19 methods** (**6,123 proposed total**) that exercise the **real DEC-1742 original 14-node source-only DAG checks** against forged completion and ordering, not just repeat its assertions. In-memory negative mutations make a stage falsely PASS, fabricate an independently verified administrator witness or executable annual authorization, insert future-node prerequisites (a cycle/ordering violation), or duplicate a prerequisite. Nine individual bypass attempts remove requirements between administrator evidence, separate 2023/run385 one-shot decision, accepted annual freezes, cross-year economics, frozen Strategy V1, prospective shadow, demo, Phase 10 and separate Phase 11. Each altered but still syntactically valid DAG must fail the **specific original semantic gate assertion**, not simply a preliminary JSON parser. Other tests reject Boolean `true` masquerading as numeric attempt 1, fabricated financial returns, allowed broker actions or current external authority. Pristine control reruns all twelve original methods.
+
+All mutations are deep-copy, **source-only**. A passing test proves only static dependency-model integrity, not current GitHub administrative no-bypass enforcement, runner-host OS isolation, fresh run inventory, independently approved SHA/runtime or trading profit. The model remains unable to execute a workflow, authorize run385, freeze a strategy or place a demo/live order.
+
+Own exact-head historical/general and Phase3 CI plus qualified independent review required. **DRAFT / NEVER MERGE / NEVER PROMOTE.** Protected original/archive/artifacts, annual dispatch/retries, GitHub permissions/tags/rulesets, broker, live trading and issue #779/#820/#821 remain unchanged and **BLOCKED**.
