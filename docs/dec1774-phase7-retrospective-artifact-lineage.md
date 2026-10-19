@@ -1,0 +1,9 @@
+# DEC-1774 — Phase7 published retrospective source-to-artifact lineage
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent source-only child of PR #2020 at `1b6bc9a43e2da6586192d50a34adbcc8395d2a1b`.
+
+The DEC-1764–1773 retrospective USDJPY Stage2 replay now explicitly lists the historical **published** artifact provenance that supports its cost table and seven-window distribution: Stage1 survivor artifact `10414407590`, Phase2 processed USDJPY artifact `10327600628`, Phase6 checkpoint `5d387b7ca93d04c498eb04c376e0dd92f1fe1953`, and final Phase7 Stage2 evidence artifact `10414817824` with ZIP digest `2522bbfd22979fd753fb1f51d2bb0d1ada957090102712fffbfdf59fe345bad4`, together with the original `result.json` and `windows.json` constituent SHA-256s.
+
+Every displayed lineage identifier is independently searched within the unchanged, SHA-1/**SHA-256 dual-pinned** public Phase7 Markdown. **This tool does NOT download, examine, fresh-authenticate or re-run any linked artifact**; it cannot certify current GitHub artifact availability, privileged runner OS security, Phase8A annual freeze, Strategy V1 readiness, or live profits. The report therefore explicitly contains `historic_artifact_bytes_not_downloaded_or_reauthenticated=true` and `external_current_provenance_witness=null`.
+
+Adds **4** source-only provenance tests (**6472 proposed cumulative methods**) while retaining the exact historic after-cost slippage results, losing windows, exhaustive historical winner omission stress, and nonauthorizing CLI exit3. This is a handoff aid for qualified independent review, not execution permission. The protected 2023/run385/attempt1, independent admin no-bypass controls #779, privileged OS isolation #820, separate amendment alternative #821 and all broker/demo/live/real-money operations remain BLOCKED. Exact-head Phase3/full regression CI and independent qualified review required.

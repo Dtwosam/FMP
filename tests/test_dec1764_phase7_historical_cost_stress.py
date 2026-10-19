@@ -388,6 +388,41 @@ class Phase7CostStressHistoricalReplayTests(unittest.TestCase):
         self.assertIs(report["live_trading_authorized"], False)
         self.assertIsNone(report["forward_profit_claim"])
 
+    def test_published_stage2_artifact_lineage_is_explicit(self):
+        observed = REPLAY()["published_historic_artifact_lineage"]
+        self.assertEqual(observed, MODULE["HISTORIC_STAGE2_PROVENANCE"])
+        self.assertEqual(observed["stage2_result_artifact_id"], "10414817824")
+        self.assertEqual(
+            observed["stage2_result_zip_sha256"],
+            "2522bbfd22979fd753fb1f51d2bb0d1ada957090102712fffbfdf59fe345bad4",
+        )
+
+    def test_published_result_and_window_hashes_are_preserved(self):
+        lineage = REPLAY()["published_historic_artifact_lineage"]
+        self.assertEqual(
+            lineage["result_json_sha256"],
+            "ce7ef3f732bf2da7cd9c0df5e5d695dcdadd63e309c9428a6f572801fcb197b7")
+        self.assertEqual(
+            lineage["windows_json_sha256"],
+            "66a1d35b12b68a0762dd98cd6838a2befcaf57ef9ae43bce181241fe4d23a4f0")
+
+    def test_historic_provenance_is_not_a_live_reauthentication(self):
+        report = REPLAY()
+        self.assertIs(report["historic_artifact_bytes_not_downloaded_or_reauthenticated"], True)
+        self.assertIsNone(report["external_current_provenance_witness"])
+        self.assertIs(report["protected_2023_run385_authorized"], False)
+        self.assertEqual(report["allowed_actions"], [])
+
+    def test_historic_stage1_and_phase2_inputs_have_exact_published_hashes(self):
+        lineage = REPLAY()["published_historic_artifact_lineage"]
+        self.assertEqual(lineage["stage1_survivor_artifact_id"], "10414407590")
+        self.assertEqual(lineage["phase2_processed_artifact_id"], "10327600628")
+        self.assertEqual(lineage["phase6_checkpoint_commit"],
+                         "5d387b7ca93d04c498eb04c376e0dd92f1fe1953")
+        self.assertEqual(
+            lineage["stage1_survivor_zip_sha256"],
+            "d9950ceb37188761a3460df7b4ab75463cdf1c19ce42634d910d33bae3f8c8bb")
+
     def test_cli_returns_nonzero_even_with_correct_historical_report(self):
         stdout, stderr = io.StringIO(), io.StringIO()
         with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
