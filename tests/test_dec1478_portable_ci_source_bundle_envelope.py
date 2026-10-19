@@ -12427,3 +12427,149 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
             self.assertIs(type(self.envelope[category]), dict)
         self._assert_portable_tree_object_order_consistency_only()
 
+    def _assert_portable_early_envelope_precedence(self, left, right, expected):
+        import io
+        import copy
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        baseline = copy.deepcopy(self.envelope)
+        left()
+        right()
+        direct = self.verdict()
+        self.envelope = copy.deepcopy(baseline)
+        right()
+        left()
+        self.assertEqual(self.verdict(), direct)
+        unchanged = copy.deepcopy(self.envelope)
+        raw = json.dumps(self.envelope, sort_keys=True)
+        parsed = review_bundle_json_text(raw)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(raw), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(self.envelope, unchanged)
+        self.assertEqual(direct, parsed)
+        self.assertEqual(status, 2)
+        self.assertEqual(direct["diagnostics"], (expected,))
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"], [expected])
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        for result in (direct, emitted):
+            self.assertFalse(result["source_consistency"])
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_schema_precedence_bad_schema_vs_pr_type_stable(self):
+        def left():
+            self.envelope['schema'] = ENVELOPE_SCHEMA + '-future'
+        def right():
+            self.envelope['pr'] = []
+        self._assert_portable_early_envelope_precedence(
+            left, right, "BUNDLE_SCHEMA_UNREVIEWED")
+
+    def test_portable_schema_precedence_bad_schema_vs_compare_null_stable(self):
+        def left():
+            self.envelope['schema'] = ENVELOPE_SCHEMA.upper()
+        def right():
+            self.envelope['compare'] = None
+        self._assert_portable_early_envelope_precedence(
+            left, right, "BUNDLE_SCHEMA_UNREVIEWED")
+
+    def test_portable_schema_precedence_bad_schema_vs_runs_dict_stable(self):
+        def left():
+            self.envelope['schema'] = False
+        def right():
+            self.envelope['runs'] = {}
+        self._assert_portable_early_envelope_precedence(
+            left, right, "BUNDLE_SCHEMA_UNREVIEWED")
+
+    def test_portable_schema_precedence_bad_schema_vs_flat_nodes_stable(self):
+        def left():
+            self.envelope['schema'] = ENVELOPE_SCHEMA + ' '
+        def right():
+            self.envelope['nodes'] = []
+        self._assert_portable_early_envelope_precedence(
+            left, right, "BUNDLE_SCHEMA_UNREVIEWED")
+
+    def test_portable_schema_precedence_bad_schema_vs_full_tree_stable(self):
+        def left():
+            self.envelope['schema'] = 'private'
+        def right():
+            self.envelope['full_tree_snapshots'] = False
+        self._assert_portable_early_envelope_precedence(
+            left, right, "BUNDLE_SCHEMA_UNREVIEWED")
+
+    def test_portable_schema_precedence_bad_schema_vs_changed_bytes_stable(self):
+        def left():
+            self.envelope['schema'] = ENVELOPE_SCHEMA.replace('-v1','-v2')
+        def right():
+            self.envelope['changed_bytes_b64'] = []
+        self._assert_portable_early_envelope_precedence(
+            left, right, "BUNDLE_SCHEMA_UNREVIEWED")
+
+    def test_portable_schema_precedence_bad_schema_vs_raw_receipts_stable(self):
+        def left():
+            self.envelope['schema'] = None
+        def right():
+            self.envelope['raw_ci_log_receipts'] = []
+        self._assert_portable_early_envelope_precedence(
+            left, right, "BUNDLE_SCHEMA_UNREVIEWED")
+
+    def test_portable_schema_precedence_bad_schema_vs_checkout_stable(self):
+        def left():
+            self.envelope['schema'] = 'v2'
+        def right():
+            self.envelope['checkout_by_run'] = None
+        self._assert_portable_early_envelope_precedence(
+            left, right, "BUNDLE_SCHEMA_UNREVIEWED")
+
+    def test_portable_schema_precedence_missing_schema_vs_bad_runs_stable(self):
+        def left():
+            self.envelope.pop('schema')
+        def right():
+            self.envelope['runs'] = {}
+        self._assert_portable_early_envelope_precedence(
+            left, right, "BUNDLE_KEY_INVENTORY_UNREVIEWED")
+
+    def test_portable_schema_precedence_missing_pr_vs_bad_schema_stable(self):
+        def left():
+            self.envelope.pop('pr')
+        def right():
+            self.envelope['schema'] = 'private'
+        self._assert_portable_early_envelope_precedence(
+            left, right, "BUNDLE_KEY_INVENTORY_UNREVIEWED")
+
+    def test_portable_schema_precedence_missing_ci_workflow_vs_bad_schema_stable(self):
+        def left():
+            self.envelope.pop('ci_workflow_bytes_b64')
+        def right():
+            self.envelope['schema'] = False
+        self._assert_portable_early_envelope_precedence(
+            left, right, "BUNDLE_KEY_INVENTORY_UNREVIEWED")
+
+    def test_portable_schema_precedence_extra_gate_vs_bad_schema_stable(self):
+        def left():
+            self.envelope['can_authorize_annual_run'] = True
+        def right():
+            self.envelope['schema'] = 'private'
+        self._assert_portable_early_envelope_precedence(
+            left, right, "BUNDLE_KEY_INVENTORY_UNREVIEWED")
+
+    def test_portable_schema_precedence_extra_blob_vs_bad_schema_stable(self):
+        def left():
+            self.envelope['decoded_blob_override'] = {}
+        def right():
+            self.envelope['schema'] = ENVELOPE_SCHEMA.upper()
+        self._assert_portable_early_envelope_precedence(
+            left, right, "BUNDLE_KEY_INVENTORY_UNREVIEWED")
+
+    def test_portable_schema_precedence_extra_raw_log_vs_bad_schema_stable(self):
+        def left():
+            self.envelope['raw_ci_runner_logs_2'] = {}
+        def right():
+            self.envelope['schema'] = None
+        self._assert_portable_early_envelope_precedence(
+            left, right, "BUNDLE_KEY_INVENTORY_UNREVIEWED")
+
+    def test_portable_schema_precedence_clean_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
