@@ -17405,9 +17405,6 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
             replacements["schema"] = '"schema":"forged-v2"'
         elif fault == "runs":
             replacements["runs"] = '"runs":null'
-        elif fault == "inventory":
-            replacements["schema"] = None
-        encoded = self._portable_top_level_members_json(replacements)
         if fault == "inventory":
             # Rebuild without schema at the root, retaining every other
             # original evidence member and the malformed number.
@@ -17418,8 +17415,10 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
                             item, sort_keys=True, separators=(",", ":"))))
                     for key, item in sorted(self.envelope.items()))
                 ) if key != "schema") + "}"
-        elif fault == "approval":
-            encoded = encoded[:-1] + ',"can_authorize_annual_run":true}'
+        else:
+            encoded = self._portable_top_level_members_json(replacements)
+            if fault == "approval":
+                encoded = encoded[:-1] + ',"can_authorize_annual_run":true}'
         with self.assertRaises(json.JSONDecodeError):
             json.loads(encoded)
         direct = self.verdict()
