@@ -1,0 +1,7 @@
+# DEC-1656 — Decoded JSON duplicates inside array-contained evidence objects
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent one-commit tests/docs child of #1902 at `173d7d82feb6d3c43ebd89bfdaff0fb5a08a43e1`; 13 new regression methods, **4,009 proposed source-defined tests**.
+
+DEC-1654/1655 checked duplicate keys in top-level dictionary category values. This draft extends the grammar boundary to dictionaries nested **inside arrays**: historical/Phase 3 run rows, CI jobs-by-run entries, PR comparison files, Phase 3 scenarios, full Git-tree entries, and merge-parent records. Each of six paths is tested in both orders: `null` first then valid last (naive decode silently restores clean source), and valid first then `null` last (naive decode changes nested evidence). Strict JSON-text/stdin must reject both at `BUNDLE_JSON_GRAMMAR_UNREVIEWED` before nested reviewer logic. The serializer descends only an explicit path and never modifies unrelated nested fields. A clean source-only nonauthorizing control completes coverage.
+
+Each case checks verdict shape, no sensitive changed-path echo, and false protected original, dispatch-gate and annual-run flags. No production code/parser/resource-limit/workflow/security updates; no protected original/archive/artifact access, annual dispatch or retry, merging, deployment or trading. Own Phase 3/full general CI and independent qualified review still required. DEC-650/#820 and DEC-651/#821/#779 remain **BLOCKED**.

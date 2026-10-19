@@ -13417,3 +13417,135 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_nested_null_last_clean_control(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+
+    def _portable_json_subtree_with_duplicate(self, node, path, null_last):
+        # Walk the explicit evidence path; never replace unanchored text.
+        if not path:
+            self.assertIs(type(node), dict)
+            keys = sorted(key for key in node if type(key) is str and key)
+            self.assertTrue(keys)
+            duplicate = keys[0]
+            original = json.dumps(duplicate)
+            escaped = ('"' + "\\u%04x" % ord(duplicate[0]) +
+                       duplicate[1:] + '"')
+            self.assertNotEqual(escaped, original)
+            items = []
+            for key, value in sorted(node.items()):
+                value_json = json.dumps(value, sort_keys=True,
+                                        separators=(",", ":"))
+                if key == duplicate:
+                    if null_last:
+                        items.extend((original + ":" + value_json,
+                                      escaped + ":null"))
+                    else:
+                        items.extend((original + ":null",
+                                      escaped + ":" + value_json))
+                else:
+                    items.append(json.dumps(key) + ":" + value_json)
+            return "{" + ",".join(items) + "}"
+        head, tail = path[0], path[1:]
+        if type(node) is dict:
+            self.assertIn(head, node)
+            return "{" + ",".join(
+                json.dumps(key) + ":" +
+                (self._portable_json_subtree_with_duplicate(value, tail,
+                                                             null_last)
+                 if key == head else
+                 json.dumps(value, sort_keys=True, separators=(",", ":")))
+                for key, value in sorted(node.items())) + "}"
+        self.assertIs(type(node), list)
+        self.assertIs(type(head), int)
+        self.assertGreaterEqual(head, 0)
+        self.assertLess(head, len(node))
+        return "[" + ",".join(
+            (self._portable_json_subtree_with_duplicate(value, tail,
+                                                         null_last)
+             if index == head else
+             json.dumps(value, sort_keys=True, separators=(",", ":")))
+            for index, value in enumerate(node)) + "]"
+
+    def _assert_duplicate_json_key_inside_array_refused(self, category,
+                                                        path, null_last):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.assertIn(category, REQUIRED)
+        clean = self._portable_top_level_members_json()
+        replacement = self._portable_json_subtree_with_duplicate(
+            self.envelope[category], path, null_last)
+        encoded = self._portable_top_level_members_json({
+            category: json.dumps(category) + ":" + replacement})
+        self.assertNotEqual(encoded, clean)
+        if null_last:
+            self.assertNotEqual(json.loads(encoded), json.loads(clean))
+        else:
+            self.assertEqual(json.loads(encoded), json.loads(clean))
+        self.assertTrue(self.verdict()["source_consistency"])
+        parsed = review_bundle_json_text(encoded)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(encoded), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(status, 2)
+        self.assertEqual(parsed["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"],
+                         ["BUNDLE_JSON_GRAMMAR_UNREVIEWED"])
+        self.assertNotIn("tests/sample.py", out.getvalue())
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        for result in (parsed, emitted):
+            self.assertFalse(result["source_consistency"])
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_array_nested_runs_null_first_refused(self):
+        self._assert_duplicate_json_key_inside_array_refused(
+            "runs", (0,), False)
+
+    def test_portable_array_nested_runs_null_last_refused(self):
+        self._assert_duplicate_json_key_inside_array_refused(
+            "runs", (0,), True)
+
+    def test_portable_array_nested_comparison_files_null_first_refused(self):
+        self._assert_duplicate_json_key_inside_array_refused(
+            "compare", ("files", 0), False)
+
+    def test_portable_array_nested_comparison_files_null_last_refused(self):
+        self._assert_duplicate_json_key_inside_array_refused(
+            "compare", ("files", 0), True)
+
+    def test_portable_array_nested_run_jobs_null_first_refused(self):
+        self._assert_duplicate_json_key_inside_array_refused(
+            "jobs_by_run", (sorted(self.envelope["jobs_by_run"])[0], 0), False)
+
+    def test_portable_array_nested_run_jobs_null_last_refused(self):
+        self._assert_duplicate_json_key_inside_array_refused(
+            "jobs_by_run", (sorted(self.envelope["jobs_by_run"])[0], 0), True)
+
+    def test_portable_array_nested_phase3_scenarios_null_first_refused(self):
+        self._assert_duplicate_json_key_inside_array_refused(
+            "phase3_evidence_snapshot", ("index", "scenarios", 0), False)
+
+    def test_portable_array_nested_phase3_scenarios_null_last_refused(self):
+        self._assert_duplicate_json_key_inside_array_refused(
+            "phase3_evidence_snapshot", ("index", "scenarios", 0), True)
+
+    def test_portable_array_nested_full_tree_entries_null_first_refused(self):
+        self._assert_duplicate_json_key_inside_array_refused(
+            "full_tree_snapshots", (sorted(self.envelope["full_tree_snapshots"])[0], "tree", 0), False)
+
+    def test_portable_array_nested_full_tree_entries_null_last_refused(self):
+        self._assert_duplicate_json_key_inside_array_refused(
+            "full_tree_snapshots", (sorted(self.envelope["full_tree_snapshots"])[0], "tree", 0), True)
+
+    def test_portable_array_nested_merge_parents_null_first_refused(self):
+        self._assert_duplicate_json_key_inside_array_refused(
+            "merge_checkout_snapshot", ("merge_commit", "parents", 0), False)
+
+    def test_portable_array_nested_merge_parents_null_last_refused(self):
+        self._assert_duplicate_json_key_inside_array_refused(
+            "merge_checkout_snapshot", ("merge_commit", "parents", 0), True)
+
+    def test_portable_array_nested_duplicate_clean_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
