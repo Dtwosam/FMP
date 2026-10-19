@@ -13237,7 +13237,8 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self._assert_portable_tree_object_order_consistency_only()
 
 
-    def _assert_nested_json_key_alias_duplicate_refused(self, category):
+    def _assert_nested_json_key_alias_duplicate_refused(self, category,
+                                                        null_last=False):
         import io
         import test_dec1479_offline_ci_bundle_stdin_command as cli
         self.assertIn(category, DICT_KEYS)
@@ -13256,8 +13257,12 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
             value_json = json.dumps(
                 value, sort_keys=True, separators=(",", ":"))
             if key == target:
-                members.append(spelled + ":null")
-                members.append(escaped + ":" + value_json)
+                if null_last:
+                    members.append(spelled + ":" + value_json)
+                    members.append(escaped + ":null")
+                else:
+                    members.append(spelled + ":null")
+                    members.append(escaped + ":" + value_json)
             else:
                 members.append(json.dumps(key) + ":" + value_json)
         category_value_json = "{" + ",".join(members) + "}"
@@ -13268,7 +13273,10 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         # Permissive last-key-wins decoding silently restores the
         # clean root envelope; the strict decoder must not.
         self.assertNotEqual(encoded, clean)
-        self.assertEqual(json.loads(encoded), json.loads(clean))
+        if null_last:
+            self.assertIsNone(json.loads(encoded)[category][target])
+        else:
+            self.assertEqual(json.loads(encoded), json.loads(clean))
         direct = self.verdict()
         parsed = review_bundle_json_text(encoded)
         out = io.StringIO()
@@ -13347,5 +13355,65 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
             "raw_ci_log_receipts")
 
     def test_portable_nested_duplicate_clean_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
+
+    def test_portable_nested_null_last_pr_refused(self):
+        self._assert_nested_json_key_alias_duplicate_refused(
+            "pr", null_last=True)
+
+    def test_portable_nested_null_last_jobs_by_run_refused(self):
+        self._assert_nested_json_key_alias_duplicate_refused(
+            "jobs_by_run", null_last=True)
+
+    def test_portable_nested_null_last_compare_refused(self):
+        self._assert_nested_json_key_alias_duplicate_refused(
+            "compare", null_last=True)
+
+    def test_portable_nested_null_last_commit_refused(self):
+        self._assert_nested_json_key_alias_duplicate_refused(
+            "commit", null_last=True)
+
+    def test_portable_nested_null_last_tree_refused(self):
+        self._assert_nested_json_key_alias_duplicate_refused(
+            "tree", null_last=True)
+
+    def test_portable_nested_null_last_nodes_refused(self):
+        self._assert_nested_json_key_alias_duplicate_refused(
+            "nodes", null_last=True)
+
+    def test_portable_nested_null_last_changed_bytes_b64_refused(self):
+        self._assert_nested_json_key_alias_duplicate_refused(
+            "changed_bytes_b64", null_last=True)
+
+    def test_portable_nested_null_last_ci_workflow_bytes_b64_refused(self):
+        self._assert_nested_json_key_alias_duplicate_refused(
+            "ci_workflow_bytes_b64", null_last=True)
+
+    def test_portable_nested_null_last_full_tree_snapshots_refused(self):
+        self._assert_nested_json_key_alias_duplicate_refused(
+            "full_tree_snapshots", null_last=True)
+
+    def test_portable_nested_null_last_merge_checkout_snapshot_refused(self):
+        self._assert_nested_json_key_alias_duplicate_refused(
+            "merge_checkout_snapshot", null_last=True)
+
+    def test_portable_nested_null_last_checkout_by_run_refused(self):
+        self._assert_nested_json_key_alias_duplicate_refused(
+            "checkout_by_run", null_last=True)
+
+    def test_portable_nested_null_last_phase3_evidence_snapshot_refused(self):
+        self._assert_nested_json_key_alias_duplicate_refused(
+            "phase3_evidence_snapshot", null_last=True)
+
+    def test_portable_nested_null_last_raw_ci_runner_logs_refused(self):
+        self._assert_nested_json_key_alias_duplicate_refused(
+            "raw_ci_runner_logs", null_last=True)
+
+    def test_portable_nested_null_last_raw_ci_log_receipts_refused(self):
+        self._assert_nested_json_key_alias_duplicate_refused(
+            "raw_ci_log_receipts", null_last=True)
+
+    def test_portable_nested_null_last_clean_control(self):
         self._assert_portable_tree_object_order_consistency_only()
 
