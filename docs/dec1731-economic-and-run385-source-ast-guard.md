@@ -1,0 +1,9 @@
+# DEC-1731 — Static test identity for protected-run blocker and economics regressions
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent one-commit tests/docs child of #1977 at `7ae101f5dc9f2d96871fe4e5651b01d2e2b0feac`.
+
+Adds **one** AST-based source-defined method (**5,968 proposed source-defined methods**) verifying parseability, exact method counts and cross-file `test_*` method-name uniqueness for nine offline Phase 8A blocker and historical-economics regression modules, from DEC-1716 through DEC-1730. The counted inventory is **125** currently authored methods, independently verified against the exact parent source before drafting this guard.
+
+These modules include (a) original installed-workflow-order assertions, whose pre-install-snapshot CI skip means Phase 3/full pre-install tests are not actual installed-workflow certification, (b) exact Phase 7 historical after-cost table and its mutation negative controls, (c) DEC-613/620 external human-proof handoff, and (d) source-only annual readiness ledger exact refusal and negative controls. A duplicate or overwritten method or syntactic error cannot silently reduce intended test discovery without the guard failing.
+
+The new AST guard does **not** import the target modules, access installed protected annual workflow source, authenticate GitHub administrator state, execute year 2023/run385, or prove profitability. Its PASS is *syntax/name inventory only*, not runtime correctness. Own exact-head Phase 3/full historical-general CI, normal-checkout focused workflow-order testing and independent qualified review remain required. All 2023 dispatch, strategy synthesis/promotion, protected history, broker/demo/live and trading remain blocked; issue #779 and DEC-650/#820, DEC-651/#821 remain **BLOCKED**. No runtime/parser/production/security/workflow changes.
