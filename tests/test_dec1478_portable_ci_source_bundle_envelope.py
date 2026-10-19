@@ -14760,3 +14760,144 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_valid_astral_array_clean_control(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+
+    def _assert_array_object_unpaired_surrogate_refused(self, category,
+                                                       path, in_key, high):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.assertIn(category, REQUIRED)
+        original = self._portable_top_level_members_json()
+        modified = copy.deepcopy(self.envelope)
+        cursor = modified[category]
+        for part in path:
+            cursor = cursor[part]
+        self.assertIs(type(cursor), dict)
+        surrogate = chr(0xD800 if high else 0xDC00)
+        if in_key:
+            cursor[surrogate + "_synthetic"] = None
+        else:
+            cursor["__synthetic_invalid_unicode__"] = surrogate
+        encoded = json.dumps(modified, sort_keys=True,
+                             separators=(",", ":"), ensure_ascii=True)
+        self.assertIn("\\ud800" if high else "\\udc00", encoded)
+        self.assertEqual(json.loads(encoded), modified)
+        self.assertTrue(_has_unpaired_json_surrogate(modified))
+        parsed = review_bundle_json_text(encoded)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(encoded), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(original, self._portable_top_level_members_json())
+        self.assertTrue(self.verdict()["source_consistency"])
+        self.assertEqual(status, 2)
+        self.assertEqual(parsed["diagnostics"],
+                         ("BUNDLE_JSON_UNICODE_UNREVIEWED",))
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"],
+                         ["BUNDLE_JSON_UNICODE_UNREVIEWED"])
+        self.assertNotIn("tests/sample.py", out.getvalue())
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        for result in (parsed, emitted):
+            self.assertFalse(result["source_consistency"])
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_array_unpaired_runs_key_high(self):
+        self._assert_array_object_unpaired_surrogate_refused(
+            "runs", (0,), True, True)
+
+    def test_portable_array_unpaired_runs_key_low(self):
+        self._assert_array_object_unpaired_surrogate_refused(
+            "runs", (0,), True, False)
+
+    def test_portable_array_unpaired_runs_value_high(self):
+        self._assert_array_object_unpaired_surrogate_refused(
+            "runs", (0,), False, True)
+
+    def test_portable_array_unpaired_runs_value_low(self):
+        self._assert_array_object_unpaired_surrogate_refused(
+            "runs", (0,), False, False)
+
+    def test_portable_array_unpaired_comparison_files_key_high(self):
+        self._assert_array_object_unpaired_surrogate_refused(
+            "compare", ("files", 0), True, True)
+
+    def test_portable_array_unpaired_comparison_files_key_low(self):
+        self._assert_array_object_unpaired_surrogate_refused(
+            "compare", ("files", 0), True, False)
+
+    def test_portable_array_unpaired_comparison_files_value_high(self):
+        self._assert_array_object_unpaired_surrogate_refused(
+            "compare", ("files", 0), False, True)
+
+    def test_portable_array_unpaired_comparison_files_value_low(self):
+        self._assert_array_object_unpaired_surrogate_refused(
+            "compare", ("files", 0), False, False)
+
+    def test_portable_array_unpaired_run_jobs_key_high(self):
+        self._assert_array_object_unpaired_surrogate_refused(
+            "jobs_by_run", (sorted(self.envelope["jobs_by_run"])[0], 0), True, True)
+
+    def test_portable_array_unpaired_run_jobs_key_low(self):
+        self._assert_array_object_unpaired_surrogate_refused(
+            "jobs_by_run", (sorted(self.envelope["jobs_by_run"])[0], 0), True, False)
+
+    def test_portable_array_unpaired_run_jobs_value_high(self):
+        self._assert_array_object_unpaired_surrogate_refused(
+            "jobs_by_run", (sorted(self.envelope["jobs_by_run"])[0], 0), False, True)
+
+    def test_portable_array_unpaired_run_jobs_value_low(self):
+        self._assert_array_object_unpaired_surrogate_refused(
+            "jobs_by_run", (sorted(self.envelope["jobs_by_run"])[0], 0), False, False)
+
+    def test_portable_array_unpaired_phase3_scenarios_key_high(self):
+        self._assert_array_object_unpaired_surrogate_refused(
+            "phase3_evidence_snapshot", ("index", "scenarios", 0), True, True)
+
+    def test_portable_array_unpaired_phase3_scenarios_key_low(self):
+        self._assert_array_object_unpaired_surrogate_refused(
+            "phase3_evidence_snapshot", ("index", "scenarios", 0), True, False)
+
+    def test_portable_array_unpaired_phase3_scenarios_value_high(self):
+        self._assert_array_object_unpaired_surrogate_refused(
+            "phase3_evidence_snapshot", ("index", "scenarios", 0), False, True)
+
+    def test_portable_array_unpaired_phase3_scenarios_value_low(self):
+        self._assert_array_object_unpaired_surrogate_refused(
+            "phase3_evidence_snapshot", ("index", "scenarios", 0), False, False)
+
+    def test_portable_array_unpaired_full_tree_entries_key_high(self):
+        self._assert_array_object_unpaired_surrogate_refused(
+            "full_tree_snapshots", (sorted(self.envelope["full_tree_snapshots"])[0], "tree", 0), True, True)
+
+    def test_portable_array_unpaired_full_tree_entries_key_low(self):
+        self._assert_array_object_unpaired_surrogate_refused(
+            "full_tree_snapshots", (sorted(self.envelope["full_tree_snapshots"])[0], "tree", 0), True, False)
+
+    def test_portable_array_unpaired_full_tree_entries_value_high(self):
+        self._assert_array_object_unpaired_surrogate_refused(
+            "full_tree_snapshots", (sorted(self.envelope["full_tree_snapshots"])[0], "tree", 0), False, True)
+
+    def test_portable_array_unpaired_full_tree_entries_value_low(self):
+        self._assert_array_object_unpaired_surrogate_refused(
+            "full_tree_snapshots", (sorted(self.envelope["full_tree_snapshots"])[0], "tree", 0), False, False)
+
+    def test_portable_array_unpaired_merge_parents_key_high(self):
+        self._assert_array_object_unpaired_surrogate_refused(
+            "merge_checkout_snapshot", ("merge_commit", "parents", 0), True, True)
+
+    def test_portable_array_unpaired_merge_parents_key_low(self):
+        self._assert_array_object_unpaired_surrogate_refused(
+            "merge_checkout_snapshot", ("merge_commit", "parents", 0), True, False)
+
+    def test_portable_array_unpaired_merge_parents_value_high(self):
+        self._assert_array_object_unpaired_surrogate_refused(
+            "merge_checkout_snapshot", ("merge_commit", "parents", 0), False, True)
+
+    def test_portable_array_unpaired_merge_parents_value_low(self):
+        self._assert_array_object_unpaired_surrogate_refused(
+            "merge_checkout_snapshot", ("merge_commit", "parents", 0), False, False)
+
+    def test_portable_array_unpaired_clean_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
