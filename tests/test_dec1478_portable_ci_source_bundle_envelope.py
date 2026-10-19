@@ -14491,3 +14491,168 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_astral_duplicate_clean_control(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+
+    def _assert_valid_astral_json_equivalent(self, category, in_key):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.assertIn(category, DICT_KEYS)
+        clean_before = self._portable_top_level_members_json()
+        modified = copy.deepcopy(self.envelope)
+        self.assertIs(type(modified[category]), dict)
+        marker = chr(0x1F680)
+        if in_key:
+            modified[category][marker + "_synthetic_extra"] = None
+        else:
+            modified[category]["__synthetic_astral_value__"] = marker
+        literal = json.dumps(modified, sort_keys=True,
+                             ensure_ascii=False, separators=(",", ":"))
+        escaped = json.dumps(modified, sort_keys=True,
+                             ensure_ascii=True, separators=(",", ":"))
+        self.assertNotEqual(literal, escaped)
+        self.assertIn(marker, literal)
+        self.assertIn("\\ud83d\\ude80", escaped)
+        self.assertEqual(json.loads(literal), modified)
+        self.assertEqual(json.loads(escaped), modified)
+        direct = review_bundle_envelope(modified)
+        literal_review = review_bundle_json_text(literal)
+        escaped_review = review_bundle_json_text(escaped)
+        self.assertEqual(literal_review, direct)
+        self.assertEqual(escaped_review, direct)
+        self.assertNotIn("BUNDLE_JSON_UNICODE_UNREVIEWED",
+                         direct["diagnostics"])
+        self.assertNotIn("BUNDLE_JSON_GRAMMAR_UNREVIEWED",
+                         direct["diagnostics"])
+        self.assertEqual(clean_before, self._portable_top_level_members_json())
+        for document in (literal, escaped):
+            out = io.StringIO()
+            status = cli.run_stdin_review(io.StringIO(document), out)
+            emitted = json.loads(out.getvalue())
+            self.assertEqual(
+                status, 0 if direct["source_consistency"] else 2)
+            self.assertEqual(set(emitted), VERDICT_FIELDS)
+            self.assertEqual(emitted["source_consistency"],
+                             direct["source_consistency"])
+            self.assertEqual(emitted["diagnostics"],
+                             list(direct["diagnostics"]))
+            self.assertNotIn("tests/sample.py", out.getvalue())
+            self.assertNotIn("docs/sample.md", out.getvalue())
+            for result in (direct, literal_review, escaped_review, emitted):
+                self.assertFalse(result["independent_original_os_proof"])
+                self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+                self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_valid_astral_pr_key_equivalence(self):
+        self._assert_valid_astral_json_equivalent(
+            "pr", True)
+
+    def test_portable_valid_astral_pr_value_equivalence(self):
+        self._assert_valid_astral_json_equivalent(
+            "pr", False)
+
+    def test_portable_valid_astral_jobs_by_run_key_equivalence(self):
+        self._assert_valid_astral_json_equivalent(
+            "jobs_by_run", True)
+
+    def test_portable_valid_astral_jobs_by_run_value_equivalence(self):
+        self._assert_valid_astral_json_equivalent(
+            "jobs_by_run", False)
+
+    def test_portable_valid_astral_compare_key_equivalence(self):
+        self._assert_valid_astral_json_equivalent(
+            "compare", True)
+
+    def test_portable_valid_astral_compare_value_equivalence(self):
+        self._assert_valid_astral_json_equivalent(
+            "compare", False)
+
+    def test_portable_valid_astral_commit_key_equivalence(self):
+        self._assert_valid_astral_json_equivalent(
+            "commit", True)
+
+    def test_portable_valid_astral_commit_value_equivalence(self):
+        self._assert_valid_astral_json_equivalent(
+            "commit", False)
+
+    def test_portable_valid_astral_tree_key_equivalence(self):
+        self._assert_valid_astral_json_equivalent(
+            "tree", True)
+
+    def test_portable_valid_astral_tree_value_equivalence(self):
+        self._assert_valid_astral_json_equivalent(
+            "tree", False)
+
+    def test_portable_valid_astral_nodes_key_equivalence(self):
+        self._assert_valid_astral_json_equivalent(
+            "nodes", True)
+
+    def test_portable_valid_astral_nodes_value_equivalence(self):
+        self._assert_valid_astral_json_equivalent(
+            "nodes", False)
+
+    def test_portable_valid_astral_changed_bytes_b64_key_equivalence(self):
+        self._assert_valid_astral_json_equivalent(
+            "changed_bytes_b64", True)
+
+    def test_portable_valid_astral_changed_bytes_b64_value_equivalence(self):
+        self._assert_valid_astral_json_equivalent(
+            "changed_bytes_b64", False)
+
+    def test_portable_valid_astral_ci_workflow_bytes_b64_key_equivalence(self):
+        self._assert_valid_astral_json_equivalent(
+            "ci_workflow_bytes_b64", True)
+
+    def test_portable_valid_astral_ci_workflow_bytes_b64_value_equivalence(self):
+        self._assert_valid_astral_json_equivalent(
+            "ci_workflow_bytes_b64", False)
+
+    def test_portable_valid_astral_full_tree_snapshots_key_equivalence(self):
+        self._assert_valid_astral_json_equivalent(
+            "full_tree_snapshots", True)
+
+    def test_portable_valid_astral_full_tree_snapshots_value_equivalence(self):
+        self._assert_valid_astral_json_equivalent(
+            "full_tree_snapshots", False)
+
+    def test_portable_valid_astral_merge_checkout_snapshot_key_equivalence(self):
+        self._assert_valid_astral_json_equivalent(
+            "merge_checkout_snapshot", True)
+
+    def test_portable_valid_astral_merge_checkout_snapshot_value_equivalence(self):
+        self._assert_valid_astral_json_equivalent(
+            "merge_checkout_snapshot", False)
+
+    def test_portable_valid_astral_checkout_by_run_key_equivalence(self):
+        self._assert_valid_astral_json_equivalent(
+            "checkout_by_run", True)
+
+    def test_portable_valid_astral_checkout_by_run_value_equivalence(self):
+        self._assert_valid_astral_json_equivalent(
+            "checkout_by_run", False)
+
+    def test_portable_valid_astral_phase3_evidence_snapshot_key_equivalence(self):
+        self._assert_valid_astral_json_equivalent(
+            "phase3_evidence_snapshot", True)
+
+    def test_portable_valid_astral_phase3_evidence_snapshot_value_equivalence(self):
+        self._assert_valid_astral_json_equivalent(
+            "phase3_evidence_snapshot", False)
+
+    def test_portable_valid_astral_raw_ci_runner_logs_key_equivalence(self):
+        self._assert_valid_astral_json_equivalent(
+            "raw_ci_runner_logs", True)
+
+    def test_portable_valid_astral_raw_ci_runner_logs_value_equivalence(self):
+        self._assert_valid_astral_json_equivalent(
+            "raw_ci_runner_logs", False)
+
+    def test_portable_valid_astral_raw_ci_log_receipts_key_equivalence(self):
+        self._assert_valid_astral_json_equivalent(
+            "raw_ci_log_receipts", True)
+
+    def test_portable_valid_astral_raw_ci_log_receipts_value_equivalence(self):
+        self._assert_valid_astral_json_equivalent(
+            "raw_ci_log_receipts", False)
+
+    def test_portable_valid_astral_literal_escape_clean_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
