@@ -18,6 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW = ROOT / "tests" / "fixtures" / "dec1779-historical-phase8a-annual-workflow.yml"
 EVIDENCE_READER = ROOT / "scripts" / "dec1752_phase8a_readiness_report.py"
 EXPECTED_GIT_BLOB_SHA1 = "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1"
+EXPECTED_HISTORICAL_WORKFLOW_SHA256 = "a61fa663b42a680e3ce08f82d7e42f410a30c801d37a19cc82fdb5f8d6fbb29f"
 EXPECTED_JOBS = ("annual_preflight", "annual_cell", "annual_freeze")
 RISKY_BEFORE_GATE = (
     "Checkout", "Set up Python", "Install pinned annual catalogue runtime",
@@ -342,6 +343,11 @@ def report_blocked_admission(path=WORKFLOW):
     ).hexdigest()
     _require(actual == EXPECTED_GIT_BLOB_SHA1,
              "installed workflow bytes differ from reviewed historical source")
+    source_sha256 = hashlib.sha256(source).hexdigest()
+    _require(
+        source_sha256 == EXPECTED_HISTORICAL_WORKFLOW_SHA256,
+        "reviewed historical workflow snapshot SHA-256 did not match",
+    )
     decoded = source.decode("utf-8")
     result = classify_reviewed_step_order(decoded)
     matrix = inspect_installed_cell_matrix(decoded)
@@ -353,6 +359,7 @@ def report_blocked_admission(path=WORKFLOW):
         "source_material": "exact_git_blob_pinned_historical_fixture_not_live_workflow",
         "installed_workflow_file_absent_from_ci_not_an_attestation": True,
         "historical_source_git_blob_sha1": actual,
+        "historical_source_sha256": source_sha256,
         "source_sha_and_live_ref_at_dispatch_not_authenticated": True,
         "observed_jobs": result,
         "historical_matrix_inventory": matrix,

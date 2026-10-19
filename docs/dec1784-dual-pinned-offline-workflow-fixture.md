@@ -1,0 +1,9 @@
+# DEC-1784 — Dual-pin historical workflow fixture before any offline review report
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent source-only child of #2030 at `24baf583802d814450382f59e3353c856d5f6e62`.
+
+The prior CI repair placed an **inert, byte-identical historical workflow snapshot** under `tests/fixtures` because `.github/workflows` was unavailable during full regression checkout. Its original Git blob SHA-1 is `09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1`. This draft independently computes and pins SHA-256 `a61fa663b42a680e3ce08f82d7e42f410a30c801d37a19cc82fdb5f8d6fbb29f` of that same original reviewed 21,915-byte YAML document and fails the review **before parsing or emitting output** unless **both** fingerprints match.
+
+The combined six-source DEC-1782 JSON/Markdown reviewer handoff now displays the historical workflow SHA-256 alongside its Git blob identity and five separately pinned source-document SHA-256s. A test simulates a compromised/bypassed SHA-1 comparison and checks that modified bytes are still rejected by SHA-256. Neither fingerprint authenticates GitHub's **current installed workflow**, effective inherited rulesets/bypass principals, real privileged runner OS, mutable main at dispatch, or fresh one-shot run inventory.
+
+Adds **3** source-defined tests (**6541 cumulative proposed**); previous #2027 failed full CI remains failed, #2030/new exact-head repair CI remains necessary. The historical fixture is still not executable as a workflow, and no real source-of-truth or permission settings change. Any valid diagnostics must remain **BLOCKED (nonzero exit3)**; altered evidence exits2 with no report. No protected annual 2023/run385, markets, broker/demo/live orders, Strategy V1 selection, money movements or trades. Independent issue #779/#820/#821 reviews and separate qualified human action still required.
