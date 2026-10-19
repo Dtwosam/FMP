@@ -17390,3 +17390,124 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_valid_numeric_clean_control(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+
+    def _assert_malformed_numeric_precedes_outer_fault(self, category,
+                                                       fault):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.assertIn(category, ("pr", "compare", "tree", "raw_ci_log_receipts"))
+        self.assertIn(fault, ("schema", "approval", "runs", "inventory"))
+        clean = self._portable_top_level_members_json()
+        # Unsupported JSON number spelling guarantees grammar failure
+        # even when other root evidence would be a separate refusal.
+        replacements = {category: json.dumps(category) + ":01"}
+        if fault == "schema":
+            replacements["schema"] = '"schema":"forged-v2"'
+        elif fault == "runs":
+            replacements["runs"] = '"runs":null'
+        elif fault == "inventory":
+            replacements["schema"] = None
+        encoded = self._portable_top_level_members_json(replacements)
+        if fault == "inventory":
+            # Rebuild without schema at the root, retaining every other
+            # original evidence member and the malformed number.
+            encoded = "{" + ",".join(
+                value for key, value in (
+                    (key, replacements.get(
+                        key, json.dumps(key) + ":" + json.dumps(
+                            item, sort_keys=True, separators=(",", ":"))))
+                    for key, item in sorted(self.envelope.items()))
+                ) if key != "schema") + "}"
+        elif fault == "approval":
+            encoded = encoded[:-1] + ',"can_authorize_annual_run":true}'
+        with self.assertRaises(json.JSONDecodeError):
+            json.loads(encoded)
+        direct = self.verdict()
+        parsed = review_bundle_json_text(encoded)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(encoded), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(self._portable_top_level_members_json(), clean)
+        self.assertTrue(direct["source_consistency"])
+        self.assertEqual(direct["diagnostics"], ())
+        self.assertEqual(status, 2)
+        self.assertEqual(parsed["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"],
+                         ["BUNDLE_JSON_GRAMMAR_UNREVIEWED"])
+        self.assertNotIn("tests/sample.py", out.getvalue())
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        for result in (parsed, emitted):
+            self.assertFalse(result["source_consistency"])
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_numeric_grammar_first_pr_schema(self):
+        self._assert_malformed_numeric_precedes_outer_fault(
+            "pr", "schema")
+
+    def test_portable_numeric_grammar_first_pr_approval(self):
+        self._assert_malformed_numeric_precedes_outer_fault(
+            "pr", "approval")
+
+    def test_portable_numeric_grammar_first_pr_runs(self):
+        self._assert_malformed_numeric_precedes_outer_fault(
+            "pr", "runs")
+
+    def test_portable_numeric_grammar_first_pr_inventory(self):
+        self._assert_malformed_numeric_precedes_outer_fault(
+            "pr", "inventory")
+
+    def test_portable_numeric_grammar_first_compare_schema(self):
+        self._assert_malformed_numeric_precedes_outer_fault(
+            "compare", "schema")
+
+    def test_portable_numeric_grammar_first_compare_approval(self):
+        self._assert_malformed_numeric_precedes_outer_fault(
+            "compare", "approval")
+
+    def test_portable_numeric_grammar_first_compare_runs(self):
+        self._assert_malformed_numeric_precedes_outer_fault(
+            "compare", "runs")
+
+    def test_portable_numeric_grammar_first_compare_inventory(self):
+        self._assert_malformed_numeric_precedes_outer_fault(
+            "compare", "inventory")
+
+    def test_portable_numeric_grammar_first_tree_schema(self):
+        self._assert_malformed_numeric_precedes_outer_fault(
+            "tree", "schema")
+
+    def test_portable_numeric_grammar_first_tree_approval(self):
+        self._assert_malformed_numeric_precedes_outer_fault(
+            "tree", "approval")
+
+    def test_portable_numeric_grammar_first_tree_runs(self):
+        self._assert_malformed_numeric_precedes_outer_fault(
+            "tree", "runs")
+
+    def test_portable_numeric_grammar_first_tree_inventory(self):
+        self._assert_malformed_numeric_precedes_outer_fault(
+            "tree", "inventory")
+
+    def test_portable_numeric_grammar_first_raw_ci_log_receipts_schema(self):
+        self._assert_malformed_numeric_precedes_outer_fault(
+            "raw_ci_log_receipts", "schema")
+
+    def test_portable_numeric_grammar_first_raw_ci_log_receipts_approval(self):
+        self._assert_malformed_numeric_precedes_outer_fault(
+            "raw_ci_log_receipts", "approval")
+
+    def test_portable_numeric_grammar_first_raw_ci_log_receipts_runs(self):
+        self._assert_malformed_numeric_precedes_outer_fault(
+            "raw_ci_log_receipts", "runs")
+
+    def test_portable_numeric_grammar_first_raw_ci_log_receipts_inventory(self):
+        self._assert_malformed_numeric_precedes_outer_fault(
+            "raw_ci_log_receipts", "inventory")
+
+    def test_portable_numeric_grammar_first_clean_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
