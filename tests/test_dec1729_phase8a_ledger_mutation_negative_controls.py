@@ -31,7 +31,12 @@ class Phase8ALedgerAdversarialMutationTests(unittest.TestCase):
         before = copy.deepcopy(self.original)
         modified = copy.deepcopy(before)
         mutate(modified)
-        self.assertNotEqual(modified, before)
+        # Python considers True == 1: compare strict JSON scalar types so
+        # the adversarial Boolean-for-integer mutation reaches the real guard.
+        self.assertNotEqual(
+            json.dumps(modified, sort_keys=True, separators=(",", ":")),
+            json.dumps(before, sort_keys=True, separators=(",", ":")),
+        )
         case = strict.Phase8AReadinessLedgerStrictInventoryTests(guard)
         case.data = modified
         with self.assertRaises(AssertionError):
