@@ -1,0 +1,9 @@
+# DEC-1752 — Offline, deterministic human-review blocker report
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent child of PR #1998 at `ae4472d94d53271057e1c3ac3b3bce25f685fd1f`. This is a new **read-only reporting helper**, not a runner, gate, attestation or release path.
+
+`python scripts/dec1752_phase8a_readiness_report.py` reads exactly five **source-only JSON documents** (DEC-1726/1739/1742/1745/1750) and prints a deterministic JSON report showing eight still-missing independent proof packages, blocked 2023/run385/attempt1 and downstream stages, suggested independent reviewer roles and the two *unapproved* remediation paths. Input SHA-256s make the report reproducible. The capture is explicitly labelled **stale for any future action**; a successful command/CI exit means **report printing worked, not that dispatch is authorized**.
+
+The helper has **no network access, credentials, GitHub mutations, protected historical reads, broker integration, workflow dispatch or file writes**. It never emits a `READY` or `AUTHORIZED` state. If any source document changes to claim a new approval, mismatches identity, smuggles a numeric false or embeds fabricated strategy economics, the report raises an error and requires independent human reconciliation. It is not a validator that can approve evidence.
+
+Adds **23 focused unit tests** (**6317 cumulative proposed source-defined**) for byte reproducibility, source hash accounting and adversarial in-memory/temporary JSON changes. Protected 2023 annual run385/attempt1 remains unconsumed only as historical claims, **not freshly reauthenticated**. Issue #779 and #820/#821 remain **BLOCKED**. No strategy profitability measured and no Phase8B, demo, live or broker authorization exists. Exact-head Phase 3/full historical-general CI and independent security/engineering review required.
