@@ -1,0 +1,72 @@
+{
+  "schema": "fmp_phase8a_non_authorizing_economic_review_contract_v1",
+  "decision": "DEC-1739",
+  "provenance": "SOURCE_ONLY_REQUIREMENTS_NOT_OBSERVATIONS",
+  "research_method": "ANNUAL_DISCOVERY_FIRST_DEC268_DEC469",
+  "phase": "PHASE8A_BLOCKED_AT_2023_RUN385",
+  "annual_series": {
+    "historical_last_segment": "2022",
+    "historical_last_run_number": 384,
+    "next_protected_segment": "2023",
+    "next_protected_run_number": 385,
+    "next_attempt": 1,
+    "independent_fresh_inventory_present": false,
+    "full_year_series_frozen": false
+  },
+  "required_evidence_groups": {
+    "annual_catalogue_and_selection": [
+      "exact_frozen_year_identity",
+      "all_18_cells_per_annual_segment",
+      "failed_and_negative_pattern_inventory",
+      "pattern_search_budget_and_multiplicity",
+      "canonical_cross_year_pattern_identity",
+      "unseen_years_not_touched_as_future_final_test"
+    ],
+    "cross_year_failure_and_concentration": [
+      "recurrence_and_absent_years",
+      "sign_reversals_and_failure_years",
+      "year_by_pair_by_timeframe_support",
+      "winner_selection_and_search_volume",
+      "trade_count_and_independent_observation_support",
+      "year_and_session_return_concentration"
+    ],
+    "after_cost_economics": [
+      "bid_ask_price_side_and_spread",
+      "slippage_sensitivity",
+      "commission_and_rollover_when_relevant",
+      "net_expected_pnl_by_year",
+      "drawdown_and_tail_events",
+      "portfolio_correlated_usd_exposure",
+      "symbol_and_timeframe_contribution",
+      "adverse_cost_and_failure_scenarios"
+    ],
+    "prospective_follow_through": [
+      "exact_frozen_strategy_v1_identity",
+      "registered_entry_exit_no_trade_protocol",
+      "leakage_safe_signal_execution_timing",
+      "predeclared_live_shadow_no_order_policy",
+      "future_market_observations_not_looked_ahead",
+      "broker_demo_after_separate_review_only",
+      "phase10_and_phase11_separate_human_authorizations"
+    ]
+  },
+  "reported_economic_measurements": {
+    "strategy_v1_net_return": null,
+    "strategy_v1_expected_value": null,
+    "strategy_v1_drawdown": null,
+    "strategy_v1_cost_sensitivity": null,
+    "strategy_v1_out_of_sample_years": null,
+    "strategy_v1_forward_shadow_return": null
+  },
+  "all_years_accepted": false,
+  "cross_year_comparison_authorized": false,
+  "strategy_v1_frozen": false,
+  "phase8b_shadow_approved": false,
+  "demo_approved": false,
+  "phase10_approved": false,
+  "live_real_money_approved": false,
+  "has_forward_profit_evidence": false,
+  "human_approved_action": null,
+  "allowed_execution_actions": [],
+  "caveat": "A source-only checklist is not performance evidence, prospective validation, independent admin proof, a broker connection or a permission to execute protected research or live trades."
+}
