@@ -150,6 +150,79 @@ def classify_reviewed_step_order(source_text):
     return outcomes
 
 
+
+def inspect_installed_cell_matrix(source_text):
+    """Validate historical installed matrix shape, not data or run readiness."""
+    blocks = extract_job_steps(source_text)
+    cell = blocks["annual_cell"]["source"]
+    rows = re.findall(
+        r"^          - symbol: ([A-Z]{6})\n"
+        r"            timeframe: (5m|15m|1h)\n"
+        r"            horizon: (60|240)\n"
+        r"            feature_artifact_id: \"([0-9]+)\"\n"
+        r"            feature_zip_sha256: ([0-9a-f]{64})\n"
+        r"            outcome_artifact_id: \"([0-9]+)\"\n"
+        r"            outcome_zip_sha256: ([0-9a-f]{64})$",
+        cell, re.MULTILINE,
+    )
+    expected = {
+        (symbol, timeframe, horizon)
+        for symbol in ("EURUSD", "GBPUSD", "USDJPY")
+        for timeframe in ("5m", "15m", "1h")
+        for horizon in ("60", "240")
+    }
+    actual = [(symbol, timeframe, horizon) for
+              symbol, timeframe, horizon, *_ in rows]
+    _require(
+        len(rows) == 18 and len(set(actual)) == 18
+        and set(actual) == expected,
+        "historical installed 18-cell matrix incomplete, broadened or duplicated",
+    )
+    artifacts = {}
+    for symbol, timeframe, horizon, feature_id, feature_sha, outcome_id, outcome_sha in rows:
+        key = (symbol, timeframe)
+        values = (feature_id, feature_sha, outcome_id, outcome_sha)
+        _require(all(int(v) > 0 for v in (feature_id, outcome_id)),
+                 "historical artifact ID must be positive")
+        if key in artifacts:
+            _require(artifacts[key] == values,
+                     "two horizons disagree on immutable source artifact lineage")
+        else:
+            artifacts[key] = values
+    _require(len(artifacts) == 9,
+             "historical matrix must have nine distinct pair/timeframe sources")
+    _require(
+        len(set(artifacts.values())) == 9,
+        "different pair/timeframe sources share one unexpected artifact pair",
+    )
+    _require(
+        "    needs: annual_preflight\n" in cell
+        and "      fail-fast: false\n" in cell
+        and "      max-parallel: 3\n" in cell
+        and "    needs: annual_cell\n" in blocks["annual_freeze"]["source"],
+        "historical annual job dependency or parallelization contract changed",
+    )
+    _require(
+        "Download all 18 annual catalogue cell products" in
+        blocks["annual_freeze"]["steps"],
+        "freeze job must depend on all 18 historically declared cell artifacts",
+    )
+    return {
+        "historical_cell_count": len(rows),
+        "historical_unique_pair_timeframe_inputs": len(artifacts),
+        "symbols": ["EURUSD", "GBPUSD", "USDJPY"],
+        "timeframes": ["5m", "15m", "1h"],
+        "horizons_minutes": [60, 240],
+        "matrix_cells": [
+            {"symbol": symbol, "timeframe": timeframe, "horizon_minutes": int(horizon)}
+            for symbol, timeframe, horizon, *_ in rows
+        ],
+        "dataset_artifact_ids_and_hashes_not_reauthenticated": True,
+        "historical_matrix_does_not_authorize_market_source_io": True,
+        "installed_job_dependency_assertions_are_source_only": True,
+    }
+
+
 def report_blocked_admission(path=WORKFLOW):
     source = read_offline_source(path)
     actual = hashlib.sha1(
@@ -157,7 +230,9 @@ def report_blocked_admission(path=WORKFLOW):
     ).hexdigest()
     _require(actual == EXPECTED_GIT_BLOB_SHA1,
              "installed workflow bytes differ from reviewed historical source")
-    result = classify_reviewed_step_order(source.decode("utf-8"))
+    decoded = source.decode("utf-8")
+    result = classify_reviewed_step_order(decoded)
+    matrix = inspect_installed_cell_matrix(decoded)
     return {
         "schema": "fmp_dec1779_offline_workflow_step_order_v1",
         "disposition": "BLOCKED_NOT_EXECUTABLE_AND_NOT_ADMIN_ATTESTED",
@@ -165,6 +240,7 @@ def report_blocked_admission(path=WORKFLOW):
         "historical_source_git_blob_sha1": actual,
         "source_sha_and_live_ref_at_dispatch_not_authenticated": True,
         "observed_jobs": result,
+        "historical_matrix_inventory": matrix,
         "job_count": 3,
         "installed_workflow_requires_main": True,
         "precheckout_admission_proven": False,

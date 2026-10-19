@@ -130,6 +130,94 @@ class InstalledAnnualWorkflowNonAdmissionTests(unittest.TestCase):
             self.assertEqual(stdout.getvalue(), "")
             self.assertIn("BLOCKED:", stderr.getvalue())
 
+
+    def test_eighteen_declared_cells_have_exact_symbol_timeframe_horizon_product(self):
+        report = REPORT()
+        matrix = report["historical_matrix_inventory"]
+        self.assertEqual(matrix["historical_cell_count"], 18)
+        self.assertEqual(matrix["historical_unique_pair_timeframe_inputs"], 9)
+        self.assertEqual(matrix["symbols"], ["EURUSD", "GBPUSD", "USDJPY"])
+        self.assertEqual(matrix["timeframes"], ["5m", "15m", "1h"])
+        self.assertEqual(matrix["horizons_minutes"], [60, 240])
+        self.assertEqual(len(matrix["matrix_cells"]), 18)
+
+    def test_historic_artifact_matrix_is_not_current_source_authorization(self):
+        report = REPORT()
+        matrix = report["historical_matrix_inventory"]
+        self.assertIs(
+            matrix["dataset_artifact_ids_and_hashes_not_reauthenticated"], True)
+        self.assertIs(
+            matrix["historical_matrix_does_not_authorize_market_source_io"], True)
+        self.assertIs(report["annual_research_dispatch_authorized"], False)
+        self.assertEqual(report["allowed_actions"], [])
+
+    def test_matrix_parser_rejects_one_missing_declared_cell(self):
+        data = WORKFLOW.read_text(encoding="utf-8")
+        marker = '          - symbol: EURUSD\n            timeframe: 5m\n            horizon: 60\n'
+        self.assertIn(marker, data)
+        bad = data.replace(marker,
+                           '          - symbol: EURUSD\n            timeframe: 5m\n'
+                           '            horizon: 60A\n', 1)
+        with self.assertRaisesRegex(
+                MOD["InvalidStaticEvidence"], "18-cell matrix"):
+            MOD["inspect_installed_cell_matrix"](bad)
+
+    def test_matrix_parser_rejects_a_duplicated_cell_key(self):
+        data = WORKFLOW.read_text(encoding="utf-8")
+        marker = '          - symbol: EURUSD\n            timeframe: 5m\n            horizon: 240\n'
+        self.assertIn(marker, data)
+        bad = data.replace(marker,
+                           '          - symbol: EURUSD\n            timeframe: 5m\n'
+                           '            horizon: 60\n', 1)
+        with self.assertRaisesRegex(
+                MOD["InvalidStaticEvidence"], "18-cell matrix"):
+            MOD["inspect_installed_cell_matrix"](bad)
+
+    def test_matrix_parser_rejects_divergent_artifact_digest_for_same_input(self):
+        data = WORKFLOW.read_text(encoding="utf-8")
+        expected = (
+            "feature_zip_sha256: "
+            "a466f0a128ea8cdc5818c6756bb71a57767f0c703eec68ad40a680f1bf9b06e2"
+        )
+        self.assertEqual(data.count(expected), 2)
+        original_line = expected
+        replacement_line = expected[:-1] + "3"
+        self.assertNotEqual(original_line, replacement_line)
+        idx = data.index(original_line)
+        revised = data[:idx] + replacement_line + data[idx+len(original_line):]
+        with self.assertRaisesRegex(
+                MOD["InvalidStaticEvidence"], "immutable source artifact lineage"):
+            MOD["inspect_installed_cell_matrix"](revised)
+
+    def test_matrix_parser_rejects_broken_job_dependency(self):
+        data = WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn("    needs: annual_preflight\n", data)
+        bad = data.replace("    needs: annual_preflight\n",
+                           "    needs: unrestricted_job\n", 1)
+        with self.assertRaisesRegex(
+                MOD["InvalidStaticEvidence"], "job dependency"):
+            MOD["inspect_installed_cell_matrix"](bad)
+
+    def test_matrix_parser_rejects_unsafe_parallelization_change(self):
+        data = WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn("      max-parallel: 3\n", data)
+        bad = data.replace("      max-parallel: 3\n",
+                           "      max-parallel: 18\n", 1)
+        with self.assertRaisesRegex(
+                MOD["InvalidStaticEvidence"], "parallelization"):
+            MOD["inspect_installed_cell_matrix"](bad)
+
+    def test_new_matrix_inventory_still_exits_blocked_not_success(self):
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            code = MOD["main"]([])
+        self.assertEqual(code, 3)
+        report = json.loads(out.getvalue())
+        self.assertEqual(report["historical_matrix_inventory"][
+            "historical_cell_count"], 18)
+        self.assertEqual(report["disposition"],
+                         "BLOCKED_NOT_EXECUTABLE_AND_NOT_ADMIN_ATTESTED")
+
     def test_no_workflow_dispatch_or_broker_is_needed(self):
         report = REPORT()
         self.assertIn("Independent administrator/security", report["next_external_review"])
