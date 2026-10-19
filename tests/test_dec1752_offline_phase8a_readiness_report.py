@@ -725,7 +725,14 @@ class OfflineBlockerDiagnosticTests(unittest.TestCase):
             target = root / FILES["admin_snapshot"]
             packet = json.loads(target.read_text(encoding="utf-8"))
             packet["caveat"] += " Previously unseen source words."
-            target.write_text(json.dumps(packet, sort_keys=True), encoding="utf-8")
+            # Preserve source member insertion order: sort_keys=True also
+            # permutes the ordered downstream gates, triggering an earlier
+            # semantic failure instead of exercising the SHA-256 pin.
+            self.assertEqual(
+                tuple(packet["downstream_gate_state"]), MOD["STAGES"])
+            target.write_text(
+                json.dumps(packet, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8")
             out, err = io.StringIO(), io.StringIO()
             with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
                 code = MOD["main"](["--docs-root", dirname])
@@ -777,6 +784,53 @@ class OfflineBlockerDiagnosticTests(unittest.TestCase):
                 (folder / filename).write_bytes((self.docs / filename).read_bytes())
             self.assertEqual(RENDER(folder)["documentary_status"], "BLOCKED")
 
+
+    def test_editorial_drift_on_all_five_order_preserved_packets_hits_pin(self):
+        # A source-only wording change is not an authorization and should
+        # reach independent byte pin verification, not merely fail due to
+        # sorted/reordered JSON member presentation.
+        cases = (
+            ("annual", "description"),
+            ("economics", "caveat"),
+            ("dependency", "note"),
+            ("preregistration", "rationale"),
+            ("admin_snapshot", "caveat"),
+        )
+        for file_key, field in cases:
+            with self.subTest(file=file_key):
+                with tempfile.TemporaryDirectory() as dirname:
+                    root = Path(dirname)
+                    for filename in FILES.values():
+                        (root / filename).write_bytes(
+                            (self.docs / filename).read_bytes())
+                    target = root / FILES[file_key]
+                    packet = json.loads(target.read_text(encoding="utf-8"))
+                    original = packet[field]
+                    self.assertIsInstance(original, str)
+                    packet[field] += " Unapproved editorial-only drift."
+                    target.write_text(
+                        json.dumps(packet, indent=2, ensure_ascii=False) + "\n",
+                        encoding="utf-8")
+                    with self.assertRaisesRegex(
+                            FAILURE, "reviewed SHA-256 manifest"):
+                        RENDER(root)
+
+    def test_reordered_gate_map_remains_invalid_independently_of_hash(self):
+        with tempfile.TemporaryDirectory() as dirname:
+            root = Path(dirname)
+            for filename in FILES.values():
+                (root / filename).write_bytes(
+                    (self.docs / filename).read_bytes())
+            path = root / FILES["admin_snapshot"]
+            packet = json.loads(path.read_text(encoding="utf-8"))
+            self.assertEqual(tuple(packet["downstream_gate_state"]),
+                             MOD["STAGES"])
+            path.write_text(
+                json.dumps(packet, sort_keys=True) + "\n",
+                encoding="utf-8")
+            with self.assertRaisesRegex(
+                    FAILURE, "required downstream gates"):
+                RENDER(root)
 
     def test_module_entrypoint_has_no_import_time_side_effects(self):
         self.assertIn("render_readiness", MOD)
