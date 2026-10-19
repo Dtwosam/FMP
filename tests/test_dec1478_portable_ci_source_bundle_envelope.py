@@ -15384,3 +15384,170 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_escaped_control_clean_control(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+
+    def _portable_array_raw_control_text(self, node, path, control):
+        if not path:
+            self.assertIs(type(node), dict)
+            child = json.dumps(node, sort_keys=True, separators=(",", ":"))
+            self.assertTrue(child.startswith("{") and child.endswith("}"))
+            self.assertNotEqual(child, "{}")
+            if control == "nul_key":
+                member = '"synthetic_' + chr(0) + '_key":null'
+            elif control == "newline_value":
+                member = '"synthetic_value":"left' + chr(10) + 'right"'
+            elif control == "carriage_key":
+                member = '"synthetic_' + chr(13) + '_key":null'
+            else:
+                self.assertEqual(control, "tab_value")
+                member = '"synthetic_value":"left' + chr(9) + 'right"'
+            return child[:-1] + "," + member + "}"
+        head, tail = path[0], path[1:]
+        if type(node) is dict:
+            self.assertIn(head, node)
+            return "{" + ",".join(
+                json.dumps(key) + ":" +
+                (self._portable_array_raw_control_text(value, tail, control)
+                 if key == head else
+                 json.dumps(value, sort_keys=True, separators=(",", ":")))
+                for key, value in sorted(node.items())) + "}"
+        self.assertIs(type(node), list)
+        self.assertIs(type(head), int)
+        self.assertGreaterEqual(head, 0)
+        self.assertLess(head, len(node))
+        return "[" + ",".join(
+            (self._portable_array_raw_control_text(value, tail, control)
+             if i == head else
+             json.dumps(value, sort_keys=True, separators=(",", ":")))
+            for i, value in enumerate(node)) + "]"
+
+    def _assert_raw_control_in_array_object_refused(self, category,
+                                                   path, control):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.assertIn(category, REQUIRED)
+        before = self._portable_top_level_members_json()
+        malformed = self._portable_array_raw_control_text(
+            self.envelope[category], path, control)
+        encoded = self._portable_top_level_members_json({
+            category: json.dumps(category) + ":" + malformed})
+        with self.assertRaises(json.JSONDecodeError):
+            json.loads(encoded)
+        parsed = review_bundle_json_text(encoded)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(encoded), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(before, self._portable_top_level_members_json())
+        self.assertTrue(self.verdict()["source_consistency"])
+        self.assertEqual(status, 2)
+        self.assertEqual(parsed["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"],
+                         ["BUNDLE_JSON_GRAMMAR_UNREVIEWED"])
+        self.assertNotIn("tests/sample.py", out.getvalue())
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        for result in (parsed, emitted):
+            self.assertFalse(result["source_consistency"])
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_array_raw_control_runs_nul_key(self):
+        self._assert_raw_control_in_array_object_refused(
+            "runs", (0,), "nul_key")
+
+    def test_portable_array_raw_control_runs_newline_value(self):
+        self._assert_raw_control_in_array_object_refused(
+            "runs", (0,), "newline_value")
+
+    def test_portable_array_raw_control_runs_carriage_key(self):
+        self._assert_raw_control_in_array_object_refused(
+            "runs", (0,), "carriage_key")
+
+    def test_portable_array_raw_control_runs_tab_value(self):
+        self._assert_raw_control_in_array_object_refused(
+            "runs", (0,), "tab_value")
+
+    def test_portable_array_raw_control_comparison_files_nul_key(self):
+        self._assert_raw_control_in_array_object_refused(
+            "compare", ("files", 0), "nul_key")
+
+    def test_portable_array_raw_control_comparison_files_newline_value(self):
+        self._assert_raw_control_in_array_object_refused(
+            "compare", ("files", 0), "newline_value")
+
+    def test_portable_array_raw_control_comparison_files_carriage_key(self):
+        self._assert_raw_control_in_array_object_refused(
+            "compare", ("files", 0), "carriage_key")
+
+    def test_portable_array_raw_control_comparison_files_tab_value(self):
+        self._assert_raw_control_in_array_object_refused(
+            "compare", ("files", 0), "tab_value")
+
+    def test_portable_array_raw_control_run_jobs_nul_key(self):
+        self._assert_raw_control_in_array_object_refused(
+            "jobs_by_run", (sorted(self.envelope["jobs_by_run"])[0], 0), "nul_key")
+
+    def test_portable_array_raw_control_run_jobs_newline_value(self):
+        self._assert_raw_control_in_array_object_refused(
+            "jobs_by_run", (sorted(self.envelope["jobs_by_run"])[0], 0), "newline_value")
+
+    def test_portable_array_raw_control_run_jobs_carriage_key(self):
+        self._assert_raw_control_in_array_object_refused(
+            "jobs_by_run", (sorted(self.envelope["jobs_by_run"])[0], 0), "carriage_key")
+
+    def test_portable_array_raw_control_run_jobs_tab_value(self):
+        self._assert_raw_control_in_array_object_refused(
+            "jobs_by_run", (sorted(self.envelope["jobs_by_run"])[0], 0), "tab_value")
+
+    def test_portable_array_raw_control_phase3_scenarios_nul_key(self):
+        self._assert_raw_control_in_array_object_refused(
+            "phase3_evidence_snapshot", ("index", "scenarios", 0), "nul_key")
+
+    def test_portable_array_raw_control_phase3_scenarios_newline_value(self):
+        self._assert_raw_control_in_array_object_refused(
+            "phase3_evidence_snapshot", ("index", "scenarios", 0), "newline_value")
+
+    def test_portable_array_raw_control_phase3_scenarios_carriage_key(self):
+        self._assert_raw_control_in_array_object_refused(
+            "phase3_evidence_snapshot", ("index", "scenarios", 0), "carriage_key")
+
+    def test_portable_array_raw_control_phase3_scenarios_tab_value(self):
+        self._assert_raw_control_in_array_object_refused(
+            "phase3_evidence_snapshot", ("index", "scenarios", 0), "tab_value")
+
+    def test_portable_array_raw_control_full_tree_entries_nul_key(self):
+        self._assert_raw_control_in_array_object_refused(
+            "full_tree_snapshots", (sorted(self.envelope["full_tree_snapshots"])[0], "tree", 0), "nul_key")
+
+    def test_portable_array_raw_control_full_tree_entries_newline_value(self):
+        self._assert_raw_control_in_array_object_refused(
+            "full_tree_snapshots", (sorted(self.envelope["full_tree_snapshots"])[0], "tree", 0), "newline_value")
+
+    def test_portable_array_raw_control_full_tree_entries_carriage_key(self):
+        self._assert_raw_control_in_array_object_refused(
+            "full_tree_snapshots", (sorted(self.envelope["full_tree_snapshots"])[0], "tree", 0), "carriage_key")
+
+    def test_portable_array_raw_control_full_tree_entries_tab_value(self):
+        self._assert_raw_control_in_array_object_refused(
+            "full_tree_snapshots", (sorted(self.envelope["full_tree_snapshots"])[0], "tree", 0), "tab_value")
+
+    def test_portable_array_raw_control_merge_parents_nul_key(self):
+        self._assert_raw_control_in_array_object_refused(
+            "merge_checkout_snapshot", ("merge_commit", "parents", 0), "nul_key")
+
+    def test_portable_array_raw_control_merge_parents_newline_value(self):
+        self._assert_raw_control_in_array_object_refused(
+            "merge_checkout_snapshot", ("merge_commit", "parents", 0), "newline_value")
+
+    def test_portable_array_raw_control_merge_parents_carriage_key(self):
+        self._assert_raw_control_in_array_object_refused(
+            "merge_checkout_snapshot", ("merge_commit", "parents", 0), "carriage_key")
+
+    def test_portable_array_raw_control_merge_parents_tab_value(self):
+        self._assert_raw_control_in_array_object_refused(
+            "merge_checkout_snapshot", ("merge_commit", "parents", 0), "tab_value")
+
+    def test_portable_array_raw_control_clean_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
