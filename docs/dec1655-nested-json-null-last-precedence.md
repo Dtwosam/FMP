@@ -1,0 +1,7 @@
+# DEC-1655 — Null-last Unicode-equivalent nested JSON duplicate keys fail closed
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent one-commit test/docs child of #1901 at `c128bd1fe5f783b817c08b7ab2783f29db6b1b59`, with 15 synthetic methods (**3,996 proposed source-defined tests**).
+
+DEC-1654 introduced **null-first, original-value-last** decoded duplicate keys one level inside each mandatory dictionary category, proving a permissive parser could reconstruct the clean envelope. This adversarial complement places the original value first and a decoded-equivalent Unicode key with `null` **last** in those same fourteen categories. A naive decoder would produce a poisoned child map, potentially hiding the true decoding failure behind a later category-specific diagnostic. Bounded JSON text/stdin ingress must consistently reject at `BUNDLE_JSON_GRAMMAR_UNREVIEWED` before any nested evidence check, with no changed-path echo and all protected annual-run admission flags false.
+
+The original nested-duplicate cases remain active; a clean direct-memory control is still source-only/non-authorizing. Only fixtures and tests are changed—no parser, limits, runtime, workflows, security or admission gates. Own exact-head Phase 3/general CI and independent review required; no protected originals/archives/artifacts, annual execution/retry, merge, deployment or trading. DEC-650/#820 and DEC-651/#821/#779 remain **BLOCKED**.
