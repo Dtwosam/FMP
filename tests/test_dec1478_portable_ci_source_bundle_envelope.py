@@ -14656,3 +14656,107 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_valid_astral_literal_escape_clean_control(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+
+    def _assert_valid_astral_in_array_object_parity(self, category, path,
+                                                    in_key):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.assertIn(category, REQUIRED)
+        before = self._portable_top_level_members_json()
+        modified = copy.deepcopy(self.envelope)
+        cursor = modified[category]
+        for segment in path:
+            cursor = cursor[segment]
+        self.assertIs(type(cursor), dict)
+        rocket = chr(0x1F680)
+        if in_key:
+            cursor[rocket + "_synthetic_array_key"] = None
+        else:
+            cursor["__synthetic_array_value__"] = rocket
+        original = json.dumps(modified, sort_keys=True,
+                              separators=(",", ":"), ensure_ascii=False)
+        escaped = json.dumps(modified, sort_keys=True,
+                             separators=(",", ":"), ensure_ascii=True)
+        self.assertIn(rocket, original)
+        self.assertIn("\\ud83d\\ude80", escaped)
+        self.assertNotEqual(original, escaped)
+        self.assertEqual(json.loads(original), json.loads(escaped))
+        self.assertEqual(json.loads(original), modified)
+        expected = review_bundle_envelope(modified)
+        literal = review_bundle_json_text(original)
+        pair = review_bundle_json_text(escaped)
+        self.assertEqual(literal, expected)
+        self.assertEqual(pair, expected)
+        self.assertNotIn("BUNDLE_JSON_UNICODE_UNREVIEWED",
+                         expected["diagnostics"])
+        self.assertNotIn("BUNDLE_JSON_GRAMMAR_UNREVIEWED",
+                         expected["diagnostics"])
+        self.assertEqual(before, self._portable_top_level_members_json())
+        for content in (original, escaped):
+            out = io.StringIO()
+            status = cli.run_stdin_review(io.StringIO(content), out)
+            emitted = json.loads(out.getvalue())
+            self.assertEqual(status, 0 if expected["source_consistency"] else 2)
+            self.assertEqual(set(emitted), VERDICT_FIELDS)
+            self.assertEqual(emitted["source_consistency"],
+                             expected["source_consistency"])
+            self.assertEqual(emitted["diagnostics"],
+                             list(expected["diagnostics"]))
+            self.assertNotIn("tests/sample.py", out.getvalue())
+            self.assertNotIn("docs/sample.md", out.getvalue())
+            for result in (expected, literal, pair, emitted):
+                self.assertFalse(result["independent_original_os_proof"])
+                self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+                self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_valid_astral_array_runs_key(self):
+        self._assert_valid_astral_in_array_object_parity(
+            "runs", (0,), True)
+
+    def test_portable_valid_astral_array_runs_value(self):
+        self._assert_valid_astral_in_array_object_parity(
+            "runs", (0,), False)
+
+    def test_portable_valid_astral_array_comparison_files_key(self):
+        self._assert_valid_astral_in_array_object_parity(
+            "compare", ("files", 0), True)
+
+    def test_portable_valid_astral_array_comparison_files_value(self):
+        self._assert_valid_astral_in_array_object_parity(
+            "compare", ("files", 0), False)
+
+    def test_portable_valid_astral_array_run_jobs_key(self):
+        self._assert_valid_astral_in_array_object_parity(
+            "jobs_by_run", (sorted(self.envelope["jobs_by_run"])[0], 0), True)
+
+    def test_portable_valid_astral_array_run_jobs_value(self):
+        self._assert_valid_astral_in_array_object_parity(
+            "jobs_by_run", (sorted(self.envelope["jobs_by_run"])[0], 0), False)
+
+    def test_portable_valid_astral_array_phase3_scenarios_key(self):
+        self._assert_valid_astral_in_array_object_parity(
+            "phase3_evidence_snapshot", ("index", "scenarios", 0), True)
+
+    def test_portable_valid_astral_array_phase3_scenarios_value(self):
+        self._assert_valid_astral_in_array_object_parity(
+            "phase3_evidence_snapshot", ("index", "scenarios", 0), False)
+
+    def test_portable_valid_astral_array_full_tree_entries_key(self):
+        self._assert_valid_astral_in_array_object_parity(
+            "full_tree_snapshots", (sorted(self.envelope["full_tree_snapshots"])[0], "tree", 0), True)
+
+    def test_portable_valid_astral_array_full_tree_entries_value(self):
+        self._assert_valid_astral_in_array_object_parity(
+            "full_tree_snapshots", (sorted(self.envelope["full_tree_snapshots"])[0], "tree", 0), False)
+
+    def test_portable_valid_astral_array_merge_parents_key(self):
+        self._assert_valid_astral_in_array_object_parity(
+            "merge_checkout_snapshot", ("merge_commit", "parents", 0), True)
+
+    def test_portable_valid_astral_array_merge_parents_value(self):
+        self._assert_valid_astral_in_array_object_parity(
+            "merge_checkout_snapshot", ("merge_commit", "parents", 0), False)
+
+    def test_portable_valid_astral_array_clean_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
