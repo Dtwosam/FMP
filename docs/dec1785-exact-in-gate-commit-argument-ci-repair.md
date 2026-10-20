@@ -1,0 +1,9 @@
+# DEC-1785 — Repair CI failure and bind the exact in-gate code SHA
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent one-commit child of #2031 at `f67f45e9d70db60976da546fd094a6cd89680051`.
+
+PRs **#2030 and #2031 both failed full historical/general CI** with **one test failure** (`test_missing_gate_commit_argument_is_refused`), even though Phase3 passed. The test assumed the reviewed historical annual workflow had only three `--code-commit "$GITHUB_SHA"` strings. It actually has **six**: the three `require-execution` gates, followed by one preflight, one research-cell, and one freeze invocation. The incorrect count assertion failed before evaluating the attack case.
+
+DEC-1785 repairs the count and changes the mutation to target the **preflight authorization step**, rather than globally replacing the first identical argument. More importantly, the production *offline static audit* now requires the **exact `--code-commit "$GITHUB_SHA"` argument within each of the three `require-execution` gate payloads**. Its prior loose check for `--code-commit` plus a possibly unrelated `$GITHUB_SHA` anywhere in that payload is replaced by an exact argument check. A new test mutates each job's gate separately and requires the source audit to refuse it, independently of later matching commands elsewhere in that same job.
+
+Adds **1** test (6542 cumulative proposed source-defined). This is a **static historical fixture validator**, not installed early authorization, true runner isolation, continuous no-bypass ref lock or proof that run385 was not consumed. The previous red CI runs remain red; only new exact-head full CI can validate the repair. No real workflow, branch, repository ruleset, protected 2023/run385, broker/demo/live order or trading operation changes. #779/#820/#821 BLOCKED and qualified independent review required.

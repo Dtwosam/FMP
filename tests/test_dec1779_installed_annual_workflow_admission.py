@@ -266,12 +266,43 @@ class InstalledAnnualWorkflowNonAdmissionTests(unittest.TestCase):
     def test_missing_gate_commit_argument_is_refused(self):
         data = WORKFLOW.read_text(encoding="utf-8")
         original = '            --code-commit "$GITHUB_SHA"'
-        self.assertEqual(data.count(original), 3)
-        changed = data.replace(
+        # Three in the execution gates, three more in later stage commands.
+        self.assertEqual(data.count(original), 6)
+        gate_name = (
+            "      - name: Require separately authorized annual catalogue execution\n"
+        )
+        self.assertEqual(data.count(gate_name), 1)
+        before, after = data.split(gate_name, 1)
+        self.assertIn(original, after.split("      - name: ", 1)[0])
+        changed = before + gate_name + after.replace(
             original, '            --code-commit "not-a-SHA"', 1)
         with self.assertRaisesRegex(
                 MOD["InvalidStaticEvidence"], "guard command/arguments"):
             MOD["inspect_pregate_step_payloads"](changed)
+
+    def test_each_real_execution_gate_requires_the_exact_commit_argument(self):
+        data = WORKFLOW.read_text(encoding="utf-8")
+        for job, gate_name in MOD["EXACT_GATE_STEP"].items():
+            with self.subTest(job=job):
+                blocks = MOD["extract_job_steps"](data)
+                block = blocks[job]["source"]
+                marker = "      - name: " + gate_name + "\n"
+                self.assertEqual(block.count(marker), 1)
+                before, rest = block.split(marker, 1)
+                actual_gate, following = rest.split("      - name: ", 1)
+                target = '            --code-commit "$GITHUB_SHA"'
+                self.assertIn(target, actual_gate)
+                replaced = (
+                    before + marker
+                    + actual_gate.replace(target,
+                        '            --code-commit "$USER_SUPPLIED_REF"', 1)
+                    + "      - name: " + following
+                )
+                start = data.index(block)
+                mutated = data[:start] + replaced + data[start + len(block):]
+                with self.assertRaisesRegex(
+                        MOD["InvalidStaticEvidence"], "guard command/arguments"):
+                    MOD["inspect_pregate_step_payloads"](mutated)
 
     def test_preflight_missing_one_metadata_api_call_is_refused(self):
         data = WORKFLOW.read_text(encoding="utf-8")
