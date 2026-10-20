@@ -166,7 +166,7 @@ def validate_review_index_fingerprint(report):
         canonical = json.dumps(
             data, sort_keys=True, separators=(",", ":"), allow_nan=False,
         ).encode("utf-8")
-    except (TypeError, ValueError) as exc:
+    except (TypeError, ValueError, OverflowError, RecursionError) as exc:
         raise InvalidReviewBundle("source-only index has unsupported/nonfinite fields") from exc
     if hashlib.sha256(canonical).hexdigest() != fingerprint:
         raise InvalidReviewBundle("source-only index contents differ from SHA-256")
@@ -183,7 +183,7 @@ def format_blocked_review_bundle_markdown(report):
         canonical = json.dumps(
             compile_blocked_review_bundle(),
             sort_keys=True, separators=(",", ":"), allow_nan=False)
-    except (TypeError, ValueError) as exc:
+    except (TypeError, ValueError, OverflowError, RecursionError) as exc:
         raise InvalidReviewBundle(
             "unsupported or nonfinite seven-source review data") from exc
     if actual != canonical:
@@ -273,7 +273,7 @@ def format_unfulfilled_review_requests(report):
         reference = json.dumps(
             compile_blocked_review_bundle(),
             sort_keys=True, separators=(",", ":"), allow_nan=False)
-    except (TypeError, ValueError) as exc:
+    except (TypeError, ValueError, OverflowError, RecursionError) as exc:
         raise InvalidReviewBundle("unsupported/nonfinite review request") from exc
     if received != reference:
         raise InvalidReviewBundle("review requests are not canonical BLOCKED evidence")
@@ -321,7 +321,7 @@ def verify_saved_blocked_review_packet(path):
         fresh_bytes = json.dumps(
             fresh, sort_keys=True, separators=(",", ":"), allow_nan=False,
         ).encode("utf-8")
-    except (UnicodeError, TypeError, ValueError, KeyError) as exc:
+    except (UnicodeError, TypeError, ValueError, KeyError, OverflowError, RecursionError) as exc:
         raise InvalidReviewBundle("saved BLOCKED packet is invalid JSON") from exc
     if type(saved) is not dict:
         raise InvalidReviewBundle("saved BLOCKED packet must be one JSON object")
@@ -373,7 +373,7 @@ def main(argv=None):
             output = json.dumps(
                 report, sort_keys=True, indent=2, allow_nan=False,
             )
-    except (OSError, UnicodeError, TypeError, ValueError, KeyError) as exc:
+    except (OSError, UnicodeError, TypeError, ValueError, KeyError, OverflowError, RecursionError) as exc:
         print("BLOCKED: invalid source-only review: " + str(exc),
               file=sys.stderr)
         return 2
