@@ -1,0 +1,12 @@
+# DEC-1855 — Synthetic-only backtest cost-input contract diagnostic
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent source-only child of PR #2101, SHA `60ccbcca75251a05fbeadc5330462969f9e4f360`.
+
+After the seven-source security-review checkpoint, a source inspection of `src/fmp/backtest/costs.py` exposed two **programmatic input-boundary weaknesses**, unrelated to unverified historical market data:
+
+1. `apply_adverse_slippage(price, side=..., pips=..., symbol=...)` currently evaluates `side is OrderSide.BUY` and routes **every other value to the sell branch**, including the plain string `"BUY"`. Core execution currently constructs enum sides via its entry/exit helpers, but a direct untyped caller can silently receive an economically favorable or adverse price in the **wrong direction**. Proposed future production remedy (NOT included here): explicitly reject any side that is not an exact `OrderSide` enum.
+2. `FixedCommissionPerMillion.cost_usd(units=...)` is typed as `units: int` but currently accepts fractional floats such as `0.5`, producing a fractional-unit commission. The real risk/size contract should be reviewed before deciding whether to reject Boolean, fractional, NaN/Infinity or extraordinary integer values while preserving intentional support for signed whole-unit positions.
+
+The offline `scripts/dec1855_synthetic_cost_boundary_diagnostic.py` uses **only fixed constants** (EURUSD 1.2, one pip and $30 per million per execution side) to expose the current behavior. It does not read broker credentials, price feeds, protected bars or annual research. It **always emits BLOCKED** and returns nonzero 3, regardless of whether a production remedy is later applied. Four tests check adverse-price direction, current untyped input behavior, explicit no-execution/no-expectancy flags and absence of subprocess/network side effects.
+
+This adds **4 source-defined proposed methods, 6,752 cumulative**, not successful economics, Strategy V1 evidence, authorization or profit. Changing the actual production backtest cost model requires its own scoped code review, updated fixtures and exact-head regression; this draft **does not change `src/fmp` or the installed executor**. External issues #779/#820/#821 and all eight security proof packages remain MISSING/BLOCKED. Protected 2023/run385/attempt1, cross-year selection, shadow/demo/live trading and money remain blocked.
