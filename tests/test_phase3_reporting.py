@@ -835,6 +835,69 @@ class Phase3ReportingTests(unittest.TestCase):
             summary = json.loads((target / "summary.json").read_text("utf-8"))
             self.assertEqual(len(summary["equity_checkpoints"]), 2)
 
+    def test_writer_rejects_duplicate_trade_and_decision_identifiers(self):
+        good = trade(trade_id="UNIQUE", minutes=1, net_pnl_usd=10.0)
+        cases = (
+            (good, replace(good, decision_id="D-OTHER")),
+            (good, replace(good, trade_id="TRADE-OTHER")),
+        )
+        for duplicate_trades in cases:
+            with self.subTest(trade_ids=[item.trade_id for item in duplicate_trades]):
+                run = BacktestRun(
+                    run_identity={}, trades=duplicate_trades, rejections=(),
+                    equity_checkpoints=(), metrics={},
+                )
+                with tempfile.TemporaryDirectory() as root:
+                    target = Path(root) / "blocked"
+                    with mock.patch("pathlib.Path.mkdir", side_effect=AssertionError(
+                        "duplicate evidence must not publish"
+                    )):
+                        with self.assertRaisesRegex(ValueError, "duplicate"):
+                            write_backtest_artifacts(run, target)
+                    self.assertFalse(target.exists())
+
+    def test_writer_refuses_repeated_or_trade_conflicting_rejections(self):
+        good = trade(trade_id="UNIQUE", minutes=1, net_pnl_usd=10.0)
+        rejection = RejectionRecord(
+            decision_id=good.decision_id, symbol="EURUSD",
+            decision_timestamp_utc=BASE_TS,
+            evaluated_timestamp_utc=BASE_TS,
+            code=RejectionCode.NO_TRADE, explanation="synthetic",
+        )
+        for trades, rejections, pattern in (
+            ((), (rejection, rejection), "duplicate rejection"),
+            ((good,), (rejection,), "both trade and rejection"),
+        ):
+            with self.subTest(pattern=pattern):
+                run = BacktestRun(
+                    run_identity={}, trades=trades, rejections=rejections,
+                    equity_checkpoints=(), metrics={},
+                )
+                with tempfile.TemporaryDirectory() as root:
+                    target = Path(root) / "blocked"
+                    with self.assertRaisesRegex(ValueError, pattern):
+                        write_backtest_artifacts(run, target)
+                    self.assertFalse(target.exists())
+
+    def test_writer_keeps_disjoint_trade_and_rejection_decisions(self):
+        good = trade(trade_id="UNIQUE", minutes=1, net_pnl_usd=10.0)
+        rejection = RejectionRecord(
+            decision_id="NOT-TRADED", symbol="EURUSD",
+            decision_timestamp_utc=BASE_TS,
+            evaluated_timestamp_utc=BASE_TS,
+            code=RejectionCode.NO_TRADE, explanation="synthetic",
+        )
+        run = BacktestRun(
+            run_identity={}, trades=(good,), rejections=(rejection,),
+            equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            path = Path(root) / "valid"
+            write_backtest_artifacts(run, path)
+            summary = json.loads((path / "summary.json").read_text("utf-8"))
+            self.assertEqual(summary["trade_count"], 1)
+            self.assertEqual(summary["rejection_count"], 1)
+
     def test_artifact_bytes_and_digests_are_deterministic(self) -> None:
         one_trade = trade(trade_id="T-1", minutes=1, net_pnl_usd=10.0)
         rejection = RejectionRecord(

@@ -368,6 +368,20 @@ def write_backtest_artifacts(run: BacktestRun, out_dir: Path) -> dict[str, objec
         except OverflowError as exc:
             raise ValueError("equity checkpoint must be finite numeric") from exc
 
+    # One input decision can contribute at most one filled trade OR one
+    # rejection. Reject duplicated/inconsistent synthetic evidence.
+    trade_ids = [trade.trade_id for trade in run.trades]
+    trade_decision_ids = [trade.decision_id for trade in run.trades]
+    rejection_decision_ids = [record.decision_id for record in run.rejections]
+    if len(set(trade_ids)) != len(trade_ids):
+        raise ValueError("duplicate trade_id in artifact evidence")
+    if len(set(trade_decision_ids)) != len(trade_decision_ids):
+        raise ValueError("duplicate trade decision_id in artifact evidence")
+    if len(set(rejection_decision_ids)) != len(rejection_decision_ids):
+        raise ValueError("duplicate rejection decision_id in artifact evidence")
+    if set(trade_decision_ids).intersection(rejection_decision_ids):
+        raise ValueError("decision cannot have both trade and rejection evidence")
+
     summary = {
         "protocol": "fmp-phase3-backtest-run-v1",
         "run_identity": run.run_identity,
