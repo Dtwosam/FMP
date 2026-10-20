@@ -1509,6 +1509,42 @@ class Phase3ReportingTests(unittest.TestCase):
         )
         self.assertEqual(metrics["max_drawdown_usd"], 0.0)
 
+    def test_writer_invalidates_prior_manifest_on_payload_replace_error(self):
+        run = BacktestRun(
+            run_identity={"code_commit": "synthetic"}, trades=(),
+            rejections=(), equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            target = Path(root) / "artifacts"
+            write_backtest_artifacts(run, target)
+            self.assertTrue((target / "manifest.json").exists())
+            with mock.patch(
+                "fmp.reporting.backtest.os.replace",
+                side_effect=OSError("synthetic payload write failure"),
+            ):
+                with self.assertRaisesRegex(OSError, "payload write failure"):
+                    write_backtest_artifacts(run, target)
+            self.assertFalse((target / "manifest.json").exists())
+            self.assertEqual(list(target.glob(".*.tmp")), [])
+
+    def test_writer_preserves_prior_manifest_on_preflight_rejection(self):
+        run = BacktestRun(
+            run_identity={"code_commit": "synthetic"}, trades=(),
+            rejections=(), equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            target = Path(root) / "artifacts"
+            write_backtest_artifacts(run, target)
+            original_manifest = (target / "manifest.json").read_bytes()
+            with self.assertRaisesRegex(ValueError, "non-finite"):
+                write_backtest_artifacts(
+                    replace(run, metrics={"net_pnl_usd": float("nan")}),
+                    target,
+                )
+            self.assertEqual(
+                (target / "manifest.json").read_bytes(), original_manifest
+            )
+
     def test_artifact_bytes_and_digests_are_deterministic(self) -> None:
         one_trade = trade(trade_id="T-1", minutes=1, net_pnl_usd=10.0)
         rejection = RejectionRecord(
