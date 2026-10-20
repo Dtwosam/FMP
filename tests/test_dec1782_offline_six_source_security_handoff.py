@@ -445,6 +445,44 @@ class Phase8AConsolidatedSourceOnlyHandoffTests(unittest.TestCase):
         self.assertIsNone(report["preregistered_strategy_v1_profit"])
         self.assertEqual(report["allowed_actions"], [])
 
+    def test_json_handoff_contains_eight_exact_external_acceptance_requirements(self):
+        docs = runpy.run_path(str(MOD["DOC_AUDIT"]))
+        report = BUILD()
+        criteria = report["independent_proof_acceptance_criteria"]
+        self.assertEqual(criteria, docs["PROOF_ACCEPTANCE_CRITERIA"])
+        self.assertEqual(tuple(criteria), docs["PROOFS"])
+        self.assertEqual(len(criteria), 8)
+        self.assertTrue(all(type(value) is str and value.strip()
+                            for value in criteria.values()))
+
+    def test_machine_and_human_external_requirements_agree_exactly(self):
+        report = BUILD()
+        md = MOD["format_blocked_handoff_markdown"](report)
+        for proof, requirement in report[
+                "independent_proof_acceptance_criteria"].items():
+            with self.subTest(proof=proof):
+                self.assertIn(f"**{proof}**", md)
+                self.assertIn(requirement, md)
+        self.assertIn("all missing", md.lower())
+        self.assertFalse(report["annual_dispatch_or_retry_authorized"])
+
+    def test_formatter_refuses_unknown_approval_field_in_requirements_map(self):
+        import copy
+        report = copy.deepcopy(BUILD())
+        report["independent_proof_acceptance_criteria"][
+            "self_certified_no_bypass_approval"] = "PASSED"
+        with self.assertRaisesRegex(
+                MOD["InvalidHandoff"], "canonical six-source report"):
+            MOD["format_blocked_handoff_markdown"](report)
+
+    def test_machine_readable_proof_criteria_never_grant_execution(self):
+        report = BUILD()
+        self.assertTrue(report["independent_proof_acceptance_criteria"])
+        self.assertEqual(report["disposition"], "BLOCKED_NO_EXECUTION_PERMISSION")
+        self.assertFalse(report["protected_2023_run385_authorized"])
+        self.assertFalse(report["broker_order_or_real_money_authorized"])
+        self.assertEqual(report["allowed_actions"], [])
+
     def test_consolidated_handoff_never_invokes_external_permission_or_trading(self):
         report = BUILD()
         self.assertIs(report["no_external_actions_performed"], True)
