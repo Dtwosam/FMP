@@ -183,7 +183,10 @@ def compile_blocked_handoff(docs_root=DOCS, workflow=WORKFLOW):
         and all(
             type(proof_requirements[key]) is str
             and proof_requirements[key].strip()
-            and all(char not in proof_requirements[key] for char in ("|", "\\n", "\\r", "`"))
+            and all(
+                ord(char) >= 32 and char not in "|`"
+                for char in proof_requirements[key]
+            )
             and not any(
                 command in proof_requirements[key].lower()
                 for command in ("gh workflow run ", "git push ",

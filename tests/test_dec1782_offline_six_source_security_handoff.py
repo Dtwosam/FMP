@@ -1104,14 +1104,24 @@ class Phase8AConsolidatedSourceOnlyHandoffTests(unittest.TestCase):
 
     def test_machine_handoff_rejects_multiline_and_table_proof_criteria(self):
         first = runpy.run_path(str(MOD["DOC_AUDIT"]))["PROOFS"][0]
-        for extra in ("\\n| GRANTED |", "\\rAUTHORIZED", " | FALSE APPROVAL",
-                      " `gh workflow run 385`"):
+        for extra in (chr(10) + "| GRANTED |", chr(13) + "AUTHORIZED",
+                      " | FALSE APPROVAL", " `gh workflow run 385`"):
             with self.subTest(extra=repr(extra)):
                 def forge(criteria):
                     criteria[first] += extra
                 with self._with_forged_proof_acceptance(forge):
                     with self.assertRaisesRegex(
                             MOD["InvalidHandoff"], "acceptance criteria"):
+                        BUILD()
+
+    def test_machine_handoff_rejects_actual_tab_and_nul_criteria(self):
+        first = runpy.run_path(str(MOD["DOC_AUDIT"]))["PROOFS"][0]
+        for control in (chr(0), chr(9), chr(31)):
+            with self.subTest(code=ord(control)):
+                def forge(criteria):
+                    criteria[first] += control
+                with self._with_forged_proof_acceptance(forge):
+                    with self.assertRaises(MOD["InvalidHandoff"]):
                         BUILD()
 
     def test_machine_handoff_rejects_direct_dispatch_or_broker_instruction(self):
