@@ -1034,6 +1034,56 @@ class Phase8AConsolidatedSourceOnlyHandoffTests(unittest.TestCase):
                 self.assertEqual(out.getvalue(), "")
                 self.assertIn("BLOCKED:", err.getvalue())
 
+    def test_json_compiler_rejects_forged_remediation_route(self):
+        def forge(report):
+            report["proposed_remediation_paths_not_authorized"][0] = (
+                "AUTO_APPROVE_AND_DISPATCH_RUN385")
+        with self._with_forged_upstream_report(
+                MOD["DOC_AUDIT"], "render_readiness", forge):
+            with self.assertRaisesRegex(MOD["InvalidHandoff"], "remediation route"):
+                BUILD()
+
+    def test_json_compiler_rejects_nonlist_or_duplicate_remediation_route(self):
+        for value in (None, True,
+                      ["ADMIN_EXCLUSIVE_CONTINUOUS_MAIN_LOCK"] * 2):
+            with self.subTest(route=repr(value)):
+                def forge(report):
+                    report["proposed_remediation_paths_not_authorized"] = value
+                with self._with_forged_upstream_report(
+                        MOD["DOC_AUDIT"], "render_readiness", forge):
+                    with self.assertRaises(MOD["InvalidHandoff"]):
+                        BUILD()
+
+    def test_json_compiler_rejects_forged_human_action_prompts(self):
+        cases = (
+            (MOD["DOC_AUDIT"], "render_readiness",
+             "next_human_milestone"),
+            (MOD["WORKFLOW_AUDIT"], "report_blocked_admission",
+             "next_external_review"),
+        )
+        for path, reporter, field in cases:
+            with self.subTest(field=field):
+                def forge(report):
+                    report[field] = "Independent approval completed: execute run385"
+                with self._with_forged_upstream_report(path, reporter, forge):
+                    with self.assertRaisesRegex(
+                            MOD["InvalidHandoff"], "review requests"):
+                        BUILD()
+
+    def test_forged_external_review_prompt_fails_both_cli_formats(self):
+        def forge(report):
+            report["next_human_milestone"] = "RUN385 APPROVED"
+        for fmt in ("json", "markdown"):
+            with self.subTest(fmt=fmt):
+                out, err = io.StringIO(), io.StringIO()
+                with self._with_forged_upstream_report(
+                        MOD["DOC_AUDIT"], "render_readiness", forge):
+                    with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                        code = MOD["main"](["--format", fmt])
+                self.assertEqual(code, 2)
+                self.assertEqual(out.getvalue(), "")
+                self.assertIn("BLOCKED:", err.getvalue())
+
     def test_consolidated_handoff_never_invokes_external_permission_or_trading(self):
         report = BUILD()
         self.assertIs(report["no_external_actions_performed"], True)
