@@ -3,6 +3,7 @@ import contextlib
 import io
 import json
 from pathlib import Path
+from unittest import mock
 import runpy
 import tempfile
 import unittest
@@ -301,6 +302,34 @@ class Phase8ABlockedSevenSourceIndexTests(unittest.TestCase):
         self.assertEqual(
             json.loads(out.getvalue())["offline_request_fingerprint_sha256"],
             report["offline_request_fingerprint_sha256"])
+
+    def test_seven_source_compiler_spawns_no_process(self):
+        with mock.patch("subprocess.Popen",
+                        side_effect=AssertionError("unexpected subprocess")):
+            result = BUILD()
+        self.assertEqual(result["allowed_actions"], [])
+        self.assertFalse(result["2023_run385_attempt1_authorized"])
+
+    def test_seven_source_compiler_creates_no_network_socket(self):
+        with mock.patch("socket.socket",
+                        side_effect=AssertionError("unexpected socket")):
+            result = BUILD()
+        self.assertTrue(result["no_external_actions_performed"])
+        self.assertFalse(result["broker_demo_live_or_real_money_authorized"])
+
+    def test_both_review_cli_formats_work_with_process_and_socket_denied(self):
+        with mock.patch("subprocess.Popen",
+                        side_effect=AssertionError("unexpected subprocess")):
+            with mock.patch("socket.socket",
+                            side_effect=AssertionError("unexpected network")):
+                for fmt in ("json", "markdown"):
+                    with self.subTest(fmt=fmt):
+                        out, err = io.StringIO(), io.StringIO()
+                        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                            code = MOD["main"](["--format", fmt])
+                        self.assertEqual(code, 3)
+                        self.assertEqual(err.getvalue(), "")
+                        self.assertIn("BLOCKED", out.getvalue())
 
     def test_cli_success_is_blocked_and_invalid_has_no_stdout(self):
         out, err = io.StringIO(), io.StringIO()
