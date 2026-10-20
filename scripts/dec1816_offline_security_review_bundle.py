@@ -262,6 +262,48 @@ def format_blocked_review_bundle_markdown(report):
     return chr(10).join(lines)
 
 
+def format_unfulfilled_review_requests(report):
+    """Export only MISSING evidence tasks from the exact canonical offline index."""
+    if type(report) is not dict:
+        raise InvalidReviewBundle("review requests need an ordinary frozen index")
+    validate_review_index_fingerprint(report)
+    try:
+        received = json.dumps(
+            report, sort_keys=True, separators=(",", ":"), allow_nan=False)
+        reference = json.dumps(
+            compile_blocked_review_bundle(),
+            sort_keys=True, separators=(",", ":"), allow_nan=False)
+    except (TypeError, ValueError) as exc:
+        raise InvalidReviewBundle("unsupported/nonfinite review request") from exc
+    if received != reference:
+        raise InvalidReviewBundle("review requests are not canonical BLOCKED evidence")
+    items = report["unfulfilled_independent_review_requests"]
+    if not (
+        type(items) is list and len(items) == 8
+        and all(
+            type(item) is dict
+            and item["status"] == "MISSING"
+            and item["evidence_ref"] is None
+            and item["reviewer_signoff"] is None
+            for item in items
+        )
+    ):
+        raise InvalidReviewBundle("independent requests cannot be marked complete")
+    return {
+        "schema": "fmp_dec1826_offline_unfulfilled_review_requests_v1",
+        "disposition": "BLOCKED_NO_EXECUTION_PERMISSION",
+        "source_only_not_current_admin_or_runner_attestation": True,
+        "parent_offline_index_sha256": report["offline_request_fingerprint_sha256"],
+        "protected_annual_identity": report[
+            "next_irreversible_annual_identity_no_dispatch"],
+        "unfulfilled_independent_review_requests": items,
+        "independent_external_proofs_verified": False,
+        "annual_dispatch_or_retry_authorized": False,
+        "broker_demo_live_or_real_money_authorized": False,
+        "allowed_actions": [],
+    }
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(
         description="Seven-source historical BLOCKED independent proof review"
@@ -269,17 +311,24 @@ def main(argv=None):
     parser.add_argument("--docs-root", type=Path)
     parser.add_argument("--workflow", type=Path)
     parser.add_argument("--worksheet", type=Path)
-    parser.add_argument("--format", choices=("json", "markdown"), default="json")
+    parser.add_argument(
+        "--format", choices=("json", "markdown", "requests"), default="json")
     args = parser.parse_args(argv)
     try:
         report = compile_blocked_review_bundle(
             args.docs_root, args.workflow, args.worksheet
         )
-        output = (
-            format_blocked_review_bundle_markdown(report)
-            if args.format == "markdown"
-            else json.dumps(report, sort_keys=True, indent=2, allow_nan=False)
-        )
+        if args.format == "markdown":
+            output = format_blocked_review_bundle_markdown(report)
+        elif args.format == "requests":
+            output = json.dumps(
+                format_unfulfilled_review_requests(report),
+                sort_keys=True, indent=2, allow_nan=False,
+            )
+        else:
+            output = json.dumps(
+                report, sort_keys=True, indent=2, allow_nan=False,
+            )
     except (OSError, UnicodeError, TypeError, ValueError, KeyError) as exc:
         print("BLOCKED: invalid source-only review: " + str(exc),
               file=sys.stderr)

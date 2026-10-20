@@ -331,6 +331,53 @@ class Phase8ABlockedSevenSourceIndexTests(unittest.TestCase):
                         self.assertEqual(err.getvalue(), "")
                         self.assertIn("BLOCKED", out.getvalue())
 
+    def test_compact_export_contains_only_eight_missing_review_requests(self):
+        report = BUILD()
+        short = MOD["format_unfulfilled_review_requests"](report)
+        self.assertEqual(short["disposition"], "BLOCKED_NO_EXECUTION_PERMISSION")
+        self.assertEqual(len(short["unfulfilled_independent_review_requests"]), 8)
+        self.assertEqual(
+            short["unfulfilled_independent_review_requests"],
+            report["unfulfilled_independent_review_requests"])
+        self.assertEqual(
+            short["parent_offline_index_sha256"],
+            report["offline_request_fingerprint_sha256"])
+        self.assertEqual(short["allowed_actions"], [])
+
+    def test_compact_export_rejects_injected_signoff_and_approval(self):
+        import copy
+        report = copy.deepcopy(BUILD())
+        report["unfulfilled_independent_review_requests"][0][
+            "reviewer_signoff"] = "APPROVED"
+        with self.assertRaises(MOD["InvalidReviewBundle"]):
+            MOD["format_unfulfilled_review_requests"](report)
+
+    def test_requests_cli_is_nonzero_and_denies_trading(self):
+        out, err = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            code = MOD["main"](["--format", "requests"])
+        self.assertEqual(code, 3)
+        self.assertEqual(err.getvalue(), "")
+        result = json.loads(out.getvalue())
+        self.assertEqual(result["schema"],
+                         "fmp_dec1826_offline_unfulfilled_review_requests_v1")
+        self.assertEqual(result["protected_annual_identity"]["authorization"],
+                         "BLOCKED")
+        self.assertFalse(result["annual_dispatch_or_retry_authorized"])
+        self.assertFalse(result["broker_demo_live_or_real_money_authorized"])
+
+    def test_requests_cli_rejects_forged_worksheet_without_stdout(self):
+        with tempfile.TemporaryDirectory() as folder:
+            forged = Path(folder) / "worksheet.md"
+            forged.write_bytes(b"APPROVED")
+            out, err = io.StringIO(), io.StringIO()
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                code = MOD["main"]([
+                    "--format", "requests", "--worksheet", str(forged)])
+        self.assertEqual(code, 2)
+        self.assertEqual(out.getvalue(), "")
+        self.assertIn("BLOCKED:", err.getvalue())
+
     def test_cli_success_is_blocked_and_invalid_has_no_stdout(self):
         out, err = io.StringIO(), io.StringIO()
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
