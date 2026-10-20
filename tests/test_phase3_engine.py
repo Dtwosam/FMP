@@ -501,6 +501,37 @@ class Phase3EngineTests(unittest.TestCase):
         instance = replace(config(), decision_config=payload)
         self.assertEqual(_run_identity(instance, ())["decision_config"], payload)
 
+    def test_scheduled_exit_collection_rejects_untyped_members(self):
+        bars = [eurusd_bar(0), eurusd_bar(1)]
+        for invalid in (None, "SYNTHETIC-EXIT", b"SYNTHETIC-EXIT",
+                        42, [None], [{}], ["SYNTHETIC-EXIT"]):
+            with self.subTest(value=repr(invalid)):
+                with self.assertRaisesRegex(ValueError, "ScheduledExit"):
+                    run_backtest(
+                        bars=bars, decisions=[], config=config(),
+                        scheduled_exits=invalid,
+                    )
+
+    def test_scheduled_exit_collection_accepts_empty_list_and_tuple(self):
+        bars = [eurusd_bar(0), eurusd_bar(1)]
+        for exits in ([], ()):
+            with self.subTest(exits=type(exits).__name__):
+                result = run_backtest(
+                    bars=bars, decisions=[], config=config(),
+                    scheduled_exits=exits,
+                )
+                self.assertEqual(result.trades, ())
+
+    def test_malformed_scheduled_exits_fail_before_any_trade_approvals(self):
+        bars = [eurusd_bar(0), eurusd_bar(1)]
+        decision = long_decision(
+            "SYNTHETIC-LONG", decision_minute=0, executable_minute=1)
+        with self.assertRaisesRegex(ValueError, "ScheduledExit"):
+            run_backtest(
+                bars=bars, decisions=[decision], config=config(),
+                scheduled_exits=[{"decision_id": "SYNTHETIC-LONG"}],
+            )
+
     def test_no_trade_is_preserved_as_reasoned_record(self) -> None:
         decision = Decision(
             decision_id="NT-1",
