@@ -1545,6 +1545,34 @@ class Phase3ReportingTests(unittest.TestCase):
                 (target / "manifest.json").read_bytes(), original_manifest
             )
 
+    def test_metrics_streaks_follow_published_exit_order(self):
+        early_win = trade(trade_id="W-EARLY", minutes=1, net_pnl_usd=10.0)
+        mid_loss = trade(trade_id="LOSS", minutes=3, net_pnl_usd=-5.0)
+        late_win = trade(trade_id="W-LATE", minutes=5, net_pnl_usd=10.0)
+        metrics = compute_backtest_metrics(
+            starting_equity_usd=10_000.0,
+            trades=(late_win, early_win, mid_loss),
+            equity_checkpoints=(EquityCheckpoint(BASE_TS, 10_000.0),),
+        )
+        self.assertEqual(metrics["longest_winning_streak"], 1)
+        self.assertEqual(metrics["longest_losing_streak"], 1)
+
+    def test_metrics_rejects_malformed_trade_exit_sort_identity(self):
+        good = trade(trade_id="VALID", minutes=1, net_pnl_usd=10.0)
+        for field, invalid, expected in (
+            ("trade_id", None, "trade ID"),
+            ("trade_id", "", "trade ID"),
+            ("exit_timestamp_utc", "2026-09-14", "exit timestamp"),
+            ("exit_timestamp_utc", datetime(2026, 9, 14), "exit timestamp"),
+        ):
+            with self.subTest(field=field, value=repr(invalid)):
+                with self.assertRaisesRegex(ValueError, expected):
+                    compute_backtest_metrics(
+                        starting_equity_usd=10_000.0,
+                        trades=(replace(good, **{field: invalid}),),
+                        equity_checkpoints=(),
+                    )
+
     def test_artifact_bytes_and_digests_are_deterministic(self) -> None:
         one_trade = trade(trade_id="T-1", minutes=1, net_pnl_usd=10.0)
         rejection = RejectionRecord(

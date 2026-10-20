@@ -1,0 +1,7 @@
+# DEC-1947 — Compute trade streaks using published exit order
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** One exact-parent source/tests/docs child of PR #2195 at `3164bfd67ad22fd80fb7de879531759bcaa9c05f`.
+
+The writer publishes `trades.jsonl` in `(exit_timestamp_utc, trade_id)` order and validates provided streak metrics against that order. The independently callable `compute_backtest_metrics` still used the supplied sequence order, so a shuffled set could produce metrics rejected during publication. Validate exact trade ID and builtin UTC exit datetime before sorting; compute **streaks only** using the same published ordering while preserving existing aggregate PnL/cost summation order. Two regression methods cover out-of-order winning streaks and invalid trade sort identities. **6,978 cumulative proposed source-defined test methods**. Exact-head Phase3/full historical-general CI and qualified independent source review mandatory.
+
+Prior #2178/#2189/#2190/#2191 full failures remain historical failures; #2192 financing subtotal repair's own full status must be checked independently. Phase8A #779/#820/#821 and eight independent external proof packages remain MISSING/BLOCKED. Accepted annual research through 2022/run384. Protected 2023/run385/attempt1, later research, Strategy V1 economics, shadow/demo/live brokers and real capital, installed GitHub refs/workflows/rulesets/runner changes remain unauthorized. No protected execution, merge, order or capital.
