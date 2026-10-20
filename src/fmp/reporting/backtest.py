@@ -166,12 +166,16 @@ def _jsonable(value: object, *, depth: int = 0) -> object:
             item.name: _jsonable(getattr(value, item.name), depth=depth + 1)
             for item in fields(value)
         }
+    if type(value) in (Direction, ExitReason, RejectionCode):
+        return _jsonable(value.value, depth=depth + 1)
     if isinstance(value, Enum):
-        return value.value
-    if isinstance(value, datetime):
+        raise ValueError("unsupported deterministic evidence enum")
+    if type(value) is datetime:
         if value.tzinfo is None or value.utcoffset() != timedelta(0):
             raise ValueError("serialized datetime must use UTC")
         return value.isoformat().replace("+00:00", "Z")
+    if isinstance(value, datetime):
+        raise ValueError("unsupported deterministic datetime subtype")
     if isinstance(value, Mapping):
         # Source identity keys must never be coerced. For example 1 and "1"
         # would otherwise collapse to one JSON key and corrupt provenance.
