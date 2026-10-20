@@ -713,11 +713,20 @@ def _verify_artifacts_in_root(root: Path, root_fd: int) -> dict[str, object]:
             or any(ch not in "0123456789abcdef" for ch in digest)
         ):
             raise ValueError("artifact entry digest must be lowercase SHA256")
+    if seen != expected_names:
+        raise ValueError("artifact evidence filename set mismatch")
+    if [entry["path"] for entry in entries] != sorted(expected_names):
+        raise ValueError("artifact evidence paths must use canonical order")
+
+    # Admit the *entire* manifest schema and ordered path set before any
+    # payload open. A forged path must never cause a misleading hash check.
+    for entry in entries:
+        name = entry["path"]
+        size = entry["size_bytes"]
+        digest = entry["sha256"]
         path = root / name
         if path.is_symlink() or not path.is_file():
             raise ValueError("artifact evidence must be a regular file")
-        # Hash bounded chunks rather than materializing an entire historical
-        # evidence JSONL file in memory.
         observed_size = 0
         observed_hash = hashlib.sha256()
         with _open_regular_artifact(path, root_fd=root_fd) as handle:
@@ -728,8 +737,4 @@ def _verify_artifacts_in_root(root: Path, root_fd: int) -> dict[str, object]:
                 observed_hash.update(block)
         if observed_size != size or observed_hash.hexdigest() != digest:
             raise ValueError("artifact evidence size or SHA256 mismatch")
-    if seen != expected_names:
-        raise ValueError("artifact evidence filename set mismatch")
-    if [entry["path"] for entry in entries] != sorted(expected_names):
-        raise ValueError("artifact evidence paths must use canonical order")
     return manifest
