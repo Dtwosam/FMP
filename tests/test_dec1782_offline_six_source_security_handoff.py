@@ -735,8 +735,16 @@ class Phase8AConsolidatedSourceOnlyHandoffTests(unittest.TestCase):
                 return real_open(path, flags, mode)
             return real_open(path, flags, mode, dir_fd=dir_fd)
 
-        with mock.patch("os.open", side_effect=audited_open):
-            report = BUILD()
+        # The production no-follow reader also checks membership in
+        # os.supports_dir_fd. Replacing os.open with a mock otherwise
+        # accidentally denies that capability before a file is opened.
+        # Register only the test's guarded replacement for this test scope,
+        # while forwarding every actual open to the original OS primitive.
+        with mock.patch("os.open", side_effect=audited_open) as guarded_open:
+            with mock.patch.object(
+                    os, "supports_dir_fd",
+                    os.supports_dir_fd | {guarded_open}):
+                report = BUILD()
         self.assertTrue(seen, "no documented source file was opened")
         self.assertTrue(report["no_external_actions_performed"])
 
