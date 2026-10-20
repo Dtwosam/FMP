@@ -151,6 +151,10 @@ def compute_backtest_metrics(
 
 def _jsonable(value: object) -> object:
     if is_dataclass(value) and not isinstance(value, type):
+        # Caller-defined dataclasses may override field getters; evidence
+        # serialization accepts only the source-defined record contracts.
+        if type(value) not in (TradeRecord, RejectionRecord, EquityCheckpoint):
+            raise ValueError("unsupported deterministic evidence dataclass")
         return {item.name: _jsonable(getattr(value, item.name)) for item in fields(value)}
     if isinstance(value, Enum):
         return value.value
