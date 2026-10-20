@@ -2406,6 +2406,57 @@ class Phase3ReportingTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "costs must be nonnegative"):
                 audit_backtest_artifact_structure(folder)
 
+    def test_audit_denies_rehashed_trade_exit_before_entry(self):
+        original = trade(trade_id="TIME", minutes=1, net_pnl_usd=10.0)
+        run = BacktestRun(
+            run_identity={}, trades=(original,), rejections=(),
+            equity_checkpoints=(), metrics={"trade_count": 1},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            folder = Path(root) / "artifacts"
+            manifest = write_backtest_artifacts(run, folder)
+            target = folder / "trades.jsonl"
+            row = json.loads(target.read_text("utf-8"))
+            row["entry_timestamp_utc"], row["exit_timestamp_utc"] = (
+                row["exit_timestamp_utc"], row["entry_timestamp_utc"]
+            )
+            forged = (json.dumps(row) + "\n").encode("utf-8")
+            target.write_bytes(forged)
+            for item in manifest["artifacts"]:
+                if item["path"] == "trades.jsonl":
+                    item["size_bytes"] = len(forged)
+                    item["sha256"] = hashlib.sha256(forged).hexdigest()
+            (folder / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "trade exit precedes entry"):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_denies_rehashed_backdated_rejection_evaluation(self):
+        rejected = RejectionRecord(
+            decision_id="NO-TRADE", symbol="EURUSD",
+            decision_timestamp_utc=BASE_TS + timedelta(minutes=1),
+            evaluated_timestamp_utc=BASE_TS + timedelta(minutes=1),
+            code=RejectionCode.NO_TRADE, explanation="synthetic",
+        )
+        run = BacktestRun(
+            run_identity={}, trades=(), rejections=(rejected,),
+            equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            folder = Path(root) / "artifacts"
+            manifest = write_backtest_artifacts(run, folder)
+            target = folder / "rejections.jsonl"
+            row = json.loads(target.read_text("utf-8"))
+            row["evaluated_timestamp_utc"] = BASE_TS.isoformat().replace("+00:00", "Z")
+            forged = (json.dumps(row) + "\n").encode("utf-8")
+            target.write_bytes(forged)
+            for item in manifest["artifacts"]:
+                if item["path"] == "rejections.jsonl":
+                    item["size_bytes"] = len(forged)
+                    item["sha256"] = hashlib.sha256(forged).hexdigest()
+            (folder / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "evaluation precedes decision"):
+                audit_backtest_artifact_structure(folder)
+
     def test_artifact_bytes_and_digests_are_deterministic(self) -> None:
         one_trade = trade(trade_id="T-1", minutes=1, net_pnl_usd=10.0)
         rejection = RejectionRecord(
