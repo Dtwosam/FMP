@@ -710,4 +710,6 @@ def verify_backtest_artifacts(out_dir: Path) -> dict[str, object]:
             raise ValueError("artifact evidence size or SHA256 mismatch")
     if seen != expected_names:
         raise ValueError("artifact evidence filename set mismatch")
+    if [entry["path"] for entry in entries] != sorted(expected_names):
+        raise ValueError("artifact evidence paths must use canonical order")
     return manifest

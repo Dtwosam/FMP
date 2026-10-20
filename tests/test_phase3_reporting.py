@@ -1848,6 +1848,36 @@ class Phase3ReportingTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "symlink ancestors"):
                 verify_backtest_artifacts(alias / "artifacts")
 
+    def test_verifier_rejects_reordered_manifest_entries(self):
+        run = BacktestRun(
+            run_identity={}, trades=(), rejections=(),
+            equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            folder = Path(root) / "artifacts"
+            manifest = write_backtest_artifacts(run, folder)
+            self.assertEqual(
+                [row["path"] for row in manifest["artifacts"]],
+                sorted(row["path"] for row in manifest["artifacts"]),
+            )
+            reordered = json.loads(json.dumps(manifest))
+            reordered["artifacts"].reverse()
+            (folder / "manifest.json").write_text(
+                json.dumps(reordered), encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "canonical order"):
+                verify_backtest_artifacts(folder)
+
+    def test_verifier_preserves_canonical_writer_manifest_order(self):
+        run = BacktestRun(
+            run_identity={}, trades=(), rejections=(),
+            equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            folder = Path(root) / "artifacts"
+            written = write_backtest_artifacts(run, folder)
+            self.assertEqual(verify_backtest_artifacts(folder), written)
+
     def test_artifact_bytes_and_digests_are_deterministic(self) -> None:
         one_trade = trade(trade_id="T-1", minutes=1, net_pnl_usd=10.0)
         rejection = RejectionRecord(
