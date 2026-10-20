@@ -898,6 +898,53 @@ class Phase3ReportingTests(unittest.TestCase):
             self.assertEqual(summary["trade_count"], 1)
             self.assertEqual(summary["rejection_count"], 1)
 
+    def test_artifact_writer_rejects_cyclic_identity_before_io(self):
+        cycle = []
+        cycle.append(cycle)
+        run = BacktestRun(
+            run_identity={"cycle": cycle}, trades=(), rejections=(),
+            equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            target = Path(root) / "blocked"
+            with mock.patch("pathlib.Path.mkdir", side_effect=AssertionError(
+                "recursive metadata cannot create evidence files"
+            )):
+                with self.assertRaisesRegex(ValueError, "nesting depth"):
+                    write_backtest_artifacts(run, target)
+            self.assertFalse(target.exists())
+
+    def test_artifact_writer_rejects_deep_nested_metrics_before_io(self):
+        nested = 1
+        for _ in range(80):
+            nested = [nested]
+        run = BacktestRun(
+            run_identity={}, trades=(), rejections=(),
+            equity_checkpoints=(), metrics={"nested": nested},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            target = Path(root) / "blocked"
+            with mock.patch("pathlib.Path.mkdir", side_effect=AssertionError(
+                "excessive nesting cannot create evidence files"
+            )):
+                with self.assertRaisesRegex(ValueError, "nesting depth"):
+                    write_backtest_artifacts(run, target)
+            self.assertFalse(target.exists())
+
+    def test_artifact_writer_preserves_accepted_nested_metadata(self):
+        nested = 1
+        for _ in range(32):
+            nested = [nested]
+        run = BacktestRun(
+            run_identity={"nested": nested}, trades=(), rejections=(),
+            equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            target = Path(root) / "valid"
+            write_backtest_artifacts(run, target)
+            saved = json.loads((target / "summary.json").read_text("utf-8"))
+            self.assertEqual(saved["run_identity"]["nested"], nested)
+
     def test_artifact_bytes_and_digests_are_deterministic(self) -> None:
         one_trade = trade(trade_id="T-1", minutes=1, net_pnl_usd=10.0)
         rejection = RejectionRecord(
