@@ -1790,6 +1790,25 @@ class Phase3ReportingTests(unittest.TestCase):
             self.assertTrue(invoked)
             self.assertEqual(outside.read_bytes(), b"{}\n")
 
+    def test_verifier_distinguishes_duplicate_key_and_invalid_json(self):
+        run = BacktestRun(
+            run_identity={}, trades=(), rejections=(),
+            equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            path = Path(root) / "artifacts"
+            write_backtest_artifacts(run, path)
+            manifest = path / "manifest.json"
+            manifest.write_text(
+                '{"protocol":"first","protocol":"second","artifacts":[]}',
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "duplicate JSON key"):
+                verify_backtest_artifacts(path)
+            manifest.write_text('{"protocol":', encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "valid JSON"):
+                verify_backtest_artifacts(path)
+
     def test_artifact_bytes_and_digests_are_deterministic(self) -> None:
         one_trade = trade(trade_id="T-1", minutes=1, net_pnl_usd=10.0)
         rejection = RejectionRecord(
