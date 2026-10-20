@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import unittest
+from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 
 from fmp.contracts import (
@@ -54,6 +55,34 @@ class Phase3ContractTests(unittest.TestCase):
         self.assertEqual(ExitReason.END_OF_DATA.value, "END_OF_DATA")
         self.assertEqual(RejectionCode.TIMING_CONTRACT.value, "TIMING_CONTRACT")
         self.assertEqual(RejectionCode.NO_TRADE.value, "NO_TRADE")
+
+    def test_quote_bar_rejects_nondatetime_timestamps(self):
+        for invalid in (None, "2026-09-14T00:00Z", 123, {},
+                        datetime(2026, 9, 14).date()):
+            with self.subTest(value=repr(invalid)):
+                with self.assertRaisesRegex(ValueError, "UTC"):
+                    replace(quote_bar(), timestamp_utc=invalid)
+
+    def test_quote_bar_rejects_unhashable_and_nonstr_symbol(self):
+        for invalid in ([], {}, ["EURUSD"], None, True, b"EURUSD"):
+            with self.subTest(value=repr(invalid)):
+                with self.assertRaisesRegex(ValueError, "unsupported symbol"):
+                    replace(quote_bar(), symbol=invalid)
+
+    def test_quote_bar_rejects_boolean_nonnumeric_and_overflow_prices(self):
+        for value in (True, False, None, "1.1", [], 10 ** 400):
+            for field in ("bid_open", "ask_close"):
+                with self.subTest(value=repr(value), field=field):
+                    with self.assertRaisesRegex(ValueError, field):
+                        replace(quote_bar(), **{field: value})
+
+    def test_quote_bar_preserves_supported_numeric_ohlc_consistency(self):
+        for symbol in ("EURUSD", "GBPUSD"):
+            with self.subTest(symbol=symbol):
+                row = replace(quote_bar(), symbol=symbol)
+                self.assertGreater(row.ask_close, row.bid_close)
+                self.assertLessEqual(row.bid_low, row.bid_close)
+        self.assertEqual(replace(quote_bar(), bid_open=1).bid_open, 1)
 
     def test_quote_bar_accepts_supported_utc_quotes(self) -> None:
         row = quote_bar()

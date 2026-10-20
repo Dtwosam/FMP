@@ -39,18 +39,27 @@ class RejectionCode(str, Enum):
 
 
 def _validate_utc(value: datetime, *, field: str) -> None:
-    if value.tzinfo is None or value.utcoffset() != timedelta(0):
+    if (
+        not isinstance(value, datetime)
+        or value.tzinfo is None
+        or value.utcoffset() != timedelta(0)
+    ):
         raise ValueError(f"{field} must use UTC")
 
 
 def _validate_symbol(symbol: str) -> None:
-    if symbol not in SUPPORTED_SYMBOLS:
-        raise ValueError(f"unsupported symbol: {symbol!r}")
+    if type(symbol) is not str or symbol not in SUPPORTED_SYMBOLS:
+        raise ValueError("unsupported symbol: expected exact supported FX pair")
 
 
 def _validate_price(value: float, *, field: str) -> None:
-    if not math.isfinite(value) or value <= 0:
+    if type(value) not in (int, float):
         raise ValueError(f"{field} must be a finite positive price")
+    try:
+        if not math.isfinite(value) or value <= 0:
+            raise ValueError(f"{field} must be a finite positive price")
+    except OverflowError as exc:
+        raise ValueError(f"{field} must be a finite positive price") from exc
 
 
 @dataclass(frozen=True, slots=True)
