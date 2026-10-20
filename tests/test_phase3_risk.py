@@ -205,6 +205,47 @@ class Phase3RiskPolicyTests(unittest.TestCase):
         self.assertEqual(release_risk(self.state, position_id="P-1"), 25.0)
         self.assertEqual(self.state.total_reserved_risk_usd, 0.0)
 
+    def test_realized_equity_overflow_fails_before_mutating_risk_state(self):
+        state = RiskState(starting_equity_usd=1e308)
+        self.assertIsNone(state.current_utc_date)
+        with self.assertRaisesRegex(ValueError, "must remain finite"):
+            record_realized_pnl(
+                state, timestamp_utc=self.ts, pnl_usd=1e308,
+                config=self.config,
+            )
+        self.assertEqual(state.risk_equity_usd, 1e308)
+        self.assertIsNone(state.current_utc_date)
+        self.assertEqual(state.day_realized_pnl_usd, 0.0)
+        self.assertFalse(state.daily_halt_active)
+
+    def test_invalid_realized_pnl_types_fail_without_utc_day_change(self):
+        for pnl in (True, False, None, "1.0", float("nan"),
+                    float("inf"), 10 ** 400):
+            with self.subTest(pnl=repr(pnl)):
+                state = RiskState(starting_equity_usd=10_000.0)
+                with self.assertRaisesRegex(ValueError, "realized PnL|remain finite"):
+                    record_realized_pnl(
+                        state, timestamp_utc=self.ts, pnl_usd=pnl,
+                        config=self.config,
+                    )
+                self.assertIsNone(state.current_utc_date)
+                self.assertEqual(state.risk_equity_usd, 10_000.0)
+
+    def test_finite_realized_gain_and_loss_preserve_same_day_accounting(self):
+        state = RiskState(starting_equity_usd=10_000.0)
+        record_realized_pnl(
+            state, timestamp_utc=self.ts, pnl_usd=25.0,
+            config=self.config,
+        )
+        record_realized_pnl(
+            state, timestamp_utc=self.ts + timedelta(minutes=1),
+            pnl_usd=-15.0, config=self.config,
+        )
+        self.assertAlmostEqual(state.risk_equity_usd, 10_010.0)
+        self.assertAlmostEqual(state.day_realized_pnl_usd, 10.0)
+        self.assertEqual(state.current_utc_date, self.ts.date())
+        self.assertFalse(state.daily_halt_active)
+
     def test_realized_risk_equity_changes_only_by_realized_net_pnl(self) -> None:
         record_realized_pnl(
             self.state,
