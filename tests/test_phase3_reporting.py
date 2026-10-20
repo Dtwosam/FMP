@@ -1610,10 +1610,34 @@ class Phase3ReportingTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as root:
             path = Path(root) / "artifacts"
             manifest = write_backtest_artifacts(run, path)
-            for forged in ("../outside.json", "metrics.json"):
+            # metrics.json is already the first sorted manifest entry.
+            # Use a different existing filename to genuinely duplicate a path.
+            for forged in ("../outside.json", "rejections.jsonl"):
                 with self.subTest(forged=forged):
                     tampered = json.loads(json.dumps(manifest))
                     tampered["artifacts"][0]["path"] = forged
+                    (path / "manifest.json").write_text(
+                        json.dumps(tampered), encoding="utf-8",
+                    )
+                    with self.assertRaisesRegex(ValueError, "path"):
+                        verify_backtest_artifacts(path)
+
+    def test_verifier_rejects_duplicate_evidence_filename_at_every_slot(self):
+        run = BacktestRun(
+            run_identity={}, trades=(), rejections=(),
+            equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            path = Path(root) / "artifacts"
+            manifest = write_backtest_artifacts(run, path)
+            self.assertEqual(len(manifest["artifacts"]), 4)
+            for i, current in enumerate(manifest["artifacts"]):
+                j = (i + 1) % len(manifest["artifacts"])
+                target = manifest["artifacts"][j]["path"]
+                self.assertNotEqual(current["path"], target)
+                with self.subTest(slot=i, duplicated=target):
+                    tampered = json.loads(json.dumps(manifest))
+                    tampered["artifacts"][i]["path"] = target
                     (path / "manifest.json").write_text(
                         json.dumps(tampered), encoding="utf-8",
                     )
