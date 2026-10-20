@@ -870,6 +870,8 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
         }
         # Economic totals must agree with the stored ledger, not just
         # individual row arithmetic and a self-rehashed manifest.
+        ledger_profit_usd: int | float = 0
+        ledger_loss_usd: int | float = 0
         ledger_totals: dict[str, int | float] = {
             name: 0 for name in (
                 "net_pnl_usd", "slippage_cost_usd",
@@ -962,6 +964,11 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                             raise ValueError("artifact report trade net PnL cost reconciliation mismatch")
                         for economic in ledger_totals:
                             ledger_totals[economic] += amounts[economic]
+                        net_value = amounts["net_pnl_usd"]
+                        if net_value > 0:
+                            ledger_profit_usd += net_value
+                        elif net_value < 0:
+                            ledger_loss_usd -= net_value
                         seen_trade_ids.add(trade_id)
                         seen_trade_decisions.add(decision)
                     else:
@@ -998,6 +1005,44 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
             try:
                 # Serialized trades use canonical exit-time order; allow
                 # tiny summation drift versus the input order of the writer.
+                matches = math.isfinite(claimed) and math.isclose(
+                    claimed, expected, rel_tol=1e-12, abs_tol=1e-8,
+                )
+            except OverflowError:
+                matches = False
+            if not matches:
+                raise ValueError(f"artifact report metric {name} conflicts with trade ledger")
+        # Profitability summaries are claims about the stored realized
+        # trade outcomes, not independent trusted economic evidence.
+        try:
+            profit_factor = (
+                ledger_profit_usd / ledger_loss_usd
+                if ledger_loss_usd > 0 else None
+            )
+        except OverflowError as exc:
+            raise ValueError("artifact report aggregate profit factor must be finite") from exc
+        for name, expected in (
+            ("gross_profit_usd", ledger_profit_usd),
+            ("gross_loss_usd", ledger_loss_usd),
+            ("profit_factor", profit_factor),
+        ):
+            if expected is not None:
+                try:
+                    finite = math.isfinite(expected)
+                except OverflowError:
+                    finite = False
+                if not finite:
+                    raise ValueError(f"artifact report aggregate {name} must be finite")
+            if name not in metrics:
+                continue
+            claimed = metrics[name]
+            if expected is None:
+                if claimed is not None:
+                    raise ValueError(f"artifact report metric {name} conflicts with trade ledger")
+                continue
+            if type(claimed) not in (int, float):
+                raise ValueError(f"artifact report metric {name} must be finite numeric")
+            try:
                 matches = math.isfinite(claimed) and math.isclose(
                     claimed, expected, rel_tol=1e-12, abs_tol=1e-8,
                 )
