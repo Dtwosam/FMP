@@ -2294,6 +2294,56 @@ class Phase3ReportingTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "both trade and rejection"):
                 audit_backtest_artifact_structure(folder)
 
+    def test_audit_refuses_rehashed_non_numeric_equity_checkpoint(self):
+        run = BacktestRun(
+            run_identity={}, trades=(), rejections=(),
+            equity_checkpoints=(EquityCheckpoint(BASE_TS, 10_000.0),),
+            metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            folder = Path(root) / "artifacts"
+            manifest = write_backtest_artifacts(run, folder)
+            file = folder / "summary.json"
+            summary = json.loads(file.read_text("utf-8"))
+            summary["equity_checkpoints"][0]["realized_risk_equity_usd"] = True
+            forged = (json.dumps(summary) + "\n").encode("utf-8")
+            file.write_bytes(forged)
+            for entry in manifest["artifacts"]:
+                if entry["path"] == "summary.json":
+                    entry["size_bytes"] = len(forged)
+                    entry["sha256"] = hashlib.sha256(forged).hexdigest()
+            (folder / "manifest.json").write_text(
+                json.dumps(manifest), encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "equity checkpoint.*numeric"):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_reversed_equity_checkpoints(self):
+        run = BacktestRun(
+            run_identity={}, trades=(), rejections=(),
+            equity_checkpoints=(
+                EquityCheckpoint(BASE_TS, 10_000.0),
+                EquityCheckpoint(BASE_TS + timedelta(minutes=1), 10_010.0),
+            ), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            folder = Path(root) / "artifacts"
+            manifest = write_backtest_artifacts(run, folder)
+            file = folder / "summary.json"
+            summary = json.loads(file.read_text("utf-8"))
+            summary["equity_checkpoints"].reverse()
+            forged = (json.dumps(summary) + "\n").encode("utf-8")
+            file.write_bytes(forged)
+            for entry in manifest["artifacts"]:
+                if entry["path"] == "summary.json":
+                    entry["size_bytes"] = len(forged)
+                    entry["sha256"] = hashlib.sha256(forged).hexdigest()
+            (folder / "manifest.json").write_text(
+                json.dumps(manifest), encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "chronological"):
+                audit_backtest_artifact_structure(folder)
+
     def test_artifact_bytes_and_digests_are_deterministic(self) -> None:
         one_trade = trade(trade_id="T-1", minutes=1, net_pnl_usd=10.0)
         rejection = RejectionRecord(
