@@ -1774,7 +1774,7 @@ class Phase3ReportingTests(unittest.TestCase):
 
             def swap_before_open(raw_path, flags, *args, **kwargs):
                 nonlocal invoked
-                if Path(raw_path) == target and not invoked:
+                if Path(raw_path) == Path("metrics.json") and not invoked:
                     invoked = True
                     target.unlink()
                     try:
@@ -1877,6 +1877,49 @@ class Phase3ReportingTests(unittest.TestCase):
             folder = Path(root) / "artifacts"
             written = write_backtest_artifacts(run, folder)
             self.assertEqual(verify_backtest_artifacts(folder), written)
+
+    def test_verifier_binds_all_evidence_opens_to_one_directory_fd(self):
+        run = BacktestRun(
+            run_identity={}, trades=(), rejections=(),
+            equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            folder = Path(root) / "artifacts"
+            write_backtest_artifacts(run, folder)
+            real_open = __import__("os").open
+            records = []
+
+            def inspect_open(path, flags, *args, **kwargs):
+                records.append((str(path), kwargs.get("dir_fd")))
+                return real_open(path, flags, *args, **kwargs)
+
+            with mock.patch("fmp.reporting.backtest.os.open",
+                            side_effect=inspect_open):
+                verify_backtest_artifacts(folder)
+            by_name = [fd for name, fd in records if name in (
+                "manifest.json", "metrics.json", "summary.json",
+                "trades.jsonl", "rejections.jsonl",
+            )]
+            self.assertEqual(len(by_name), 5)
+            self.assertTrue(all(type(fd) is int for fd in by_name))
+            self.assertEqual(len(set(by_name)), 1)
+
+    def test_verifier_refuses_root_symlink_before_opening_directory_fd(self):
+        run = BacktestRun(
+            run_identity={}, trades=(), rejections=(),
+            equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            home = Path(root)
+            direct = home / "direct"
+            write_backtest_artifacts(run, direct)
+            alias = home / "alias"
+            try:
+                alias.symlink_to(direct, target_is_directory=True)
+            except (OSError, NotImplementedError):
+                self.skipTest("symlinks unavailable")
+            with self.assertRaisesRegex(ValueError, "symlink"):
+                verify_backtest_artifacts(alias)
 
     def test_artifact_bytes_and_digests_are_deterministic(self) -> None:
         one_trade = trade(trade_id="T-1", minutes=1, net_pnl_usd=10.0)
