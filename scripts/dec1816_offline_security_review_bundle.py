@@ -429,6 +429,7 @@ def verify_complete_blocked_review_triplet(full_path, requests_path, markdown_pa
         "schema": "fmp_dec1839_source_only_three_format_review_v1",
         "disposition": "BLOCKED_NO_EXECUTION_PERMISSION",
         "three_saved_formats_consistent_with_pinned_sources": True,
+        "sequential_snapshot_not_atomic_or_future_file_lock": True,
         "source_only_not_independent_attestation": True,
         "offline_request_fingerprint_sha256":
             full["offline_request_fingerprint_sha256"],

@@ -1054,6 +1054,80 @@ class Phase8ABlockedSevenSourceIndexTests(unittest.TestCase):
             self.assertIn("BLOCKED:", err.getvalue())
             self.assertTrue(opened)
 
+    def test_three_artifact_verdict_declares_nonatomic_snapshot_limitation(self):
+        with tempfile.TemporaryDirectory() as folder:
+            files = self._write_three_canonical_saved_review_artifacts(
+                Path(folder))
+            verdict = MOD["verify_complete_blocked_review_triplet"](*files)
+        self.assertIs(
+            verdict["sequential_snapshot_not_atomic_or_future_file_lock"], True)
+        self.assertIs(verdict["source_only_not_independent_attestation"], True)
+        self.assertFalse(verdict["protected_2023_run385_attempt1_authorized"])
+
+    def test_triplet_rejects_human_edit_between_saved_file_checks(self):
+        with tempfile.TemporaryDirectory() as folder:
+            files = self._write_three_canonical_saved_review_artifacts(
+                Path(folder))
+            verify_triplet = MOD["verify_complete_blocked_review_triplet"]
+            globals_ = verify_triplet.__globals__
+            original = globals_["verify_saved_unfulfilled_review_requests"]
+
+            def mutate_after_requests(path):
+                checked = original(path)
+                files[2].write_bytes(files[2].read_bytes() + b"APPROVED")
+                return checked
+
+            with mock.patch.dict(
+                    globals_,
+                    {"verify_saved_unfulfilled_review_requests":
+                        mutate_after_requests}):
+                with self.assertRaises((OSError, ValueError)):
+                    verify_triplet(*files)
+
+    def test_triplet_rejects_compact_edit_after_full_packet_check(self):
+        with tempfile.TemporaryDirectory() as folder:
+            files = self._write_three_canonical_saved_review_artifacts(
+                Path(folder))
+            verify_triplet = MOD["verify_complete_blocked_review_triplet"]
+            globals_ = verify_triplet.__globals__
+            original = globals_["verify_saved_blocked_review_packet"]
+
+            def mutate_after_full(path):
+                checked = original(path)
+                files[1].write_bytes(files[1].read_bytes() + b"APPROVED")
+                return checked
+
+            with mock.patch.dict(
+                    globals_, {"verify_saved_blocked_review_packet":
+                               mutate_after_full}):
+                with self.assertRaises((OSError, ValueError)):
+                    verify_triplet(*files)
+
+    def test_triplet_cli_race_fails_without_stdout_or_permissions(self):
+        with tempfile.TemporaryDirectory() as folder:
+            files = self._write_three_canonical_saved_review_artifacts(
+                Path(folder))
+            builder = MOD["verify_complete_blocked_review_triplet"]
+            globals_ = builder.__globals__
+            original = globals_["verify_saved_unfulfilled_review_requests"]
+
+            def mutate_between(path):
+                value = original(path)
+                files[2].write_bytes(files[2].read_bytes() + b"APPROVED")
+                return value
+
+            out, err = io.StringIO(), io.StringIO()
+            with mock.patch.dict(
+                    globals_,
+                    {"verify_saved_unfulfilled_review_requests":
+                        mutate_between}):
+                with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                    code = MOD["main"]([
+                        "--verify-triplet", *map(str, files)])
+            self.assertEqual(code, 2)
+            self.assertEqual(out.getvalue(), "")
+            self.assertIn("BLOCKED:", err.getvalue())
+
     def test_cli_success_is_blocked_and_invalid_has_no_stdout(self):
         out, err = io.StringIO(), io.StringIO()
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
