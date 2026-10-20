@@ -1,0 +1,9 @@
+# DEC-1967 — Canonical structural schema checks for Phase3 audit
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** One exact-parent source/tests/docs child of #2215 at `3526248abd43118ddd152648941372084adeb272`.
+
+The separately exported `audit_backtest_artifact_structure` previously accepted JSONL records as long as each line was an ordinary JSON object and the number of lines matched the summary. A self-rehashed forged file containing `{}\n` in place of a TradeRecord could therefore pass the structural count check. Require exactly the canonical source-defined TradeRecord and RejectionRecord member-name sets for their respective JSONL rows, and require the summary to contain the exact six canonical keys and `fmp-phase3-backtest-run-v1` protocol with an ordinary run_identity dictionary. Keep the low-level `verify_backtest_artifacts` checksum-only API unchanged; the opt-in auditor checks canonical structure, not full field values, profitability or market source.
+
+Two source-defined synthetic tests forge and rehash an empty-object trade row and an unapproved summary protocol; both must fail even though all manifest SHA256 digests agree. **7,009 cumulative proposed test methods**. Own exact-head Phase3/full historical/general tests plus independent reporting-security review required. These checks are not externally authenticated provenance, independent OS runner security or trading returns.
+
+Historic full regression failures remain failed. Phase8A #779/#820/#821 and eight independent external administrator/ref/early installed workflow/real OS/provenance/fresh inventory/human approval proof packages still MISSING/BLOCKED. Accepted annual evidence ends 2022/run384, protected 2023/run385/attempt1 and future research, Strategy V1 economics, shadow/demo/live brokers/funds and installed GitHub refs/workflows/rulesets/runners blocked. No protected dispatch, merges, orders or capital.

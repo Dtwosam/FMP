@@ -814,6 +814,13 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
         metrics = read_small_json("metrics.json")
         if type(summary) is not dict or type(metrics) is not dict:
             raise ValueError("artifact report summary and metrics must be objects")
+        if set(summary) != {
+            "protocol", "run_identity", "trade_count", "rejection_count",
+            "equity_checkpoint_count", "equity_checkpoints",
+        } or summary["protocol"] != "fmp-phase3-backtest-run-v1":
+            raise ValueError("artifact report summary protocol or fields mismatch")
+        if type(summary["run_identity"]) is not dict:
+            raise ValueError("artifact report run identity must be an object")
         counts: dict[str, int] = {}
         for field in ("trade_count", "rejection_count", "equity_checkpoint_count"):
             count = summary.get(field)
@@ -824,6 +831,10 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
         if type(checkpoints) is not list or len(checkpoints) != counts["equity_checkpoint_count"]:
             raise ValueError("artifact report equity checkpoint count conflicts with summary")
 
+        record_fields = {
+            "trades.jsonl": {item.name for item in fields(TradeRecord)},
+            "rejections.jsonl": {item.name for item in fields(RejectionRecord)},
+        }
         for name, field in (("trades.jsonl", "trade_count"),
                             ("rejections.jsonl", "rejection_count")):
             observed = 0
@@ -835,8 +846,11 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                         raise ValueError("artifact report JSONL line exceeds audit size limit")
                     observed_size += len(line)
                     observed_hash.update(line)
-                    if type(_audit_load_json(line)) is not dict:
+                    record = _audit_load_json(line)
+                    if type(record) is not dict:
                         raise ValueError("artifact report JSONL record must be an object")
+                    if set(record) != record_fields[name]:
+                        raise ValueError("artifact report JSONL canonical fields mismatch")
                     observed += 1
             if (
                 observed_size != expected_records[name]["size_bytes"]
