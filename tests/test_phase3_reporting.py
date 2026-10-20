@@ -2039,6 +2039,40 @@ class Phase3ReportingTests(unittest.TestCase):
                 ):
                     verify_backtest_artifacts(folder)
 
+    def test_verifier_refuses_hardlinked_payload_evidence(self):
+        run = BacktestRun(
+            run_identity={}, trades=(), rejections=(),
+            equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            target = Path(root) / "artifacts"
+            write_backtest_artifacts(run, target)
+            alias = Path(root) / "outside-metrics"
+            try:
+                __import__("os").link(target / "metrics.json", alias)
+            except (OSError, NotImplementedError):
+                self.skipTest("hardlinks unavailable")
+            with self.assertRaisesRegex(ValueError, "hardlinked"):
+                verify_backtest_artifacts(target)
+            self.assertEqual(alias.read_bytes(), (target / "metrics.json").read_bytes())
+
+    def test_verifier_refuses_hardlinked_manifest_evidence(self):
+        run = BacktestRun(
+            run_identity={}, trades=(), rejections=(),
+            equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            target = Path(root) / "artifacts"
+            write_backtest_artifacts(run, target)
+            alias = Path(root) / "outside-manifest"
+            try:
+                __import__("os").link(target / "manifest.json", alias)
+            except (OSError, NotImplementedError):
+                self.skipTest("hardlinks unavailable")
+            with self.assertRaisesRegex(ValueError, "hardlinked"):
+                verify_backtest_artifacts(target)
+            self.assertTrue(alias.read_bytes().startswith(b"{"))
+
     def test_artifact_bytes_and_digests_are_deterministic(self) -> None:
         one_trade = trade(trade_id="T-1", minutes=1, net_pnl_usd=10.0)
         rejection = RejectionRecord(

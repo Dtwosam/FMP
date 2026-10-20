@@ -1,0 +1,9 @@
+# DEC-1964 — Reject multiply linked verifier evidence files
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent source/tests/docs child of PR #2212 at `690d7e752590ebb804c460f789a46093c136edc4`.
+
+A fixed-name Phase3 evidence file opened with `O_NOFOLLOW` could still be a hardlinked regular file, sharing its bytes with another path outside the evidence directory. The canonical writer's uniquely created and atomically replaced artifact files have exactly one hardlink. Require `os.fstat(fd).st_nlink == 1` for both the pinned manifest and all four evidence payloads before streaming. Reject hardlinked aliases and unlinked-but-open descriptors with a controlled `ValueError`. This restricts the verifier to source-defined writer output and reduces cross-path aliasing, but is not a solution for bind mounts, privileged filesystem modification or malicious concurrent in-place writes.
+
+Two synthetic methods create a second hardlink to the payload and to the manifest, verify clean fail-closed errors, and check the alias bytes were not modified. **7,002 cumulative proposed source-defined methods**. Own exact-head Phase3/full historical-general CI and qualified independent filesystem review required; do not claim authentic data or strategy profitability.
+
+Historical full-suite failures remain recorded as failed; #2212 and later require their own full checks. Phase8A #779/#820/#821 and eight independent administrator/ref/installed early workflow/real OS isolation/provenance/fresh 2023 inventory/separate human approval proof packages remain MISSING/BLOCKED. Accepted annual catalogue ends 2022/run384; protected 2023/run385/attempt1 and later research, Strategy V1 economics, shadow/demo/live broker capital, installed GitHub refs/workflows/rulesets/runners unauthorized. No protected dispatch, merges, trades or money.
