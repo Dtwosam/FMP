@@ -66,6 +66,85 @@ def intent(
 
 
 class Phase3ExecutionTests(unittest.TestCase):
+    def test_custom_commission_cannot_supply_negative_entry_cost(self):
+        class NegativeCommission:
+            def cost_usd(self, *, units):
+                return -1.0
+
+        with self.assertRaisesRegex(ValueError, "entry commission"):
+            fill_entry(
+                intent(), bar(), slippage_pips=0.0,
+                commission_model=NegativeCommission(),
+            )
+
+    def test_custom_commission_rejects_nonfinite_bool_and_nonnumeric_entry(self):
+        class ArbitraryCommission:
+            def __init__(self, value):
+                self.value = value
+
+            def cost_usd(self, *, units):
+                return self.value
+
+        for cost in (float("nan"), float("inf"), -float("inf"),
+                     True, None, "0", 10 ** 400):
+            with self.subTest(cost=repr(cost)):
+                with self.assertRaisesRegex(ValueError, "entry commission"):
+                    fill_entry(
+                        intent(), bar(), slippage_pips=0.0,
+                        commission_model=ArbitraryCommission(cost),
+                    )
+
+    def test_custom_exit_commission_rejects_negative_and_nonfinite_cost(self):
+        class ArbitraryCommission:
+            def __init__(self, cost):
+                self.cost = cost
+
+            def cost_usd(self, *, units):
+                return self.cost
+
+        position = fill_entry(
+            intent(), bar(), slippage_pips=0.0,
+            commission_model=ZeroCommission(),
+        )
+        for value in (-1.0, float("nan"), float("inf"), True):
+            with self.subTest(value=repr(value)):
+                with self.assertRaisesRegex(ValueError, "exit commission"):
+                    close_end_of_data(
+                        position, bar(timestamp=BASE_TS + timedelta(minutes=1)),
+                        slippage_pips=0.0,
+                        commission_model=ArbitraryCommission(value),
+                        financing_model=ZeroFinancing(),
+                    )
+
+    def test_custom_financing_must_be_finite_but_can_pay_credit(self):
+        class ArbitraryFinancing:
+            def __init__(self, value):
+                self.value = value
+
+            def cost_usd(self, **kwargs):
+                return self.value
+
+        position = fill_entry(
+            intent(), bar(), slippage_pips=0.0,
+            commission_model=ZeroCommission(),
+        )
+        exit_bar = bar(timestamp=BASE_TS + timedelta(minutes=1))
+        credit = close_end_of_data(
+            position, exit_bar, slippage_pips=0.0,
+            commission_model=ZeroCommission(),
+            financing_model=ArbitraryFinancing(-0.75),
+        )
+        self.assertEqual(credit.financing_cost_usd, -0.75)
+        for value in (float("nan"), float("inf"), -float("inf"),
+                      True, "0", None, 10 ** 400):
+            with self.subTest(value=repr(value)):
+                with self.assertRaisesRegex(ValueError, "financing"):
+                    close_end_of_data(
+                        position, exit_bar, slippage_pips=0.0,
+                        commission_model=ZeroCommission(),
+                        financing_model=ArbitraryFinancing(value),
+                    )
+
     def test_long_entry_reference_is_ask_open_and_buy_slippage_is_adverse(self) -> None:
         quote = bar()
         self.assertEqual(entry_reference_price(quote, Direction.LONG), 1.1002)
