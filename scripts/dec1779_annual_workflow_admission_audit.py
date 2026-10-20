@@ -266,8 +266,7 @@ def inspect_pregate_step_payloads(source_text):
             "          python scripts/phase8a_annual_pattern_catalogue.py "
             "require-execution \\\n" in gate
             and "--annual-segment-label" in gate
-            and "--code-commit" in gate
-            and "$GITHUB_SHA" in gate,
+            and '            --code-commit "$GITHUB_SHA"' in gate,
             "historic in-run execution guard command/arguments changed: " + job,
         )
         _require(
