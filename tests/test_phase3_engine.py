@@ -480,6 +480,27 @@ class Phase3EngineTests(unittest.TestCase):
         self.assertEqual(_run_identity(c, ())["decision_config"], sample)
         self.assertEqual(_run_identity(c, ())["decision_config"], sample)
 
+    def test_nested_decision_metadata_rejects_terminal_control_values(self):
+        for char in (chr(0), chr(9), chr(10), chr(13), chr(27), chr(127)):
+            with self.subTest(control=ord(char)):
+                with self.assertRaisesRegex(ValueError, "string values"):
+                    replace(config(), decision_config={
+                        "outer": [{"comment": "synthetic" + char + "APPROVED"}]
+                    })
+
+    def test_nested_decision_metadata_rejects_surrogate_codepoints(self):
+        for bad in (chr(0xD800), chr(0xDC00)):
+            for as_key in (True, False):
+                with self.subTest(code=ord(bad), as_key=as_key):
+                    value = {bad: "safe"} if as_key else {"comment": bad}
+                    with self.assertRaisesRegex(ValueError, "decision_config"):
+                        replace(config(), decision_config={"nested": value})
+
+    def test_normal_unicode_nested_values_remain_supported(self):
+        payload = {"comment": "invented café 测试", "levels": ["零", 0.5]}
+        instance = replace(config(), decision_config=payload)
+        self.assertEqual(_run_identity(instance, ())["decision_config"], payload)
+
     def test_no_trade_is_preserved_as_reasoned_record(self) -> None:
         decision = Decision(
             decision_id="NT-1",
