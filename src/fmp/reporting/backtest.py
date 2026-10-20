@@ -425,7 +425,9 @@ def write_backtest_artifacts(run: BacktestRun, out_dir: Path) -> dict[str, objec
         if type(claimed) not in (int, float):
             raise ValueError("metric net_pnl_usd must be finite numeric")
         try:
-            if not math.isfinite(claimed) or claimed != expected_net_pnl:
+            if not math.isfinite(claimed):
+                raise ValueError("metric net_pnl_usd is non-finite")
+            if claimed != expected_net_pnl:
                 raise ValueError("metric net_pnl_usd conflicts with trade ledger")
         except OverflowError as exc:
             raise ValueError("metric net_pnl_usd must be finite numeric") from exc
