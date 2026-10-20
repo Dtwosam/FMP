@@ -566,8 +566,13 @@ def main(argv=None):
                     report, sort_keys=True, indent=2, allow_nan=False,
                 )
     except (OSError, UnicodeError, TypeError, ValueError, KeyError, OverflowError, RecursionError) as exc:
-        print("BLOCKED: invalid source-only review: " + str(exc),
-              file=sys.stderr)
+        # Exception messages may contain attacker-chosen paths, control bytes,
+        # ANSI cursor escapes or newlines: never let these rewrite a verdict.
+        safe_error = ascii(str(exc))
+        print(
+            "BLOCKED: invalid source-only review: " + safe_error[:400],
+            file=sys.stderr,
+        )
         return 2
     print(output)
     return 3  # No action permission can be inferred from a valid report.

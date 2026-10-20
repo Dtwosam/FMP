@@ -1212,6 +1212,53 @@ class Phase8ABlockedSevenSourceIndexTests(unittest.TestCase):
         self.assertIn("--verify-markdown", out.getvalue())
         self.assertEqual(err.getvalue(), "")
 
+    def test_invalid_report_stderr_escapes_newline_and_terminal_codes(self):
+        error = "packet" + chr(10) + "APPROVED" + chr(27) + "[2J" + chr(13)
+        fn = MOD["main"]
+        def forged(*args, **kwargs):
+            raise MOD["InvalidReviewBundle"](error)
+        out, err = io.StringIO(), io.StringIO()
+        with mock.patch.dict(fn.__globals__, {"compile_blocked_review_bundle": forged}):
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                code = fn([])
+        self.assertEqual(code, 2)
+        self.assertEqual(out.getvalue(), "")
+        message = err.getvalue()
+        self.assertEqual(message.count(chr(10)), 1)
+        self.assertNotIn(chr(27), message)
+        self.assertNotIn(chr(13), message)
+        self.assertIn("BLOCKED:", message)
+        self.assertIn("APPROVED", message)
+        self.assertIn(chr(92) + "x1b", message)
+
+    def test_invalid_report_error_is_single_bounded_diagnostic_line(self):
+        long_msg = chr(9) + "APPROVED" + ("X" * 3000)
+        fn = MOD["main"]
+        def rejected(*args, **kwargs):
+            raise ValueError(long_msg)
+        out, err = io.StringIO(), io.StringIO()
+        with mock.patch.dict(fn.__globals__, {"compile_blocked_review_bundle": rejected}):
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                code = fn([])
+        self.assertEqual(code, 2)
+        self.assertEqual(out.getvalue(), "")
+        self.assertLessEqual(len(err.getvalue()), 460)
+        self.assertNotIn(chr(9), err.getvalue())
+        self.assertEqual(err.getvalue().count(chr(10)), 1)
+
+    def test_real_invalid_saved_verifier_has_only_blocked_one_line_error(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / ("source" + chr(10) + "APPROVED.json")
+            path.write_bytes(b"APPROVED")
+            out, err = io.StringIO(), io.StringIO()
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                code = MOD["main"](["--verify-report", str(path)])
+        self.assertEqual(code, 2)
+        self.assertEqual(out.getvalue(), "")
+        self.assertEqual(err.getvalue().count(chr(10)), 1)
+        self.assertIn("BLOCKED:", err.getvalue())
+        self.assertNotIn(chr(10) + "APPROVED", err.getvalue())
+
     def test_cli_success_is_blocked_and_invalid_has_no_stdout(self):
         out, err = io.StringIO(), io.StringIO()
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
