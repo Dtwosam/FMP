@@ -1,0 +1,9 @@
+# DEC-1904 — Bounded printable decision rejection reasons
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** One-commit exact-parent source-only child of #2152 at `6caa832504b957c3970c8a44e65de0a27b54e5c9`.
+
+`Decision.reason_code` and `Decision.reason_text` previously accepted arbitrary objects, embedded control or surrogate characters, and unbounded text. A NO_TRADE decision can copy these values into `RejectionRecord.explanation`, risking malformed/non-string backtest evidence even when no position is opened. Admit only ordinary printable string values or `None`, with caps of 128 and 4,096 characters respectively. Preserve existing empty strings, ordinary English and multilingual Unicode values, and the existing reason preference and trading/risk behavior.
+
+Three synthetic regression methods cover non-string, newline/NUL, surrogate and oversized reason values, exact boundary/empty/Unicode controls, and propagation of safe NO_TRADE reason text into a rejection record. **6,880 cumulative proposed source-defined test methods**; no real historical quote inputs, network, file, broker, trading or privileged workflow alterations. Checks require exact-head Phase3 and full historical/general CI; independent qualified review remains mandatory.
+
+Phase 8A security and economic gates are unchanged: external #779/#820/#821 open; eight independent administrator, exclusive/immutable ref, source/workflow, privileged runner OS isolation, upstream provenance, fresh 2023 one-shot inventory and separate human authorization proofs MISSING. Accepted annual catalogue still ends at 2022/run384; 2023/run385/attempt1, future discovery, Strategy V1, shadow/demo/Phase10/11 and live funds are BLOCKED. This proposal cannot authorize a merge, installed control, protected research, broker action or profitability claim.
