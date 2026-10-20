@@ -104,6 +104,44 @@ class Phase3SizingTests(unittest.TestCase):
             expected_units,
         )
 
+    def test_risk_price_and_budget_reject_boolean_and_nonnumeric_values(self):
+        for value in (True, False, None, "1.1000", [], 10 ** 400):
+            with self.subTest(value=repr(value)):
+                with self.assertRaisesRegex(ValueError, "entry price"):
+                    loss_usd_per_unit("EURUSD", value, 1.0990)
+                with self.assertRaisesRegex(ValueError, "allowed risk"):
+                    size_units(
+                        symbol="EURUSD", entry_price=1.1,
+                        stop_price=1.099, allowed_risk_usd=value,
+                    )
+
+    def test_risk_sizing_refuses_unhashable_and_nonstring_symbols(self):
+        for symbol in ([], {}, ["EURUSD"], None, True, b"EURUSD"):
+            with self.subTest(symbol=repr(symbol)):
+                with self.assertRaisesRegex(ValueError, "unsupported symbol"):
+                    loss_usd_per_unit(symbol, 1.1, 1.099)
+                with self.assertRaisesRegex(ValueError, "unsupported symbol"):
+                    pnl_usd(
+                        symbol=symbol, direction=Direction.LONG,
+                        units=100, entry_price=1.1, exit_price=1.101,
+                    )
+
+    def test_risk_pnl_rejects_untyped_direction_and_position_size(self):
+        for direction in ("LONG", None, [], {}, True):
+            with self.subTest(direction=repr(direction)):
+                with self.assertRaisesRegex(ValueError, "direction"):
+                    pnl_usd(
+                        symbol="EURUSD", direction=direction, units=100,
+                        entry_price=1.1, exit_price=1.101,
+                    )
+        for units in (1.0, True, False, None, "100", [], -1, 0):
+            with self.subTest(units=repr(units)):
+                with self.assertRaisesRegex(ValueError, "units"):
+                    pnl_usd(
+                        symbol="EURUSD", direction=Direction.LONG,
+                        units=units, entry_price=1.1, exit_price=1.101,
+                    )
+
     def test_sizing_rejects_zero_stop_distance(self) -> None:
         with self.assertRaisesRegex(ValueError, "stop distance"):
             size_units(

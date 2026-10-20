@@ -7,9 +7,14 @@ from fmp.contracts import Direction, SUPPORTED_SYMBOLS
 
 
 def _positive_decimal(value: float, *, field: str) -> Decimal:
-    if not math.isfinite(value) or value <= 0:
-        raise ValueError(f"{field} must be finite and positive")
-    return Decimal(str(value))
+    if type(value) not in (int, float):
+        raise ValueError(f"{field} must be finite numeric and positive")
+    try:
+        if not math.isfinite(value) or value <= 0:
+            raise ValueError(f"{field} must be finite and positive")
+        return Decimal(str(value))
+    except (TypeError, OverflowError) as exc:
+        raise ValueError(f"{field} must be finite and positive") from exc
 
 
 def _loss_usd_per_unit_decimal(
@@ -17,8 +22,8 @@ def _loss_usd_per_unit_decimal(
     entry_price: float,
     stop_price: float,
 ) -> Decimal:
-    if symbol not in SUPPORTED_SYMBOLS:
-        raise ValueError(f"unsupported symbol: {symbol!r}")
+    if type(symbol) is not str or symbol not in SUPPORTED_SYMBOLS:
+        raise ValueError("unsupported symbol: expected exact supported FX pair")
     entry = _positive_decimal(entry_price, field="entry price")
     stop = _positive_decimal(stop_price, field="stop price")
     distance = abs(entry - stop)
@@ -56,11 +61,14 @@ def pnl_usd(
     entry_price: float,
     exit_price: float,
 ) -> float:
-    if symbol not in SUPPORTED_SYMBOLS:
-        raise ValueError(f"unsupported symbol: {symbol!r}")
-    if direction not in {Direction.LONG, Direction.SHORT}:
+    if type(symbol) is not str or symbol not in SUPPORTED_SYMBOLS:
+        raise ValueError("unsupported symbol: expected exact supported FX pair")
+    if (
+        type(direction) is not Direction
+        or direction not in (Direction.LONG, Direction.SHORT)
+    ):
         raise ValueError("PnL direction must be LONG or SHORT")
-    if not isinstance(units, int) or isinstance(units, bool) or units <= 0:
+    if type(units) is not int or units <= 0:
         raise ValueError("units must be a positive integer")
     entry = _positive_decimal(entry_price, field="entry price")
     exit_ = _positive_decimal(exit_price, field="exit price")
