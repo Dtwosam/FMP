@@ -505,6 +505,48 @@ class Phase8ABlockedSevenSourceIndexTests(unittest.TestCase):
                     self.assertEqual(path.read_bytes(), original)
                     self.assertIn("BLOCKED", out.getvalue())
 
+    def test_deeply_nested_saved_json_returns_controlled_blocked_error(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "nested.json"
+            path.write_text("[" * 1200 + "]" * 1200, encoding="utf-8")
+            with self.assertRaises(MOD["InvalidReviewBundle"]):
+                MOD["verify_saved_blocked_review_packet"](path)
+            out, err = io.StringIO(), io.StringIO()
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                code = MOD["main"](["--verify-report", str(path)])
+            self.assertEqual(code, 2)
+            self.assertEqual(out.getvalue(), "")
+            self.assertIn("BLOCKED:", err.getvalue())
+
+    def test_duplicate_nested_json_member_is_denied_without_stdout(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "duplicated.json"
+            path.write_text(
+                '{"proofs":[{"id":"one","id":"approved"}]}', encoding="utf-8"
+            )
+            out, err = io.StringIO(), io.StringIO()
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                code = MOD["main"](["--verify-report", str(path)])
+            self.assertEqual(code, 2)
+            self.assertEqual(out.getvalue(), "")
+            self.assertIn("BLOCKED:", err.getvalue())
+
+    def test_saved_json_refuses_invalid_utf8_and_multiple_json_roots(self):
+        for payload in (bytes((255, 254)),
+                        b'{} {}',
+                        b'{}' + bytes((0,)) + b'{}'):
+            with self.subTest(payload=repr(payload)):
+                with tempfile.TemporaryDirectory() as folder:
+                    path = Path(folder) / "packet.json"
+                    path.write_bytes(payload)
+                    with self.assertRaises(MOD["InvalidReviewBundle"]):
+                        MOD["verify_saved_blocked_review_packet"](path)
+
+    def test_saved_verifier_rejects_directory_instead_of_regular_file(self):
+        with tempfile.TemporaryDirectory() as folder:
+            with self.assertRaises((OSError, ValueError)):
+                MOD["verify_saved_blocked_review_packet"](Path(folder))
+
     def test_cli_success_is_blocked_and_invalid_has_no_stdout(self):
         out, err = io.StringIO(), io.StringIO()
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
