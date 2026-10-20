@@ -305,6 +305,9 @@ def run_backtest(
     config: BacktestConfig,
     scheduled_exits: Sequence[ScheduledExit] = (),
 ) -> BacktestRun:
+    # Do not access untrusted config objects or their getters.
+    if type(config) is not BacktestConfig:
+        raise ValueError("config must be a BacktestConfig record")
     validate_quote_bars(bars)
     validate_decisions(decisions)
     scheduled_exit_by_decision = _scheduled_exit_map(decisions, scheduled_exits)
