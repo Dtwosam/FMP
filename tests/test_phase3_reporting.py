@@ -101,6 +101,61 @@ class Phase3ReportingTests(unittest.TestCase):
         self.assertEqual(metrics["financing_cost_usd"], 3.0)
         self.assertEqual(metrics["total_explicit_cost_usd"], 6.0)
 
+    def test_metrics_reject_invalid_starting_equity_without_bool_alias(self):
+        for value in (True, False, None, [], "10000", 10 ** 400):
+            with self.subTest(equity_type=type(value).__name__):
+                with self.assertRaisesRegex(ValueError, "starting equity"):
+                    compute_backtest_metrics(
+                        starting_equity_usd=value, trades=(),
+                        equity_checkpoints=(),
+                    )
+
+    def test_metrics_reject_finite_trade_pnl_aggregate_overflow(self):
+        trades = (
+            trade(trade_id="EXTREME-1", minutes=1, net_pnl_usd=1e308),
+            trade(trade_id="EXTREME-2", minutes=3, net_pnl_usd=1e308),
+        )
+        with self.assertRaisesRegex(ValueError, "metric.*finite"):
+            compute_backtest_metrics(
+                starting_equity_usd=10_000.0, trades=trades,
+                equity_checkpoints=(EquityCheckpoint(BASE_TS, 10_000.0),),
+            )
+
+    def test_metrics_reject_nonfinite_derived_cost_ratio_and_drawdown(self):
+        cases = (
+            (
+                (
+                    trade(trade_id="C1", minutes=1, net_pnl_usd=0.0,
+                          slippage_cost_usd=1e308),
+                    trade(trade_id="C2", minutes=3, net_pnl_usd=0.0,
+                          slippage_cost_usd=1e308),
+                ),
+                (EquityCheckpoint(BASE_TS, 10_000.0),),
+            ),
+            (
+                (
+                    trade(trade_id="P1", minutes=1, net_pnl_usd=1e308),
+                    trade(trade_id="L1", minutes=3, net_pnl_usd=-1e-308),
+                ),
+                (EquityCheckpoint(BASE_TS, 10_000.0),),
+            ),
+            (
+                (),
+                (
+                    EquityCheckpoint(BASE_TS, 1e308),
+                    EquityCheckpoint(BASE_TS + timedelta(minutes=1), -1e308),
+                ),
+            ),
+        )
+        for trades, checkpoints in cases:
+            with self.subTest(trade_count=len(trades),
+                              checkpoint_count=len(checkpoints)):
+                with self.assertRaisesRegex(ValueError, "metric.*finite"):
+                    compute_backtest_metrics(
+                        starting_equity_usd=10_000.0, trades=trades,
+                        equity_checkpoints=checkpoints,
+                    )
+
     def test_zero_trade_metrics_are_explicit(self) -> None:
         metrics = compute_backtest_metrics(
             starting_equity_usd=10_000.0,
