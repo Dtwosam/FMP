@@ -1986,9 +1986,12 @@ class Phase3ReportingTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as root:
             folder = Path(root) / "artifacts"
             manifest = write_backtest_artifacts(run, folder)
+            # The manifest is canonical-sorted: forge the first evidence payload.
+            # Earlier healthy files must not trigger the patched hash constructor.
+            self.assertEqual(manifest["artifacts"][0]["path"], "metrics.json")
             tampered = json.loads(json.dumps(manifest))
             for item in tampered["artifacts"]:
-                if item["path"] == "trades.jsonl":
+                if item["path"] == "metrics.json":
                     item["size_bytes"] += 1
             (folder / "manifest.json").write_text(
                 json.dumps(tampered), encoding="utf-8",

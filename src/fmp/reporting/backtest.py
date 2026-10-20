@@ -731,13 +731,14 @@ def _verify_artifacts_in_root(root: Path, root_fd: int) -> dict[str, object]:
         if path.is_symlink() or not path.is_file():
             raise ValueError("artifact evidence must be a regular file")
         observed_size = 0
-        observed_hash = hashlib.sha256()
         with _open_regular_artifact(path, root_fd=root_fd) as handle:
             # Inspect the pinned regular-file descriptor before consuming
             # potentially expensive evidence payload bytes.
             before = os.fstat(handle.fileno())
             if before.st_size != size:
                 raise ValueError("artifact evidence size or SHA256 mismatch")
+            # No digest allocation or payload reads before the size preflight.
+            observed_hash = hashlib.sha256()
             while block := handle.read(1024 * 1024):
                 observed_size += len(block)
                 if observed_size > size:
