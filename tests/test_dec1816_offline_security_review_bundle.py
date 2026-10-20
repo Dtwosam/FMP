@@ -1418,6 +1418,86 @@ class Phase8ABlockedSevenSourceIndexTests(unittest.TestCase):
                     with self.assertRaises(MOD["InvalidReviewBundle"]):
                         MOD["verify_saved_blocked_markdown"](path)
 
+    def test_triplet_rejects_first_file_changing_after_initial_validation(self):
+        with tempfile.TemporaryDirectory() as folder:
+            files = self._write_three_canonical_saved_review_artifacts(
+                Path(folder))
+            check = MOD["verify_complete_blocked_review_triplet"]
+            original = check.__globals__["verify_saved_unfulfilled_review_requests"]
+
+            def edit_earlier_file(path):
+                value = original(path)
+                files[0].write_bytes(files[0].read_bytes() + b"APPROVED")
+                return value
+
+            with mock.patch.dict(
+                    check.__globals__,
+                    {"verify_saved_unfulfilled_review_requests": edit_earlier_file}
+            ):
+                with self.assertRaisesRegex(
+                        MOD["InvalidReviewBundle"], "changed during"):
+                    check(*files)
+
+    def test_triplet_rejects_edit_after_last_verification_before_verdict(self):
+        with tempfile.TemporaryDirectory() as folder:
+            files = self._write_three_canonical_saved_review_artifacts(
+                Path(folder))
+            check = MOD["verify_complete_blocked_review_triplet"]
+            original = check.__globals__["verify_saved_blocked_markdown"]
+
+            def edit_after_human(path):
+                value = original(path)
+                files[1].write_bytes(files[1].read_bytes() + b"APPROVED")
+                return value
+
+            with mock.patch.dict(
+                    check.__globals__,
+                    {"verify_saved_blocked_markdown": edit_after_human}
+            ):
+                with self.assertRaisesRegex(
+                        MOD["InvalidReviewBundle"], "changed during"):
+                    check(*files)
+
+    def test_midcheck_first_file_edit_returns_blocked_cli_without_stdout(self):
+        with tempfile.TemporaryDirectory() as folder:
+            files = self._write_three_canonical_saved_review_artifacts(
+                Path(folder))
+            checker = MOD["verify_complete_blocked_review_triplet"]
+            original = checker.__globals__["verify_saved_unfulfilled_review_requests"]
+
+            def edit_after_first(path):
+                result = original(path)
+                files[0].write_bytes(files[0].read_bytes() + b"APPROVED")
+                return result
+
+            out, err = io.StringIO(), io.StringIO()
+            with mock.patch.dict(
+                    checker.__globals__,
+                    {"verify_saved_unfulfilled_review_requests": edit_after_first}
+            ):
+                with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                    status = MOD["main"](["--verify-triplet", *map(str, files)])
+            self.assertEqual(status, 2)
+            self.assertEqual(out.getvalue(), "")
+            self.assertIn("BLOCKED:", err.getvalue())
+
+    def test_final_recheck_preserves_exact_bytes_and_blocked_disposition(self):
+        with tempfile.TemporaryDirectory() as folder:
+            files = self._write_three_canonical_saved_review_artifacts(
+                Path(folder))
+            originals = [path.read_bytes() for path in files]
+            with mock.patch("subprocess.Popen",
+                            side_effect=AssertionError("unexpected process")):
+                with mock.patch("socket.socket",
+                                side_effect=AssertionError("unexpected socket")):
+                    with self._deny_writable_os_opens() as observed:
+                        verdict = MOD["verify_complete_blocked_review_triplet"](*files)
+            self.assertTrue(observed)
+            self.assertEqual([path.read_bytes() for path in files], originals)
+            self.assertEqual(verdict["disposition"], "BLOCKED_NO_EXECUTION_PERMISSION")
+            self.assertTrue(verdict[
+                "sequential_snapshot_not_atomic_or_future_file_lock"])
+
     def test_cli_success_is_blocked_and_invalid_has_no_stdout(self):
         out, err = io.StringIO(), io.StringIO()
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
