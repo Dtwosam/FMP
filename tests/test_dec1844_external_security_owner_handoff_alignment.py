@@ -42,8 +42,12 @@ class Phase8AIndependentHumanEvidenceHandoffTests(unittest.TestCase):
                 for ref in refs:
                     number = ref.rstrip("/").split("/")[-1]
                     self.assertIn("#" + number, row)
-        plain = data.replace("**", "").lower()
-        self.assertIn("navigation, not an authenticated proof", plain)
+        self.assertIn(
+            "[#779](https://github.com/Dtwosam/FMP/issues/779)", data)
+        self.assertIn(
+            "[#820](https://github.com/Dtwosam/FMP/pull/820)", data)
+        self.assertIn(
+            "[#821](https://github.com/Dtwosam/FMP/pull/821)", data)
 
     def test_no_source_only_matrix_grants_the_irreversible_run(self):
         data = HANDOFF.read_text(encoding="utf-8")
