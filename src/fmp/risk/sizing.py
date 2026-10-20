@@ -34,8 +34,21 @@ def _loss_usd_per_unit_decimal(
     return distance / stop
 
 
+def _finite_risk_result(value: Decimal, *, field: str) -> float:
+    try:
+        result = float(value)
+    except (ValueError, OverflowError) as exc:
+        raise ValueError(f"{field} must remain finite") from exc
+    if not math.isfinite(result):
+        raise ValueError(f"{field} must remain finite")
+    return result
+
+
 def loss_usd_per_unit(symbol: str, entry_price: float, stop_price: float) -> float:
-    return float(_loss_usd_per_unit_decimal(symbol, entry_price, stop_price))
+    return _finite_risk_result(
+        _loss_usd_per_unit_decimal(symbol, entry_price, stop_price),
+        field="loss per unit",
+    )
 
 
 def size_units(
@@ -47,9 +60,14 @@ def size_units(
 ) -> int:
     allowed = _positive_decimal(allowed_risk_usd, field="allowed risk")
     loss = _loss_usd_per_unit_decimal(symbol, entry_price, stop_price)
-    units = int((allowed / loss).to_integral_value(rounding=ROUND_FLOOR))
+    try:
+        units = int((allowed / loss).to_integral_value(rounding=ROUND_FLOOR))
+    except (ArithmeticError, ValueError, OverflowError) as exc:
+        raise ValueError("position size cannot be calculated safely") from exc
     if units <= 0:
         raise ValueError("position size must be positive")
+    if units > (2 ** 63 - 1):
+        raise ValueError("position size exceeds supported safety limit")
     return units
 
 
@@ -79,5 +97,5 @@ def pnl_usd(
         else (entry - exit_) * count
     )
     if symbol in {"EURUSD", "GBPUSD"}:
-        return float(quote_pnl)
-    return float(quote_pnl / exit_)
+        return _finite_risk_result(quote_pnl, field="trade PnL")
+    return _finite_risk_result(quote_pnl / exit_, field="trade PnL")
