@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import unittest
+from unittest import mock
 from datetime import datetime, timedelta, timezone
 
 from fmp.backtest.costs import FixedCommissionPerMillion, ZeroCommission, ZeroFinancing
@@ -68,6 +69,44 @@ def synthetic_trade(*, slippage_pips=0.0, commission_rate=None):
 
 
 class SyntheticIntegratedCostOrderingTests(unittest.TestCase):
+    def test_synthetic_engine_cannot_open_sockets_or_launch_subprocesses(self):
+        with mock.patch("subprocess.Popen",
+                        side_effect=AssertionError("network/process denied")):
+            with mock.patch("socket.socket",
+                            side_effect=AssertionError("network/process denied")):
+                run, trade = synthetic_trade(
+                    slippage_pips=0.5, commission_rate=30.0
+                )
+        self.assertEqual(len(run.trades), 1)
+        self.assertGreaterEqual(trade.commission_cost_usd, 0.0)
+
+    def test_synthetic_engine_never_opens_real_or_protected_data_files(self):
+        with mock.patch("builtins.open",
+                        side_effect=AssertionError("filesystem denied")):
+            with mock.patch("os.open",
+                            side_effect=AssertionError("filesystem denied")):
+                run, trade = synthetic_trade(
+                    slippage_pips=1.0, commission_rate=120.0
+                )
+        self.assertEqual(len(run.trades), 1)
+        self.assertEqual(
+            trade.decision_id, "SYNTHETIC-COST-ONLY"
+        )
+
+    def test_synthetic_engine_manifest_explicitly_excludes_market_data(self):
+        for slippage in (0.0, 0.5, 1.0):
+            with self.subTest(slippage=slippage):
+                run, _ = synthetic_trade(
+                    slippage_pips=slippage, commission_rate=30.0
+                )
+                identity = str(run.run_identity)
+                self.assertIn(
+                    "DEC-1865-INVENTED-CONSTANTS-NOT-MARKET-DATA", identity
+                )
+                self.assertIn("not_strategy_v1", identity)
+                self.assertNotIn("run385", identity)
+                self.assertNotIn("broker_order", identity)
+
     def test_more_commission_never_improves_synthetic_net_trade(self):
         trades = [
             synthetic_trade(slippage_pips=0.0, commission_rate=rate)[1]
