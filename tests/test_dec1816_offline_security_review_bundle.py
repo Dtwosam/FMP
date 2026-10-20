@@ -6,6 +6,7 @@ from pathlib import Path
 import runpy
 import tempfile
 import unittest
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 MOD = runpy.run_path(
@@ -86,6 +87,69 @@ class Phase8ABlockedSevenSourceIndexTests(unittest.TestCase):
         self.assertFalse(report["2023_run385_attempt1_authorized"])
         self.assertFalse(report["independent_external_admin_runner_proof_verified"])
         self.assertEqual(report["allowed_actions"], [])
+
+    @staticmethod
+    def _forged_source(module_path, builder_name, edit):
+        import copy
+        original_run = runpy.run_path
+        file_name = str(module_path)
+        module = original_run(file_name)
+        original_build = module[builder_name]
+
+        def altered(*args, **kwargs):
+            report = copy.deepcopy(original_build(*args, **kwargs))
+            edit(report)
+            return report
+
+        def intercept(path):
+            if str(path) == file_name:
+                return dict(module, **{builder_name: altered})
+            return original_run(path)
+
+        return mock.patch.object(MOD["runpy"], "run_path",
+                                 side_effect=intercept)
+
+    def test_rejects_unreviewed_approval_field_in_six_source_report(self):
+        def forge(report):
+            report["independently_approved_run385"] = True
+        with self._forged_source(
+                MOD["SIX"], "compile_blocked_handoff", forge):
+            with self.assertRaisesRegex(
+                    MOD["InvalidReviewBundle"], "unreviewed"):
+                BUILD()
+
+    def test_rejects_unreviewed_signoff_field_in_blank_worksheet(self):
+        def forge(report):
+            report["reviewer_signoff_authorizing_live_trade"] = "APPROVED"
+        with self._forged_source(
+                MOD["BLANK"], "report_blocked_blank_worksheet", forge):
+            with self.assertRaisesRegex(
+                    MOD["InvalidReviewBundle"], "unreviewed"):
+                BUILD()
+
+    def test_rejects_deleted_review_field_from_either_upstream(self):
+        for source_path, builder, field in (
+            (MOD["SIX"], "compile_blocked_handoff", "human_review_request"),
+            (MOD["BLANK"], "report_blocked_blank_worksheet", "source_material"),
+        ):
+            with self.subTest(field=field):
+                def forge(report):
+                    del report[field]
+                with self._forged_source(source_path, builder, forge):
+                    with self.assertRaises(MOD["InvalidReviewBundle"]):
+                        BUILD()
+
+    def test_cli_rejects_forged_source_authorization_without_stdout(self):
+        def forge(report):
+            report["security_proofs_autocompleted"] = True
+        out, err = io.StringIO(), io.StringIO()
+        with self._forged_source(
+                MOD["SIX"], "compile_blocked_handoff", forge):
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                status = MOD["main"]([])
+        self.assertEqual(status, 2)
+        self.assertEqual(out.getvalue(), "")
+        self.assertIn("BLOCKED:", err.getvalue())
 
     def test_cli_success_is_blocked_and_invalid_has_no_stdout(self):
         out, err = io.StringIO(), io.StringIO()
