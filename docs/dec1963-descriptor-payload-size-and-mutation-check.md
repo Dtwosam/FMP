@@ -1,0 +1,9 @@
+# DEC-1963 — Pinned artifact size preflight and during-read mutation evidence
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent source/tests/docs child of PR #2211 at `07d295c7045807ee5605b042a836405012cf786a`.
+
+The read-only verifier already holds a pinned root directory descriptor and opens each fixed evidence filename via no-follow regular-file descriptors. Previously it streamed payload bytes before comparing the manifest's claimed size to an OS-reported file size, and did not inspect descriptor metadata after hashing. Compare the pinned payload descriptor's `st_size` to the manifest **before** hashing. After streaming, refuse changes in the same open descriptor's device, inode, size, modification or status-change nanosecond timestamps. Continue to compare streamed byte count and SHA256 against the manifest; preserve unchanged writer-compatible artifacts and the required full-manifest admission before any payload opens.
+
+Two new source-defined methods verify a forged claimed size is rejected without starting a hash, and a simulated in-place file replacement while reading is refused as a changed artifact. **7,000 cumulative proposed methods**, +2 from #2211. The metadata check narrows observable file-change races but is not a cryptographic immutability proof against privileged mutation or a solution for all concurrent filesystem changes. Own exact-head Phase3/full historical-general CI and qualified independent review mandatory.
+
+Older verifier full regressions #2198–#2203 remain explicitly failed as recorded; #2210–#2211 must earn their own full results. Phase8A #779/#820/#821 and eight independent external proofs remain MISSING/BLOCKED. Accepted annual catalogue through 2022/run384, protected 2023/run385/attempt1, future years, Strategy V1 economics, shadow/demo/live broker capital and installed GitHub refs/workflows/rulesets/runners unauthorized. No protected data read/dispatch, merges, broker orders, real capital or profit.

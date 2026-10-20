@@ -730,11 +730,25 @@ def _verify_artifacts_in_root(root: Path, root_fd: int) -> dict[str, object]:
         observed_size = 0
         observed_hash = hashlib.sha256()
         with _open_regular_artifact(path, root_fd=root_fd) as handle:
+            # Inspect the pinned regular-file descriptor before consuming
+            # potentially expensive evidence payload bytes.
+            before = os.fstat(handle.fileno())
+            if before.st_size != size:
+                raise ValueError("artifact evidence size or SHA256 mismatch")
             while block := handle.read(1024 * 1024):
                 observed_size += len(block)
                 if observed_size > size:
                     raise ValueError("artifact evidence size or SHA256 mismatch")
                 observed_hash.update(block)
+            after = os.fstat(handle.fileno())
+            if (
+                before.st_dev != after.st_dev
+                or before.st_ino != after.st_ino
+                or before.st_size != after.st_size
+                or before.st_mtime_ns != after.st_mtime_ns
+                or before.st_ctime_ns != after.st_ctime_ns
+            ):
+                raise ValueError("artifact evidence changed during verification")
         if observed_size != size or observed_hash.hexdigest() != digest:
             raise ValueError("artifact evidence size or SHA256 mismatch")
     return manifest
