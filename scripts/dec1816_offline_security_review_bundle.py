@@ -350,7 +350,11 @@ def main(argv=None):
     if args.verify_report is not None and any(
         x is not None for x in (args.docs_root, args.workflow, args.worksheet)
     ):
-        parser.error("--verify-report cannot override frozen evidence inputs")
+        print(
+            "BLOCKED: --verify-report cannot override frozen evidence inputs",
+            file=sys.stderr,
+        )
+        return 2
     try:
         report = (
             verify_saved_blocked_review_packet(args.verify_report)
