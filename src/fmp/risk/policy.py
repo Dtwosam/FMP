@@ -65,8 +65,13 @@ class RiskState:
     reservations_usd: dict[str, float] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        if not math.isfinite(self.starting_equity_usd) or self.starting_equity_usd <= 0:
+        if type(self.starting_equity_usd) not in (int, float):
             raise ValueError("starting equity must be finite and positive")
+        try:
+            if not math.isfinite(self.starting_equity_usd) or self.starting_equity_usd <= 0:
+                raise ValueError("starting equity must be finite and positive")
+        except OverflowError as exc:
+            raise ValueError("starting equity must be finite and positive") from exc
         self.risk_equity_usd = self.starting_equity_usd
 
     @property
@@ -86,17 +91,33 @@ def roll_utc_day(state: RiskState, *, timestamp_utc: datetime) -> None:
     state.halt_timestamp_utc = None
 
 
+def _require_risk_position_id(position_id: str) -> None:
+    if (
+        type(position_id) is not str or not position_id.strip()
+        or any(ord(char) < 32 or ord(char) == 127 for char in position_id)
+    ):
+        raise ValueError("position_id must be a nonempty printable string")
+
+
 def reserve_risk(state: RiskState, *, position_id: str, amount_usd: float) -> None:
-    if not position_id:
-        raise ValueError("position_id must be non-empty")
+    _require_risk_position_id(position_id)
     if position_id in state.reservations_usd:
         raise ValueError(f"risk already reserved for position {position_id!r}")
-    if not math.isfinite(amount_usd) or amount_usd <= 0:
+    if type(amount_usd) not in (int, float):
         raise ValueError("reserved risk amount must be finite and positive")
+    try:
+        if not math.isfinite(amount_usd) or amount_usd <= 0:
+            raise ValueError("reserved risk amount must be finite and positive")
+        combined = state.total_reserved_risk_usd + amount_usd
+    except OverflowError as exc:
+        raise ValueError("reserved risk aggregate must remain finite") from exc
+    if not math.isfinite(combined):
+        raise ValueError("reserved risk aggregate must remain finite")
     state.reservations_usd[position_id] = amount_usd
 
 
 def release_risk(state: RiskState, *, position_id: str) -> float:
+    _require_risk_position_id(position_id)
     try:
         return state.reservations_usd.pop(position_id)
     except KeyError as exc:

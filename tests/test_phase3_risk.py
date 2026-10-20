@@ -260,6 +260,42 @@ class Phase3RiskPolicyTests(unittest.TestCase):
         self.assertFalse(result.approved)
         self.assertEqual(result.rejection_code, RejectionCode.SIMULTANEOUS_RISK)
 
+    def test_risk_state_rejects_invalid_initial_equity_without_bool_alias(self):
+        for value in (True, False, None, "10000", [], 10 ** 400,
+                      float("nan"), float("inf"), 0):
+            with self.subTest(value=repr(value)):
+                with self.assertRaisesRegex(ValueError, "equity"):
+                    RiskState(starting_equity_usd=value)
+
+    def test_risk_reservation_rejects_invalid_amount_before_mutation(self):
+        for value in (True, False, None, "25", [], float("inf"),
+                      float("nan"), 10 ** 400, -1):
+            with self.subTest(value=repr(value)):
+                state = RiskState(starting_equity_usd=10_000.0)
+                with self.assertRaisesRegex(ValueError, "risk amount"):
+                    reserve_risk(state, position_id="synthetic", amount_usd=value)
+                self.assertEqual(state.reservations_usd, {})
+
+    def test_risk_reservation_rejects_invalid_identifier_before_mutation(self):
+        for bad in (None, [], {}, 17, True, "", " ",
+                    "bad" + chr(10), "bad" + chr(27)):
+            with self.subTest(position_id=repr(bad)):
+                state = RiskState(starting_equity_usd=10_000.0)
+                with self.assertRaisesRegex(ValueError, "position_id"):
+                    reserve_risk(state, position_id=bad, amount_usd=25.0)
+                with self.assertRaisesRegex(ValueError, "position_id"):
+                    release_risk(state, position_id=bad)
+                self.assertEqual(state.reservations_usd, {})
+
+    def test_risk_reservation_rejects_aggregate_overflow_atomically(self):
+        state = RiskState(starting_equity_usd=1e308)
+        reserve_risk(state, position_id="first", amount_usd=1e308)
+        with self.assertRaisesRegex(ValueError, "aggregate"):
+            reserve_risk(state, position_id="second", amount_usd=1e308)
+        self.assertEqual(state.reservations_usd, {"first": 1e308})
+        self.assertEqual(release_risk(state, position_id="first"), 1e308)
+        self.assertEqual(state.reservations_usd, {})
+
     def test_release_returns_exact_reserved_risk(self) -> None:
         reserve_risk(self.state, position_id="P-1", amount_usd=25.0)
         self.assertEqual(release_risk(self.state, position_id="P-1"), 25.0)
