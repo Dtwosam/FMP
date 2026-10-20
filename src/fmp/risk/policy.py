@@ -78,7 +78,27 @@ class RiskState:
 
     @property
     def total_reserved_risk_usd(self) -> float:
-        return sum(self.reservations_usd.values())
+        # A mutable reservation map can be corrupted outside reserve_risk.
+        # Never let NaN/negative/overflowed values bypass the risk cap.
+        if type(self.reservations_usd) is not dict:
+            raise ValueError("reserved risk state must be a dictionary")
+        total = 0.0
+        for position_id, amount in self.reservations_usd.items():
+            try:
+                _require_risk_position_id(position_id)
+            except ValueError as exc:
+                raise ValueError("reserved risk state contains invalid position id") from exc
+            if type(amount) not in (int, float):
+                raise ValueError("reserved risk state contains invalid amount")
+            try:
+                if not math.isfinite(amount) or amount <= 0:
+                    raise ValueError("reserved risk state contains invalid amount")
+            except OverflowError as exc:
+                raise ValueError("reserved risk state contains invalid amount") from exc
+            total += amount
+            if not math.isfinite(total):
+                raise ValueError("reserved risk state aggregate must remain finite")
+        return total
 
 
 def roll_utc_day(state: RiskState, *, timestamp_utc: datetime) -> None:
@@ -234,6 +254,8 @@ def assess_decision(
     if type(state) is not RiskState:
         raise ValueError("state must be a RiskState record")
 
+    # Reject corrupted reservations before UTC rollover and trade approval.
+    existing_reserved_risk_usd = state.total_reserved_risk_usd
     roll_utc_day(state, timestamp_utc=timestamp_utc)
 
     if state.daily_halt_active:
@@ -255,7 +277,7 @@ def assess_decision(
 
     allowed_risk_usd = state.risk_equity_usd * fraction
     simultaneous_limit_usd = state.risk_equity_usd * config.max_simultaneous_risk_fraction
-    if state.total_reserved_risk_usd + allowed_risk_usd > simultaneous_limit_usd + 1e-12:
+    if existing_reserved_risk_usd + allowed_risk_usd > simultaneous_limit_usd + 1e-12:
         return _rejected(RejectionCode.SIMULTANEOUS_RISK, "simultaneous reserved risk limit would be exceeded")
 
     try:
