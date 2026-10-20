@@ -198,6 +198,44 @@ class Phase8AConsolidatedSourceOnlyHandoffTests(unittest.TestCase):
         self.assertIn("NOT current installed workflow", markdown)
         self.assertIn("**BLOCKED. NOT AUTHORIZED.", markdown)
 
+    def test_markdown_displays_complete_blocked_one_shot_identity(self):
+        report = BUILD()
+        md = MOD["format_blocked_handoff_markdown"](report)
+        self.assertIn("Frozen next run: 385", md)
+        self.assertIn("Annual segment: 2023", md)
+        self.assertIn("Attempt: 1", md)
+        self.assertIn("BLOCKED — no one-shot run may be consumed", md)
+
+    def test_markdown_displays_each_blocked_downstream_stage(self):
+        report = BUILD()
+        md = MOD["format_blocked_handoff_markdown"](report)
+        self.assertEqual(len(report["blocked_downstream_stages"]), 8)
+        for stage in report["blocked_downstream_stages"]:
+            with self.subTest(stage=stage):
+                self.assertIn(f"| {stage} | **BLOCKED** |", md)
+        self.assertEqual(md.count(" | **BLOCKED** |"), 8)
+
+    def test_markdown_lists_historic_eighteen_cell_scope_without_attestation(self):
+        report = BUILD()
+        md = MOD["format_blocked_handoff_markdown"](report)
+        self.assertIn("Declared historical research cells: 18", md)
+        self.assertIn(
+            "Declared historical distinct pair/timeframe input sources: 9", md)
+        self.assertIn(
+            "not reauthenticated against any live runner", md)
+        self.assertIn("NOT CURRENT", md)
+
+    def test_both_human_and_json_formats_remain_nonzero_blocked(self):
+        for fmt in ("markdown", "json"):
+            with self.subTest(fmt=fmt):
+                output, errors = io.StringIO(), io.StringIO()
+                with contextlib.redirect_stdout(output), contextlib.redirect_stderr(errors):
+                    code = MOD["main"](["--format", fmt])
+                self.assertEqual(code, 3)
+                self.assertEqual(errors.getvalue(), "")
+                self.assertTrue(output.getvalue())
+        self.assertIs(BUILD()["protected_2023_run385_authorized"], False)
+
     def test_consolidated_handoff_never_invokes_external_permission_or_trading(self):
         report = BUILD()
         self.assertIs(report["no_external_actions_performed"], True)

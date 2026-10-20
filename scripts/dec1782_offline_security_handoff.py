@@ -275,6 +275,32 @@ def format_blocked_handoff_markdown(report):
         )
     entries.extend([
         "",
+        "## Irreversible annual research identity — NO DISPATCH",
+        "",
+        f"Annual segment: ${report['one_shot_run_identity']['segment']}",
+        f"Frozen next run: ${report['one_shot_run_identity']['run_number']}",
+        f"Attempt: ${report['one_shot_run_identity']['attempt_number']}",
+        "**Action status: BLOCKED — no one-shot run may be consumed.**",
+        "",
+        "## All downstream research and trading stages — BLOCKED",
+        "",
+        "| Stage | Status |",
+        "| --- | --- |",
+    ])
+    for stage in report["blocked_downstream_stages"]:
+        entries.append(f"| {stage} | **BLOCKED** |")
+    entries.extend([
+        "",
+        "## Historical installed-workflow fixture scope (NOT CURRENT)",
+        "",
+        f"Declared historical research cells: "
+        f"${report['installed_historical_cell_count']} "
+        "(EURUSD, GBPUSD, USDJPY × 5m, 15m, 1h × 60/240-minute horizons).",
+        f"Declared historical distinct pair/timeframe input sources: "
+        f"${report['installed_historical_pair_timeframe_source_count']}.",
+        "These declarations were not reauthenticated against any live runner "
+        "or protected market dataset.",
+        "",
         "## Installed workflow observation, not runner attestation",
         "",
         "| Job | Zero-based in-job runtime gate index | Pre-gate source operations |",
