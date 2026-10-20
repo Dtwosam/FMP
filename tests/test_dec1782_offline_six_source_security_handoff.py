@@ -586,6 +586,80 @@ class Phase8AConsolidatedSourceOnlyHandoffTests(unittest.TestCase):
                 self.assertEqual(out.getvalue(), "")
                 self.assertIn("BLOCKED:", err.getvalue())
 
+    @staticmethod
+    def _with_forged_upstream_report(script_path, reporter_name, modify):
+        import copy
+        original_run = runpy.run_path
+        script_path = str(script_path)
+        module = original_run(script_path)
+        build_report = module[reporter_name]
+
+        def altered_report(*args, **kwargs):
+            report = copy.deepcopy(build_report(*args, **kwargs))
+            modify(report)
+            return report
+
+        def intercept(path):
+            if str(path) == script_path:
+                return dict(module, **{reporter_name: altered_report})
+            return original_run(path)
+
+        return mock.patch.object(MOD["runpy"], "run_path",
+                                 side_effect=intercept)
+
+    def test_compiler_rejects_upstream_shadow_and_demo_approval_claims(self):
+        for key in ("allows_shadow", "allows_demo"):
+            with self.subTest(key=key):
+                def forge(report):
+                    report[key] = True
+                with self._with_forged_upstream_report(
+                        MOD["DOC_AUDIT"], "render_readiness", forge):
+                    with self.assertRaisesRegex(
+                            MOD["InvalidHandoff"], "non-authorizing"):
+                        BUILD()
+
+    def test_compiler_rejects_upstream_documentary_schema_and_decision_drift(self):
+        for key, fake in (
+            ("schema", "source_only_approved_v2"),
+            ("decision", "DEC-APPROVE-385"),
+        ):
+            with self.subTest(key=key):
+                def forge(report):
+                    report[key] = fake
+                with self._with_forged_upstream_report(
+                        MOD["DOC_AUDIT"], "render_readiness", forge):
+                    with self.assertRaises(MOD["InvalidHandoff"]):
+                        BUILD()
+
+    def test_compiler_rejects_workflow_live_ref_or_fixture_claim_drift(self):
+        for key, fake in (
+            ("source_sha_and_live_ref_at_dispatch_not_authenticated", False),
+            ("source_material", "live_installed_runner_attested"),
+            ("source_workflow", ".github/workflows/unreviewed.yml"),
+        ):
+            with self.subTest(key=key):
+                def forge(report):
+                    report[key] = fake
+                with self._with_forged_upstream_report(
+                        MOD["WORKFLOW_AUDIT"], "report_blocked_admission", forge):
+                    with self.assertRaisesRegex(
+                            MOD["InvalidHandoff"], "no verified execution authority"):
+                        BUILD()
+
+    def test_both_cli_formats_reject_forged_shadow_permission_without_stdout(self):
+        def forge(report):
+            report["allows_shadow"] = True
+        for fmt in ("json", "markdown"):
+            with self.subTest(fmt=fmt):
+                stdout, stderr = io.StringIO(), io.StringIO()
+                with self._with_forged_upstream_report(
+                        MOD["DOC_AUDIT"], "render_readiness", forge):
+                    with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+                        code = MOD["main"](["--format", fmt])
+                self.assertEqual(code, 2)
+                self.assertEqual(stdout.getvalue(), "")
+                self.assertIn("BLOCKED:", stderr.getvalue())
+
     def test_consolidated_handoff_never_invokes_external_permission_or_trading(self):
         report = BUILD()
         self.assertIs(report["no_external_actions_performed"], True)
