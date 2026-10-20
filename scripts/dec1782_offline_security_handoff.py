@@ -33,6 +33,34 @@ REVIEWED_RUNTIME_GATES = {
     "annual_freeze": 4,
 }
 
+# Freeze the complete fields carried by each reviewed upstream diagnostic.
+# An unknown field such as an unreviewed approval must not silently vanish
+# from the consolidated JSON/Markdown handoff.
+DOCUMENTARY_REPORT_KEYS = frozenset((
+    "schema", "decision", "mode", "documentary_status",
+    "allows_protected_run", "allows_broker_actions", "allows_shadow",
+    "allows_demo", "allows_live_trading", "source_observation_date_utc",
+    "source_main_sha", "current_main_verified",
+    "current_rulesets_and_os_verified", "fresh_run_inventory_verified",
+    "one_shot_run_identity", "missing_external_proofs",
+    "blocked_downstream_stages", "strategy_v1_profit",
+    "proposed_remediation_paths_not_authorized", "source_sha256",
+    "no_actions_were_performed", "next_human_milestone",
+))
+WORKFLOW_REPORT_KEYS = frozenset((
+    "schema", "disposition", "source_workflow", "source_material",
+    "installed_workflow_file_absent_from_ci_not_an_attestation",
+    "historical_source_git_blob_sha1", "historical_source_sha256",
+    "source_sha_and_live_ref_at_dispatch_not_authenticated",
+    "observed_jobs", "historical_matrix_inventory",
+    "historical_pregate_payloads", "job_count", "installed_workflow_requires_main",
+    "precheckout_admission_proven", "preinstall_admission_proven",
+    "authoritative_pre_dispatch_ref_lock_proven",
+    "protected_2023_run385_attempt1_authorized",
+    "annual_research_dispatch_authorized", "broker_or_trading_authorized",
+    "allowed_actions", "next_external_review",
+))
+
 class InvalidHandoff(ValueError):
     """Any mismatched source/readiness state must reject the complete report."""
 
@@ -47,6 +75,16 @@ def compile_blocked_handoff(docs_root=DOCS, workflow=WORKFLOW):
     workflow_module = runpy.run_path(str(WORKFLOW_AUDIT))
     documentary = docs_module["render_readiness"](Path(docs_root))
     installed = workflow_module["report_blocked_admission"](Path(workflow))
+    _require(
+        type(documentary) is dict
+        and set(documentary) == DOCUMENTARY_REPORT_KEYS,
+        "documentary source report has unknown, missing or malformed fields",
+    )
+    _require(
+        type(installed) is dict
+        and set(installed) == WORKFLOW_REPORT_KEYS,
+        "historical workflow source report has unknown, missing or malformed fields",
+    )
     expected_proofs = docs_module["PROOFS"]
     _require(
         documentary.get("schema") == "fmp_dec1752_offline_blocker_diagnostic_v1"
