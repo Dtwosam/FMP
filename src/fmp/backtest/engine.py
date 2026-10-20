@@ -70,10 +70,17 @@ class BacktestConfig:
     execution_timing_mode: str = NEXT_SUPPLIED_BAR
 
     def __post_init__(self) -> None:
-        if not math.isfinite(self.starting_equity_usd) or self.starting_equity_usd <= 0:
+        if type(self.starting_equity_usd) not in (int, float):
             raise ValueError("starting equity must be finite and positive")
-        if not math.isfinite(self.slippage_pips) or self.slippage_pips < 0:
+        if type(self.slippage_pips) not in (int, float):
             raise ValueError("slippage pips must be finite and non-negative")
+        try:
+            if not math.isfinite(self.starting_equity_usd) or self.starting_equity_usd <= 0:
+                raise ValueError("starting equity must be finite and positive")
+            if not math.isfinite(self.slippage_pips) or self.slippage_pips < 0:
+                raise ValueError("slippage pips must be finite and non-negative")
+        except OverflowError as exc:
+            raise ValueError("starting equity and slippage must be finite") from exc
         _require_utc(self.requested_start_utc, field="requested_start_utc")
         _require_utc(self.requested_end_utc, field="requested_end_utc")
         if self.requested_end_utc < self.requested_start_utc:

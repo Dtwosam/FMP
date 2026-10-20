@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import unittest
+from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 
 from fmp.backtest.costs import ZeroCommission, ZeroFinancing
@@ -173,6 +174,29 @@ class Phase3EngineTests(unittest.TestCase):
         self.assertEqual(run.trades, ())
         self.assertEqual(len(run.rejections), 1)
         self.assertEqual(run.rejections[0].code, RejectionCode.TIMING_CONTRACT)
+
+    def test_backtest_config_rejects_boolean_or_non_numeric_equity(self):
+        for value in (True, False, "10000", None, 10 ** 400):
+            with self.subTest(value=repr(value)):
+                with self.assertRaisesRegex(ValueError, "equity|finite"):
+                    replace(config(), starting_equity_usd=value)
+
+    def test_backtest_config_rejects_boolean_or_non_numeric_slippage(self):
+        for value in (True, False, "1.0", None, 10 ** 400):
+            with self.subTest(value=repr(value)):
+                with self.assertRaisesRegex(ValueError, "slippage|finite"):
+                    replace(config(), slippage_pips=value)
+
+    def test_backtest_config_keeps_valid_integer_and_float_scalars(self):
+        for equity, pips in ((10000, 0), (10000.0, 0.0),
+                             (12500.5, 0.5)):
+            with self.subTest(equity=equity, pips=pips):
+                candidate = replace(
+                    config(), starting_equity_usd=equity,
+                    slippage_pips=pips,
+                )
+                self.assertEqual(candidate.starting_equity_usd, equity)
+                self.assertEqual(candidate.slippage_pips, pips)
 
     def test_backtest_config_rejects_unknown_execution_timing_mode(self) -> None:
         with self.assertRaises(ValueError):
