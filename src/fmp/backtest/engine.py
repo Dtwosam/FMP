@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+from copy import deepcopy
 from collections import defaultdict
 from dataclasses import dataclass
 from types import MappingProxyType
@@ -108,12 +109,17 @@ class BacktestConfig:
                 raise ValueError(
                     "decision_config keys must be nonempty printable strings"
                 )
-        # A frozen dataclass alone cannot protect a caller-owned mutable map.
-        # Copy its top level and prevent later edits to the stored mapping.
-        # Nested values are outside this deliberately scoped contract.
+        # Freeze top-level edits and detach nested caller-owned dictionaries,
+        # lists and other deepcopy-compatible values. This protects run
+        # provenance from changes to the original objects, but is not a
+        # guarantee of deep immutability of the retained config.
+        try:
+            metadata_snapshot = deepcopy(dict(self.decision_config))
+        except (TypeError, ValueError, RecursionError) as exc:
+            raise ValueError("decision_config cannot be snapshotted") from exc
         object.__setattr__(
             self, "decision_config",
-            MappingProxyType(dict(self.decision_config)),
+            MappingProxyType(metadata_snapshot),
         )
         _require_utc(self.requested_start_utc, field="requested_start_utc")
         _require_utc(self.requested_end_utc, field="requested_end_utc")

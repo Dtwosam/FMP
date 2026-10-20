@@ -357,6 +357,36 @@ class Phase3EngineTests(unittest.TestCase):
         self.assertEqual(identity["decision_config"], {"source": "SYNTHETIC-ONLY"})
         self.assertEqual(dict(instance.decision_config), {"source": "SYNTHETIC-ONLY"})
 
+    def test_backtest_config_does_not_alias_nested_caller_metadata(self):
+        nested = {"thresholds": [1, 2], "labels": {"scope": "SYNTHETIC"}}
+        original = {"scenario": nested}
+        instance = replace(config(), decision_config=original)
+        nested["thresholds"].append(999)
+        nested["labels"]["scope"] = "FORGED-AFTER-CREATION"
+        original["scenario"] = {"thresholds": [-1]}
+        self.assertEqual(
+            instance.decision_config["scenario"],
+            {"thresholds": [1, 2], "labels": {"scope": "SYNTHETIC"}},
+        )
+
+    def test_backtest_identity_keeps_original_nested_caller_values(self):
+        provided = {"cost_cases": [0, {"commission": 30.0}]}
+        instance = replace(config(), decision_config=provided)
+        provided["cost_cases"][1]["commission"] = -30.0
+        identity = _run_identity(instance, ())
+        self.assertEqual(
+            identity["decision_config"],
+            {"cost_cases": [0, {"commission": 30.0}]},
+        )
+
+    def test_deepcopy_unsafe_metadata_raises_controlled_error(self):
+        class Uncopyable:
+            def __deepcopy__(self, memo):
+                raise TypeError("cannot copy unsafe mutable identity")
+
+        with self.assertRaisesRegex(ValueError, "cannot be snapshotted"):
+            replace(config(), decision_config={"unsafe": Uncopyable()})
+
     def test_no_trade_is_preserved_as_reasoned_record(self) -> None:
         decision = Decision(
             decision_id="NT-1",
