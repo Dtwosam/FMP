@@ -4,6 +4,7 @@ import hashlib
 import json
 import tempfile
 import unittest
+from enum import Enum
 from dataclasses import dataclass
 from unittest import mock
 from dataclasses import replace
@@ -997,6 +998,64 @@ class Phase3ReportingTests(unittest.TestCase):
                         json.loads((target / "metrics.json").read_text("utf-8")),
                         metrics,
                     )
+
+    def test_artifact_writer_refuses_unsupported_enum_before_io(self):
+        class UntrustedEnum(Enum):
+            REASON = "fabricated"
+        run = BacktestRun(
+            run_identity={"reason": UntrustedEnum.REASON}, trades=(),
+            rejections=(), equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            target = Path(root) / "blocked"
+            with mock.patch("pathlib.Path.mkdir", side_effect=AssertionError(
+                "untrusted enum must never publish"
+            )):
+                with self.assertRaisesRegex(ValueError, "evidence enum"):
+                    write_backtest_artifacts(run, target)
+            self.assertFalse(target.exists())
+
+    def test_artifact_writer_refuses_datetime_subclass_getters(self):
+        class UntrustedDatetime(datetime):
+            def utcoffset(self):
+                raise AssertionError("untrusted datetime getter invoked")
+
+        untrusted = UntrustedDatetime(
+            2026, 9, 14, tzinfo=timezone.utc,
+        )
+        run = BacktestRun(
+            run_identity={"timestamp": untrusted}, trades=(),
+            rejections=(), equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            target = Path(root) / "blocked"
+            with mock.patch("pathlib.Path.mkdir", side_effect=AssertionError(
+                "datetime subclass cannot publish"
+            )):
+                with self.assertRaisesRegex(ValueError, "datetime subtype"):
+                    write_backtest_artifacts(run, target)
+            self.assertFalse(target.exists())
+
+    def test_artifact_writer_serializes_canonical_enum_and_utc_datetime(self):
+        run = BacktestRun(
+            run_identity={
+                "direction": Direction.LONG,
+                "reason": RejectionCode.NO_TRADE,
+                "time": BASE_TS,
+            },
+            trades=(), rejections=(), equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            target = Path(root) / "valid"
+            write_backtest_artifacts(run, target)
+            identity = json.loads(
+                (target / "summary.json").read_text("utf-8")
+            )["run_identity"]
+            self.assertEqual(identity["direction"], Direction.LONG.value)
+            self.assertEqual(identity["reason"], RejectionCode.NO_TRADE.value)
+            self.assertEqual(identity["time"], BASE_TS.isoformat().replace(
+                "+00:00", "Z"
+            ))
 
     def test_artifact_bytes_and_digests_are_deterministic(self) -> None:
         one_trade = trade(trade_id="T-1", minutes=1, net_pnl_usd=10.0)
