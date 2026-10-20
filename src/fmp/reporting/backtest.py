@@ -755,3 +755,84 @@ def _verify_artifacts_in_root(root: Path, root_fd: int) -> dict[str, object]:
         if observed_size != size or observed_hash.hexdigest() != digest:
             raise ValueError("artifact evidence size or SHA256 mismatch")
     return manifest
+
+
+def _audit_json_unique_pairs(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    result: dict[str, object] = {}
+    for name, value in pairs:
+        if name in result:
+            raise ValueError("artifact report contains duplicate JSON key")
+        result[name] = value
+    return result
+
+
+def _audit_load_json(payload: bytes) -> object:
+    def refuse_nonfinite(value: str) -> object:
+        raise ValueError("artifact report contains non-finite JSON constant")
+
+    try:
+        return json.loads(
+            payload, object_pairs_hook=_audit_json_unique_pairs,
+            parse_constant=refuse_nonfinite,
+        )
+    except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+        raise ValueError("artifact report must contain valid JSON") from exc
+
+
+def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
+    """Independently inspect cross-file counts after digest verification.
+
+    This is a non-atomic local consistency audit, not source authentication.
+    """
+    root = Path(out_dir)
+    verify_backtest_artifacts(root)
+    directory_flag = getattr(os, "O_DIRECTORY", None)
+    nofollow = getattr(os, "O_NOFOLLOW", None)
+    if type(directory_flag) is not int or type(nofollow) is not int:
+        raise ValueError("artifact audit requires no-follow directory opening")
+    try:
+        root_fd = os.open(root, os.O_RDONLY | directory_flag | nofollow)
+    except OSError as exc:
+        raise ValueError("artifact audit requires a direct directory") from exc
+    try:
+        def read_small_json(name: str) -> object:
+            with _open_regular_artifact(root / name, root_fd=root_fd) as handle:
+                data = handle.read(1024 * 1024 + 1)
+            if len(data) > 1024 * 1024:
+                raise ValueError("artifact report JSON exceeds audit size limit")
+            return _audit_load_json(data)
+
+        summary = read_small_json("summary.json")
+        metrics = read_small_json("metrics.json")
+        if type(summary) is not dict or type(metrics) is not dict:
+            raise ValueError("artifact report summary and metrics must be objects")
+        counts: dict[str, int] = {}
+        for field in ("trade_count", "rejection_count", "equity_checkpoint_count"):
+            count = summary.get(field)
+            if type(count) is not int or count < 0:
+                raise ValueError(f"artifact report {field} must be a nonnegative integer")
+            counts[field] = count
+        checkpoints = summary.get("equity_checkpoints")
+        if type(checkpoints) is not list or len(checkpoints) != counts["equity_checkpoint_count"]:
+            raise ValueError("artifact report equity checkpoint count conflicts with summary")
+
+        for name, field in (("trades.jsonl", "trade_count"),
+                            ("rejections.jsonl", "rejection_count")):
+            observed = 0
+            with _open_regular_artifact(root / name, root_fd=root_fd) as handle:
+                while line := handle.readline(1024 * 1024 + 1):
+                    if len(line) > 1024 * 1024:
+                        raise ValueError("artifact report JSONL line exceeds audit size limit")
+                    if type(_audit_load_json(line)) is not dict:
+                        raise ValueError("artifact report JSONL record must be an object")
+                    observed += 1
+            if observed != counts[field]:
+                raise ValueError(f"artifact report {field} conflicts with JSONL records")
+        if "trade_count" in metrics and (
+            type(metrics["trade_count"]) is not int
+            or metrics["trade_count"] != counts["trade_count"]
+        ):
+            raise ValueError("artifact report metric trade_count conflicts with summary")
+        return counts
+    finally:
+        os.close(root_fd)

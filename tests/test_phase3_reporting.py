@@ -22,6 +22,7 @@ from fmp.contracts import (
     TradeRecord,
 )
 from fmp.reporting.backtest import (
+    audit_backtest_artifact_structure,
     compute_backtest_metrics,
     verify_backtest_artifacts,
     write_backtest_artifacts,
@@ -2072,6 +2073,71 @@ class Phase3ReportingTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "hardlinked"):
                 verify_backtest_artifacts(target)
             self.assertTrue(alias.read_bytes().startswith(b"{"))
+
+    def test_audit_reconciles_normal_writer_trade_rejection_counts(self):
+        row = trade(trade_id="SAMPLE", minutes=1, net_pnl_usd=10.0)
+        rejection = RejectionRecord(
+            decision_id="NO-ENTRY", symbol="EURUSD",
+            decision_timestamp_utc=BASE_TS,
+            evaluated_timestamp_utc=BASE_TS,
+            code=RejectionCode.NO_TRADE, explanation="synthetic",
+        )
+        run = BacktestRun(
+            run_identity={}, trades=(row,), rejections=(rejection,),
+            equity_checkpoints=(EquityCheckpoint(BASE_TS, 10_000.0),),
+            metrics={"trade_count": 1},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            folder = Path(root) / "artifacts"
+            write_backtest_artifacts(run, folder)
+            self.assertEqual(audit_backtest_artifact_structure(folder), {
+                "trade_count": 1, "rejection_count": 1,
+                "equity_checkpoint_count": 1,
+            })
+
+    def test_audit_rejects_rehashed_forged_summary_trade_count(self):
+        run = BacktestRun(
+            run_identity={}, trades=(), rejections=(),
+            equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            folder = Path(root) / "artifacts"
+            manifest = write_backtest_artifacts(run, folder)
+            summary_file = folder / "summary.json"
+            summary = json.loads(summary_file.read_text("utf-8"))
+            summary["trade_count"] = 1
+            changed = (json.dumps(summary) + "\n").encode("utf-8")
+            summary_file.write_bytes(changed)
+            for entry in manifest["artifacts"]:
+                if entry["path"] == "summary.json":
+                    entry["size_bytes"] = len(changed)
+                    entry["sha256"] = hashlib.sha256(changed).hexdigest()
+            (folder / "manifest.json").write_text(
+                json.dumps(manifest), encoding="utf-8",
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "trade_count"):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_rejects_rehashed_non_json_trade_line(self):
+        run = BacktestRun(
+            run_identity={}, trades=(), rejections=(),
+            equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            folder = Path(root) / "artifacts"
+            manifest = write_backtest_artifacts(run, folder)
+            forged = b"not JSON at all\n"
+            (folder / "trades.jsonl").write_bytes(forged)
+            for entry in manifest["artifacts"]:
+                if entry["path"] == "trades.jsonl":
+                    entry["size_bytes"] = len(forged)
+                    entry["sha256"] = hashlib.sha256(forged).hexdigest()
+            (folder / "manifest.json").write_text(
+                json.dumps(manifest), encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "valid JSON"):
+                audit_backtest_artifact_structure(folder)
 
     def test_artifact_bytes_and_digests_are_deterministic(self) -> None:
         one_trade = trade(trade_id="T-1", minutes=1, net_pnl_usd=10.0)
