@@ -443,6 +443,68 @@ class Phase8ABlockedSevenSourceIndexTests(unittest.TestCase):
             self.assertEqual(out.getvalue(), "")
             self.assertIn("BLOCKED:", err.getvalue())
 
+    def test_saved_json_verifier_rejects_parent_directory_symlink(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            real = root / "real"
+            real.mkdir()
+            packet = real / "packet.json"
+            packet.write_text(json.dumps(BUILD()), encoding="utf-8")
+            alias = root / "alias"
+            alias.symlink_to(real, target_is_directory=True)
+            with self.assertRaises((OSError, ValueError)):
+                MOD["verify_saved_blocked_review_packet"](alias / "packet.json")
+
+    def test_saved_json_verifier_rejects_oversized_file(self):
+        with tempfile.TemporaryDirectory() as folder:
+            packet = Path(folder) / "packet.json"
+            packet.write_bytes(b" " * (1024 * 1024 + 1))
+            with self.assertRaises((OSError, ValueError)):
+                MOD["verify_saved_blocked_review_packet"](packet)
+
+    def test_saved_json_verifier_rejects_nonobject_and_nonstrict_numeric_alias(self):
+        for value in ('[]', 'null', 'true', '{"attempt": 1.0}',
+                      '{"approval": 1e999}'):
+            with self.subTest(value=value):
+                with tempfile.TemporaryDirectory() as folder:
+                    path = Path(folder) / "packet.json"
+                    path.write_text(value, encoding="utf-8")
+                    with self.assertRaises(MOD["InvalidReviewBundle"]):
+                        MOD["verify_saved_blocked_review_packet"](path)
+
+    def test_verifier_cli_refuses_mixed_source_override_without_stdout(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            path = root / "packet.json"
+            path.write_text(json.dumps(BUILD()), encoding="utf-8")
+            for option in ("--docs-root", "--workflow", "--worksheet"):
+                with self.subTest(option=option):
+                    out, err = io.StringIO(), io.StringIO()
+                    with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                        code = MOD["main"]([
+                            "--verify-report", str(path), option, str(root)
+                        ])
+                    self.assertEqual(code, 2)
+                    self.assertEqual(out.getvalue(), "")
+                    self.assertIn("BLOCKED:", err.getvalue())
+
+    def test_verifier_never_changes_the_saved_input_file(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "packet.json"
+            original = json.dumps(BUILD(), indent=2).encode("utf-8")
+            path.write_bytes(original)
+            for fmt in ("json", "markdown", "requests"):
+                with self.subTest(fmt=fmt):
+                    out, err = io.StringIO(), io.StringIO()
+                    with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                        code = MOD["main"]([
+                            "--verify-report", str(path), "--format", fmt
+                        ])
+                    self.assertEqual(code, 3)
+                    self.assertEqual(err.getvalue(), "")
+                    self.assertEqual(path.read_bytes(), original)
+                    self.assertIn("BLOCKED", out.getvalue())
+
     def test_cli_success_is_blocked_and_invalid_has_no_stdout(self):
         out, err = io.StringIO(), io.StringIO()
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
