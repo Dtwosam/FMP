@@ -305,6 +305,15 @@ def format_blocked_handoff_markdown(report):
     )
     _assert_human_review_evidence_is_frozen(report)
     proof_rows = report["eight_missing_independent_proofs"]
+    docs = runpy.run_path(str(DOC_AUDIT))
+    criteria = docs["PROOF_ACCEPTANCE_CRITERIA"]
+    _require(
+        type(criteria) is dict
+        and set(criteria) == set(docs["PROOFS"])
+        and all(type(criteria[key]) is str and criteria[key].strip()
+                for key in docs["PROOFS"]),
+        "eight independently frozen external review requirements missing",
+    )
     entries = [
         "# Phase 8A — consolidated independent security-review handoff",
         "",
@@ -325,6 +334,20 @@ def format_blocked_handoff_markdown(report):
         entries.append(
             f"| {row['id']} | {row['review_role']} | **MISSING** |"
         )
+    entries.extend([
+        "",
+        "## Exact independent evidence required from each reviewer",
+        "",
+        "These are requirements, not attestations. Each item is still MISSING.",
+        "",
+    ])
+    for row in proof_rows:
+        entries.extend([
+            f"**{row['id']}** — {row['review_role']} (MISSING)",
+            "",
+            criteria[row["id"]],
+            "",
+        ])
     entries.extend([
         "",
         "## Irreversible annual research identity — NO DISPATCH",
