@@ -1,0 +1,9 @@
+# DEC-1946 — Invalidate stale manifest before rewriting artifacts
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent source/tests/docs child of #2194 `d457922f8a647f476f549d5cd49b595840e4e281`.
+
+`write_backtest_artifacts` previously published each payload with per-file atomic replacement, followed by a manifest last. A pre-existing manifest from a successful prior write could remain present when a later write failed partway through, causing a mixed-generation folder to retain stale apparently-valid evidence metadata. After all input validations and serialization, but **before rewriting any payload file**, remove the prior `manifest.json` leaf. A failed replacement now leaves no manifest claiming the output set is coherent; preflight rejection leaves the previously valid output and manifest entirely untouched. The newly written manifest still comes only after all payload replacements and digest reads. This does not create a crash-atomic multi-file transaction or prove protection against concurrent directory mutation.
+
+Two synthetic methods verify an existing manifest is invalidated on a simulated subsequent write failure and kept byte-identical when malformed metrics are refused during preflight. **6,976 cumulative proposed source-defined methods**. Own exact-head Phase3/full historical-general CI and independent filesystem security review required.
+
+Earlier PR #2178/#2189/#2190 full failures are preserved. Phase8A #779/#820/#821 and eight external administrator/ref/installed workflow/real runner OS isolation/DEC609–610 provenance/fresh protected 2023 inventory/human admission proofs remain MISSING/BLOCKED. Accepted catalogue ends 2022/run384; protected 2023/run385/attempt1, later annual research, Strategy V1 economics, shadow/demo/live brokers/capital and installed GitHub refs/workflows/rulesets/runners remain unauthorized. No protected dispatch, merge, trading, real funds or profit.

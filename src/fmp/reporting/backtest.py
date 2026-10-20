@@ -570,6 +570,10 @@ def write_backtest_artifacts(run: BacktestRun, out_dir: Path) -> dict[str, objec
     if out_dir.is_symlink():
         raise ValueError("artifact output directory must not be a symlink")
     out_dir.mkdir(parents=True, exist_ok=True)
+    # Invalidate an old manifest *before* modifying any payload files.
+    # If a later file replacement fails, mixed-generation artifacts must
+    # not retain a manifest that falsely appears to certify the directory.
+    (out_dir / "manifest.json").unlink(missing_ok=True)
     for name, data in payloads.items():
         _atomic_write(out_dir / name, data)
 
