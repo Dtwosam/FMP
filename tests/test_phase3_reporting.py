@@ -1678,6 +1678,46 @@ class Phase3ReportingTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "duplicate JSON key"):
                 verify_backtest_artifacts(path)
 
+    def test_verifier_streams_large_evidence_file_without_read_bytes(self):
+        run = BacktestRun(
+            run_identity={}, trades=(), rejections=(),
+            equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            path = Path(root) / "artifacts"
+            manifest = write_backtest_artifacts(run, path)
+            large = b"x" * (2 * 1024 * 1024 + 17)
+            (path / "trades.jsonl").write_bytes(large)
+            for entry in manifest["artifacts"]:
+                if entry["path"] == "trades.jsonl":
+                    entry["size_bytes"] = len(large)
+                    entry["sha256"] = hashlib.sha256(large).hexdigest()
+            (path / "manifest.json").write_text(
+                json.dumps(manifest), encoding="utf-8",
+            )
+            original_read = Path.read_bytes
+
+            def forbid_payload_read(self):
+                if self.name == "trades.jsonl":
+                    raise AssertionError("payload must be streamed")
+                return original_read(self)
+
+            with mock.patch.object(Path, "read_bytes", forbid_payload_read):
+                self.assertEqual(verify_backtest_artifacts(path), manifest)
+
+    def test_verifier_streaming_stops_at_declared_size(self):
+        run = BacktestRun(
+            run_identity={}, trades=(), rejections=(),
+            equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            path = Path(root) / "artifacts"
+            write_backtest_artifacts(run, path)
+            with (path / "trades.jsonl").open("ab") as handle:
+                handle.write(b"excess")
+            with self.assertRaisesRegex(ValueError, "size or SHA256 mismatch"):
+                verify_backtest_artifacts(path)
+
     def test_artifact_bytes_and_digests_are_deterministic(self) -> None:
         one_trade = trade(trade_id="T-1", minutes=1, net_pnl_usd=10.0)
         rejection = RejectionRecord(
