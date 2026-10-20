@@ -297,6 +297,39 @@ class Phase3ContractTests(unittest.TestCase):
         self.assertIs(valid.direction, Direction.LONG)
         self.assertEqual(valid.requested_risk_fraction, 0.0025)
 
+    def test_decision_reasons_reject_nontext_unprintable_and_oversized_values(self):
+        ts = datetime(2026, 9, 14, tzinfo=timezone.utc)
+        original = Decision(
+            decision_id="SYNTHETIC-REASON", symbol="EURUSD",
+            decision_timestamp_utc=ts, direction=Direction.NO_TRADE,
+            earliest_executable_timestamp_utc=None,
+            requested_risk_fraction=None, stop_price=None, target_price=None,
+        )
+        for field, limit in (("reason_code", 128), ("reason_text", 4096)):
+            invalid = (True, 42, [], {}, b"not-text", "bad\nline",
+                       "bad\x00value", "bad\ud800value", "x" * (limit + 1))
+            for value in invalid:
+                with self.subTest(field=field, value=repr(value)[:80]):
+                    with self.assertRaisesRegex(ValueError, field):
+                        replace(original, **{field: value})
+
+    def test_decision_reasons_keep_existing_empty_and_unicode_controls(self):
+        ts = datetime(2026, 9, 14, tzinfo=timezone.utc)
+        original = Decision(
+            decision_id="SYNTHETIC-REASON", symbol="EURUSD",
+            decision_timestamp_utc=ts, direction=Direction.NO_TRADE,
+            earliest_executable_timestamp_utc=None,
+            requested_risk_fraction=None, stop_price=None, target_price=None,
+        )
+        for value in ("", "FILTERED", "Café 日本語", "x" * 128):
+            with self.subTest(value=repr(value)[:60]):
+                self.assertEqual(
+                    replace(original, reason_code=value).reason_code, value
+                )
+        self.assertEqual(
+            replace(original, reason_text="x" * 4096).reason_text, "x" * 4096
+        )
+
     def test_scheduled_exit_rejects_nonstr_or_unprintable_decision_id(self):
         ts = datetime(2026, 9, 14, 12, tzinfo=timezone.utc)
         for invalid in (None, [], {}, True, 7, "", "  ", "bad" + chr(10),

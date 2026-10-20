@@ -129,6 +129,22 @@ class Decision:
         if type(self.direction) is not Direction:
             raise ValueError("decision direction must be a Direction enum")
 
+        # Free-form rejection reasons become part of backtest evidence.
+        # Reject object aliases, unprintable text and oversized values before
+        # either NO_TRADE reporting or directional execution.
+        for field, value, limit in (
+            ("reason_code", self.reason_code, 128),
+            ("reason_text", self.reason_text, 4096),
+        ):
+            if value is not None and (
+                type(value) is not str
+                or len(value) > limit
+                or not value.isprintable()
+            ):
+                raise ValueError(
+                    f"{field} must be a printable string of at most {limit} characters"
+                )
+
         if self.requested_risk_fraction is not None:
             if type(self.requested_risk_fraction) not in (int, float):
                 raise ValueError("requested_risk_fraction must be finite and positive")

@@ -577,6 +577,23 @@ class Phase3EngineTests(unittest.TestCase):
                             scheduled_exits=exits,
                         )
 
+    def test_engine_retains_unicode_no_trade_reason_as_plain_text(self):
+        explanation = "Café 日本語 - filtered"
+        decision = Decision(
+            decision_id="SYNTHETIC-REASON", symbol="EURUSD",
+            decision_timestamp_utc=DAY, direction=Direction.NO_TRADE,
+            earliest_executable_timestamp_utc=None,
+            requested_risk_fraction=None, stop_price=None, target_price=None,
+            reason_code="FILTERED", reason_text=explanation,
+        )
+        result = run_backtest(
+            bars=[eurusd_bar(0)], decisions=[decision], config=config(),
+        )
+        self.assertEqual(len(result.rejections), 1)
+        self.assertEqual(result.rejections[0].code, RejectionCode.NO_TRADE)
+        self.assertEqual(result.rejections[0].explanation, explanation)
+        self.assertEqual(result.trades, ())
+
     def test_no_trade_is_preserved_as_reasoned_record(self) -> None:
         decision = Decision(
             decision_id="NT-1",
