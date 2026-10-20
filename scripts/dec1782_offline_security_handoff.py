@@ -79,11 +79,23 @@ def compile_blocked_handoff(docs_root=DOCS, workflow=WORKFLOW):
                 for key in expected_proofs),
         "missing exact external-proof acceptance criteria",
     )
+    owners = docs_module["OWNERS"]
+    _require(
+        type(expected_proofs) is tuple and type(owners) is tuple
+        and len(expected_proofs) == len(owners) == 8,
+        "exact eight independent proof identities and reviewers required",
+    )
+    expected_proof_rows = [
+        {"id": proof, "review_role": owner, "status": "MISSING"}
+        for proof, owner in zip(expected_proofs, owners)
+    ]
     _require(
         type(proofs) is list and len(proofs) == 8
-        and tuple(row["id"] for row in proofs) == expected_proofs
-        and all(row["status"] == "MISSING" for row in proofs),
-        "all eight independent proof packages must remain missing",
+        and all(type(row) is dict
+                and set(row) == {"id", "review_role", "status"}
+                for row in proofs)
+        and proofs == expected_proof_rows,
+        "all eight independent proof packages need exact missing roles and shape",
     )
     _require(
         installed["disposition"] == "BLOCKED_NOT_EXECUTABLE_AND_NOT_ADMIN_ATTESTED"
