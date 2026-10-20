@@ -387,6 +387,58 @@ class Phase3EngineTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "cannot be snapshotted"):
             replace(config(), decision_config={"unsafe": Uncopyable()})
 
+    def test_nested_decision_metadata_is_recursively_read_only(self):
+        config_obj = replace(
+            config(), decision_config={
+                "nested": {"threshold": [1.0, {"cost": 30.0}]}
+            }
+        )
+        nested = config_obj.decision_config["nested"]
+        with self.assertRaises(TypeError):
+            nested["threshold"] = [100]
+        with self.assertRaises(AttributeError):
+            nested["threshold"].append("forged")
+        with self.assertRaises(TypeError):
+            nested["threshold"][1]["cost"] = -1.0
+        self.assertEqual(
+            _run_identity(config_obj, ())["decision_config"],
+            {"nested": {"threshold": [1.0, {"cost": 30.0}]}},
+        )
+
+    def test_decision_metadata_rejects_recursive_or_nonjson_values(self):
+        cyclic = []
+        cyclic.append(cyclic)
+        for bad in (cyclic, {"key": float("nan")},
+                    {"key": float("inf")}, {"key": object()},
+                    {"key": {2: "bad nested key"}},
+                    {"key": {"inner": {True: "bad"}}}):
+            with self.subTest(bad=type(bad).__name__):
+                with self.assertRaisesRegex(ValueError, "decision_config"):
+                    replace(config(), decision_config={"nested": bad})
+
+    def test_run_identity_thaws_nested_lists_as_plain_json(self):
+        original = {"ranges": [1, {"spread_pips": [0.0, 0.5]}]}
+        config_obj = replace(config(), decision_config=original)
+        original["ranges"][1]["spread_pips"].append(999)
+        first = _run_identity(config_obj, ())
+        self.assertEqual(
+            first["decision_config"],
+            {"ranges": [1, {"spread_pips": [0.0, 0.5]}]},
+        )
+        first["decision_config"]["ranges"][1]["spread_pips"].append(-999)
+        second = _run_identity(config_obj, ())
+        self.assertEqual(
+            second["decision_config"],
+            {"ranges": [1, {"spread_pips": [0.0, 0.5]}]},
+        )
+
+    def test_run_identity_fails_closed_for_opaque_object_even_if_copyable(self):
+        class MutableOpaque:
+            def __deepcopy__(self, memo):
+                return self
+        with self.assertRaisesRegex(ValueError, "JSON-compatible"):
+            replace(config(), decision_config={"custom": MutableOpaque()})
+
     def test_no_trade_is_preserved_as_reasoned_record(self) -> None:
         decision = Decision(
             decision_id="NT-1",
