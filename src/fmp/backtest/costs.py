@@ -15,6 +15,8 @@ PIP_SIZES: dict[str, float] = {
 
 
 def pip_size(symbol: str) -> float:
+    if type(symbol) is not str:
+        raise ValueError("unsupported symbol: expected exact string")
     try:
         return PIP_SIZES[symbol]
     except KeyError as exc:
