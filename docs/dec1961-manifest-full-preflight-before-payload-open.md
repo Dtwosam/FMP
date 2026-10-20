@@ -1,0 +1,11 @@
+# DEC-1961 — Preflight entire manifest before any evidence payload read
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent source/tests/docs child of PR #2209 `73b325a75d71ea7376c78f2aa5f803b4f98fc663`.
+
+**New verified negative evidence:** #2203 full historical/general [39506202032](https://github.com/Dtwosam/FMP/actions/runs/39506202032) **FAILED**. After correcting its genuinely duplicated manifest-path fixture, the verifier first opened the forged target and compared it against a different entry's original digest; it therefore raised `"artifact evidence size or SHA256 mismatch"`, not the expected duplicate `path` refusal. Two additional duplicate JSON key assertions in that older exact head still failed because the error-classification correction first appears in later #2204. Preserve all #2203 negative results.
+
+**Source-only repair:** split the verifier's manifest processing into two ordered passes. Pass 1 checks the complete four-entry list shape, all fixed path uniqueness and allowed filenames, ordinary nonnegative int sizes, exact lowercase SHA256 string syntax, and canonical writer ordering. Only after pass 1 succeeds may pass 2 open any of the four fixed evidence files through the pinned no-follow regular-file descriptor and verify size/hash. This means a forged path or invalid later digest metadata fails before any evidence payload read, preventing misleading hash errors and avoidable I/O. No writer protocol or valid canonical artifacts change.
+
+Two synthetic source-defined methods patch the verified regular-file opener to fail if payloads are touched during duplicate-path or bad-digest-schema preflight, and require explicit path/digest ValueError. **6,998 cumulative proposed methods**. Own exact-head Phase3/full historical-general checks and qualified independent review mandatory. Earlier #2178–#2191 and #2198–#2200 and #2203 full failures remain **FAILED**, even if this exact later source repair passes.
+
+Phase8A #779/#820/#821, eight independent external proofs and protected 2023/run385/attempt1 human authorization remain MISSING/BLOCKED; accepted catalogue ends 2022/run384. Later annual research, Strategy V1 economics, shadow/demo/live broker funds and installed GitHub refs/workflows/rulesets/runners forbidden. DRAFT NEVER MERGE NEVER PROMOTE; no protected read/dispatch, merge, order or real money.

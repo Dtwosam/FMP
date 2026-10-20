@@ -1921,6 +1921,62 @@ class Phase3ReportingTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "symlink"):
                 verify_backtest_artifacts(alias)
 
+    def test_verifier_refuses_duplicate_paths_before_payload_hashing(self):
+        run = BacktestRun(
+            run_identity={}, trades=(), rejections=(),
+            equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            path = Path(root) / "artifacts"
+            manifest = write_backtest_artifacts(run, path)
+            forged = json.loads(json.dumps(manifest))
+            forged["artifacts"][0]["path"] = forged["artifacts"][1]["path"]
+            (path / "manifest.json").write_text(
+                json.dumps(forged), encoding="utf-8",
+            )
+            from fmp.reporting import backtest as reporting_backtest
+            actual = reporting_backtest._open_regular_artifact
+
+            def refuse_payload_open(target, *, root_fd):
+                if target.name != "manifest.json":
+                    raise AssertionError("payload opened before manifest admission")
+                return actual(target, root_fd=root_fd)
+
+            with mock.patch(
+                "fmp.reporting.backtest._open_regular_artifact",
+                side_effect=refuse_payload_open,
+            ):
+                with self.assertRaisesRegex(ValueError, "path"):
+                    verify_backtest_artifacts(path)
+
+    def test_verifier_rejects_bad_digest_shape_before_payload_open(self):
+        run = BacktestRun(
+            run_identity={}, trades=(), rejections=(),
+            equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            folder = Path(root) / "artifacts"
+            manifest = write_backtest_artifacts(run, folder)
+            forged = json.loads(json.dumps(manifest))
+            forged["artifacts"][-1]["sha256"] = "0" * 63
+            (folder / "manifest.json").write_text(
+                json.dumps(forged), encoding="utf-8",
+            )
+            from fmp.reporting import backtest as reporting_backtest
+            original = reporting_backtest._open_regular_artifact
+
+            def refuse_payload_open(target, *, root_fd):
+                if target.name != "manifest.json":
+                    raise AssertionError("payload accessed on invalid schema")
+                return original(target, root_fd=root_fd)
+
+            with mock.patch(
+                "fmp.reporting.backtest._open_regular_artifact",
+                side_effect=refuse_payload_open,
+            ):
+                with self.assertRaisesRegex(ValueError, "digest"):
+                    verify_backtest_artifacts(folder)
+
     def test_artifact_bytes_and_digests_are_deterministic(self) -> None:
         one_trade = trade(trade_id="T-1", minutes=1, net_pnl_usd=10.0)
         rejection = RejectionRecord(
