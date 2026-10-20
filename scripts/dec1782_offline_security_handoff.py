@@ -269,6 +269,27 @@ def _assert_human_review_evidence_is_frozen(report):
         and report.get("preregistered_strategy_v1_profit") is None,
         "cannot render a claim of security or trading permission",
     )
+    # The pinned six-source evidence is the canonical human handoff. Rebuild
+    # it from local reviewed bytes, then compare lossless, strict JSON rather
+    # than trusting a caller-edited dict's subset of safety fields.
+    # This deliberately rejects unknown keys, fake permission indicators,
+    # stale/missing fields, numeric aliases of bools, and nonfinite values.
+    try:
+        actual_json = json.dumps(
+            report, sort_keys=True, separators=(",", ":"), allow_nan=False,
+        )
+        canonical_json = json.dumps(
+            compile_blocked_handoff(),
+            sort_keys=True, separators=(",", ":"), allow_nan=False,
+        )
+    except (TypeError, ValueError) as exc:
+        raise InvalidHandoff(
+            "human handoff includes unsupported or nonfinite data"
+        ) from exc
+    _require(
+        actual_json == canonical_json,
+        "human handoff differs from exact canonical six-source report",
+    )
 
 
 def format_blocked_handoff_markdown(report):
