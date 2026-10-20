@@ -343,6 +343,31 @@ def write_backtest_artifacts(run: BacktestRun, out_dir: Path) -> dict[str, objec
         if rejection.evaluated_timestamp_utc < rejection.decision_timestamp_utc:
             raise ValueError("rejection evaluation cannot precede decision")
 
+    # Equity checkpoints are constructor-unvalidated records. Preserve
+    # chronological realized-risk evidence rather than serializing aliases.
+    previous_checkpoint_timestamp: datetime | None = None
+    for checkpoint in run.equity_checkpoints:
+        timestamp = checkpoint.timestamp_utc
+        if (
+            type(timestamp) is not datetime or timestamp.tzinfo is None
+            or timestamp.utcoffset() != timedelta(0)
+        ):
+            raise ValueError("equity checkpoint timestamp must use UTC")
+        if (
+            previous_checkpoint_timestamp is not None
+            and timestamp < previous_checkpoint_timestamp
+        ):
+            raise ValueError("equity checkpoints must be chronological")
+        previous_checkpoint_timestamp = timestamp
+        equity = checkpoint.realized_risk_equity_usd
+        if type(equity) not in (int, float):
+            raise ValueError("equity checkpoint must be finite numeric")
+        try:
+            if not math.isfinite(equity):
+                raise ValueError("equity checkpoint must be finite numeric")
+        except OverflowError as exc:
+            raise ValueError("equity checkpoint must be finite numeric") from exc
+
     summary = {
         "protocol": "fmp-phase3-backtest-run-v1",
         "run_identity": run.run_identity,
