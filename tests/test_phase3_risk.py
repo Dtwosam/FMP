@@ -307,6 +307,50 @@ class Phase3RiskPolicyTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "equity"):
                     RiskState(starting_equity_usd=value)
 
+    def test_public_risk_day_and_pnl_reject_invalid_state_records(self):
+        class HostileState:
+            @property
+            def current_utc_date(self):
+                raise AssertionError("invalid risk-state getter accessed")
+
+        for invalid in (None, {}, [], HostileState()):
+            with self.subTest(state_type=type(invalid).__name__):
+                with self.assertRaisesRegex(ValueError, "RiskState"):
+                    roll_utc_day(invalid, timestamp_utc=self.ts)
+                with self.assertRaisesRegex(ValueError, "RiskState"):
+                    record_realized_pnl(
+                        invalid, timestamp_utc=self.ts,
+                        pnl_usd=10.0, config=self.config,
+                    )
+
+    def test_reserve_and_release_reject_invalid_state_without_getters(self):
+        class HostileState:
+            @property
+            def reservations_usd(self):
+                raise AssertionError("invalid reservations getter accessed")
+
+        for invalid in (None, {}, [], HostileState()):
+            with self.subTest(state_type=type(invalid).__name__):
+                with self.assertRaisesRegex(ValueError, "RiskState"):
+                    reserve_risk(
+                        invalid, position_id="SYNTHETIC", amount_usd=25.0,
+                    )
+                with self.assertRaisesRegex(ValueError, "RiskState"):
+                    release_risk(invalid, position_id="SYNTHETIC")
+
+    def test_real_risk_state_preserves_public_reservation_and_pnl_controls(self):
+        state = RiskState(starting_equity_usd=10_000.0)
+        reserve_risk(state, position_id="SYNTHETIC", amount_usd=25.0)
+        self.assertEqual(release_risk(state, position_id="SYNTHETIC"), 25.0)
+        record_realized_pnl(
+            state, timestamp_utc=self.ts, pnl_usd=-25.0,
+            config=self.config,
+        )
+        self.assertEqual(state.risk_equity_usd, 9_975.0)
+        self.assertEqual(state.current_utc_date, self.ts.date())
+        self.assertEqual(state.day_realized_pnl_usd, -25.0)
+        self.assertFalse(state.daily_halt_active)
+
     def test_risk_reservation_rejects_invalid_amount_before_mutation(self):
         for value in (True, False, None, "25", [], float("inf"),
                       float("nan"), 10 ** 400, -1):

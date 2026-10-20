@@ -83,6 +83,8 @@ class RiskState:
 
 def roll_utc_day(state: RiskState, *, timestamp_utc: datetime) -> None:
     _require_utc(timestamp_utc, field_name="timestamp_utc")
+    if type(state) is not RiskState:
+        raise ValueError("state must be a RiskState record")
     target_date = timestamp_utc.date()
     if state.current_utc_date == target_date:
         return
@@ -106,6 +108,8 @@ def _require_risk_position_id(position_id: str) -> None:
 
 def reserve_risk(state: RiskState, *, position_id: str, amount_usd: float) -> None:
     _require_risk_position_id(position_id)
+    if type(state) is not RiskState:
+        raise ValueError("state must be a RiskState record")
     if position_id in state.reservations_usd:
         raise ValueError(f"risk already reserved for position {position_id!r}")
     if type(amount_usd) not in (int, float):
@@ -126,6 +130,8 @@ def reserve_risk(state: RiskState, *, position_id: str, amount_usd: float) -> No
 
 def release_risk(state: RiskState, *, position_id: str) -> float:
     _require_risk_position_id(position_id)
+    if type(state) is not RiskState:
+        raise ValueError("state must be a RiskState record")
     try:
         return state.reservations_usd.pop(position_id)
     except KeyError as exc:
@@ -144,6 +150,8 @@ def record_realized_pnl(
     # malformed config must never leave partial PnL state behind.
     if type(config) is not RiskConfig:
         raise ValueError("config must be a RiskConfig record")
+    if type(state) is not RiskState:
+        raise ValueError("state must be a RiskState record")
     if type(pnl_usd) not in (int, float):
         raise ValueError("realized PnL must be a finite number")
     try:
