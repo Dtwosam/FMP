@@ -304,8 +304,8 @@ def format_unfulfilled_review_requests(report):
     }
 
 
-def verify_saved_blocked_review_packet(path):
-    """Verify saved JSON against new pinned local inputs; never authorizes."""
+def _read_strict_saved_json(path):
+    """Single bounded, nofollow, duplicate-free JSON-object trust boundary."""
     audit = runpy.run_path(str(runpy.run_path(str(SIX))["DOC_AUDIT"]))
     raw = audit["_read_regular_nofollow"](Path(path))
     try:
@@ -314,6 +314,21 @@ def verify_saved_blocked_review_packet(path):
             object_pairs_hook=audit["_strict_pairs"],
             parse_constant=audit["_reject_constant"],
         )
+    except (UnicodeError, TypeError, ValueError, OverflowError, RecursionError) as exc:
+        raise InvalidReviewBundle(
+            "saved reviewer packet has malformed or unsupported JSON"
+        ) from exc
+    if type(saved) is not dict:
+        raise InvalidReviewBundle(
+            "saved reviewer packet must be exactly one JSON object"
+        )
+    return saved
+
+
+def verify_saved_blocked_review_packet(path):
+    """Verify saved JSON against new pinned local inputs; never authorizes."""
+    saved = _read_strict_saved_json(path)
+    try:
         fresh = compile_blocked_review_bundle()
         saved_bytes = json.dumps(
             saved, sort_keys=True, separators=(",", ":"), allow_nan=False,
@@ -323,8 +338,6 @@ def verify_saved_blocked_review_packet(path):
         ).encode("utf-8")
     except (UnicodeError, TypeError, ValueError, KeyError, OverflowError, RecursionError) as exc:
         raise InvalidReviewBundle("saved BLOCKED packet is invalid JSON") from exc
-    if type(saved) is not dict:
-        raise InvalidReviewBundle("saved BLOCKED packet must be one JSON object")
     validate_review_index_fingerprint(saved)
     if saved_bytes != fresh_bytes:
         raise InvalidReviewBundle(
@@ -335,14 +348,8 @@ def verify_saved_blocked_review_packet(path):
 
 def verify_saved_unfulfilled_review_requests(path):
     """Validate compact MISSING-only requests against freshly pinned evidence."""
-    audit = runpy.run_path(str(runpy.run_path(str(SIX))["DOC_AUDIT"]))
-    raw = audit["_read_regular_nofollow"](Path(path))
+    saved = _read_strict_saved_json(path)
     try:
-        saved = json.loads(
-            raw.decode("utf-8"),
-            object_pairs_hook=audit["_strict_pairs"],
-            parse_constant=audit["_reject_constant"],
-        )
         canonical_saved = json.dumps(
             saved, sort_keys=True, separators=(",", ":"), allow_nan=False,
         )
@@ -355,7 +362,7 @@ def verify_saved_unfulfilled_review_requests(path):
         raise InvalidReviewBundle(
             "saved unfulfilled requests have malformed or unsupported JSON"
         ) from exc
-    if type(saved) is not dict or canonical_saved != canonical_fresh:
+    if canonical_saved != canonical_fresh:
         raise InvalidReviewBundle(
             "saved independent requests differ from fresh MISSING-only evidence"
         )

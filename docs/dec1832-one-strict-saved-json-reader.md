@@ -1,0 +1,7 @@
+# DEC-1832 — One fail-closed parser for both saved security packets
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent source-only child of #2078, `5f048d89ed8e0a895800592e211e3f154913e7ee`.
+
+The full seven-source review verifier and compact eight-owner request verifier separately implemented the same bounded no-follow read and strict JSON decoder. That duplication risks security drift: one mode might reject duplicate keys, malformed UTF-8 or recursion while the other silently accepts them. Consolidate both into `_read_strict_saved_json`, which uses the pinned documentary no-follow 1 MiB reader, exact ordinary dict root, duplicate-key rejection at all nested levels, nonstandard numeric constant rejection and controlled `RecursionError` handling. The full verifier still requires its exact digest and independently rebuilt pinned report; compact requests still must exactly match the rebuilt MISSING-only request projection.
+
+Three new tests (**6,694 cumulative proposed source-defined**) verify both paths use the shared parser, both reject over-depth inputs, and both remain functional when subprocess and socket primitives are denied. Also remove a duplicate test import. Valid packets still return BLOCKED exit 3; invalid packets exit 2 without stdout. This is **not** real runner isolation, GitHub admin/ref proof, external signoff, or permission. Eight #779/#820/#821 proofs remain MISSING, protected 2023/run385/attempt1 and broker/demo/live trading blocked. Exact-head Phase3/full CI and qualified review required.

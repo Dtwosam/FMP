@@ -7,7 +7,6 @@ from unittest import mock
 import runpy
 import tempfile
 import unittest
-from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 MOD = runpy.run_path(
@@ -630,6 +629,44 @@ class Phase8ABlockedSevenSourceIndexTests(unittest.TestCase):
             self.assertEqual(code, 2)
             self.assertEqual(out.getvalue(), "")
             self.assertIn("BLOCKED:", err.getvalue())
+
+    def test_saved_verification_modes_share_exact_strict_json_reader(self):
+        self.assertIn("_read_strict_saved_json",
+                      MOD["verify_saved_blocked_review_packet"].__code__.co_names)
+        self.assertIn("_read_strict_saved_json",
+                      MOD["verify_saved_unfulfilled_review_requests"].__code__.co_names)
+
+    def test_both_saved_json_modes_reject_deep_nested_inputs(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "nested.json"
+            path.write_text("[" * 1200 + "]" * 1200, encoding="utf-8")
+            for verifier in (
+                MOD["verify_saved_blocked_review_packet"],
+                MOD["verify_saved_unfulfilled_review_requests"],
+            ):
+                with self.subTest(verifier=verifier.__name__):
+                    with self.assertRaises(MOD["InvalidReviewBundle"]):
+                        verifier(path)
+
+    def test_saved_packet_reading_is_offline_under_process_and_socket_denials(self):
+        with tempfile.TemporaryDirectory() as folder:
+            base = Path(folder)
+            full = base / "full.json"
+            requests = base / "requests.json"
+            full.write_text(json.dumps(BUILD()), encoding="utf-8")
+            requests.write_text(json.dumps(
+                MOD["format_unfulfilled_review_requests"](BUILD())
+            ), encoding="utf-8")
+            with mock.patch("subprocess.Popen",
+                            side_effect=AssertionError("unexpected process")):
+                with mock.patch("socket.socket",
+                                side_effect=AssertionError("unexpected network")):
+                    self.assertEqual(
+                        MOD["verify_saved_blocked_review_packet"](full)[
+                            "disposition"], "BLOCKED_NO_EXECUTION_PERMISSION")
+                    self.assertEqual(
+                        MOD["verify_saved_unfulfilled_review_requests"](requests)[
+                            "disposition"], "BLOCKED_NO_EXECUTION_PERMISSION")
 
     def test_cli_success_is_blocked_and_invalid_has_no_stdout(self):
         out, err = io.StringIO(), io.StringIO()
