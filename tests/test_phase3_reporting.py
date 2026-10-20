@@ -1477,6 +1477,15 @@ class Phase3ReportingTests(unittest.TestCase):
             saved = json.loads((target / "metrics.json").read_text("utf-8"))
             self.assertEqual(saved["financing_cost_usd"], 2 ** 33)
 
+    def test_metric_calculator_rejects_derived_ratio_overflow_cleanly(self):
+        record = trade(trade_id="EXTREME", minutes=1, net_pnl_usd=1e308)
+        with self.assertRaisesRegex(ValueError, "metric.*finite"):
+            compute_backtest_metrics(
+                starting_equity_usd=1e-308,
+                trades=(record,),
+                equity_checkpoints=(EquityCheckpoint(BASE_TS, 1e-308),),
+            )
+
     def test_artifact_bytes_and_digests_are_deterministic(self) -> None:
         one_trade = trade(trade_id="T-1", minutes=1, net_pnl_usd=10.0)
         rejection = RejectionRecord(
