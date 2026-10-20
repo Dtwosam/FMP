@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import unittest
+from unittest import mock
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 
@@ -531,6 +532,50 @@ class Phase3EngineTests(unittest.TestCase):
                 bars=bars, decisions=[decision], config=config(),
                 scheduled_exits=[{"decision_id": "SYNTHETIC-LONG"}],
             )
+
+    @staticmethod
+    def _deny_external_calls():
+        from contextlib import ExitStack
+        stack = ExitStack()
+        for name in ("subprocess.Popen", "socket.socket",
+                     "builtins.open", "os.open"):
+            stack.enter_context(mock.patch(
+                name, side_effect=AssertionError(
+                    "synthetic preflight must not access external resources"
+                )))
+        return stack
+
+    def test_engine_rejects_invalid_quote_members_without_external_calls(self):
+        for rows in ([eurusd_bar(0), None], [eurusd_bar(0), {}], "EURUSD"):
+            with self.subTest(rows=repr(rows)[:60]):
+                with self._deny_external_calls():
+                    with self.assertRaisesRegex(ValueError, "QuoteBar"):
+                        run_backtest(
+                            bars=rows, decisions=[], config=config(),
+                        )
+
+    def test_engine_rejects_invalid_decision_members_without_external_calls(self):
+        bars = [eurusd_bar(0), eurusd_bar(1)]
+        for decisions in ([None], [{}], "NO_TRADE"):
+            with self.subTest(decisions=repr(decisions)):
+                with self._deny_external_calls():
+                    with self.assertRaisesRegex(ValueError, "Decision"):
+                        run_backtest(
+                            bars=bars, decisions=decisions, config=config(),
+                        )
+
+    def test_engine_rejects_invalid_scheduled_exits_without_external_calls(self):
+        bars = [eurusd_bar(0), eurusd_bar(1)]
+        decision = long_decision(
+            "SYNTHETIC-1", decision_minute=0, executable_minute=1)
+        for exits in ([None], [{}], "SYNTHETIC"):
+            with self.subTest(exits=repr(exits)):
+                with self._deny_external_calls():
+                    with self.assertRaisesRegex(ValueError, "ScheduledExit"):
+                        run_backtest(
+                            bars=bars, decisions=[decision], config=config(),
+                            scheduled_exits=exits,
+                        )
 
     def test_no_trade_is_preserved_as_reasoned_record(self) -> None:
         decision = Decision(
