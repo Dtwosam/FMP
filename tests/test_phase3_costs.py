@@ -163,6 +163,21 @@ class Phase3CostTests(unittest.TestCase):
             with self.subTest(units=units):
                 self.assertAlmostEqual(model.cost_usd(units=units), expected)
 
+    def test_fixed_commission_rejects_huge_units_that_overflow(self):
+        model = FixedCommissionPerMillion(usd_per_million_per_side=30.0)
+        for units in (10 ** 400, -(10 ** 400)):
+            with self.subTest(negative=units < 0):
+                with self.assertRaisesRegex(ValueError, "finite"):
+                    model.cost_usd(units=units)
+
+    def test_fixed_commission_rejects_infinite_derived_cost(self):
+        model = FixedCommissionPerMillion(usd_per_million_per_side=1e308)
+        self.assertTrue(math.isfinite(model.cost_usd(units=1_000_000)))
+        for units in (2_000_000, -2_000_000, 10 ** 320):
+            with self.subTest(units=units):
+                with self.assertRaisesRegex(ValueError, "finite"):
+                    model.cost_usd(units=units)
+
     def test_fixed_commission_rejects_negative_or_non_finite_rate(self) -> None:
         with self.assertRaisesRegex(ValueError, "commission"):
             FixedCommissionPerMillion(usd_per_million_per_side=-1.0)

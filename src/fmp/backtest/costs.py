@@ -84,7 +84,13 @@ class FixedCommissionPerMillion:
     def cost_usd(self, *, units: int) -> float:
         if type(units) is not int:
             raise ValueError("commission units must be a whole integer position size")
-        return abs(units) / 1_000_000 * self.usd_per_million_per_side
+        try:
+            cost = abs(units) / 1_000_000 * self.usd_per_million_per_side
+        except OverflowError as exc:
+            raise ValueError("commission cost must be finite and non-negative") from exc
+        if not math.isfinite(cost):
+            raise ValueError("commission cost must be finite and non-negative")
+        return cost
 
     def to_config(self) -> Mapping[str, object]:
         return {
