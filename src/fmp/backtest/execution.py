@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 
 from fmp.backtest.costs import (
@@ -26,6 +27,22 @@ class ExitFill:
     intrabar_ambiguous: bool
     exit_commission_usd: float
     financing_cost_usd: float
+
+
+def _checked_model_cost(value: float, *, name: str, allow_credit: bool) -> float:
+    """Prevent malformed custom cost-model results from inflating net P&L."""
+    if type(value) not in (int, float):
+        raise ValueError(f"{name} must be a finite numeric cost")
+    try:
+        finite = math.isfinite(value)
+    except OverflowError as exc:
+        raise ValueError(f"{name} must be finite") from exc
+    if not finite or (not allow_credit and value < 0):
+        raise ValueError(
+            f"{name} must be finite"
+            + (" (credit permitted)" if allow_credit else " and non-negative")
+        )
+    return float(value)
 
 
 def _entry_side(direction: Direction) -> OrderSide:
@@ -79,7 +96,10 @@ def fill_entry(
         entry_timestamp_utc=bar.timestamp_utc,
         entry_reference_price=reference,
         entry_price=execution,
-        entry_commission_usd=commission_model.cost_usd(units=intent.units),
+        entry_commission_usd=_checked_model_cost(
+            commission_model.cost_usd(units=intent.units),
+            name="entry commission", allow_credit=False,
+        ),
         stop_price=intent.stop_price,
         target_price=intent.target_price,
         reserved_risk_usd=intent.reserved_risk_usd,
@@ -109,13 +129,19 @@ def _make_exit_fill(
         execution_price=execution,
         reason=reason,
         intrabar_ambiguous=intrabar_ambiguous,
-        exit_commission_usd=commission_model.cost_usd(units=position.units),
-        financing_cost_usd=financing_model.cost_usd(
-            symbol=position.symbol,
-            direction=position.direction,
-            units=position.units,
-            entry_timestamp_utc=position.entry_timestamp_utc,
-            exit_timestamp_utc=bar.timestamp_utc,
+        exit_commission_usd=_checked_model_cost(
+            commission_model.cost_usd(units=position.units),
+            name="exit commission", allow_credit=False,
+        ),
+        financing_cost_usd=_checked_model_cost(
+            financing_model.cost_usd(
+                symbol=position.symbol,
+                direction=position.direction,
+                units=position.units,
+                entry_timestamp_utc=position.entry_timestamp_utc,
+                exit_timestamp_utc=bar.timestamp_utc,
+            ),
+            name="financing", allow_credit=True,
         ),
     )
 
