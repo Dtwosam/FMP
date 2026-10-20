@@ -356,6 +356,47 @@ class Phase3ReportingTests(unittest.TestCase):
             self.assertEqual((Path(root) / "valid/trades.jsonl").read_bytes(), b"")
             self.assertEqual((Path(root) / "valid/rejections.jsonl").read_bytes(), b"")
 
+    def test_artifact_identity_rejects_nonstr_keys_without_file_creation(self):
+        base = BacktestRun(
+            run_identity={"1": "canonical", 1: "coercion-collision"},
+            trades=(), rejections=(), equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            target = Path(root) / "bad"
+            with mock.patch("pathlib.Path.mkdir", side_effect=AssertionError(
+                "invalid identity keys must fail without I/O"
+            )):
+                with self.assertRaisesRegex(ValueError, "mapping keys"):
+                    write_backtest_artifacts(base, target)
+            self.assertFalse(target.exists())
+
+    def test_artifact_identity_rejects_control_and_surrogate_keys(self):
+        for bad in ("bad\nline", "bad\x00nul", "bad\ud800surrogate"):
+            with self.subTest(value=ascii(bad)):
+                base = BacktestRun(
+                    run_identity={bad: "value"},
+                    trades=(), rejections=(), equity_checkpoints=(), metrics={},
+                )
+                with tempfile.TemporaryDirectory() as root:
+                    target = Path(root) / "bad"
+                    with mock.patch("pathlib.Path.mkdir", side_effect=AssertionError(
+                        "unprintable evidence key must not make artifacts"
+                    )):
+                        with self.assertRaisesRegex(ValueError, "mapping keys"):
+                            write_backtest_artifacts(base, target)
+                    self.assertFalse(target.exists())
+
+    def test_artifact_identity_preserves_nested_unicode_keys(self):
+        run = BacktestRun(
+            run_identity={"café": {"日本語": "synthetic"}, "": "allowed"},
+            trades=(), rejections=(), equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            target = Path(root) / "valid"
+            write_backtest_artifacts(run, target)
+            payload = json.loads((target / "summary.json").read_text("utf-8"))
+            self.assertEqual(payload["run_identity"], run.run_identity)
+
     def test_artifact_bytes_and_digests_are_deterministic(self) -> None:
         one_trade = trade(trade_id="T-1", minutes=1, net_pnl_usd=10.0)
         rejection = RejectionRecord(

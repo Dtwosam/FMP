@@ -8,6 +8,7 @@ from dataclasses import fields, is_dataclass
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
+from types import MappingProxyType
 from typing import Mapping, Sequence
 
 from fmp.contracts import BacktestRun, EquityCheckpoint, RejectionRecord, TradeRecord
@@ -158,7 +159,14 @@ def _jsonable(value: object) -> object:
             raise ValueError("serialized datetime must use UTC")
         return value.isoformat().replace("+00:00", "Z")
     if isinstance(value, Mapping):
-        return {str(key): _jsonable(item) for key, item in value.items()}
+        # Source identity keys must never be coerced. For example 1 and "1"
+        # would otherwise collapse to one JSON key and corrupt provenance.
+        if type(value) not in (dict, MappingProxyType):
+            raise ValueError("serialized mapping must be an ordinary mapping")
+        for key in value:
+            if type(key) is not str or not key.isprintable():
+                raise ValueError("serialized mapping keys must be printable strings")
+        return {key: _jsonable(item) for key, item in value.items()}
     if isinstance(value, (tuple, list)):
         return [_jsonable(item) for item in value]
     if isinstance(value, float) and not math.isfinite(value):
