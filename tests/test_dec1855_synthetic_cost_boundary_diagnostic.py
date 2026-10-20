@@ -7,6 +7,11 @@ from pathlib import Path
 import runpy
 from unittest import mock
 
+from fmp.backtest.costs import (
+    FixedCommissionPerMillion, apply_adverse_slippage, pip_size,
+)
+from fmp.contracts import OrderSide
+
 ROOT = Path(__file__).resolve().parents[1]
 MOD = runpy.run_path(
     str(ROOT / "scripts" / "dec1855_synthetic_cost_boundary_diagnostic.py")
@@ -37,6 +42,64 @@ class SyntheticCostBoundaryDiagnosticTests(unittest.TestCase):
         self.assertFalse(result["protected_2023_run385_attempt1_authorized"])
         self.assertFalse(result["broker_demo_live_or_real_money_authorized"])
         self.assertEqual(result["allowed_actions"], [])
+
+    def test_synthetic_adverse_slippage_monotone_on_each_supported_fx_pair(self):
+        for symbol, reference in (
+            ("EURUSD", 1.20), ("GBPUSD", 1.35), ("USDJPY", 150.00)
+        ):
+            with self.subTest(symbol=symbol):
+                buys, sells = [], []
+                for pips in (0.0, 0.25, 0.5, 1.0, 3.0):
+                    bought = apply_adverse_slippage(
+                        reference, side=OrderSide.BUY, pips=pips, symbol=symbol)
+                    sold = apply_adverse_slippage(
+                        reference, side=OrderSide.SELL, pips=pips, symbol=symbol)
+                    self.assertGreaterEqual(bought, reference)
+                    self.assertLessEqual(sold, reference)
+                    self.assertAlmostEqual(
+                        bought - reference, pips * pip_size(symbol), places=9)
+                    self.assertAlmostEqual(
+                        reference - sold, pips * pip_size(symbol), places=9)
+                    buys.append(bought)
+                    sells.append(sold)
+                self.assertEqual(buys, sorted(buys))
+                self.assertEqual(sells, sorted(sells, reverse=True))
+
+    def test_synthetic_commission_symmetry_and_monotone_size(self):
+        for rate in (0.0, 10.0, 30.0):
+            with self.subTest(rate=rate):
+                cost = FixedCommissionPerMillion(
+                    usd_per_million_per_side=rate)
+                measurements = [
+                    cost.cost_usd(units=n)
+                    for n in (0, 100_000, 200_000, 1_000_000)
+                ]
+                self.assertEqual(measurements, sorted(measurements))
+                self.assertEqual(measurements[0], 0.0)
+                for units in (100_000, 200_000, 1_000_000):
+                    self.assertAlmostEqual(
+                        cost.cost_usd(units=units),
+                        cost.cost_usd(units=-units),
+                    )
+
+    def test_synthetic_invalid_slippage_magnitudes_reject(self):
+        for pips in (-1.0, float("nan"), float("inf")):
+            with self.subTest(pips=repr(pips)):
+                with self.assertRaises(ValueError):
+                    apply_adverse_slippage(
+                        1.20, side=OrderSide.BUY, pips=pips, symbol="EURUSD")
+        with self.assertRaisesRegex(ValueError, "slipped price"):
+            apply_adverse_slippage(
+                1.20, side=OrderSide.SELL, pips=20_000.0, symbol="EURUSD")
+
+    def test_synthetic_matrix_is_not_a_return_or_strategy_claim(self):
+        report = BUILD()
+        self.assertEqual(
+            report["disposition"], "BLOCKED_NO_STRATEGY_OR_TRADING_PERMISSION")
+        self.assertEqual(report["source_material"], "constants_only_no_market_data")
+        self.assertFalse(report["economic_expectancy_or_profitable_strategy_verified"])
+        self.assertFalse(report["broker_demo_live_or_real_money_authorized"])
+        self.assertEqual(report["allowed_actions"], [])
 
     def test_synthetic_cli_exits_nonzero_and_does_not_use_network_or_process(self):
         out, err = io.StringIO(), io.StringIO()
