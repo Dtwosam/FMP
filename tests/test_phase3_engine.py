@@ -202,6 +202,44 @@ class Phase3EngineTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             config(execution_timing_mode="LOOKAHEAD")
 
+    def test_run_identity_rejects_untyped_or_blank_metadata(self):
+        fields = (
+            "processed_data_manifest_id", "schema_version",
+            "timeframe", "code_commit",
+        )
+        for field in fields:
+            for value in (None, [], {}, 42, "   "):
+                with self.subTest(field=field, value=repr(value)):
+                    with self.assertRaisesRegex(ValueError, field):
+                        replace(config(), **{field: value})
+
+    def test_run_identity_rejects_metadata_control_characters(self):
+        for field in (
+            "processed_data_manifest_id", "schema_version",
+            "timeframe", "code_commit",
+        ):
+            for char in (chr(0), chr(9), chr(10), chr(13), chr(27), chr(127)):
+                with self.subTest(field=field, character=ord(char)):
+                    with self.assertRaisesRegex(ValueError, "control"):
+                        replace(config(), **{field: "value" + char})
+
+    def test_engine_config_rejects_unhashable_or_nonstring_timing_mode(self):
+        for mode in ([], {}, None, True, 1):
+            with self.subTest(mode=repr(mode)):
+                with self.assertRaisesRegex(ValueError, "execution_timing_mode"):
+                    replace(config(), execution_timing_mode=mode)
+
+    def test_engine_config_preserves_normal_identity_strings(self):
+        instance = replace(
+            config(),
+            processed_data_manifest_id="synthetic-only-manifest",
+            schema_version="fmp-canonical-1m-v1",
+            timeframe="1m",
+            code_commit="reviewed-synthetic-test-hash",
+        )
+        self.assertEqual(instance.timeframe, "1m")
+        self.assertEqual(instance.code_commit, "reviewed-synthetic-test-hash")
+
     def test_no_trade_is_preserved_as_reasoned_record(self) -> None:
         decision = Decision(
             decision_id="NT-1",
