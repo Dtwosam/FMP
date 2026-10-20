@@ -409,6 +409,42 @@ class Phase8AConsolidatedSourceOnlyHandoffTests(unittest.TestCase):
         self.assertEqual(first["allowed_actions"], [])
         self.assertFalse(first["protected_2023_run385_authorized"])
 
+    def test_human_handoff_includes_all_eight_evidence_acceptance_criteria(self):
+        requirements = runpy.run_path(str(MOD["DOC_AUDIT"]))[
+            "PROOF_ACCEPTANCE_CRITERIA"]
+        md = MOD["format_blocked_handoff_markdown"](BUILD())
+        self.assertEqual(len(requirements), 8)
+        for proof_id, explanation in requirements.items():
+            with self.subTest(proof=proof_id):
+                self.assertIn(f"**{proof_id}**", md)
+                self.assertIn(explanation, md)
+                self.assertIn(f"| {proof_id} |", md)
+        self.assertIn("requirements, not attestations", md)
+
+    def test_acceptance_criteria_require_effective_not_only_repo_rules(self):
+        md = MOD["format_blocked_handoff_markdown"](BUILD())
+        self.assertIn("repository", md)
+        self.assertIn("organization and enterprise", md)
+        self.assertIn("bypass", md)
+        self.assertIn("continuous", md)
+        self.assertIn("exclusive", md)
+
+    def test_acceptance_criteria_demand_real_runner_and_fresh_inventory(self):
+        md = MOD["format_blocked_handoff_markdown"](BUILD())
+        self.assertIn("Real runner UID/caps/mount", md)
+        self.assertIn("full workflow dispatch/run-attempt inventory", md)
+        self.assertIn("reverified immediately before", md)
+        self.assertIn("a separate human run385/attempt1 decision", md)
+
+    def test_detailed_requirements_cannot_convert_blocked_report_to_approval(self):
+        report = BUILD()
+        md = MOD["format_blocked_handoff_markdown"](report)
+        self.assertEqual(md.count("| **MISSING** |"), 8)
+        self.assertIn("**BLOCKED. NOT AUTHORIZED.", md)
+        self.assertFalse(report["protected_2023_run385_authorized"])
+        self.assertIsNone(report["preregistered_strategy_v1_profit"])
+        self.assertEqual(report["allowed_actions"], [])
+
     def test_consolidated_handoff_never_invokes_external_permission_or_trading(self):
         report = BUILD()
         self.assertIs(report["no_external_actions_performed"], True)
