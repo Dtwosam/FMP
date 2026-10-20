@@ -333,6 +333,35 @@ def verify_saved_blocked_review_packet(path):
     return fresh
 
 
+def verify_saved_unfulfilled_review_requests(path):
+    """Validate compact MISSING-only requests against freshly pinned evidence."""
+    audit = runpy.run_path(str(runpy.run_path(str(SIX))["DOC_AUDIT"]))
+    raw = audit["_read_regular_nofollow"](Path(path))
+    try:
+        saved = json.loads(
+            raw.decode("utf-8"),
+            object_pairs_hook=audit["_strict_pairs"],
+            parse_constant=audit["_reject_constant"],
+        )
+        canonical_saved = json.dumps(
+            saved, sort_keys=True, separators=(",", ":"), allow_nan=False,
+        )
+        fresh = format_unfulfilled_review_requests(
+            compile_blocked_review_bundle())
+        canonical_fresh = json.dumps(
+            fresh, sort_keys=True, separators=(",", ":"), allow_nan=False,
+        )
+    except (UnicodeError, TypeError, ValueError, KeyError, OverflowError, RecursionError) as exc:
+        raise InvalidReviewBundle(
+            "saved unfulfilled requests have malformed or unsupported JSON"
+        ) from exc
+    if type(saved) is not dict or canonical_saved != canonical_fresh:
+        raise InvalidReviewBundle(
+            "saved independent requests differ from fresh MISSING-only evidence"
+        )
+    return fresh
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(
         description="Seven-source historical BLOCKED independent proof review"
@@ -345,34 +374,50 @@ def main(argv=None):
         help="Check saved BLOCKED JSON against freshly re-read pinned sources",
     )
     parser.add_argument(
+        "--verify-requests", type=Path,
+        help="Check saved compact MISSING-only requests against pinned sources",
+    )
+    parser.add_argument(
         "--format", choices=("json", "markdown", "requests"), default="json")
     args = parser.parse_args(argv)
-    if args.verify_report is not None and any(
-        x is not None for x in (args.docs_root, args.workflow, args.worksheet)
+    if (
+        args.verify_report is not None and args.verify_requests is not None
+    ) or (
+        (args.verify_report is not None or args.verify_requests is not None)
+        and any(x is not None for x in (
+            args.docs_root, args.workflow, args.worksheet))
+    ) or (
+        args.verify_requests is not None and args.format == "markdown"
     ):
         print(
-            "BLOCKED: --verify-report cannot override frozen evidence inputs",
+            "BLOCKED: saved verification modes cannot be combined or override sources",
             file=sys.stderr,
         )
         return 2
     try:
-        report = (
-            verify_saved_blocked_review_packet(args.verify_report)
-            if args.verify_report is not None
-            else compile_blocked_review_bundle(
-                args.docs_root, args.workflow, args.worksheet)
-        )
-        if args.format == "markdown":
-            output = format_blocked_review_bundle_markdown(report)
-        elif args.format == "requests":
+        if args.verify_requests is not None:
             output = json.dumps(
-                format_unfulfilled_review_requests(report),
+                verify_saved_unfulfilled_review_requests(args.verify_requests),
                 sort_keys=True, indent=2, allow_nan=False,
             )
         else:
-            output = json.dumps(
-                report, sort_keys=True, indent=2, allow_nan=False,
+            report = (
+                verify_saved_blocked_review_packet(args.verify_report)
+                if args.verify_report is not None
+                else compile_blocked_review_bundle(
+                    args.docs_root, args.workflow, args.worksheet)
             )
+            if args.format == "markdown":
+                output = format_blocked_review_bundle_markdown(report)
+            elif args.format == "requests":
+                output = json.dumps(
+                    format_unfulfilled_review_requests(report),
+                    sort_keys=True, indent=2, allow_nan=False,
+                )
+            else:
+                output = json.dumps(
+                    report, sort_keys=True, indent=2, allow_nan=False,
+                )
     except (OSError, UnicodeError, TypeError, ValueError, KeyError, OverflowError, RecursionError) as exc:
         print("BLOCKED: invalid source-only review: " + str(exc),
               file=sys.stderr)
