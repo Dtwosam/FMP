@@ -70,6 +70,15 @@ def compile_blocked_handoff(docs_root=DOCS, workflow=WORKFLOW):
         "blocked 2023/run385/attempt1 one-shot identity changed",
     )
     proofs = documentary["missing_external_proofs"]
+    proof_requirements = docs_module["PROOF_ACCEPTANCE_CRITERIA"]
+    _require(
+        type(proof_requirements) is dict
+        and tuple(proof_requirements) == expected_proofs
+        and all(type(proof_requirements[key]) is str
+                and proof_requirements[key].strip()
+                for key in expected_proofs),
+        "missing exact external-proof acceptance criteria",
+    )
     _require(
         type(proofs) is list and len(proofs) == 8
         and tuple(row["id"] for row in proofs) == expected_proofs
@@ -137,6 +146,9 @@ def compile_blocked_handoff(docs_root=DOCS, workflow=WORKFLOW):
         "installed_workflow_historical_fixture_only":
             installed["installed_workflow_file_absent_from_ci_not_an_attestation"],
         "eight_missing_independent_proofs": proofs,
+        "independent_proof_acceptance_criteria": {
+            key: proof_requirements[key] for key in expected_proofs
+        },
         "blocked_downstream_stages": documentary["blocked_downstream_stages"],
         "installed_jobs_pregate_and_runtime_gate": {
             job: {
@@ -306,12 +318,11 @@ def format_blocked_handoff_markdown(report):
     _assert_human_review_evidence_is_frozen(report)
     proof_rows = report["eight_missing_independent_proofs"]
     docs = runpy.run_path(str(DOC_AUDIT))
-    criteria = docs["PROOF_ACCEPTANCE_CRITERIA"]
+    criteria = report["independent_proof_acceptance_criteria"]
     _require(
         type(criteria) is dict
-        and set(criteria) == set(docs["PROOFS"])
-        and all(type(criteria[key]) is str and criteria[key].strip()
-                for key in docs["PROOFS"]),
+        and tuple(criteria) == tuple(docs["PROOFS"])
+        and criteria == docs["PROOF_ACCEPTANCE_CRITERIA"],
         "eight independently frozen external review requirements missing",
     )
     entries = [
