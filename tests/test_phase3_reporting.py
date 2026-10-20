@@ -945,6 +945,59 @@ class Phase3ReportingTests(unittest.TestCase):
             saved = json.loads((target / "summary.json").read_text("utf-8"))
             self.assertEqual(saved["run_identity"]["nested"], nested)
 
+    def test_artifact_writer_rejects_conflicting_trade_counts(self):
+        good = trade(trade_id="T-1", minutes=1, net_pnl_usd=10.0)
+        for wrong in (True, "1", 0, 2, -1):
+            with self.subTest(count=repr(wrong)):
+                run = BacktestRun(
+                    run_identity={}, trades=(good,), rejections=(),
+                    equity_checkpoints=(), metrics={"trade_count": wrong},
+                )
+                with tempfile.TemporaryDirectory() as root:
+                    target = Path(root) / "blocked"
+                    with mock.patch("pathlib.Path.mkdir", side_effect=AssertionError(
+                        "count mismatch must not create financial evidence"
+                    )):
+                        with self.assertRaisesRegex(ValueError, "trade_count"):
+                            write_backtest_artifacts(run, target)
+                    self.assertFalse(target.exists())
+
+    def test_artifact_writer_rejects_conflicting_net_pnl(self):
+        good = trade(trade_id="T-1", minutes=1, net_pnl_usd=10.0)
+        for wrong in (True, "10", 9.0, 11.0, float("nan")):
+            with self.subTest(net=repr(wrong)):
+                run = BacktestRun(
+                    run_identity={}, trades=(good,), rejections=(),
+                    equity_checkpoints=(), metrics={"net_pnl_usd": wrong},
+                )
+                with tempfile.TemporaryDirectory() as root:
+                    target = Path(root) / "blocked"
+                    with mock.patch("pathlib.Path.mkdir", side_effect=AssertionError(
+                        "net PnL mismatch must not publish"
+                    )):
+                        with self.assertRaisesRegex(ValueError, "net_pnl_usd"):
+                            write_backtest_artifacts(run, target)
+                    self.assertFalse(target.exists())
+
+    def test_artifact_writer_preserves_reconciled_metrics_and_empty_run(self):
+        good = trade(trade_id="T-1", minutes=1, net_pnl_usd=10.0)
+        for trades, metrics in (
+            ((good,), {"trade_count": 1, "net_pnl_usd": 10.0}),
+            ((), {"trade_count": 0, "net_pnl_usd": 0.0}),
+        ):
+            with self.subTest(count=len(trades)):
+                run = BacktestRun(
+                    run_identity={}, trades=trades, rejections=(),
+                    equity_checkpoints=(), metrics=metrics,
+                )
+                with tempfile.TemporaryDirectory() as root:
+                    target = Path(root) / "valid"
+                    write_backtest_artifacts(run, target)
+                    self.assertEqual(
+                        json.loads((target / "metrics.json").read_text("utf-8")),
+                        metrics,
+                    )
+
     def test_artifact_bytes_and_digests_are_deterministic(self) -> None:
         one_trade = trade(trade_id="T-1", minutes=1, net_pnl_usd=10.0)
         rejection = RejectionRecord(
