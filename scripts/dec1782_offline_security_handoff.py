@@ -6,6 +6,7 @@ workflow dispatch, runner operations, broker access, or action authorization.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 import runpy
@@ -239,6 +240,23 @@ def compile_blocked_handoff(docs_root=DOCS, workflow=WORKFLOW):
             for job in jobs
         ),
         "unsafe or malformed historical pre-gate trace; external admission absent",
+    )
+    # Re-derive all machine-facing historical observations from separately
+    # re-read, pinned fixture bytes. This prevents a malformed or *plausible*
+    # upstream reporter from substituting reviewed labels, command payloads,
+    # cell inventory or gate metadata while keeping only the denial flags.
+    fixture_bytes = workflow_module["read_offline_source"](Path(workflow))
+    _require(
+        hashlib.sha256(fixture_bytes).hexdigest() ==
+            workflow_module["EXPECTED_HISTORICAL_WORKFLOW_SHA256"],
+        "independently read historical fixture hash no longer matches",
+    )
+    fixture_text = fixture_bytes.decode("utf-8")
+    _require(
+        jobs == workflow_module["classify_reviewed_step_order"](fixture_text)
+        and matrix == workflow_module["inspect_installed_cell_matrix"](fixture_text)
+        and trace == workflow_module["inspect_pregate_step_payloads"](fixture_text),
+        "machine-readable historical observations differ from pinned fixture",
     )
     _require(
         "installed_three_job_precheckout_preinstall_preaccess_enforcement"
