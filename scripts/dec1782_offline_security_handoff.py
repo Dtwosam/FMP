@@ -86,6 +86,36 @@ def compile_blocked_handoff(docs_root=DOCS, workflow=WORKFLOW):
         and set(installed) == WORKFLOW_REPORT_KEYS,
         "historical workflow source report has unknown, missing or malformed fields",
     )
+    # These upstream documentary-only fields were previously projected away.
+    # They must not carry alternative approval instructions unnoticed.
+    route_ids = documentary["proposed_remediation_paths_not_authorized"]
+    _require(
+        type(route_ids) is list and len(route_ids) == 2
+        and all(type(route) is str for route in route_ids)
+        and set(route_ids) == {
+            "ADMIN_EXCLUSIVE_CONTINUOUS_MAIN_LOCK",
+            "SEPARATELY_APPROVED_IMMUTABLE_REF_CODE_AMENDMENT",
+        },
+        "unreviewed, selected or malformed remediation route claim",
+    )
+    _require(
+        documentary["next_human_milestone"] == (
+            "Independent administrator/security review must establish a safe "
+            "continuous ref-lock path or separately approved immutable-ref "
+            "amendment, verify actual runtime and a fresh unconsumed run385 "
+            "inventory, and record a distinct human one-shot decision. "
+            "This offline report grants none of those permissions."
+        )
+        and type(documentary["next_human_milestone"]) is str
+        and installed["next_external_review"] == (
+            "Independent administrator/security evidence of continuous no-bypass "
+            "main identity or separately approved immutable-ref amendment; real "
+            "installed early-admission/runner OS proofs; fresh one-shot run inventory; "
+            "then separate human 2023/run385/attempt1 action."
+        )
+        and type(installed["next_external_review"]) is str,
+        "upstream external review requests cannot become approval instructions",
+    )
     expected_proofs = docs_module["PROOFS"]
     # JSON and Markdown must agree on the exact reviewed source identity.
     # Neither hash nor stale public ref proves the current installed runner.

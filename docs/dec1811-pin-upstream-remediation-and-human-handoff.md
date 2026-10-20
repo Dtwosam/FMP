@@ -1,0 +1,9 @@
+# DEC-1811 — Reject forged upstream remediation choices or review prompts
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent source-only child of #2057, `9294823a6eabd5c6cd8f6ca1ab334b628dbb806a`.
+
+The consolidated offline JSON compiler verifies all known upstream field names, but the DEC-1752 documentary report's `proposed_remediation_paths_not_authorized` and `next_human_milestone` and DEC-1779 historical workflow's `next_external_review` were projected away without verification. A forged or auto-approval-like value in these documentary fields could be silently ignored and the compiler could still produce a plausible BLOCKED machine-readable handoff.
+
+Fail closed unless the remediation routes are **exactly the two reviewed, not selected** possible external paths: `ADMIN_EXCLUSIVE_CONTINUOUS_MAIN_LOCK` and `SEPARATELY_APPROVED_IMMUTABLE_REF_CODE_AMENDMENT`. Reject duplicate, malformed or additional routes. Pin both non-authorizing human/external review requests to their exact reviewed offline text, preventing an upstream claim of approval or dispatch instructions from being laundered through JSON or Markdown. These checks only protect **local source-report consistency**; they cannot attest administrator actions, current rulesets or runner OS state.
+
+Adds four adversarial test methods (6,628 cumulative proposed source-defined methods). All forged upstream route/review values fail closed with `InvalidHandoff`, and both CLI formats exit 2 without stdout. Valid reports stay permanently BLOCKED (exit 3). No GitHub workflow/ref/ruleset mutation, protected 2023/run385/attempt1 research, broker/demo/live trading or profit claim. Eight independent proof packages and #779/#820/#821 remain MISSING/BLOCKED. Own exact-head Phase3/full CI and qualified independent review are required.
