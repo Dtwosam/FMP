@@ -166,8 +166,14 @@ class ScheduledExit:
     timestamp_utc: datetime
 
     def __post_init__(self) -> None:
-        if not self.decision_id.strip():
-            raise ValueError("scheduled-exit decision_id must be non-empty")
+        if (
+            type(self.decision_id) is not str
+            or not self.decision_id.strip()
+            or any(ord(ch) < 32 or ord(ch) == 127 for ch in self.decision_id)
+        ):
+            raise ValueError(
+                "scheduled-exit decision_id must be a nonempty printable string"
+            )
         _validate_symbol(self.symbol)
         _validate_utc(self.timestamp_utc, field="scheduled-exit timestamp_utc")
 
