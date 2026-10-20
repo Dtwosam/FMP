@@ -472,6 +472,16 @@ def main(argv=None):
         default=None, help="Report format; defaults to saved input type or JSON",
     )
     tokens = list(sys.argv[1:] if argv is None else argv)
+    # Exit code zero belongs to an isolated help request, never a saved
+    # verification mixed with help. Otherwise tools may mistake help for PASS.
+    if any(token in ("-h", "--help") for token in tokens) and (
+        len(tokens) != 1
+    ):
+        print(
+            "BLOCKED: help cannot be combined with review evidence or flags",
+            file=sys.stderr,
+        )
+        return 2
     singleton = (
         "--docs-root", "--workflow", "--worksheet",
         "--verify-report", "--verify-requests",
