@@ -448,6 +448,60 @@ class Phase3RiskPolicyTests(unittest.TestCase):
                 self.assertEqual(state.risk_equity_usd, 10_000.0)
                 self.assertIsNone(state.current_utc_date)
 
+    def test_risk_day_rejects_backward_roll_without_resetting_halt(self):
+        state = RiskState(starting_equity_usd=10_000.0)
+        record_realized_pnl(
+            state, timestamp_utc=self.ts, pnl_usd=-200.0,
+            config=self.config,
+        )
+        self.assertTrue(state.daily_halt_active)
+        saved = (
+            state.current_utc_date, state.day_start_equity_usd,
+            state.day_realized_pnl_usd, state.halt_timestamp_utc,
+            state.risk_equity_usd,
+        )
+        with self.assertRaisesRegex(ValueError, "backward"):
+            roll_utc_day(
+                state, timestamp_utc=self.ts - timedelta(days=1),
+            )
+        self.assertTrue(state.daily_halt_active)
+        self.assertEqual(saved, (
+            state.current_utc_date, state.day_start_equity_usd,
+            state.day_realized_pnl_usd, state.halt_timestamp_utc,
+            state.risk_equity_usd,
+        ))
+
+    def test_realized_pnl_rejects_backdated_mutation_atomically(self):
+        state = RiskState(starting_equity_usd=10_000.0)
+        next_day = self.ts + timedelta(days=1)
+        record_realized_pnl(
+            state, timestamp_utc=next_day, pnl_usd=25.0,
+            config=self.config,
+        )
+        with self.assertRaisesRegex(ValueError, "backward"):
+            record_realized_pnl(
+                state, timestamp_utc=self.ts, pnl_usd=75.0,
+                config=self.config,
+            )
+        self.assertEqual(state.risk_equity_usd, 10_025.0)
+        self.assertEqual(state.day_realized_pnl_usd, 25.0)
+        self.assertEqual(state.current_utc_date, next_day.date())
+
+    def test_risk_assessment_refuses_backdated_day_without_mutation(self):
+        state = RiskState(starting_equity_usd=10_000.0)
+        next_day = self.ts + timedelta(days=1)
+        roll_utc_day(state, timestamp_utc=next_day)
+        reserve_risk(state, position_id="held", amount_usd=25.0)
+        with self.assertRaisesRegex(ValueError, "backward"):
+            assess_decision(
+                decision=directional_decision(),
+                reference_entry_price=1.1,
+                timestamp_utc=self.ts, config=self.config, state=state,
+            )
+        self.assertEqual(state.current_utc_date, next_day.date())
+        self.assertEqual(state.reservations_usd, {"held": 25.0})
+        self.assertEqual(state.day_realized_pnl_usd, 0.0)
+
     def test_risk_utc_rolling_still_accepts_real_utc_dates(self):
         state = RiskState(starting_equity_usd=10_000.0)
         roll_utc_day(state, timestamp_utc=self.ts)

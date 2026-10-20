@@ -86,6 +86,9 @@ def roll_utc_day(state: RiskState, *, timestamp_utc: datetime) -> None:
     target_date = timestamp_utc.date()
     if state.current_utc_date == target_date:
         return
+    # A backdated call must not erase a later day's risk halt or realized PnL.
+    if state.current_utc_date is not None and target_date < state.current_utc_date:
+        raise ValueError("risk UTC day must not move backward")
     state.current_utc_date = target_date
     state.day_start_equity_usd = state.risk_equity_usd
     state.day_realized_pnl_usd = 0.0
