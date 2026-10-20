@@ -236,6 +236,12 @@ def write_backtest_artifacts(run: BacktestRun, out_dir: Path) -> dict[str, objec
     # A malformed run must not create an empty output or partial artifacts.
     if type(run) is not BacktestRun:
         raise ValueError("run must be a BacktestRun record")
+    for field, mapping in (
+        ("run_identity", run.run_identity),
+        ("metrics", run.metrics),
+    ):
+        if type(mapping) not in (dict, MappingProxyType):
+            raise ValueError(f"{field} must be an ordinary mapping")
     for field, records, canonical in (
         ("trades", run.trades, TradeRecord),
         ("rejections", run.rejections, RejectionRecord),
