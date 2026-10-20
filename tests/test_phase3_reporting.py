@@ -1379,6 +1379,40 @@ class Phase3ReportingTests(unittest.TestCase):
                     write_backtest_artifacts(run, path)
             self.assertFalse(path.exists())
 
+    def test_writer_refuses_symlinked_artifact_output_directory(self):
+        run = BacktestRun(
+            run_identity={}, trades=(), rejections=(),
+            equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            home = Path(root)
+            target = home / "outside"
+            target.mkdir()
+            sentinel = target / "sentinel.txt"
+            sentinel.write_text("unchanged", encoding="utf-8")
+            link = home / "artifact-output-link"
+            try:
+                link.symlink_to(target, target_is_directory=True)
+            except (OSError, NotImplementedError):
+                self.skipTest("directory symlinks unavailable")
+            with self.assertRaisesRegex(ValueError, "output directory.*symlink"):
+                write_backtest_artifacts(run, link)
+            self.assertTrue(link.is_symlink())
+            self.assertEqual(sentinel.read_text("utf-8"), "unchanged")
+            self.assertEqual(list(target.iterdir()), [sentinel])
+
+    def test_writer_preserves_normal_existing_output_directory(self):
+        run = BacktestRun(
+            run_identity={}, trades=(), rejections=(),
+            equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            path = Path(root) / "direct-artifacts"
+            path.mkdir()
+            manifest = write_backtest_artifacts(run, path)
+            self.assertEqual(manifest["protocol"], "fmp-phase3-backtest-artifacts-v1")
+            self.assertTrue((path / "manifest.json").is_file())
+
     def test_artifact_bytes_and_digests_are_deterministic(self) -> None:
         one_trade = trade(trade_id="T-1", minutes=1, net_pnl_usd=10.0)
         rejection = RejectionRecord(

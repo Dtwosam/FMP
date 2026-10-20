@@ -547,6 +547,10 @@ def write_backtest_artifacts(run: BacktestRun, out_dir: Path) -> dict[str, objec
         "metrics.json": _stable_json_bytes(run.metrics),
     }
     out_dir = Path(out_dir)
+    # Refuse an existing output-directory symlink rather than following it
+    # while writing apparently local artifact files.
+    if out_dir.is_symlink():
+        raise ValueError("artifact output directory must not be a symlink")
     out_dir.mkdir(parents=True, exist_ok=True)
     for name, data in payloads.items():
         _atomic_write(out_dir / name, data)
