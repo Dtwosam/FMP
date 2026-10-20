@@ -268,6 +268,12 @@ class BacktestRun:
 
 
 def validate_quote_bars(bars: Sequence[QuoteBar]) -> None:
+    if (
+        not isinstance(bars, Sequence)
+        or isinstance(bars, (str, bytes, bytearray))
+        or any(type(bar) is not QuoteBar for bar in bars)
+    ):
+        raise ValueError("quote bars must be a sequence of QuoteBar records")
     keys = [(bar.timestamp_utc, bar.symbol) for bar in bars]
     if len(set(keys)) != len(keys):
         raise ValueError("duplicate quote-bar identity")
@@ -276,6 +282,12 @@ def validate_quote_bars(bars: Sequence[QuoteBar]) -> None:
 
 
 def validate_decisions(decisions: Sequence[Decision]) -> None:
+    if (
+        not isinstance(decisions, Sequence)
+        or isinstance(decisions, (str, bytes, bytearray))
+        or any(type(decision) is not Decision for decision in decisions)
+    ):
+        raise ValueError("decisions must be a sequence of Decision records")
     ids = [decision.decision_id for decision in decisions]
     if len(set(ids)) != len(ids):
         raise ValueError("duplicate decision_id")
