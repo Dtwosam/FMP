@@ -4,6 +4,7 @@ import hashlib
 import json
 import math
 import os
+import tempfile
 from dataclasses import fields, is_dataclass
 from datetime import datetime, timedelta
 from enum import Enum
@@ -234,9 +235,20 @@ def _stable_jsonl_bytes(values: Sequence[object]) -> bytes:
 
 def _atomic_write(path: Path, data: bytes) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_name(f".{path.name}.tmp")
-    temporary.write_bytes(data)
-    os.replace(temporary, path)
+    # Fixed temporary names could follow a planted symlink. Securely create
+    # a distinct temp file in the destination directory, then replace.
+    temporary_path: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="wb", dir=path.parent, prefix=f".{path.name}.",
+            suffix=".tmp", delete=False,
+        ) as temporary:
+            temporary_path = Path(temporary.name)
+            temporary.write(data)
+        os.replace(temporary_path, path)
+    finally:
+        if temporary_path is not None:
+            temporary_path.unlink(missing_ok=True)
 
 
 def _artifact_record(path: Path) -> dict[str, object]:

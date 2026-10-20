@@ -1057,6 +1057,42 @@ class Phase3ReportingTests(unittest.TestCase):
                 "+00:00", "Z"
             ))
 
+    def test_writer_never_follows_preexisting_predictable_temp_symlink(self):
+        run = BacktestRun(
+            run_identity={}, trades=(), rejections=(),
+            equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            root_path = Path(root)
+            target = root_path / "artifacts"
+            target.mkdir()
+            sentinel = root_path / "must-not-overwrite.txt"
+            sentinel.write_text("unaltered", encoding="utf-8")
+            planted = target / ".summary.json.tmp"
+            try:
+                planted.symlink_to(sentinel)
+            except (OSError, NotImplementedError):
+                self.skipTest("symlink creation is unavailable")
+            write_backtest_artifacts(run, target)
+            self.assertEqual(sentinel.read_text("utf-8"), "unaltered")
+            self.assertTrue(planted.is_symlink())
+            self.assertTrue((target / "summary.json").is_file())
+
+    def test_writer_removes_unique_temp_file_on_replace_failure(self):
+        run = BacktestRun(
+            run_identity={}, trades=(), rejections=(),
+            equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            target = Path(root) / "artifacts"
+            with mock.patch("fmp.reporting.backtest.os.replace",
+                            side_effect=OSError("synthetic replace failure")):
+                with self.assertRaisesRegex(OSError, "synthetic replace failure"):
+                    write_backtest_artifacts(run, target)
+            self.assertTrue(target.exists())
+            self.assertEqual(list(target.glob(".*.tmp")), [])
+            self.assertFalse((target / "summary.json").exists())
+
     def test_artifact_bytes_and_digests_are_deterministic(self) -> None:
         one_trade = trade(trade_id="T-1", minutes=1, net_pnl_usd=10.0)
         rejection = RejectionRecord(
