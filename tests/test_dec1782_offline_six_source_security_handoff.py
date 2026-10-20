@@ -762,6 +762,49 @@ class Phase8AConsolidatedSourceOnlyHandoffTests(unittest.TestCase):
                         self.assertEqual(err.getvalue(), "")
                         self.assertIn("BLOCKED", out.getvalue())
 
+    def test_json_compiler_rejects_boolean_alias_for_one_shot_attempt(self):
+        def forge(report):
+            report["one_shot_run_identity"]["attempt_number"] = True
+        with self._with_forged_upstream_report(
+                MOD["DOC_AUDIT"], "render_readiness", forge):
+            with self.assertRaisesRegex(MOD["InvalidHandoff"], "one-shot identity"):
+                BUILD()
+
+    def test_json_compiler_rejects_float_alias_for_frozen_run_number(self):
+        def forge(report):
+            report["one_shot_run_identity"]["run_number"] = 385.0
+        with self._with_forged_upstream_report(
+                MOD["DOC_AUDIT"], "render_readiness", forge):
+            with self.assertRaisesRegex(MOD["InvalidHandoff"], "one-shot identity"):
+                BUILD()
+
+    def test_compiler_rejects_malformed_one_shot_identity_shapes(self):
+        for value in (None, [], {"attempt_number": 1},
+                      {"segment": "2023", "run_number": 385,
+                       "attempt_number": 1, "authorization": "BLOCKED",
+                       "self_approved": True}):
+            with self.subTest(shape=repr(value)):
+                def forge(report):
+                    report["one_shot_run_identity"] = value
+                with self._with_forged_upstream_report(
+                        MOD["DOC_AUDIT"], "render_readiness", forge):
+                    with self.assertRaises(MOD["InvalidHandoff"]):
+                        BUILD()
+
+    def test_both_cli_formats_reject_boolean_one_shot_alias(self):
+        def forge(report):
+            report["one_shot_run_identity"]["attempt_number"] = True
+        for fmt in ("json", "markdown"):
+            with self.subTest(fmt=fmt):
+                out, err = io.StringIO(), io.StringIO()
+                with self._with_forged_upstream_report(
+                        MOD["DOC_AUDIT"], "render_readiness", forge):
+                    with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                        status = MOD["main"](["--format", fmt])
+                self.assertEqual(status, 2)
+                self.assertEqual(out.getvalue(), "")
+                self.assertIn("BLOCKED:", err.getvalue())
+
     def test_consolidated_handoff_never_invokes_external_permission_or_trading(self):
         report = BUILD()
         self.assertIs(report["no_external_actions_performed"], True)
