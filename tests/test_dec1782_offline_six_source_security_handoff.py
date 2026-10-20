@@ -992,6 +992,48 @@ class Phase8AConsolidatedSourceOnlyHandoffTests(unittest.TestCase):
                 self.assertEqual(out.getvalue(), "")
                 self.assertIn("BLOCKED:", err.getvalue())
 
+    def test_json_compiler_rejects_nested_float_horizon_alias(self):
+        def forge(report):
+            report["historical_matrix_inventory"]["matrix_cells"][0][
+                "horizon_minutes"] = 60.0
+        with self._with_forged_upstream_report(
+                MOD["WORKFLOW_AUDIT"], "report_blocked_admission", forge):
+            with self.assertRaisesRegex(MOD["InvalidHandoff"], "pinned fixture"):
+                BUILD()
+
+    def test_json_compiler_rejects_nested_boolean_integer_alias(self):
+        def forge(report):
+            report["historical_matrix_inventory"][
+                "historical_matrix_does_not_authorize_market_source_io"] = 1
+        with self._with_forged_upstream_report(
+                MOD["WORKFLOW_AUDIT"], "report_blocked_admission", forge):
+            with self.assertRaisesRegex(MOD["InvalidHandoff"], "pinned fixture"):
+                BUILD()
+
+    def test_json_compiler_rejects_nonfinite_historical_matrix_metadata(self):
+        def forge(report):
+            report["historical_matrix_inventory"]["matrix_cells"][0][
+                "horizon_minutes"] = float("nan")
+        with self._with_forged_upstream_report(
+                MOD["WORKFLOW_AUDIT"], "report_blocked_admission", forge):
+            with self.assertRaisesRegex(MOD["InvalidHandoff"], "nonfinite"):
+                BUILD()
+
+    def test_nonfinite_nested_historical_source_rejects_both_cli_formats(self):
+        def forge(report):
+            report["historical_matrix_inventory"]["matrix_cells"][1][
+                "horizon_minutes"] = float("inf")
+        for fmt in ("json", "markdown"):
+            with self.subTest(fmt=fmt):
+                out, err = io.StringIO(), io.StringIO()
+                with self._with_forged_upstream_report(
+                        MOD["WORKFLOW_AUDIT"], "report_blocked_admission", forge):
+                    with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                        status = MOD["main"](["--format", fmt])
+                self.assertEqual(status, 2)
+                self.assertEqual(out.getvalue(), "")
+                self.assertIn("BLOCKED:", err.getvalue())
+
     def test_consolidated_handoff_never_invokes_external_permission_or_trading(self):
         report = BUILD()
         self.assertIs(report["no_external_actions_performed"], True)
