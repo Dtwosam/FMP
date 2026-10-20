@@ -2139,6 +2139,63 @@ class Phase3ReportingTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "valid JSON"):
                 audit_backtest_artifact_structure(folder)
 
+    def test_audit_detects_summary_rewrite_after_initial_verification(self):
+        run = BacktestRun(
+            run_identity={}, trades=(), rejections=(),
+            equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            folder = Path(root) / "artifacts"
+            write_backtest_artifacts(run, folder)
+            actual = verify_backtest_artifacts
+
+            def mutate_after_verify(root_path):
+                manifest = actual(root_path)
+                target = folder / "summary.json"
+                before = target.read_bytes()
+                self.assertIn(b'"trade_count":0', before)
+                target.write_bytes(before.replace(
+                    b'"trade_count":0', b'"trade_count":1', 1,
+                ))
+                return manifest
+
+            with mock.patch(
+                "fmp.reporting.backtest.verify_backtest_artifacts",
+                side_effect=mutate_after_verify,
+            ):
+                with self.assertRaisesRegex(
+                    ValueError, "changed since verification",
+                ):
+                    audit_backtest_artifact_structure(folder)
+
+    def test_audit_detects_trade_rewrite_after_initial_verification(self):
+        record = trade(trade_id="REAL", minutes=1, net_pnl_usd=10.0)
+        run = BacktestRun(
+            run_identity={}, trades=(record,), rejections=(),
+            equity_checkpoints=(), metrics={"trade_count": 1},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            folder = Path(root) / "artifacts"
+            write_backtest_artifacts(run, folder)
+            actual = verify_backtest_artifacts
+
+            def mutate_after_verify(root_path):
+                manifest = actual(root_path)
+                target = folder / "trades.jsonl"
+                before = target.read_bytes()
+                self.assertIn(b'"EURUSD"', before)
+                target.write_bytes(before.replace(b'"EURUSD"', b'"GBPUSD"', 1))
+                return manifest
+
+            with mock.patch(
+                "fmp.reporting.backtest.verify_backtest_artifacts",
+                side_effect=mutate_after_verify,
+            ):
+                with self.assertRaisesRegex(
+                    ValueError, "changed since verification",
+                ):
+                    audit_backtest_artifact_structure(folder)
+
     def test_artifact_bytes_and_digests_are_deterministic(self) -> None:
         one_trade = trade(trade_id="T-1", minutes=1, net_pnl_usd=10.0)
         rejection = RejectionRecord(
