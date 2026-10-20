@@ -273,6 +273,39 @@ class Phase3RiskPolicyTests(unittest.TestCase):
         self.assertEqual(state.current_utc_date, self.ts.date())
         self.assertEqual(state.day_start_equity_usd, 10_000.0)
 
+    def test_risk_fraction_config_rejects_boolean_and_non_numeric_values(self):
+        fields = (
+            "default_risk_fraction",
+            "max_risk_fraction",
+            "max_simultaneous_risk_fraction",
+            "daily_loss_halt_fraction",
+        )
+        for field in fields:
+            for value in (True, False, None, "0.01", [], {}):
+                with self.subTest(field=field, value=repr(value)):
+                    kwargs = {field: value}
+                    with self.assertRaisesRegex(ValueError, field):
+                        RiskConfig(**kwargs)
+
+    def test_risk_fraction_config_rejects_nonfinite_or_overflowed_numeric(self):
+        for field in (
+            "default_risk_fraction", "max_risk_fraction",
+            "max_simultaneous_risk_fraction", "daily_loss_halt_fraction",
+        ):
+            for value in (float("nan"), float("inf"), -float("inf"), 10 ** 400):
+                with self.subTest(field=field, value=repr(value)):
+                    with self.assertRaisesRegex(ValueError, field):
+                        RiskConfig(**{field: value})
+
+    def test_risk_fraction_defaults_remain_positive_and_ordered(self):
+        cfg = RiskConfig()
+        self.assertGreater(cfg.default_risk_fraction, 0)
+        self.assertLessEqual(cfg.default_risk_fraction, cfg.max_risk_fraction)
+        self.assertLessEqual(
+            cfg.max_risk_fraction, cfg.max_simultaneous_risk_fraction,
+        )
+        self.assertGreater(cfg.daily_loss_halt_fraction, 0)
+
     def test_realized_risk_equity_changes_only_by_realized_net_pnl(self) -> None:
         record_realized_pnl(
             self.state,

@@ -32,8 +32,13 @@ class RiskConfig:
             "daily_loss_halt_fraction": self.daily_loss_halt_fraction,
         }
         for name, value in values.items():
-            if not math.isfinite(value) or value <= 0:
-                raise ValueError(f"{name} must be finite and positive")
+            if type(value) not in (int, float):
+                raise ValueError(f"{name} must be finite numeric and positive")
+            try:
+                if not math.isfinite(value) or value <= 0:
+                    raise ValueError(f"{name} must be finite and positive")
+            except OverflowError as exc:
+                raise ValueError(f"{name} must be finite and positive") from exc
         if self.default_risk_fraction > self.max_risk_fraction:
             raise ValueError("default risk fraction must not exceed maximum risk fraction")
         if self.max_risk_fraction > self.max_simultaneous_risk_fraction:
