@@ -1288,6 +1288,50 @@ class Phase3ReportingTests(unittest.TestCase):
                         metrics,
                     )
 
+    def test_writer_calculates_streaks_in_published_exit_order(self):
+        earlier_win = trade(trade_id="W-EARLY", minutes=1, net_pnl_usd=10.0)
+        middle_loss = trade(trade_id="LOSS", minutes=3, net_pnl_usd=-5.0)
+        later_win = trade(trade_id="W-LATE", minutes=5, net_pnl_usd=10.0)
+        # Caller input has two adjacent wins, published chronological
+        # order correctly separates them with the loss.
+        run = BacktestRun(
+            run_identity={}, trades=(later_win, earlier_win, middle_loss),
+            rejections=(), equity_checkpoints=(), metrics={
+                "longest_winning_streak": 1,
+                "longest_losing_streak": 1,
+            },
+        )
+        with tempfile.TemporaryDirectory() as root:
+            path = Path(root) / "valid"
+            write_backtest_artifacts(run, path)
+            rows = [
+                json.loads(line) for line in
+                (path / "trades.jsonl").read_text("utf-8").splitlines()
+            ]
+            self.assertEqual(
+                [row["trade_id"] for row in rows],
+                ["W-EARLY", "LOSS", "W-LATE"],
+            )
+
+    def test_writer_rejects_streak_claim_based_on_unsorted_input_order(self):
+        earlier_win = trade(trade_id="W-EARLY", minutes=1, net_pnl_usd=10.0)
+        middle_loss = trade(trade_id="LOSS", minutes=3, net_pnl_usd=-5.0)
+        later_win = trade(trade_id="W-LATE", minutes=5, net_pnl_usd=10.0)
+        run = BacktestRun(
+            run_identity={}, trades=(later_win, earlier_win, middle_loss),
+            rejections=(), equity_checkpoints=(), metrics={
+                "longest_winning_streak": 2,
+            },
+        )
+        with tempfile.TemporaryDirectory() as root:
+            path = Path(root) / "blocked"
+            with mock.patch("pathlib.Path.mkdir", side_effect=AssertionError(
+                "incorrect win streak cannot publish"
+            )):
+                with self.assertRaisesRegex(ValueError, "longest_winning_streak"):
+                    write_backtest_artifacts(run, path)
+            self.assertFalse(path.exists())
+
     def test_artifact_bytes_and_digests_are_deterministic(self) -> None:
         one_trade = trade(trade_id="T-1", minutes=1, net_pnl_usd=10.0)
         rejection = RejectionRecord(

@@ -457,9 +457,12 @@ def write_backtest_artifacts(run: BacktestRun, out_dir: Path) -> dict[str, objec
         except OverflowError as exc:
             raise ValueError(f"metric {name} must be finite numeric") from exc
 
-    # Recompute core win/loss economics so a self-consistent artifact hash
-    # cannot mask a claimed profit factor unrelated to published trades.
-    pnls = [trade.net_pnl_usd for trade in run.trades]
+    # Recompute core win/loss economics in the same deterministic exit
+    # order used for the published trades JSONL (and streak calculations).
+    ordered_trades = sorted(
+        run.trades, key=lambda item: (item.exit_timestamp_utc, item.trade_id)
+    )
+    pnls = [trade.net_pnl_usd for trade in ordered_trades]
     profit_usd = sum(value for value in pnls if value > 0)
     loss_usd = -sum(value for value in pnls if value < 0)
     for name, expected in (
@@ -524,7 +527,7 @@ def write_backtest_artifacts(run: BacktestRun, out_dir: Path) -> dict[str, objec
         "equity_checkpoint_count": len(run.equity_checkpoints),
         "equity_checkpoints": run.equity_checkpoints,
     }
-    trades = sorted(run.trades, key=lambda item: (item.exit_timestamp_utc, item.trade_id))
+    trades = ordered_trades
     rejections = sorted(
         run.rejections,
         key=lambda item: (item.evaluated_timestamp_utc, item.decision_id),
