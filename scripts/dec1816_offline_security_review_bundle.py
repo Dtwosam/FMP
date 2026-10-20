@@ -442,8 +442,15 @@ def verify_complete_blocked_review_triplet(full_path, requests_path, markdown_pa
     }
 
 
+class _FailClosedReviewParser(argparse.ArgumentParser):
+    """Never echo attacker-controlled flags or values into terminal stderr."""
+
+    def error(self, message):
+        raise InvalidReviewBundle("invalid or abbreviated review argument")
+
+
 def main(argv=None):
-    parser = argparse.ArgumentParser(
+    parser = _FailClosedReviewParser(
         description="Seven-source historical BLOCKED independent proof review",
         allow_abbrev=False,
     )
@@ -500,8 +507,11 @@ def main(argv=None):
             return 2
     try:
         args = parser.parse_args(tokens)
+    except InvalidReviewBundle:
+        print("BLOCKED: invalid or abbreviated review argument", file=sys.stderr)
+        return 2
     except SystemExit as exc:
-        if exc.code == 0:  # Built-in --help is not a security decision.
+        if exc.code == 0:  # Isolated built-in --help never verifies evidence.
             return 0
         print("BLOCKED: invalid or abbreviated review argument", file=sys.stderr)
         return 2
