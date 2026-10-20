@@ -1,0 +1,7 @@
+# DEC-1826 — Compact unfulfilled independent security review requests
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent source-only child of PR #2072 `6c954db969f982e13b5db69d3e3c03c4bc15fdef`.
+
+The seven-source index now has an explicit `--format requests` output for qualified external reviewers. It exports **only** the exact eight MISSING proof IDs, reviewer roles, source-defined acceptance criteria and null evidence/signoff placeholders, plus the frozen BLOCKED 2023/run385/attempt1 identity and the local canonical seven-source packet digest. Its parent index is verified against a newly reconstructed pinned offline packet, and any edited status or injected approval claim fails closed. The original `json` and `markdown` choices remain intact.
+
+The compact output is **not** a review submission, signature, administration attestation or gate. A valid read-only request still has BLOCKED disposition and exit status 3; altered worksheet evidence fails exit 2 without output. Four new source-defined tests (6,672 cumulative proposed). External issues #779/#820/#821 and eight independently authenticated proof packages remain MISSING; protected 2023/run385/attempt1, later research, brokers/demo/live trading and real money remain blocked. No installed GitHub ref, workflow, ruleset or runner mutation; no strategy profitability. Own exact-head Phase3/full CI and qualified independent review required.
