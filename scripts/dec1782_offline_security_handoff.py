@@ -192,11 +192,28 @@ def compile_blocked_handoff(docs_root=DOCS, workflow=WORKFLOW):
         all(
             jobs[job]["checkout_before_runtime_gate"] is True
             and jobs[job]["main_ref_check_after_checkout"] is True
+            and type(trace[job]) is dict
+            and set(trace[job]) == {
+                "actual_pregate_setup_and_read_payloads",
+                "static_source_only_not_actual_runner_trace",
+                "no_early_admission_or_immutable_server_ref_proven",
+            }
             and trace[job]["static_source_only_not_actual_runner_trace"] is True
             and trace[job]["no_early_admission_or_immutable_server_ref_proven"] is True
+            and type(trace[job]["actual_pregate_setup_and_read_payloads"]) is list
+            and all(
+                type(step) is dict
+                and set(step) == {"name", "payload", "zero_based_step_index"}
+                and type(step["name"]) is str
+                and type(step["payload"]) is str
+                and type(step["zero_based_step_index"]) is int
+                and 0 <= step["zero_based_step_index"] <
+                    jobs[job]["zero_based_in_job_gate_index"]
+                for step in trace[job]["actual_pregate_setup_and_read_payloads"]
+            )
             for job in jobs
         ),
-        "unsafe pre-gate ordering and absent external admission must be explicit",
+        "unsafe or malformed historical pre-gate trace; external admission absent",
     )
     _require(
         "installed_three_job_precheckout_preinstall_preaccess_enforcement"
