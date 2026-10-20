@@ -9,6 +9,7 @@ from fmp.backtest.engine import (
     DECLARED_EARLIEST_BAR,
     NEXT_SUPPLIED_BAR,
     BacktestConfig,
+    _run_identity,
     run_backtest,
 )
 from fmp.contracts import Decision, Direction, ExitReason, QuoteBar, RejectionCode, ScheduledExit
@@ -333,6 +334,28 @@ class Phase3EngineTests(unittest.TestCase):
                          {"model": "zero_commission"})
         self.assertEqual(candidate.financing_model.to_config(),
                          {"model": "zero_financing"})
+
+    def test_backtest_config_decision_metadata_is_caller_independent(self):
+        original = {"scenario": "invented", "cost_case": 1}
+        instance = replace(config(), decision_config=original)
+        original["scenario"] = "altered-after-construction"
+        original["added"] = True
+        self.assertEqual(instance.decision_config["scenario"], "invented")
+        self.assertNotIn("added", instance.decision_config)
+
+    def test_backtest_config_decision_metadata_is_top_level_read_only(self):
+        instance = replace(config(), decision_config={"scenario": "invented"})
+        with self.assertRaises(TypeError):
+            instance.decision_config["scenario"] = "forged"
+        self.assertEqual(instance.decision_config["scenario"], "invented")
+
+    def test_backtest_run_identity_uses_frozen_decision_snapshot(self):
+        original = {"source": "SYNTHETIC-ONLY"}
+        instance = replace(config(), decision_config=original)
+        original["source"] = "MUTATED-BY-CALLER"
+        identity = _run_identity(instance, ())
+        self.assertEqual(identity["decision_config"], {"source": "SYNTHETIC-ONLY"})
+        self.assertEqual(dict(instance.decision_config), {"source": "SYNTHETIC-ONLY"})
 
     def test_no_trade_is_preserved_as_reasoned_record(self) -> None:
         decision = Decision(

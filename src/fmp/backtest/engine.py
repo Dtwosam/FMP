@@ -3,6 +3,7 @@ from __future__ import annotations
 import math
 from collections import defaultdict
 from dataclasses import dataclass
+from types import MappingProxyType
 from datetime import datetime, timedelta
 from typing import Mapping, Sequence
 
@@ -107,6 +108,13 @@ class BacktestConfig:
                 raise ValueError(
                     "decision_config keys must be nonempty printable strings"
                 )
+        # A frozen dataclass alone cannot protect a caller-owned mutable map.
+        # Copy its top level and prevent later edits to the stored mapping.
+        # Nested values are outside this deliberately scoped contract.
+        object.__setattr__(
+            self, "decision_config",
+            MappingProxyType(dict(self.decision_config)),
+        )
         _require_utc(self.requested_start_utc, field="requested_start_utc")
         _require_utc(self.requested_end_utc, field="requested_end_utc")
         if self.requested_end_utc < self.requested_start_utc:
