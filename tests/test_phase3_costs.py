@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import math
 import unittest
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from fmp.backtest import BACKTEST_ENGINE_VERSION
 from fmp.backtest.costs import (
@@ -194,6 +194,86 @@ class Phase3CostTests(unittest.TestCase):
             exit_timestamp_utc=datetime(2026, 9, 15, 8, 0, tzinfo=timezone.utc),
         )
         self.assertEqual(cost, 0.0)
+        self.assertEqual(model.to_config(), {"model": "zero_financing"})
+
+
+    def test_zero_financing_rejects_bad_symbol_and_direction(self):
+        model = ZeroFinancing()
+        entry = datetime(2026, 9, 14, 20, tzinfo=timezone.utc)
+        exit_ = datetime(2026, 9, 15, 8, tzinfo=timezone.utc)
+        for symbol in ("AUDUSD", "eurusd", None):
+            with self.subTest(symbol=symbol):
+                with self.assertRaisesRegex(ValueError, "symbol"):
+                    model.cost_usd(
+                        symbol=symbol, direction=Direction.LONG, units=100,
+                        entry_timestamp_utc=entry, exit_timestamp_utc=exit_,
+                    )
+        for direction in ("LONG", Direction.NO_TRADE, None, True):
+            with self.subTest(direction=direction):
+                with self.assertRaisesRegex(ValueError, "direction"):
+                    model.cost_usd(
+                        symbol="EURUSD", direction=direction, units=100,
+                        entry_timestamp_utc=entry, exit_timestamp_utc=exit_,
+                    )
+
+    def test_zero_financing_rejects_noninteger_units(self):
+        model = ZeroFinancing()
+        entry = datetime(2026, 9, 14, 20, tzinfo=timezone.utc)
+        for units in (True, False, 1.0, -0.5, None, "100000"):
+            with self.subTest(units=repr(units)):
+                with self.assertRaisesRegex(ValueError, "units"):
+                    model.cost_usd(
+                        symbol="EURUSD", direction=Direction.SHORT,
+                        units=units, entry_timestamp_utc=entry,
+                        exit_timestamp_utc=entry,
+                    )
+
+    def test_zero_financing_rejects_naive_or_non_utc_timestamps(self):
+        model = ZeroFinancing()
+        good = datetime(2026, 9, 14, 20, tzinfo=timezone.utc)
+        bad = (
+            datetime(2026, 9, 14, 20),
+            datetime(2026, 9, 14, 20,
+                     tzinfo=timezone(timedelta(hours=1))),
+            None, "2026-09-14T20:00:00",
+        )
+        for invalid in bad:
+            for field in ("entry_timestamp_utc", "exit_timestamp_utc"):
+                with self.subTest(value=repr(invalid), field=field):
+                    params = dict(
+                        symbol="EURUSD", direction=Direction.LONG, units=1,
+                        entry_timestamp_utc=good, exit_timestamp_utc=good,
+                    )
+                    params[field] = invalid
+                    with self.assertRaisesRegex(ValueError, "UTC"):
+                        model.cost_usd(**params)
+
+    def test_zero_financing_rejects_exit_preceding_entry(self):
+        model = ZeroFinancing()
+        entry = datetime(2026, 9, 14, 20, tzinfo=timezone.utc)
+        exit_ = entry - timedelta(minutes=1)
+        with self.assertRaisesRegex(ValueError, "precede"):
+            model.cost_usd(
+                symbol="USDJPY", direction=Direction.SHORT, units=100,
+                entry_timestamp_utc=entry, exit_timestamp_utc=exit_,
+            )
+
+    def test_zero_financing_still_returns_zero_for_valid_signed_positions(self):
+        model = ZeroFinancing()
+        when = datetime(2026, 9, 14, 20, tzinfo=timezone.utc)
+        later = when + timedelta(hours=4)
+        for symbol in ("EURUSD", "GBPUSD", "USDJPY"):
+            for direction in (Direction.LONG, Direction.SHORT):
+                for units in (-100, 0, 100):
+                    with self.subTest(symbol=symbol, direction=direction,
+                                      units=units):
+                        self.assertEqual(
+                            model.cost_usd(
+                                symbol=symbol, direction=direction, units=units,
+                                entry_timestamp_utc=when,
+                                exit_timestamp_utc=later,
+                            ), 0.0,
+                        )
         self.assertEqual(model.to_config(), {"model": "zero_financing"})
 
 
