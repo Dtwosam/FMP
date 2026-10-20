@@ -52,6 +52,41 @@ class Phase8ABlockedSevenSourceIndexTests(unittest.TestCase):
             with self.assertRaises((OSError, ValueError)):
                 BUILD(worksheet=edited)
 
+    def test_bundle_exposes_exact_irreversible_2023_run385_attempt1(self):
+        report = BUILD()
+        self.assertEqual(report["next_irreversible_annual_identity_no_dispatch"], {
+            "segment": "2023",
+            "run_number": 385,
+            "attempt_number": 1,
+            "authorization": "BLOCKED",
+        })
+
+    def test_bundle_exposes_stale_not_current_source_observation(self):
+        report = BUILD()
+        self.assertEqual(
+            report["observed_date_utc_not_current_attestation"], "2026-10-19")
+        self.assertEqual(
+            report["observed_main_sha_not_live_ref"],
+            SIX["compile_blocked_handoff"]()[
+                "source_main_sha_not_current_dispatch_ref"])
+
+    def test_bundle_exposes_all_eight_blocked_downstream_stages(self):
+        report = BUILD()
+        stages = report["blocked_downstream_research_and_trading_stages"]
+        self.assertEqual(stages, SIX["compile_blocked_handoff"]()[
+            "blocked_downstream_stages"])
+        self.assertEqual(len(stages), 8)
+        self.assertTrue(stages)
+
+    def test_irreversible_identity_never_overrides_execution_denials(self):
+        report = BUILD()
+        self.assertEqual(
+            report["next_irreversible_annual_identity_no_dispatch"][
+                "authorization"], "BLOCKED")
+        self.assertFalse(report["2023_run385_attempt1_authorized"])
+        self.assertFalse(report["independent_external_admin_runner_proof_verified"])
+        self.assertEqual(report["allowed_actions"], [])
+
     def test_cli_success_is_blocked_and_invalid_has_no_stdout(self):
         out, err = io.StringIO(), io.StringIO()
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
