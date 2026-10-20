@@ -50,6 +50,39 @@ class Phase3CostTests(unittest.TestCase):
             149.98,
         )
 
+    def test_adverse_slippage_rejects_string_buy_instead_of_treating_as_sell(self):
+        with self.assertRaisesRegex(ValueError, "side"):
+            apply_adverse_slippage(
+                1.2000, side="BUY", pips=1.0, symbol="EURUSD"
+            )
+
+    def test_adverse_slippage_rejects_non_enum_side_variants(self):
+        for side in ("SELL", None, True, 0, Direction.LONG, Direction.SHORT):
+            with self.subTest(side=repr(side)):
+                with self.assertRaisesRegex(ValueError, "side"):
+                    apply_adverse_slippage(
+                        1.2000, side=side, pips=1.0, symbol="EURUSD"
+                    )
+
+    def test_adverse_slippage_rejects_bad_side_even_with_zero_pips(self):
+        for side in ("BUY", "SELL", None):
+            with self.subTest(side=repr(side)):
+                with self.assertRaisesRegex(ValueError, "side"):
+                    apply_adverse_slippage(
+                        1.2000, side=side, pips=0.0, symbol="EURUSD"
+                    )
+
+    def test_slippage_enum_side_still_adverse_for_all_supported_pairs(self):
+        for symbol, price in (("EURUSD", 1.2), ("GBPUSD", 1.35),
+                              ("USDJPY", 150.0)):
+            with self.subTest(symbol=symbol):
+                buy = apply_adverse_slippage(
+                    price, side=OrderSide.BUY, pips=1.0, symbol=symbol)
+                sell = apply_adverse_slippage(
+                    price, side=OrderSide.SELL, pips=1.0, symbol=symbol)
+                self.assertGreater(buy, price)
+                self.assertLess(sell, price)
+
     def test_adverse_slippage_rejects_negative_pips(self) -> None:
         with self.assertRaisesRegex(ValueError, "slippage"):
             apply_adverse_slippage(

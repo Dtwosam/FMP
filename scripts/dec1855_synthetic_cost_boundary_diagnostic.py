@@ -52,6 +52,7 @@ def inspect_synthetic_cost_boundaries():
         "enum_sell_moves_down": True,
         "untyped_buy_string_interpreted_as_sell":
             mistyped_buy is not None and mistyped_buy == sell,
+        "untyped_buy_string_rejected": mistyped_buy is None,
         "fractional_commission_units_currently_accepted":
             fractional_units_cost is not None,
         "known_issues_require_separate_backtester_review": True,

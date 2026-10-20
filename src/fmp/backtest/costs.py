@@ -28,6 +28,8 @@ def apply_adverse_slippage(
     pips: float,
     symbol: str,
 ) -> float:
+    if type(side) is not OrderSide:
+        raise ValueError("slippage side must be an OrderSide enum")
     if not math.isfinite(price) or price <= 0:
         raise ValueError("price must be finite and positive")
     if not math.isfinite(pips) or pips < 0:

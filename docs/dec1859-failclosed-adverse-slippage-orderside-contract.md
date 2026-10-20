@@ -1,0 +1,9 @@
+# DEC-1859 — Fail closed on non-enum slippage order side in synthetic backtester
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent source-only child of PR #2106 at `4e14b701bbcc7fde136f75b238cfacdb6c2c449f`. This proposal edits pure backtester cost code, **not** the installed protected research workflow or broker/trading executor. It requires independent scoped code review, exact-head Phase3 and historical/general CI before any future promotion.
+
+**Verified synthetic correctness gap:** In `src/fmp/backtest/costs.py`, `apply_adverse_slippage` chose `price + delta` only when `side is OrderSide.BUY`, otherwise defaulting to the SELL branch. A mistaken plain string `"BUY"`, `None`, another enum or a Boolean can silently receive SELL slippage rather than an adverse BUY fill. This could distort a hypothetical after-cost backtest in the wrong direction.
+
+Reject all values where `type(side) is not OrderSide`, with a documented `ValueError` before quote cost processing. Real `OrderSide.BUY` and `OrderSide.SELL` remain adverse in their correct direction across three supported synthetic pairs. Update the constants-only DEC-1855 diagnostic to expose `untyped_buy_string_rejected=true`, retain the old `untyped_buy_string_interpreted_as_sell` flag as false, and **retain** the separately unresolved fractional commission-unit input finding. Four new regression methods: **6,760 cumulative proposed source-defined methods** on this lineage.
+
+The diagnostic remains `BLOCKED_NO_STRATEGY_OR_TRADING_PERMISSION`, not evidence of market expectancy, Strategy V1, profits or a real run. Accepted annual discovery ends at 2022/run384; protected 2023/run385/attempt1 and all further research, shadow/demo/live, ref/ruleset/workflow changes, broker orders and capital remain BLOCKED. Eight external security/inventory/human proof packages under #779/#820/#821 still MISSING. **No merge or promotion from this draft.**
