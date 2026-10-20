@@ -391,6 +391,22 @@ def verify_saved_unfulfilled_review_requests(path):
     return fresh
 
 
+def verify_saved_blocked_markdown(path):
+    """Accept only byte-exact canonical CLI Markdown from frozen inputs."""
+    audit = runpy.run_path(str(runpy.run_path(str(SIX))["DOC_AUDIT"]))
+    raw = audit["_read_regular_nofollow"](Path(path))
+    fresh = compile_blocked_review_bundle()
+    # The CLI's print() adds its trailing LF to the renderer's own ending LF.
+    canonical = (format_blocked_review_bundle_markdown(fresh) + chr(10)).encode(
+        "utf-8"
+    )
+    if raw != canonical:
+        raise InvalidReviewBundle(
+            "saved Markdown differs from freshly reconstructed BLOCKED review"
+        )
+    return fresh
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(
         description="Seven-source historical BLOCKED independent proof review"
@@ -407,16 +423,21 @@ def main(argv=None):
         help="Check saved compact MISSING-only requests against pinned sources",
     )
     parser.add_argument(
+        "--verify-markdown", type=Path,
+        help="Check saved exact CLI Markdown against freshly pinned BLOCKED evidence",
+    )
+    parser.add_argument(
         "--format", choices=("json", "markdown", "requests"), default="json")
     args = parser.parse_args(argv)
+    active = sum(path is not None for path in (
+        args.verify_report, args.verify_requests, args.verify_markdown
+    ))
     if (
-        args.verify_report is not None and args.verify_requests is not None
-    ) or (
-        (args.verify_report is not None or args.verify_requests is not None)
-        and any(x is not None for x in (
-            args.docs_root, args.workflow, args.worksheet))
-    ) or (
-        args.verify_requests is not None and args.format == "markdown"
+        active > 1
+        or (active and any(x is not None for x in (
+            args.docs_root, args.workflow, args.worksheet)))
+        or (args.verify_markdown is not None and args.format == "requests")
+        or (args.verify_requests is not None and args.format == "markdown")
     ):
         print(
             "BLOCKED: saved verification modes cannot be combined or override sources",
@@ -424,7 +445,10 @@ def main(argv=None):
         )
         return 2
     try:
-        if args.verify_requests is not None:
+        if args.verify_markdown is not None:
+            output = format_blocked_review_bundle_markdown(
+                verify_saved_blocked_markdown(args.verify_markdown))
+        elif args.verify_requests is not None:
             output = json.dumps(
                 verify_saved_unfulfilled_review_requests(args.verify_requests),
                 sort_keys=True, indent=2, allow_nan=False,

@@ -785,6 +785,88 @@ class Phase8ABlockedSevenSourceIndexTests(unittest.TestCase):
             for row in report["unfulfilled_independent_review_requests"]
         ))
 
+    def test_saved_markdown_exact_cli_round_trip_is_only_blocked(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "review.md"
+            out, err = io.StringIO(), io.StringIO()
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                original_status = MOD["main"](["--format", "markdown"])
+            self.assertEqual(original_status, 3)
+            self.assertEqual(err.getvalue(), "")
+            path.write_bytes(out.getvalue().encode("utf-8"))
+            fresh = MOD["verify_saved_blocked_markdown"](path)
+            self.assertFalse(fresh["2023_run385_attempt1_authorized"])
+            verified_out, verified_err = io.StringIO(), io.StringIO()
+            with contextlib.redirect_stdout(verified_out), contextlib.redirect_stderr(verified_err):
+                code = MOD["main"](["--verify-markdown", str(path)])
+            self.assertEqual(code, 3)
+            self.assertEqual(verified_out.getvalue(), out.getvalue())
+            self.assertEqual(verified_err.getvalue(), "")
+            self.assertEqual(path.read_bytes(), out.getvalue().encode("utf-8"))
+
+    def test_saved_markdown_rejects_approval_and_changed_line_endings(self):
+        original = MOD["format_blocked_review_bundle_markdown"](BUILD()) + chr(10)
+        for forged in (
+            original.replace("MISSING", "APPROVED", 1),
+            original.replace(chr(10), chr(13) + chr(10), 1),
+            original + "APPROVED: dispatch 385",
+        ):
+            with self.subTest(forged=forged[-40:]):
+                with tempfile.TemporaryDirectory() as folder:
+                    path = Path(folder) / "review.md"
+                    path.write_text(forged, encoding="utf-8")
+                    with self.assertRaises(MOD["InvalidReviewBundle"]):
+                        MOD["verify_saved_blocked_markdown"](path)
+
+    def test_saved_markdown_rejects_symlinks_and_oversized_text(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            actual = root / "actual.md"
+            actual.write_text(MOD["format_blocked_review_bundle_markdown"](BUILD())
+                              + chr(10), encoding="utf-8")
+            alias = root / "alias.md"
+            alias.symlink_to(actual)
+            with self.assertRaises((OSError, ValueError)):
+                MOD["verify_saved_blocked_markdown"](alias)
+            actual.write_bytes(b"x" * (1024 * 1024 + 1))
+            with self.assertRaises((OSError, ValueError)):
+                MOD["verify_saved_blocked_markdown"](actual)
+
+    def test_saved_markdown_cli_rejects_mixed_inputs_without_stdout(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "review.md"
+            path.write_text(MOD["format_blocked_review_bundle_markdown"](BUILD())
+                            + chr(10), encoding="utf-8")
+            for extra in (
+                ["--verify-report", str(path)],
+                ["--verify-requests", str(path)],
+                ["--worksheet", str(path)],
+                ["--format", "requests"],
+            ):
+                with self.subTest(extra=extra):
+                    out, err = io.StringIO(), io.StringIO()
+                    with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                        code = MOD["main"](["--verify-markdown", str(path)] + extra)
+                    self.assertEqual(code, 2)
+                    self.assertEqual(out.getvalue(), "")
+                    self.assertIn("BLOCKED:", err.getvalue())
+
+    def test_saved_markdown_verification_remains_offline_and_read_only(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "review.md"
+            path.write_text(MOD["format_blocked_review_bundle_markdown"](BUILD())
+                            + chr(10), encoding="utf-8")
+            original = path.read_bytes()
+            with mock.patch("subprocess.Popen",
+                            side_effect=AssertionError("unexpected subprocess")):
+                with mock.patch("socket.socket",
+                                side_effect=AssertionError("unexpected socket")):
+                    with self._deny_writable_os_opens() as seen:
+                        fresh = MOD["verify_saved_blocked_markdown"](path)
+            self.assertTrue(seen)
+            self.assertEqual(fresh["allowed_actions"], [])
+            self.assertEqual(path.read_bytes(), original)
+
     def test_cli_success_is_blocked_and_invalid_has_no_stdout(self):
         out, err = io.StringIO(), io.StringIO()
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
