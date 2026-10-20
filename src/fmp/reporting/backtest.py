@@ -4,6 +4,7 @@ import hashlib
 import json
 import math
 import os
+import stat
 import tempfile
 from dataclasses import fields, is_dataclass
 from datetime import datetime, timedelta
@@ -610,6 +611,25 @@ def _manifest_unique_object_pairs(pairs: list[tuple[str, object]]) -> dict[str, 
     return result
 
 
+def _open_regular_artifact(path: Path):
+    """Open a no-follow regular file without blocking on a FIFO leaf."""
+    nofollow = getattr(os, "O_NOFOLLOW", None)
+    nonblock = getattr(os, "O_NONBLOCK", None)
+    if type(nofollow) is not int or type(nonblock) is not int:
+        raise ValueError("artifact verification requires no-follow file opening")
+    try:
+        fd = os.open(path, os.O_RDONLY | nofollow | nonblock)
+    except OSError as exc:
+        raise ValueError("artifact evidence must be a regular file") from exc
+    try:
+        if not stat.S_ISREG(os.fstat(fd).st_mode):
+            raise ValueError("artifact evidence must be a regular file")
+        return os.fdopen(fd, "rb")
+    except BaseException:
+        os.close(fd)
+        raise
+
+
 def verify_backtest_artifacts(out_dir: Path) -> dict[str, object]:
     """Verify local artifact bytes against an expected-shape Phase3 manifest.
 
@@ -622,12 +642,15 @@ def verify_backtest_artifacts(out_dir: Path) -> dict[str, object]:
     manifest_file = root / "manifest.json"
     if manifest_file.is_symlink() or not manifest_file.is_file():
         raise ValueError("artifact manifest must be a regular file")
-    if manifest_file.stat().st_size > 262_144:
+    with _open_regular_artifact(manifest_file) as handle:
+        if os.fstat(handle.fileno()).st_size > 262_144:
+            raise ValueError("artifact manifest exceeds size limit")
+        raw_manifest = handle.read(262_145)
+    if len(raw_manifest) > 262_144:
         raise ValueError("artifact manifest exceeds size limit")
     try:
         manifest = json.loads(
-            manifest_file.read_bytes(),
-            object_pairs_hook=_manifest_unique_object_pairs,
+            raw_manifest, object_pairs_hook=_manifest_unique_object_pairs,
         )
     except (ValueError, UnicodeDecodeError) as exc:
         raise ValueError("artifact manifest must be valid JSON") from exc
@@ -670,7 +693,7 @@ def verify_backtest_artifacts(out_dir: Path) -> dict[str, object]:
         # evidence JSONL file in memory.
         observed_size = 0
         observed_hash = hashlib.sha256()
-        with path.open("rb") as handle:
+        with _open_regular_artifact(path) as handle:
             while block := handle.read(1024 * 1024):
                 observed_size += len(block)
                 if observed_size > size:

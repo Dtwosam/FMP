@@ -1,0 +1,9 @@
+# DEC-1953 — Descriptor-level no-follow verifier opening
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent source/tests/docs child #2201 at `95c5c0bd4a254d860964e99afba44b93beaa2d72`.
+
+The read-only `verify_backtest_artifacts` checked `Path.is_symlink` before ordinary file opening. An adversarial replacement between the check and opening could make the verifier follow a symlink; a FIFO leaf could block reads indefinitely. Add a source-only `_open_regular_artifact` helper that requires platform `O_NOFOLLOW` and `O_NONBLOCK`, opens the fixed name using those flags, checks `os.fstat(fd)` for an exact regular-file type and uses the open descriptor for the manifest and each streamed payload. Fail closed if the required OS flags are absent or opening fails. Limit the manifest read to 262,145 bytes after descriptor fstat, never allocating based on a path that may be replaced.
+
+Two synthetic test methods cover a FIFO in an evidence leaf and an adversarial symlink swap precisely as `os.open` is called, without following outside-target bytes. **6,988 cumulative proposed source-defined methods**. Own exact-head Phase3/full historical-general CI and independent OS/filesystem review mandatory. This reduces leaf-follow races; it does not prove safe ancestor directories, a protected dirfd-root chain, immutable source data, broker safety or independent runner isolation.
+
+Previous #2178–#2191 full historical/general failures remain FAILED. Phase8A #779/#820/#821 eight external security proof packages remain MISSING/BLOCKED; accepted annual catalogue ends 2022/run384. Protected 2023/run385/attempt1, future annual-first research, Strategy V1 economics, shadow/demo/live broker capital, installed GitHub workflows/refs/rulesets/runners forbidden. No protected dispatch, merges, trades or money.

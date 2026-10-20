@@ -1718,6 +1718,54 @@ class Phase3ReportingTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "size or SHA256 mismatch"):
                 verify_backtest_artifacts(path)
 
+    def test_verifier_rejects_fifo_evidence_leaf_without_blocking(self):
+        if not hasattr(__import__("os"), "mkfifo"):
+            self.skipTest("FIFO creation unavailable")
+        run = BacktestRun(
+            run_identity={}, trades=(), rejections=(),
+            equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            path = Path(root) / "artifacts"
+            write_backtest_artifacts(run, path)
+            fifo = path / "metrics.json"
+            fifo.unlink()
+            __import__("os").mkfifo(fifo)
+            with self.assertRaisesRegex(ValueError, "regular file"):
+                verify_backtest_artifacts(path)
+
+    def test_verifier_rechecks_no_follow_at_open_descriptor(self):
+        run = BacktestRun(
+            run_identity={}, trades=(), rejections=(),
+            equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            path = Path(root) / "artifacts"
+            write_backtest_artifacts(run, path)
+            target = path / "metrics.json"
+            real_open = __import__("os").open
+            outside = Path(root) / "outside"
+            outside.write_bytes(target.read_bytes())
+            invoked = False
+
+            def swap_before_open(raw_path, flags, *args, **kwargs):
+                nonlocal invoked
+                if Path(raw_path) == target and not invoked:
+                    invoked = True
+                    target.unlink()
+                    try:
+                        target.symlink_to(outside)
+                    except (OSError, NotImplementedError):
+                        self.skipTest("symlinks unavailable")
+                return real_open(raw_path, flags, *args, **kwargs)
+
+            with mock.patch("fmp.reporting.backtest.os.open",
+                            side_effect=swap_before_open):
+                with self.assertRaisesRegex(ValueError, "regular file"):
+                    verify_backtest_artifacts(path)
+            self.assertTrue(invoked)
+            self.assertEqual(outside.read_bytes(), b"{}\n")
+
     def test_artifact_bytes_and_digests_are_deterministic(self) -> None:
         one_trade = trade(trade_id="T-1", minutes=1, net_pnl_usd=10.0)
         rejection = RejectionRecord(
