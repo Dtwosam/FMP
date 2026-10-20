@@ -484,6 +484,38 @@ def write_backtest_artifacts(run: BacktestRun, out_dir: Path) -> dict[str, objec
         except OverflowError as exc:
             raise ValueError(f"metric {name} must be finite numeric") from exc
 
+    # These optional summary fields are deterministic functions of the
+    # published trade sequence, not independent editable performance claims.
+    winners = [value for value in pnls if value > 0]
+    losers = [value for value in pnls if value < 0]
+    trade_count = len(pnls)
+    expected_distribution = {
+        "win_rate": len(winners) / trade_count if trade_count else None,
+        "average_win_usd": sum(winners) / len(winners) if winners else None,
+        "average_loss_usd": sum(losers) / len(losers) if losers else None,
+        "expectancy_usd": expected_net_pnl / trade_count if trade_count else None,
+        "longest_winning_streak": _longest_streak(pnls, winning=True),
+        "longest_losing_streak": _longest_streak(pnls, winning=False),
+    }
+    for name, expected in expected_distribution.items():
+        if name not in run.metrics:
+            continue
+        claimed = run.metrics[name]
+        if expected is None:
+            if claimed is not None:
+                raise ValueError(f"metric {name} conflicts with trade ledger")
+        elif type(expected) is int:
+            if type(claimed) is not int or claimed != expected:
+                raise ValueError(f"metric {name} conflicts with trade ledger")
+        else:
+            if type(claimed) not in (int, float):
+                raise ValueError(f"metric {name} must be finite numeric")
+            try:
+                if not math.isfinite(claimed) or claimed != expected:
+                    raise ValueError(f"metric {name} conflicts with trade ledger")
+            except OverflowError as exc:
+                raise ValueError(f"metric {name} must be finite numeric") from exc
+
     summary = {
         "protocol": "fmp-phase3-backtest-run-v1",
         "run_identity": run.run_identity,

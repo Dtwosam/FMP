@@ -1215,6 +1215,79 @@ class Phase3ReportingTests(unittest.TestCase):
                         metrics,
                     )
 
+    def test_writer_rejects_forged_distribution_economics(self):
+        win = trade(trade_id="W", minutes=1, net_pnl_usd=100.0)
+        loss = trade(trade_id="L", minutes=3, net_pnl_usd=-50.0)
+        for field, wrong in (
+            ("win_rate", 0.75),
+            ("average_win_usd", 120.0),
+            ("average_loss_usd", -40.0),
+            ("expectancy_usd", 20.0),
+            ("longest_winning_streak", 2),
+            ("longest_losing_streak", 2),
+        ):
+            with self.subTest(field=field):
+                run = BacktestRun(
+                    run_identity={}, trades=(win, loss), rejections=(),
+                    equity_checkpoints=(), metrics={field: wrong},
+                )
+                with tempfile.TemporaryDirectory() as root:
+                    target = Path(root) / "blocked"
+                    with mock.patch("pathlib.Path.mkdir", side_effect=AssertionError(
+                        "forged distribution must not publish"
+                    )):
+                        with self.assertRaisesRegex(ValueError, field):
+                            write_backtest_artifacts(run, target)
+                    self.assertFalse(target.exists())
+
+    def test_writer_denies_undefined_or_untyped_trade_distribution(self):
+        for field, wrong in (
+            ("win_rate", 0.0),
+            ("average_win_usd", 0.0),
+            ("average_loss_usd", -1.0),
+            ("expectancy_usd", 0.0),
+            ("longest_winning_streak", True),
+            ("longest_losing_streak", 0.0),
+        ):
+            with self.subTest(field=field):
+                run = BacktestRun(
+                    run_identity={}, trades=(), rejections=(),
+                    equity_checkpoints=(), metrics={field: wrong},
+                )
+                with tempfile.TemporaryDirectory() as root:
+                    target = Path(root) / "blocked"
+                    with self.assertRaisesRegex(ValueError, field):
+                        write_backtest_artifacts(run, target)
+                    self.assertFalse(target.exists())
+
+    def test_writer_preserves_exact_distribution_with_no_trade_control(self):
+        win = trade(trade_id="W", minutes=1, net_pnl_usd=100.0)
+        loss = trade(trade_id="L", minutes=3, net_pnl_usd=-50.0)
+        for trades, metrics in (
+            ((win, loss), {
+                "win_rate": 0.5, "average_win_usd": 100.0,
+                "average_loss_usd": -50.0, "expectancy_usd": 25.0,
+                "longest_winning_streak": 1, "longest_losing_streak": 1,
+            }),
+            ((), {
+                "win_rate": None, "average_win_usd": None,
+                "average_loss_usd": None, "expectancy_usd": None,
+                "longest_winning_streak": 0, "longest_losing_streak": 0,
+            }),
+        ):
+            with self.subTest(trade_count=len(trades)):
+                run = BacktestRun(
+                    run_identity={}, trades=trades, rejections=(),
+                    equity_checkpoints=(), metrics=metrics,
+                )
+                with tempfile.TemporaryDirectory() as root:
+                    target = Path(root) / "valid"
+                    write_backtest_artifacts(run, target)
+                    self.assertEqual(
+                        json.loads((target / "metrics.json").read_text("utf-8")),
+                        metrics,
+                    )
+
     def test_artifact_bytes_and_digests_are_deterministic(self) -> None:
         one_trade = trade(trade_id="T-1", minutes=1, net_pnl_usd=10.0)
         rejection = RejectionRecord(
