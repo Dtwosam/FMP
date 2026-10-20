@@ -402,6 +402,29 @@ def format_blocked_handoff_markdown(report):
         )
     entries.extend([
         "",
+        "## Exact pinned pre-gate payloads — HISTORICAL, NOT CURRENT",
+        "",
+        "The following JSON-escaped literals are copied from the pinned "
+        "historical workflow fixture, not a command to run or a live runner "
+        "observation. Step numbers are zero-based and precede the runtime "
+        "gate; displaying them never proves early admission.",
+        "",
+    ])
+    for job, state in report["installed_jobs_pregate_and_runtime_gate"].items():
+        entries.extend([
+            f"### {job}: historical runtime gate at step "
+            f"{state['runtime_gate_zero_based_index']}",
+            "",
+        ])
+        for step in state["observed_setup_and_read_payloads_before_gate"]:
+            entries.extend([
+                f"**Step {step['zero_based_step_index']}: {step['name']}**",
+                "",
+                "    " + json.dumps(step["payload"], ensure_ascii=True),
+                "",
+            ])
+    entries.extend([
+        "",
         "## Frozen documentary sources",
         "",
         f"Published observation date (STALE): "
