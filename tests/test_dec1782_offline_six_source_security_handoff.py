@@ -6,6 +6,7 @@ from pathlib import Path
 import runpy
 import tempfile
 import unittest
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "dec1782_offline_security_handoff.py"
@@ -525,6 +526,65 @@ class Phase8AConsolidatedSourceOnlyHandoffTests(unittest.TestCase):
         self.assertEqual(errors.getvalue(), "")
         self.assertIn("Exact pinned pre-gate payloads", output.getvalue())
         self.assertIn("**BLOCKED. NOT AUTHORIZED.", output.getvalue())
+
+    @staticmethod
+    def _with_forged_documentary_proofs(mutate):
+        import copy
+        real_run_path = runpy.run_path
+        doc_path = str(MOD["DOC_AUDIT"])
+        doc_module = real_run_path(doc_path)
+        actual_render = doc_module["render_readiness"]
+
+        def altered_render(path):
+            report = copy.deepcopy(actual_render(path))
+            mutate(report["missing_external_proofs"])
+            return report
+
+        def source_swap(path):
+            if str(path) == doc_path:
+                return dict(doc_module, render_readiness=altered_render)
+            return real_run_path(path)
+
+        return mock.patch.object(MOD["runpy"], "run_path",
+                                 side_effect=source_swap)
+
+    def test_json_builder_rejects_forged_external_proof_reviewer_role(self):
+        def forge(proofs):
+            proofs[0]["review_role"] = "Automated self-approval"
+        with self._with_forged_documentary_proofs(forge):
+            with self.assertRaisesRegex(
+                    MOD["InvalidHandoff"], "exact missing roles and shape"):
+                BUILD()
+
+    def test_json_builder_rejects_extra_external_approval_field(self):
+        def forge(proofs):
+            proofs[1]["approved_by_unreviewed_actor"] = True
+        with self._with_forged_documentary_proofs(forge):
+            with self.assertRaisesRegex(
+                    MOD["InvalidHandoff"], "exact missing roles and shape"):
+                BUILD()
+
+    def test_json_builder_rejects_nonobject_proof_without_unhandled_crash(self):
+        for bad in (None, [], "ready", True):
+            with self.subTest(bad=repr(bad)):
+                def forge(proofs):
+                    proofs[2] = bad
+                with self._with_forged_documentary_proofs(forge):
+                    with self.assertRaises(MOD["InvalidHandoff"]):
+                        BUILD()
+
+    def test_both_cli_formats_reject_forged_roles_without_stdout(self):
+        def forge(proofs):
+            proofs[7]["review_role"] = "Nobody"
+        for fmt in ("json", "markdown"):
+            with self.subTest(fmt=fmt):
+                out, err = io.StringIO(), io.StringIO()
+                with self._with_forged_documentary_proofs(forge):
+                    with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                        code = MOD["main"](["--format", fmt])
+                self.assertEqual(code, 2)
+                self.assertEqual(out.getvalue(), "")
+                self.assertIn("BLOCKED:", err.getvalue())
 
     def test_consolidated_handoff_never_invokes_external_permission_or_trading(self):
         report = BUILD()
