@@ -49,8 +49,12 @@ def compile_blocked_handoff(docs_root=DOCS, workflow=WORKFLOW):
     installed = workflow_module["report_blocked_admission"](Path(workflow))
     expected_proofs = docs_module["PROOFS"]
     _require(
-        documentary["documentary_status"] == "BLOCKED"
+        documentary.get("schema") == "fmp_dec1752_offline_blocker_diagnostic_v1"
+        and documentary.get("decision") == "DEC-1752"
+        and documentary["documentary_status"] == "BLOCKED"
         and documentary["mode"] == "OFFLINE_SOURCE_ONLY_NOT_A_GATE_OR_ATTESTATION"
+        and documentary.get("allows_shadow") is False
+        and documentary.get("allows_demo") is False
         and documentary["allows_protected_run"] is False
         and documentary["allows_broker_actions"] is False
         and documentary["allows_live_trading"] is False
@@ -98,7 +102,14 @@ def compile_blocked_handoff(docs_root=DOCS, workflow=WORKFLOW):
         "all eight independent proof packages need exact missing roles and shape",
     )
     _require(
-        installed["disposition"] == "BLOCKED_NOT_EXECUTABLE_AND_NOT_ADMIN_ATTESTED"
+        installed.get("schema") == "fmp_dec1779_offline_workflow_step_order_v1"
+        and installed.get("source_material") ==
+            "exact_git_blob_pinned_historical_fixture_not_live_workflow"
+        and installed.get("source_workflow") ==
+            ".github/workflows/phase8a-annual-pattern-catalogue.yml"
+        and installed.get("source_sha_and_live_ref_at_dispatch_not_authenticated")
+            is True
+        and installed["disposition"] == "BLOCKED_NOT_EXECUTABLE_AND_NOT_ADMIN_ATTESTED"
         and installed["protected_2023_run385_attempt1_authorized"] is False
         and installed["annual_research_dispatch_authorized"] is False
         and installed["broker_or_trading_authorized"] is False
