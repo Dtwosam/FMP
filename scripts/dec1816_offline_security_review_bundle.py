@@ -304,6 +304,35 @@ def format_unfulfilled_review_requests(report):
     }
 
 
+def verify_saved_blocked_review_packet(path):
+    """Verify saved JSON against new pinned local inputs; never authorizes."""
+    audit = runpy.run_path(str(runpy.run_path(str(SIX))["DOC_AUDIT"]))
+    raw = audit["_read_regular_nofollow"](Path(path))
+    try:
+        saved = json.loads(
+            raw.decode("utf-8"),
+            object_pairs_hook=audit["_strict_pairs"],
+            parse_constant=audit["_reject_constant"],
+        )
+        fresh = compile_blocked_review_bundle()
+        saved_bytes = json.dumps(
+            saved, sort_keys=True, separators=(",", ":"), allow_nan=False,
+        ).encode("utf-8")
+        fresh_bytes = json.dumps(
+            fresh, sort_keys=True, separators=(",", ":"), allow_nan=False,
+        ).encode("utf-8")
+    except (UnicodeError, TypeError, ValueError, KeyError) as exc:
+        raise InvalidReviewBundle("saved BLOCKED packet is invalid JSON") from exc
+    if type(saved) is not dict:
+        raise InvalidReviewBundle("saved BLOCKED packet must be one JSON object")
+    validate_review_index_fingerprint(saved)
+    if saved_bytes != fresh_bytes:
+        raise InvalidReviewBundle(
+            "saved BLOCKED packet differs from freshly pinned seven-source review"
+        )
+    return fresh
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(
         description="Seven-source historical BLOCKED independent proof review"
@@ -312,11 +341,22 @@ def main(argv=None):
     parser.add_argument("--workflow", type=Path)
     parser.add_argument("--worksheet", type=Path)
     parser.add_argument(
+        "--verify-report", type=Path,
+        help="Check saved BLOCKED JSON against freshly re-read pinned sources",
+    )
+    parser.add_argument(
         "--format", choices=("json", "markdown", "requests"), default="json")
     args = parser.parse_args(argv)
+    if args.verify_report is not None and any(
+        x is not None for x in (args.docs_root, args.workflow, args.worksheet)
+    ):
+        parser.error("--verify-report cannot override frozen evidence inputs")
     try:
-        report = compile_blocked_review_bundle(
-            args.docs_root, args.workflow, args.worksheet
+        report = (
+            verify_saved_blocked_review_packet(args.verify_report)
+            if args.verify_report is not None
+            else compile_blocked_review_bundle(
+                args.docs_root, args.workflow, args.worksheet)
         )
         if args.format == "markdown":
             output = format_blocked_review_bundle_markdown(report)

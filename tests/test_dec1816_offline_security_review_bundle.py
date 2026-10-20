@@ -378,6 +378,71 @@ class Phase8ABlockedSevenSourceIndexTests(unittest.TestCase):
         self.assertEqual(out.getvalue(), "")
         self.assertIn("BLOCKED:", err.getvalue())
 
+    def test_saved_json_packet_reverifies_as_blocked_not_approved(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "packet.json"
+            path.write_text(json.dumps(BUILD()), encoding="utf-8")
+            validated = MOD["verify_saved_blocked_review_packet"](path)
+        self.assertEqual(validated, BUILD())
+        self.assertFalse(validated["2023_run385_attempt1_authorized"])
+        self.assertEqual(validated["allowed_actions"], [])
+
+    def test_saved_json_packet_refuses_forged_approval_even_with_rehash(self):
+        import copy
+        import hashlib
+        original = copy.deepcopy(BUILD())
+        original["2023_run385_attempt1_authorized"] = True
+        raw = json.dumps({
+            k: v for k, v in original.items()
+            if k != "offline_request_fingerprint_sha256"
+        }, sort_keys=True, separators=(",", ":"), allow_nan=False)
+        original["offline_request_fingerprint_sha256"] = hashlib.sha256(
+            raw.encode()).hexdigest()
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "packet.json"
+            path.write_text(json.dumps(original), encoding="utf-8")
+            with self.assertRaisesRegex(
+                    MOD["InvalidReviewBundle"], "differs from freshly"):
+                MOD["verify_saved_blocked_review_packet"](path)
+
+    def test_saved_json_rejects_duplicate_keys_and_nonfinite_values(self):
+        for text in ('{"schema":"x","schema":"y"}',
+                     '{"paid_profit": NaN}', '{"paid_profit": 1e999}'):
+            with self.subTest(payload=text):
+                with tempfile.TemporaryDirectory() as folder:
+                    path = Path(folder) / "packet.json"
+                    path.write_text(text, encoding="utf-8")
+                    with self.assertRaises(MOD["InvalidReviewBundle"]):
+                        MOD["verify_saved_blocked_review_packet"](path)
+
+    def test_saved_json_rejects_symlinked_packet(self):
+        with tempfile.TemporaryDirectory() as folder:
+            link = Path(folder) / "packet.json"
+            original = Path(folder) / "real.json"
+            original.write_text(json.dumps(BUILD()), encoding="utf-8")
+            link.symlink_to(original)
+            with self.assertRaises((OSError, ValueError)):
+                MOD["verify_saved_blocked_review_packet"](link)
+
+    def test_saved_json_cli_blocked_or_rejected_without_stdout(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "packet.json"
+            path.write_text(json.dumps(BUILD()), encoding="utf-8")
+            out, err = io.StringIO(), io.StringIO()
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                code = MOD["main"](["--verify-report", str(path)])
+            self.assertEqual(code, 3)
+            self.assertEqual(err.getvalue(), "")
+            self.assertEqual(json.loads(out.getvalue())["disposition"],
+                             "BLOCKED_NO_EXECUTION_PERMISSION")
+            path.write_text('{"decision":"APPROVED"}', encoding="utf-8")
+            out, err = io.StringIO(), io.StringIO()
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                code = MOD["main"](["--verify-report", str(path)])
+            self.assertEqual(code, 2)
+            self.assertEqual(out.getvalue(), "")
+            self.assertIn("BLOCKED:", err.getvalue())
+
     def test_cli_success_is_blocked_and_invalid_has_no_stdout(self):
         out, err = io.StringIO(), io.StringIO()
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
