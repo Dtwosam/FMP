@@ -29,7 +29,8 @@ class SyntheticCostBoundaryDiagnosticTests(unittest.TestCase):
 
     def test_current_untyped_side_and_fractional_units_exposure_is_visible(self):
         result = BUILD()
-        self.assertIs(result["untyped_buy_string_interpreted_as_sell"], True)
+        self.assertIs(result["untyped_buy_string_interpreted_as_sell"], False)
+        self.assertIs(result["untyped_buy_string_rejected"], True)
         self.assertIs(result["fractional_commission_units_currently_accepted"], True)
         self.assertTrue(result["known_issues_require_separate_backtester_review"])
 
