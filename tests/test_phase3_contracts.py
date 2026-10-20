@@ -82,7 +82,7 @@ class Phase3ContractTests(unittest.TestCase):
                 row = replace(quote_bar(), symbol=symbol)
                 self.assertGreater(row.ask_close, row.bid_close)
                 self.assertLessEqual(row.bid_low, row.bid_close)
-        self.assertEqual(replace(quote_bar(), bid_open=1).bid_open, 1)
+        self.assertEqual(replace(quote_bar(), bid_low=1).bid_low, 1)
 
     def test_quote_bar_accepts_supported_utc_quotes(self) -> None:
         row = quote_bar()
