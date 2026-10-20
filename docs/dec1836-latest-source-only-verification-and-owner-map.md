@@ -1,0 +1,9 @@
+# DEC-1836 — Exact-head source-only saved review verification through PR #2082
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Documentation-only exact-parent child of #2082 `fad085d37f4f4c55a94dd02258fc551937da1df0`.
+
+The current offline seven-source security-review tool supports full JSON, canonical Markdown and compact eight-owner unfulfilled proof exports. Strict `--verify-report` and `--verify-requests` re-read bounded, nofollow saved JSON, reject duplicate/nonstandard/nonfinite/deeply nested data, prohibit conflicting inputs, and require exact equality with fresh pinned source-only evidence. Read-only file-operation unit tests cover all output choices. The eight proof rows now each carry specific GitHub review navigation for #779 (main race/admin/inventory), #820 (actual runner OS/preaccess) and/or #821 (immutable dispatch alternatives). Every `status` stays MISSING with null `evidence_ref` and `reviewer_signoff`.
+
+Checked on October 20, PRs #2066–2074 exact-head Phase3/full regression PASS; #2075–2081 Phase3 PASS/full in progress; #2082 checks in progress at the checkpoint. Original #2061 full regression failure remains documented and the #2062 repaired head passed. **6,701 cumulative proposed source-defined tests** are not profitable trading evidence, an authorized release or completed security attestation.
+
+Actual administrator/ruleset no-bypass protection, installed early runner admission and OS isolation, reviewed DEC609/610 freeze provenance, fresh full one-shot 2023 run385 inventory and a distinct qualified human run decision remain externally MISSING. Issues #779/#820/#821 remain OPEN/BLOCKED. No protected 2023/run385/attempt1 dispatch or read, installed workflow/ref/ruleset alteration, broker/demo/live order or real-money profit. This document neither verifies nor authorizes those actions. Exact-head CI and independent qualified review required.
