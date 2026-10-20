@@ -1418,6 +1418,84 @@ class Phase8ABlockedSevenSourceIndexTests(unittest.TestCase):
                     with self.assertRaises(MOD["InvalidReviewBundle"]):
                         MOD["verify_saved_blocked_markdown"](path)
 
+    def test_two_pass_triplet_rejects_full_packet_changed_after_check(self):
+        with tempfile.TemporaryDirectory() as folder:
+            files = self._write_three_canonical_saved_review_artifacts(Path(folder))
+            verifier = MOD["verify_complete_blocked_review_triplet"]
+            globals_ = verifier.__globals__
+            original = globals_["verify_saved_unfulfilled_review_requests"]
+
+            def change_earlier_full(path):
+                checked = original(path)
+                files[0].write_bytes(files[0].read_bytes() + b"APPROVED")
+                return checked
+
+            with mock.patch.dict(
+                globals_,
+                {"verify_saved_unfulfilled_review_requests": change_earlier_full},
+            ):
+                with self.assertRaisesRegex(
+                        MOD["InvalidReviewBundle"], "between the two"):
+                    verifier(*files)
+
+    def test_two_pass_triplet_rejects_compact_file_changed_after_check(self):
+        with tempfile.TemporaryDirectory() as folder:
+            files = self._write_three_canonical_saved_review_artifacts(Path(folder))
+            verifier = MOD["verify_complete_blocked_review_triplet"]
+            globals_ = verifier.__globals__
+            original = globals_["verify_saved_blocked_markdown"]
+
+            def change_earlier_requests(path):
+                checked = original(path)
+                files[1].write_bytes(files[1].read_bytes() + b"APPROVED")
+                return checked
+
+            with mock.patch.dict(
+                globals_, {"verify_saved_blocked_markdown": change_earlier_requests}
+            ):
+                with self.assertRaisesRegex(
+                        MOD["InvalidReviewBundle"], "between the two"):
+                    verifier(*files)
+
+    def test_two_pass_triplet_cli_rejects_late_full_file_change_without_stdout(self):
+        with tempfile.TemporaryDirectory() as folder:
+            files = self._write_three_canonical_saved_review_artifacts(Path(folder))
+            verifier = MOD["verify_complete_blocked_review_triplet"]
+            globals_ = verifier.__globals__
+            original = globals_["verify_saved_blocked_markdown"]
+
+            def change_after_last_check(path):
+                checked = original(path)
+                files[0].write_bytes(files[0].read_bytes() + b"APPROVED")
+                return checked
+
+            out, err = io.StringIO(), io.StringIO()
+            with mock.patch.dict(
+                globals_, {"verify_saved_blocked_markdown": change_after_last_check}
+            ):
+                with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                    status = MOD["main"]([
+                        "--verify-triplet", *map(str, files)
+                    ])
+            self.assertEqual(status, 2)
+            self.assertEqual(out.getvalue(), "")
+            self.assertIn("BLOCKED:", err.getvalue())
+
+    def test_two_pass_triplet_normal_inputs_still_blocked_and_read_only(self):
+        with tempfile.TemporaryDirectory() as folder:
+            files = self._write_three_canonical_saved_review_artifacts(Path(folder))
+            original = [file.read_bytes() for file in files]
+            with mock.patch("socket.socket",
+                            side_effect=AssertionError("unexpected socket")):
+                with mock.patch("subprocess.Popen",
+                                side_effect=AssertionError("unexpected process")):
+                    with self._deny_writable_os_opens() as observed:
+                        verdict = MOD["verify_complete_blocked_review_triplet"](*files)
+            self.assertTrue(observed)
+            self.assertEqual(verdict["disposition"], "BLOCKED_NO_EXECUTION_PERMISSION")
+            self.assertTrue(verdict["sequential_snapshot_not_atomic_or_future_file_lock"])
+            self.assertEqual([file.read_bytes() for file in files], original)
+
     def test_cli_success_is_blocked_and_invalid_has_no_stdout(self):
         out, err = io.StringIO(), io.StringIO()
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):

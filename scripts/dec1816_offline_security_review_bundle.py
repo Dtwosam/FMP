@@ -408,10 +408,19 @@ def verify_saved_blocked_markdown(path):
 
 
 def verify_complete_blocked_review_triplet(full_path, requests_path, markdown_path):
-    """Compare all three saved artifacts to pinned offline evidence, no approval."""
-    full = verify_saved_blocked_review_packet(full_path)
-    requests = verify_saved_unfulfilled_review_requests(requests_path)
-    human = verify_saved_blocked_markdown(markdown_path)
+    """Two-pass best-effort read consistency, NOT an atomic or durable lock."""
+    audit = runpy.run_path(str(runpy.run_path(str(SIX))["DOC_AUDIT"]))
+    reader = audit["_read_regular_nofollow"]
+    paths = (Path(full_path), Path(requests_path), Path(markdown_path))
+    initial_bytes = tuple(reader(path) for path in paths)
+    full = verify_saved_blocked_review_packet(paths[0])
+    requests = verify_saved_unfulfilled_review_requests(paths[1])
+    human = verify_saved_blocked_markdown(paths[2])
+    final_bytes = tuple(reader(path) for path in paths)
+    if initial_bytes != final_bytes:
+        raise InvalidReviewBundle(
+            "saved reviewer files changed between the two read-only observations"
+        )
     if not (
         full == human
         and requests["parent_offline_index_sha256"]
