@@ -408,10 +408,22 @@ def verify_saved_blocked_markdown(path):
 
 
 def verify_complete_blocked_review_triplet(full_path, requests_path, markdown_path):
-    """Compare all three saved artifacts to pinned offline evidence, no approval."""
+    """Compare three saved files, then recheck bytes; not an atomic file lock."""
+    audit = runpy.run_path(str(runpy.run_path(str(SIX))["DOC_AUDIT"]))
+    read = audit["_read_regular_nofollow"]
+    paths = (Path(full_path), Path(requests_path), Path(markdown_path))
+    original_bytes = tuple(read(path) for path in paths)
     full = verify_saved_blocked_review_packet(full_path)
     requests = verify_saved_unfulfilled_review_requests(requests_path)
     human = verify_saved_blocked_markdown(markdown_path)
+    # A file that was already checked may change while the remaining files
+    # are inspected. Read every input again before returning a verdict.
+    # This narrows a time-of-check gap but cannot guarantee future custody.
+    final_bytes = tuple(read(path) for path in paths)
+    if original_bytes != final_bytes:
+        raise InvalidReviewBundle(
+            "saved review files changed during non-atomic verification"
+        )
     if not (
         full == human
         and requests["parent_offline_index_sha256"]
