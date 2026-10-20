@@ -9,6 +9,7 @@ from unittest import mock
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from types import MappingProxyType
 
 from fmp.contracts import (
     BacktestRun,
@@ -499,6 +500,58 @@ class Phase3ReportingTests(unittest.TestCase):
             write_backtest_artifacts(run, target)
             saved = json.loads((target / "summary.json").read_text("utf-8"))
             self.assertEqual(saved["run_identity"], run.run_identity)
+
+    def test_artifact_writer_rejects_invalid_run_identity_mapping(self):
+        base = BacktestRun(
+            run_identity={}, trades=(), rejections=(),
+            equity_checkpoints=(), metrics={},
+        )
+        for invalid in (None, True, "identity", [], [("key", "value")]):
+            with self.subTest(value=repr(invalid)[:50]):
+                with tempfile.TemporaryDirectory() as root:
+                    target = Path(root) / "invalid"
+                    with mock.patch("pathlib.Path.mkdir", side_effect=AssertionError(
+                        "identity mismatch must not touch files"
+                    )):
+                        with self.assertRaisesRegex(ValueError, "run_identity"):
+                            write_backtest_artifacts(
+                                replace(base, run_identity=invalid), target,
+                            )
+                    self.assertFalse(target.exists())
+
+    def test_artifact_writer_rejects_invalid_metrics_mapping(self):
+        base = BacktestRun(
+            run_identity={}, trades=(), rejections=(),
+            equity_checkpoints=(), metrics={},
+        )
+        for invalid in (None, "metrics", False, [], object()):
+            with self.subTest(value_type=type(invalid).__name__):
+                with tempfile.TemporaryDirectory() as root:
+                    target = Path(root) / "invalid"
+                    with mock.patch("pathlib.Path.mkdir", side_effect=AssertionError(
+                        "untyped metrics cannot create artifacts"
+                    )):
+                        with self.assertRaisesRegex(ValueError, "metrics"):
+                            write_backtest_artifacts(
+                                replace(base, metrics=invalid), target,
+                            )
+                    self.assertFalse(target.exists())
+
+    def test_artifact_writer_preserves_immutable_mapping_inputs(self):
+        run = BacktestRun(
+            run_identity=MappingProxyType({"code_commit": "synthetic"}),
+            trades=(), rejections=(), equity_checkpoints=(),
+            metrics=MappingProxyType({"trade_count": 0}),
+        )
+        with tempfile.TemporaryDirectory() as root:
+            target = Path(root) / "valid"
+            write_backtest_artifacts(run, target)
+            saved = json.loads((target / "metrics.json").read_text("utf-8"))
+            self.assertEqual(saved, {"trade_count": 0})
+            self.assertEqual(
+                json.loads((target / "summary.json").read_text("utf-8"))["run_identity"],
+                {"code_commit": "synthetic"},
+            )
 
     def test_artifact_bytes_and_digests_are_deterministic(self) -> None:
         one_trade = trade(trade_id="T-1", minutes=1, net_pnl_usd=10.0)
