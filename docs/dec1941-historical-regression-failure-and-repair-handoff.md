@@ -1,6 +1,6 @@
 # DEC-1941 — Preserve full historical failure and bounded non-finite PnL repair
 
-**DRAFT / NEVER MERGE / NEVER PROMOTE.** Documentation-only exact-parent child of #2189 at `5e00e793026357136b851095c7f80f5c3081a312`; seventeen sequential draft commits ahead and zero behind #2173, no merges. **6,969 cumulative proposed source-defined methods** (+38), no protected activity.
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Documentation-only exact-parent child of #2189 at `5e00e793026357136b851095c7f80f5c3081a312`; sixteen sequential draft commits ahead and zero behind #2173, no merges. **6,969 cumulative proposed source-defined methods** (+38), no protected activity.
 
 **Exact negative evidence:** PR [#2178](https://github.com/Dtwosam/FMP/pull/2178) at `ee6fc92e444bd3c6b8fb18b67ab376b1766c8cfa` had Phase3 **SUCCESS** but full historical/general [run 39496009035](https://github.com/Dtwosam/FMP/actions/runs/39496009035) **FAILURE**. Job [118881110892](https://github.com/Dtwosam/FMP/actions/runs/39496009035/job/118881110892) failed step `Run historical snapshot and general unit tests`; all 240 preceding job steps succeeded. Two subtests in `test_artifact_writer_rejects_nonfinite_metrics_before_directory_creation` asserted the error message contain `"non-finite"` for claimed `NaN` and `+Infinity`. Source correctly rejected them before any artifact I/O but instead emitted `"metric net_pnl_usd conflicts with trade ledger"`. The full run remains FAILURE; later green checks cannot change it.
 
