@@ -2196,6 +2196,50 @@ class Phase3ReportingTests(unittest.TestCase):
                 ):
                     audit_backtest_artifact_structure(folder)
 
+    def test_audit_refuses_rehashed_incomplete_trade_record_fields(self):
+        record = trade(trade_id="T-CANON", minutes=1, net_pnl_usd=10.0)
+        run = BacktestRun(
+            run_identity={}, trades=(record,), rejections=(),
+            equity_checkpoints=(), metrics={"trade_count": 1},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            folder = Path(root) / "artifacts"
+            manifest = write_backtest_artifacts(run, folder)
+            forged = b'{}\n'
+            (folder / "trades.jsonl").write_bytes(forged)
+            for entry in manifest["artifacts"]:
+                if entry["path"] == "trades.jsonl":
+                    entry["size_bytes"] = len(forged)
+                    entry["sha256"] = hashlib.sha256(forged).hexdigest()
+            (folder / "manifest.json").write_text(
+                json.dumps(manifest), encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "canonical fields"):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_wrong_summary_protocol(self):
+        run = BacktestRun(
+            run_identity={}, trades=(), rejections=(),
+            equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            folder = Path(root) / "artifacts"
+            manifest = write_backtest_artifacts(run, folder)
+            target = folder / "summary.json"
+            summary = json.loads(target.read_text("utf-8"))
+            summary["protocol"] = "fmp-unapproved-evidence-v1"
+            forged = (json.dumps(summary) + "\n").encode("utf-8")
+            target.write_bytes(forged)
+            for entry in manifest["artifacts"]:
+                if entry["path"] == "summary.json":
+                    entry["size_bytes"] = len(forged)
+                    entry["sha256"] = hashlib.sha256(forged).hexdigest()
+            (folder / "manifest.json").write_text(
+                json.dumps(manifest), encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "summary protocol"):
+                audit_backtest_artifact_structure(folder)
+
     def test_artifact_bytes_and_digests_are_deterministic(self) -> None:
         one_trade = trade(trade_id="T-1", minutes=1, net_pnl_usd=10.0)
         rejection = RejectionRecord(
