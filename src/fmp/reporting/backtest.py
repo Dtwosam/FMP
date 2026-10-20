@@ -601,6 +601,15 @@ def write_backtest_artifacts(run: BacktestRun, out_dir: Path) -> dict[str, objec
     return manifest
 
 
+def _manifest_unique_object_pairs(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    result: dict[str, object] = {}
+    for name, value in pairs:
+        if name in result:
+            raise ValueError("artifact manifest contains duplicate JSON key")
+        result[name] = value
+    return result
+
+
 def verify_backtest_artifacts(out_dir: Path) -> dict[str, object]:
     """Verify local artifact bytes against an expected-shape Phase3 manifest.
 
@@ -616,7 +625,10 @@ def verify_backtest_artifacts(out_dir: Path) -> dict[str, object]:
     if manifest_file.stat().st_size > 262_144:
         raise ValueError("artifact manifest exceeds size limit")
     try:
-        manifest = json.loads(manifest_file.read_bytes())
+        manifest = json.loads(
+            manifest_file.read_bytes(),
+            object_pairs_hook=_manifest_unique_object_pairs,
+        )
     except (ValueError, UnicodeDecodeError) as exc:
         raise ValueError("artifact manifest must be valid JSON") from exc
     if (

@@ -1639,6 +1639,45 @@ class Phase3ReportingTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "regular file"):
                 verify_backtest_artifacts(path)
 
+    def test_verifier_rejects_duplicate_manifest_root_json_key(self):
+        run = BacktestRun(
+            run_identity={}, trades=(), rejections=(),
+            equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            path = Path(root) / "artifacts"
+            write_backtest_artifacts(run, path)
+            manifest = path / "manifest.json"
+            original = manifest.read_bytes().strip()
+            self.assertTrue(original.startswith(b"{"))
+            manifest.write_bytes(b'{"protocol": "forged", ' + original[1:])
+            with self.assertRaisesRegex(ValueError, "duplicate JSON key"):
+                verify_backtest_artifacts(path)
+
+    def test_verifier_rejects_duplicate_nested_entry_json_key(self):
+        run = BacktestRun(
+            run_identity={}, trades=(), rejections=(),
+            equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            path = Path(root) / "artifacts"
+            manifest = write_backtest_artifacts(run, path)
+            valid = manifest["artifacts"][0]
+            conflicting = '{"path":"../outside","path":' + json.dumps(
+                valid["path"]
+            ) + ',"size_bytes":' + str(valid["size_bytes"]) + (
+                ',"sha256":' + json.dumps(valid["sha256"]) + '}'
+            )
+            remaining = ",".join(
+                json.dumps(entry, sort_keys=True)
+                for entry in manifest["artifacts"][1:]
+            )
+            forged = ('{"protocol":' + json.dumps(manifest["protocol"])
+                      + ',"artifacts":[' + conflicting + ',' + remaining + ']}')
+            (path / "manifest.json").write_text(forged, encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "duplicate JSON key"):
+                verify_backtest_artifacts(path)
+
     def test_artifact_bytes_and_digests_are_deterministic(self) -> None:
         one_trade = trade(trade_id="T-1", minutes=1, net_pnl_usd=10.0)
         rejection = RejectionRecord(
