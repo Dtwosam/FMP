@@ -270,6 +270,36 @@ class Phase3EngineTests(unittest.TestCase):
         self.assertGreater(value.requested_end_utc,
                            value.requested_start_utc)
 
+    def test_backtest_config_requires_real_risk_contract(self):
+        for value in (None, [], {}, "RiskConfig", True):
+            with self.subTest(value=repr(value)):
+                with self.assertRaisesRegex(ValueError, "risk_config"):
+                    replace(config(), risk_config=value)
+
+    def test_backtest_config_rejects_nondictionary_decision_metadata(self):
+        for value in (None, 42, [], True, "not-a-map"):
+            with self.subTest(value=repr(value)):
+                with self.assertRaisesRegex(ValueError, "decision_config"):
+                    replace(config(), decision_config=value)
+
+    def test_backtest_config_rejects_malformed_decision_metadata_keys(self):
+        for key in (None, 12, "", "bad" + chr(10), "bad" + chr(27)):
+            with self.subTest(key=repr(key)):
+                with self.assertRaisesRegex(ValueError, "decision_config keys"):
+                    replace(config(), decision_config={key: "synthetic"})
+
+    def test_backtest_config_preserves_synthetic_valid_decision_metadata(self):
+        settings = replace(
+            config(), decision_config={
+                "synthetic_fixture": "no_real_market_data",
+                "cost_scenario": 3
+            }
+        )
+        self.assertEqual(
+            settings.decision_config["synthetic_fixture"],
+            "no_real_market_data"
+        )
+
     def test_no_trade_is_preserved_as_reasoned_record(self) -> None:
         decision = Decision(
             decision_id="NT-1",

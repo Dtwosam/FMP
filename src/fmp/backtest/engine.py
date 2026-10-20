@@ -85,6 +85,17 @@ class BacktestConfig:
                 raise ValueError("slippage pips must be finite and non-negative")
         except OverflowError as exc:
             raise ValueError("starting equity and slippage must be finite") from exc
+        if not isinstance(self.risk_config, RiskConfig):
+            raise ValueError("risk_config must be a RiskConfig instance")
+        if not isinstance(self.decision_config, Mapping):
+            raise ValueError("decision_config must be a mapping")
+        for key in self.decision_config:
+            if type(key) is not str or not key or any(
+                ord(char) < 32 or ord(char) == 127 for char in key
+            ):
+                raise ValueError(
+                    "decision_config keys must be nonempty printable strings"
+                )
         _require_utc(self.requested_start_utc, field="requested_start_utc")
         _require_utc(self.requested_end_utc, field="requested_end_utc")
         if self.requested_end_utc < self.requested_start_utc:
