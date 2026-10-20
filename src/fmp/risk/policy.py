@@ -214,6 +214,15 @@ def assess_decision(
     except OverflowError:
         return _rejected(RejectionCode.INVALID_SIZE, "reference entry price is invalid")
 
+    # Refuse untrusted decision/config/state inputs before UTC-day mutation
+    # or running any attribute getters supplied by those objects.
+    if type(decision) is not Decision:
+        raise ValueError("decision must be a Decision record")
+    if type(config) is not RiskConfig:
+        raise ValueError("config must be a RiskConfig record")
+    if type(state) is not RiskState:
+        raise ValueError("state must be a RiskState record")
+
     roll_utc_day(state, timestamp_utc=timestamp_utc)
 
     if state.daily_halt_active:
