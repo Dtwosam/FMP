@@ -115,6 +115,44 @@ class SyntheticIntegratedCostOrderingTests(unittest.TestCase):
         self.assertEqual(trade.exit_timestamp_utc, DAY + timedelta(minutes=2))
         self.assertGreaterEqual(trade.commission_cost_usd, 0.0)
         self.assertGreaterEqual(trade.slippage_cost_usd, 0.0)
+    def test_every_synthetic_trade_net_equals_gross_less_all_costs(self):
+        for pips, rate in ((0.0, 0.0), (0.5, 30.0),
+                           (1.0, 120.0)):
+            with self.subTest(pips=pips, rate=rate):
+                run, trade = synthetic_trade(
+                    slippage_pips=pips, commission_rate=rate)
+                net = (trade.gross_pnl_usd - trade.slippage_cost_usd
+                       - trade.commission_cost_usd
+                       - trade.financing_cost_usd)
+                self.assertAlmostEqual(trade.net_pnl_usd, net, places=8)
+                self.assertEqual(trade.financing_cost_usd, 0.0)
+                self.assertEqual(len(run.trades), 1)
+
+    def test_large_synthetic_commission_changes_gross_win_to_net_loss(self):
+        _, without_fees = synthetic_trade(
+            slippage_pips=0.0, commission_rate=0.0)
+        _, expensive = synthetic_trade(
+            slippage_pips=0.0, commission_rate=100_000.0)
+        self.assertGreater(without_fees.gross_pnl_usd, 0.0)
+        self.assertGreater(expensive.gross_pnl_usd, 0.0)
+        self.assertLess(expensive.net_pnl_usd, 0.0)
+        self.assertGreater(expensive.commission_cost_usd,
+                           expensive.gross_pnl_usd)
+        self.assertGreater(without_fees.net_pnl_usd,
+                           expensive.net_pnl_usd)
+
+    def test_synthetic_realized_equity_uses_net_not_gross_pnl(self):
+        for rate in (0.0, 30.0, 100_000.0):
+            with self.subTest(commission_rate=rate):
+                run, trade = synthetic_trade(
+                    slippage_pips=0.0, commission_rate=rate)
+                self.assertAlmostEqual(
+                    trade.risk_equity_after_usd,
+                    trade.risk_equity_before_usd + trade.net_pnl_usd,
+                    places=8)
+                self.assertAlmostEqual(
+                    run.equity_checkpoints[-1].realized_risk_equity_usd,
+                    trade.risk_equity_after_usd, places=8)
 
 
 if __name__ == "__main__":
