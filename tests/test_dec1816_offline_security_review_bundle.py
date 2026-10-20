@@ -1167,6 +1167,42 @@ class Phase8ABlockedSevenSourceIndexTests(unittest.TestCase):
                 self.assertEqual(out.getvalue(), "")
                 self.assertIn("BLOCKED: invalid", err.getvalue())
 
+    def test_help_mixed_with_any_saved_review_flag_fails_closed(self):
+        cases = (
+            ["--verify-report", "report.json", "--help"],
+            ["--help", "--verify-requests", "request.json"],
+            ["--verify-markdown", "review.md", "-h"],
+            ["--verify-triplet", "full.json", "tasks.json", "review.md", "--help"],
+            ["--format", "markdown", "--help"],
+        )
+        for args in cases:
+            with self.subTest(args=args):
+                out, err = io.StringIO(), io.StringIO()
+                with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                    status = MOD["main"](args)
+                self.assertEqual(status, 2)
+                self.assertEqual(out.getvalue(), "")
+                self.assertIn("BLOCKED: help cannot be combined", err.getvalue())
+
+    def test_repeated_help_does_not_return_false_positive_zero(self):
+        for args in (["-h", "-h"], ["--help", "--help"],
+                     ["-h", "--help"], ["--help", "--format=requests"]):
+            with self.subTest(args=args):
+                out, err = io.StringIO(), io.StringIO()
+                with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                    status = MOD["main"](args)
+                self.assertEqual(status, 2)
+                self.assertEqual(out.getvalue(), "")
+                self.assertIn("BLOCKED:", err.getvalue())
+
+    def test_short_help_alone_is_informational_only(self):
+        out, err = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            status = MOD["main"](["-h"])
+        self.assertEqual(status, 0)
+        self.assertIn("--verify-report", out.getvalue())
+        self.assertEqual(err.getvalue(), "")
+
     def test_builtin_help_exits_without_generating_review_evidence(self):
         out, err = io.StringIO(), io.StringIO()
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
