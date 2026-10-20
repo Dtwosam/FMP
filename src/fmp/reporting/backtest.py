@@ -392,6 +392,28 @@ def write_backtest_artifacts(run: BacktestRun, out_dir: Path) -> dict[str, objec
     if set(trade_decision_ids).intersection(rejection_decision_ids):
         raise ValueError("decision cannot have both trade and rejection evidence")
 
+    # A supplied metric summary must not contradict the published trade
+    # ledger. Recompute the two primary count/economic totals before I/O.
+    expected_net_pnl = sum(trade.net_pnl_usd for trade in run.trades)
+    try:
+        if not math.isfinite(expected_net_pnl):
+            raise ValueError("trade net PnL aggregate must remain finite")
+    except OverflowError as exc:
+        raise ValueError("trade net PnL aggregate must remain finite") from exc
+    if "trade_count" in run.metrics:
+        count = run.metrics["trade_count"]
+        if type(count) is not int or count != len(run.trades):
+            raise ValueError("metric trade_count conflicts with trade ledger")
+    if "net_pnl_usd" in run.metrics:
+        claimed = run.metrics["net_pnl_usd"]
+        if type(claimed) not in (int, float):
+            raise ValueError("metric net_pnl_usd must be finite numeric")
+        try:
+            if not math.isfinite(claimed) or claimed != expected_net_pnl:
+                raise ValueError("metric net_pnl_usd conflicts with trade ledger")
+        except OverflowError as exc:
+            raise ValueError("metric net_pnl_usd must be finite numeric") from exc
+
     summary = {
         "protocol": "fmp-phase3-backtest-run-v1",
         "run_identity": run.run_identity,
