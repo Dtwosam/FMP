@@ -124,8 +124,9 @@ def compute_backtest_metrics(
     commission_cost = sum(trade.commission_cost_usd for trade in trades)
     financing_cost = sum(trade.financing_cost_usd for trade in trades)
 
-    metrics = {
-        "net_pnl_usd": net_pnl,
+    try:
+        metrics = {
+            "net_pnl_usd": net_pnl,
         "net_return": net_pnl / starting_equity_usd,
         "trade_count": trade_count,
         "win_rate": (len(wins) / trade_count) if trade_count else None,
@@ -144,7 +145,9 @@ def compute_backtest_metrics(
         "commission_cost_usd": commission_cost,
         "financing_cost_usd": financing_cost,
         "total_explicit_cost_usd": slippage_cost + commission_cost + financing_cost,
-    }
+        }
+    except OverflowError as exc:
+        raise ValueError("backtest metric calculation must remain finite") from exc
     # Finite individual trades can still overflow during aggregation or
     # ratio calculation. Never return non-finite economic evidence.
     for name, value in metrics.items():
