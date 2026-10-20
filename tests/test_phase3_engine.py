@@ -300,6 +300,40 @@ class Phase3EngineTests(unittest.TestCase):
             "no_real_market_data"
         )
 
+    def test_backtest_config_rejects_missing_commission_model_interface(self):
+        for bad in (None, {}, object(), "zero-commission"):
+            with self.subTest(model=repr(bad)):
+                with self.assertRaisesRegex(ValueError, "commission_model"):
+                    replace(config(), commission_model=bad)
+
+    def test_backtest_config_rejects_missing_financing_model_interface(self):
+        for bad in (None, [], object(), "zero-financing"):
+            with self.subTest(model=repr(bad)):
+                with self.assertRaisesRegex(ValueError, "financing_model"):
+                    replace(config(), financing_model=bad)
+
+    def test_backtest_config_rejects_partial_cost_model_objects(self):
+        class MissingConfig:
+            def cost_usd(self, **kwargs):
+                return 0.0
+
+        class MissingCost:
+            def to_config(self):
+                return {"model": "test"}
+
+        for field in ("commission_model", "financing_model"):
+            for model in (MissingConfig(), MissingCost()):
+                with self.subTest(field=field, model=type(model).__name__):
+                    with self.assertRaisesRegex(ValueError, field):
+                        replace(config(), **{field: model})
+
+    def test_backtest_config_preserves_valid_zero_cost_model_protocols(self):
+        candidate = config()
+        self.assertEqual(candidate.commission_model.to_config(),
+                         {"model": "zero_commission"})
+        self.assertEqual(candidate.financing_model.to_config(),
+                         {"model": "zero_financing"})
+
     def test_no_trade_is_preserved_as_reasoned_record(self) -> None:
         decision = Decision(
             decision_id="NT-1",

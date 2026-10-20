@@ -87,6 +87,17 @@ class BacktestConfig:
             raise ValueError("starting equity and slippage must be finite") from exc
         if not isinstance(self.risk_config, RiskConfig):
             raise ValueError("risk_config must be a RiskConfig instance")
+        for field, model in (
+            ("commission_model", self.commission_model),
+            ("financing_model", self.financing_model),
+        ):
+            if (
+                not callable(getattr(model, "cost_usd", None))
+                or not callable(getattr(model, "to_config", None))
+            ):
+                raise ValueError(
+                    f"{field} must implement cost_usd and to_config"
+                )
         if not isinstance(self.decision_config, Mapping):
             raise ValueError("decision_config must be a mapping")
         for key in self.decision_config:
