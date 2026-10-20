@@ -2240,6 +2240,60 @@ class Phase3ReportingTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "summary protocol"):
                 audit_backtest_artifact_structure(folder)
 
+    def test_audit_refuses_rehashed_duplicate_trade_identifier(self):
+        first = trade(trade_id="T-ONE", minutes=1, net_pnl_usd=10.0)
+        second = replace(
+            trade(trade_id="T-TWO", minutes=3, net_pnl_usd=-5.0),
+            decision_id="DEC-TWO",
+        )
+        run = BacktestRun(
+            run_identity={}, trades=(first, second), rejections=(),
+            equity_checkpoints=(), metrics={"trade_count": 2},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            folder = Path(root) / "artifacts"
+            manifest = write_backtest_artifacts(run, folder)
+            path = folder / "trades.jsonl"
+            rows = [json.loads(line) for line in path.read_text("utf-8").splitlines()]
+            rows[1]["trade_id"] = rows[0]["trade_id"]
+            forged = ("\n".join(json.dumps(row) for row in rows) + "\n").encode("utf-8")
+            path.write_bytes(forged)
+            for entry in manifest["artifacts"]:
+                if entry["path"] == "trades.jsonl":
+                    entry["size_bytes"] = len(forged)
+                    entry["sha256"] = hashlib.sha256(forged).hexdigest()
+            (folder / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "duplicate trade_id"):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_trade_rejection_decision_conflict(self):
+        filled = trade(trade_id="T-FILLED", minutes=1, net_pnl_usd=10.0)
+        rejected = RejectionRecord(
+            decision_id="DECLINED", symbol="EURUSD",
+            decision_timestamp_utc=BASE_TS,
+            evaluated_timestamp_utc=BASE_TS,
+            code=RejectionCode.NO_TRADE, explanation="synthetic",
+        )
+        run = BacktestRun(
+            run_identity={}, trades=(filled,), rejections=(rejected,),
+            equity_checkpoints=(), metrics={"trade_count": 1},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            folder = Path(root) / "artifacts"
+            manifest = write_backtest_artifacts(run, folder)
+            path = folder / "rejections.jsonl"
+            row = json.loads(path.read_text("utf-8"))
+            row["decision_id"] = filled.decision_id
+            forged = (json.dumps(row) + "\n").encode("utf-8")
+            path.write_bytes(forged)
+            for entry in manifest["artifacts"]:
+                if entry["path"] == "rejections.jsonl":
+                    entry["size_bytes"] = len(forged)
+                    entry["sha256"] = hashlib.sha256(forged).hexdigest()
+            (folder / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "both trade and rejection"):
+                audit_backtest_artifact_structure(folder)
+
     def test_artifact_bytes_and_digests_are_deterministic(self) -> None:
         one_trade = trade(trade_id="T-1", minutes=1, net_pnl_usd=10.0)
         rejection = RejectionRecord(

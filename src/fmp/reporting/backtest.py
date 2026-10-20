@@ -835,6 +835,9 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
             "trades.jsonl": {item.name for item in fields(TradeRecord)},
             "rejections.jsonl": {item.name for item in fields(RejectionRecord)},
         }
+        seen_trade_ids: set[str] = set()
+        seen_trade_decisions: set[str] = set()
+        seen_rejection_decisions: set[str] = set()
         for name, field in (("trades.jsonl", "trade_count"),
                             ("rejections.jsonl", "rejection_count")):
             observed = 0
@@ -851,6 +854,25 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                         raise ValueError("artifact report JSONL record must be an object")
                     if set(record) != record_fields[name]:
                         raise ValueError("artifact report JSONL canonical fields mismatch")
+                    decision = record["decision_id"]
+                    if type(decision) is not str or not decision.strip():
+                        raise ValueError("artifact report decision_id must be nonempty")
+                    if name == "trades.jsonl":
+                        trade_id = record["trade_id"]
+                        if type(trade_id) is not str or not trade_id.strip():
+                            raise ValueError("artifact report trade_id must be nonempty")
+                        if trade_id in seen_trade_ids:
+                            raise ValueError("artifact report duplicate trade_id")
+                        if decision in seen_trade_decisions:
+                            raise ValueError("artifact report duplicate trade decision_id")
+                        seen_trade_ids.add(trade_id)
+                        seen_trade_decisions.add(decision)
+                    else:
+                        if decision in seen_rejection_decisions:
+                            raise ValueError("artifact report duplicate rejection decision_id")
+                        if decision in seen_trade_decisions:
+                            raise ValueError("artifact report decision has both trade and rejection")
+                        seen_rejection_decisions.add(decision)
                     observed += 1
             if (
                 observed_size != expected_records[name]["size_bytes"]
