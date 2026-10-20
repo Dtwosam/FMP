@@ -349,6 +349,66 @@ class Phase8AConsolidatedSourceOnlyHandoffTests(unittest.TestCase):
                 with self.assertRaises(MOD["InvalidHandoff"]):
                     MOD["format_blocked_handoff_markdown"](report)
 
+    def test_formatter_rejects_extra_approval_field_on_report(self):
+        import copy
+        report = copy.deepcopy(BUILD())
+        report["broker_execution_permitted_by_reviewer"] = True
+        with self.assertRaisesRegex(
+                MOD["InvalidHandoff"], "canonical six-source report"):
+            MOD["format_blocked_handoff_markdown"](report)
+
+    def test_formatter_rejects_missing_schema_or_changed_schema(self):
+        import copy
+        for mode in ("delete", "rename"):
+            with self.subTest(mode=mode):
+                report = copy.deepcopy(BUILD())
+                if mode == "delete":
+                    del report["schema"]
+                else:
+                    report["schema"] = "approved_handoff_v99"
+                with self.assertRaisesRegex(
+                        MOD["InvalidHandoff"], "canonical six-source report"):
+                    MOD["format_blocked_handoff_markdown"](report)
+
+    def test_formatter_rejects_false_to_zero_numeric_alias(self):
+        import copy
+        report = copy.deepcopy(BUILD())
+        report["no_external_actions_performed"] = 1
+        with self.assertRaisesRegex(
+                MOD["InvalidHandoff"], "human handoff"):
+            MOD["format_blocked_handoff_markdown"](report)
+
+    def test_formatter_rejects_modified_ignored_metadata(self):
+        import copy
+        report = copy.deepcopy(BUILD())
+        report["no_external_actions_performed"] = True
+        report["self_asserted_approval_comment"] = "READY"
+        with self.assertRaisesRegex(
+                MOD["InvalidHandoff"], "canonical six-source report"):
+            MOD["format_blocked_handoff_markdown"](report)
+
+    def test_formatter_rejects_nonfinite_injected_metadata(self):
+        import copy
+        report = copy.deepcopy(BUILD())
+        report["price_target"] = float("nan")
+        with self.assertRaisesRegex(
+                MOD["InvalidHandoff"], "nonfinite"):
+            MOD["format_blocked_handoff_markdown"](report)
+
+    def test_canonical_handoff_rebuild_is_deterministic_and_blocked(self):
+        first = BUILD()
+        second = BUILD()
+        self.assertEqual(
+            json.dumps(first, sort_keys=True, allow_nan=False),
+            json.dumps(second, sort_keys=True, allow_nan=False),
+        )
+        self.assertIn(
+            "**BLOCKED. NOT AUTHORIZED.",
+            MOD["format_blocked_handoff_markdown"](first),
+        )
+        self.assertEqual(first["allowed_actions"], [])
+        self.assertFalse(first["protected_2023_run385_authorized"])
+
     def test_consolidated_handoff_never_invokes_external_permission_or_trading(self):
         report = BUILD()
         self.assertIs(report["no_external_actions_performed"], True)
