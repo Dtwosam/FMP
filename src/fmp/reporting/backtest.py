@@ -45,6 +45,35 @@ def compute_backtest_metrics(
     equity_checkpoints: Sequence[EquityCheckpoint],
 ) -> dict[str, object]:
     _validate_starting_equity(starting_equity_usd)
+    # Prevent caller-defined sequence/getter code from creating financial
+    # evidence; admit only canonical records in ordinary containers.
+    if (
+        type(trades) not in (list, tuple)
+        or any(type(item) is not TradeRecord for item in trades)
+    ):
+        raise ValueError("trades must be a list or tuple of TradeRecord records")
+    if (
+        type(equity_checkpoints) not in (list, tuple)
+        or any(type(item) is not EquityCheckpoint for item in equity_checkpoints)
+    ):
+        raise ValueError(
+            "equity checkpoints must be a list or tuple of EquityCheckpoint records"
+        )
+    for item in trades:
+        for field_name in (
+            "net_pnl_usd", "slippage_cost_usd",
+            "commission_cost_usd", "financing_cost_usd",
+        ):
+            value = getattr(item, field_name)
+            if type(value) not in (int, float):
+                raise ValueError(f"trade {field_name} must be finite numeric")
+            try:
+                if not math.isfinite(value):
+                    raise ValueError(f"trade {field_name} must be finite numeric")
+            except OverflowError as exc:
+                raise ValueError(f"trade {field_name} must be finite numeric") from exc
+            if field_name in ("slippage_cost_usd", "commission_cost_usd") and value < 0:
+                raise ValueError(f"trade {field_name} must be non-negative")
     pnls = [trade.net_pnl_usd for trade in trades]
     if any(not math.isfinite(value) for value in pnls):
         raise ValueError("trade net PnL must be finite")
@@ -61,14 +90,24 @@ def compute_backtest_metrics(
     max_drawdown_fraction = 0.0
     previous_timestamp: datetime | None = None
     for checkpoint in equity_checkpoints:
-        if checkpoint.timestamp_utc.tzinfo is None or checkpoint.timestamp_utc.utcoffset() != timedelta(0):
+        timestamp = checkpoint.timestamp_utc
+        if (
+            not isinstance(timestamp, datetime)
+            or timestamp.tzinfo is None
+            or timestamp.utcoffset() != timedelta(0)
+        ):
             raise ValueError("equity checkpoint timestamp must use UTC")
         if previous_timestamp is not None and checkpoint.timestamp_utc < previous_timestamp:
             raise ValueError("equity checkpoints must be chronological")
         previous_timestamp = checkpoint.timestamp_utc
         equity = checkpoint.realized_risk_equity_usd
-        if not math.isfinite(equity):
-            raise ValueError("equity checkpoint must be finite")
+        if type(equity) not in (int, float):
+            raise ValueError("equity checkpoint must be finite numeric")
+        try:
+            if not math.isfinite(equity):
+                raise ValueError("equity checkpoint must be finite numeric")
+        except OverflowError as exc:
+            raise ValueError("equity checkpoint must be finite numeric") from exc
         if equity > peak:
             peak = equity
         drawdown = peak - equity
