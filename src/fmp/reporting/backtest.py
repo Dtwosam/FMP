@@ -444,8 +444,11 @@ def write_backtest_artifacts(run: BacktestRun, out_dir: Path) -> dict[str, objec
         + summed_costs["financing_cost_usd"]
     )
     for name, expected in summed_costs.items():
-        if not math.isfinite(expected):
-            raise ValueError(f"trade {name} aggregate must remain finite")
+        try:
+            if not math.isfinite(expected):
+                raise ValueError(f"trade {name} aggregate must remain finite")
+        except OverflowError as exc:
+            raise ValueError(f"trade {name} aggregate must remain finite") from exc
         if name not in run.metrics:
             continue
         claimed = run.metrics[name]
@@ -470,8 +473,12 @@ def write_backtest_artifacts(run: BacktestRun, out_dir: Path) -> dict[str, objec
         ("gross_loss_usd", loss_usd),
         ("profit_factor", profit_usd / loss_usd if loss_usd > 0 else None),
     ):
-        if expected is not None and not math.isfinite(expected):
-            raise ValueError(f"trade {name} aggregate must remain finite")
+        if expected is not None:
+            try:
+                if not math.isfinite(expected):
+                    raise ValueError(f"trade {name} aggregate must remain finite")
+            except OverflowError as exc:
+                raise ValueError(f"trade {name} aggregate must remain finite") from exc
         if name not in run.metrics:
             continue
         claimed = run.metrics[name]
