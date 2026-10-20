@@ -867,6 +867,61 @@ class Phase8ABlockedSevenSourceIndexTests(unittest.TestCase):
             self.assertEqual(fresh["allowed_actions"], [])
             self.assertEqual(path.read_bytes(), original)
 
+    def test_saved_markdown_explicit_format_mismatch_fails_closed(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "review.md"
+            path.write_text(MOD["format_blocked_review_bundle_markdown"](BUILD())
+                            + chr(10), encoding="utf-8")
+            for other in ("json", "requests"):
+                with self.subTest(format=other):
+                    out, err = io.StringIO(), io.StringIO()
+                    with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                        code = MOD["main"]([
+                            "--verify-markdown", str(path), "--format", other
+                        ])
+                    self.assertEqual(code, 2)
+                    self.assertEqual(out.getvalue(), "")
+                    self.assertIn("BLOCKED:", err.getvalue())
+
+    def test_saved_compact_explicit_format_mismatch_fails_closed(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "requests.json"
+            path.write_text(json.dumps(
+                MOD["format_unfulfilled_review_requests"](BUILD())),
+                encoding="utf-8")
+            for other in ("json", "markdown"):
+                with self.subTest(format=other):
+                    out, err = io.StringIO(), io.StringIO()
+                    with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                        code = MOD["main"]([
+                            "--verify-requests", str(path), "--format", other
+                        ])
+                    self.assertEqual(code, 2)
+                    self.assertEqual(out.getvalue(), "")
+                    self.assertIn("BLOCKED:", err.getvalue())
+
+    def test_explicit_matching_saved_format_remains_blocked(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            md = root / "review.md"
+            requests = root / "requests.json"
+            md.write_text(MOD["format_blocked_review_bundle_markdown"](BUILD())
+                          + chr(10), encoding="utf-8")
+            requests.write_text(json.dumps(
+                MOD["format_unfulfilled_review_requests"](BUILD())),
+                encoding="utf-8")
+            for args in (
+                ["--verify-markdown", str(md), "--format", "markdown"],
+                ["--verify-requests", str(requests), "--format", "requests"],
+            ):
+                with self.subTest(args=args):
+                    out, err = io.StringIO(), io.StringIO()
+                    with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                        code = MOD["main"](args)
+                    self.assertEqual(code, 3)
+                    self.assertEqual(err.getvalue(), "")
+                    self.assertIn("BLOCKED", out.getvalue())
+
     def test_cli_success_is_blocked_and_invalid_has_no_stdout(self):
         out, err = io.StringIO(), io.StringIO()
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):

@@ -427,7 +427,9 @@ def main(argv=None):
         help="Check saved exact CLI Markdown against freshly pinned BLOCKED evidence",
     )
     parser.add_argument(
-        "--format", choices=("json", "markdown", "requests"), default="json")
+        "--format", choices=("json", "markdown", "requests"),
+        default=None, help="Report format; defaults to saved input type or JSON",
+    )
     args = parser.parse_args(argv)
     active = sum(path is not None for path in (
         args.verify_report, args.verify_requests, args.verify_markdown
@@ -436,14 +438,24 @@ def main(argv=None):
         active > 1
         or (active and any(x is not None for x in (
             args.docs_root, args.workflow, args.worksheet)))
-        or (args.verify_markdown is not None and args.format == "requests")
-        or (args.verify_requests is not None and args.format == "markdown")
+        or (
+            args.verify_markdown is not None
+            and args.format not in (None, "markdown")
+        )
+        or (
+            args.verify_requests is not None
+            and args.format not in (None, "requests")
+        )
     ):
         print(
             "BLOCKED: saved verification modes cannot be combined or override sources",
             file=sys.stderr,
         )
         return 2
+    selected_format = args.format or (
+        "markdown" if args.verify_markdown is not None else
+        "requests" if args.verify_requests is not None else "json"
+    )
     try:
         if args.verify_markdown is not None:
             output = format_blocked_review_bundle_markdown(
@@ -460,9 +472,9 @@ def main(argv=None):
                 else compile_blocked_review_bundle(
                     args.docs_root, args.workflow, args.worksheet)
             )
-            if args.format == "markdown":
+            if selected_format == "markdown":
                 output = format_blocked_review_bundle_markdown(report)
-            elif args.format == "requests":
+            elif selected_format == "requests":
                 output = json.dumps(
                     format_unfulfilled_review_requests(report),
                     sort_keys=True, indent=2, allow_nan=False,
