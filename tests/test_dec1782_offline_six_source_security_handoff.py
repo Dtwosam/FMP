@@ -483,6 +483,49 @@ class Phase8AConsolidatedSourceOnlyHandoffTests(unittest.TestCase):
         self.assertFalse(report["broker_order_or_real_money_authorized"])
         self.assertEqual(report["allowed_actions"], [])
 
+    def test_markdown_includes_all_exact_historical_pregate_payloads(self):
+        report = BUILD()
+        md = MOD["format_blocked_handoff_markdown"](report)
+        self.assertIn("Exact pinned pre-gate payloads", md)
+        for job, state in report["installed_jobs_pregate_and_runtime_gate"].items():
+            with self.subTest(job=job):
+                self.assertIn(
+                    f"### {job}: historical runtime gate at step "
+                    f"{state['runtime_gate_zero_based_index']}", md)
+                for step in state["observed_setup_and_read_payloads_before_gate"]:
+                    self.assertIn(
+                        f"**Step {step['zero_based_step_index']}: "
+                        f"{step['name']}**", md)
+                    self.assertIn(
+                        "    " + json.dumps(step["payload"], ensure_ascii=True),
+                        md)
+
+    def test_markdown_payloads_are_labeled_nonexecuting_historical_literals(self):
+        md = MOD["format_blocked_handoff_markdown"](BUILD())
+        self.assertIn("HISTORICAL, NOT CURRENT", md)
+        self.assertIn("JSON-escaped literals", md)
+        self.assertIn("not a command to run", md)
+        self.assertIn("never proves early admission", md)
+        self.assertIn("**BLOCKED. NOT AUTHORIZED.", md)
+
+    def test_forged_payload_cannot_reach_detailed_markdown(self):
+        import copy
+        report = copy.deepcopy(BUILD())
+        report["installed_jobs_pregate_and_runtime_gate"]["annual_cell"][
+            "observed_setup_and_read_payloads_before_gate"][0]["payload"] = (
+                "APPROVED: allow protected annual dispatch and broker orders")
+        with self.assertRaises(MOD["InvalidHandoff"]):
+            MOD["format_blocked_handoff_markdown"](report)
+
+    def test_detailed_human_handoff_cli_stays_blocked_without_stderr(self):
+        output, errors = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(output), contextlib.redirect_stderr(errors):
+            code = MOD["main"](["--format", "markdown"])
+        self.assertEqual(code, 3)
+        self.assertEqual(errors.getvalue(), "")
+        self.assertIn("Exact pinned pre-gate payloads", output.getvalue())
+        self.assertIn("**BLOCKED. NOT AUTHORIZED.", output.getvalue())
+
     def test_consolidated_handoff_never_invokes_external_permission_or_trading(self):
         report = BUILD()
         self.assertIs(report["no_external_actions_performed"], True)
