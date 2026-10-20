@@ -685,6 +685,86 @@ class Phase3ReportingTests(unittest.TestCase):
             self.assertEqual(record["entry_timestamp_utc"],
                              record["exit_timestamp_utc"])
 
+    def test_trade_artifacts_reject_malformed_prices_before_io(self):
+        good = trade(trade_id="VALID", minutes=1, net_pnl_usd=10.0)
+        for field in ("entry_reference_price", "exit_reference_price",
+                      "entry_price", "exit_price", "stop_price", "target_price"):
+            for invalid in (None, True, "1.1", float("nan"), float("inf"),
+                            10 ** 400, 0.0, -1.0):
+                if field == "target_price" and invalid is None:
+                    continue
+                with self.subTest(field=field, value=repr(invalid)[:32]):
+                    run = BacktestRun(
+                        run_identity={}, trades=(replace(good, **{field: invalid}),),
+                        rejections=(), equity_checkpoints=(), metrics={},
+                    )
+                    with tempfile.TemporaryDirectory() as root:
+                        target = Path(root) / "blocked"
+                        with mock.patch("pathlib.Path.mkdir", side_effect=AssertionError(
+                            "invalid trade price must not create files"
+                        )):
+                            with self.assertRaisesRegex(ValueError, field):
+                                write_backtest_artifacts(run, target)
+                        self.assertFalse(target.exists())
+
+    def test_trade_artifacts_reject_invalid_pnl_costs_and_equity(self):
+        good = trade(trade_id="VALID", minutes=1, net_pnl_usd=10.0)
+        fields = ("gross_pnl_usd", "slippage_cost_usd",
+                  "commission_cost_usd", "financing_cost_usd",
+                  "net_pnl_usd", "risk_equity_before_usd",
+                  "risk_equity_after_usd")
+        for field in fields:
+            for invalid in (None, True, "10", float("nan"), 10 ** 400):
+                with self.subTest(field=field, value=repr(invalid)[:32]):
+                    run = BacktestRun(
+                        run_identity={}, trades=(replace(good, **{field: invalid}),),
+                        rejections=(), equity_checkpoints=(), metrics={},
+                    )
+                    with tempfile.TemporaryDirectory() as root:
+                        target = Path(root) / "blocked"
+                        with mock.patch("pathlib.Path.mkdir", side_effect=AssertionError(
+                            "invalid trade financials must not create files"
+                        )):
+                            with self.assertRaisesRegex(ValueError, field):
+                                write_backtest_artifacts(run, target)
+                        self.assertFalse(target.exists())
+        for field in ("slippage_cost_usd", "commission_cost_usd"):
+            with self.subTest(field=field, value=-1.0):
+                run = BacktestRun(
+                    run_identity={}, trades=(replace(good, **{field: -1.0}),),
+                    rejections=(), equity_checkpoints=(), metrics={},
+                )
+                with self.assertRaisesRegex(ValueError, field):
+                    write_backtest_artifacts(run, Path("never-created"))
+
+    def test_trade_artifacts_preserve_valid_financing_credit_and_no_target(self):
+        original = trade(trade_id="VALID", minutes=1, net_pnl_usd=10.0)
+        valid = replace(original, target_price=None, financing_cost_usd=-2.0,
+                        intrabar_ambiguous=True)
+        run = BacktestRun(
+            run_identity={}, trades=(valid,), rejections=(),
+            equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            path = Path(root) / "valid"
+            write_backtest_artifacts(run, path)
+            row = json.loads((path / "trades.jsonl").read_text("utf-8"))
+            self.assertIsNone(row["target_price"])
+            self.assertEqual(row["financing_cost_usd"], -2.0)
+            self.assertTrue(row["intrabar_ambiguous"])
+
+    def test_trade_artifacts_reject_non_boolean_ambiguity_flag(self):
+        original = trade(trade_id="VALID", minutes=1, net_pnl_usd=10.0)
+        for invalid in (0, 1, None, "False"):
+            with self.subTest(value=repr(invalid)):
+                run = BacktestRun(
+                    run_identity={}, trades=(replace(
+                        original, intrabar_ambiguous=invalid,
+                    ),), rejections=(), equity_checkpoints=(), metrics={},
+                )
+                with self.assertRaisesRegex(ValueError, "intrabar_ambiguous"):
+                    write_backtest_artifacts(run, Path("never-created"))
+
     def test_artifact_bytes_and_digests_are_deterministic(self) -> None:
         one_trade = trade(trade_id="T-1", minutes=1, net_pnl_usd=10.0)
         rejection = RejectionRecord(

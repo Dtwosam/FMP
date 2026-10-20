@@ -291,6 +291,29 @@ def write_backtest_artifacts(run: BacktestRun, out_dir: Path) -> dict[str, objec
                 raise ValueError(f"trade {field} must use UTC")
         if trade.exit_timestamp_utc < trade.entry_timestamp_utc:
             raise ValueError("trade exit cannot precede entry")
+        if type(trade.intrabar_ambiguous) is not bool:
+            raise ValueError("trade intrabar_ambiguous must be a Boolean")
+        for field in (
+            "entry_reference_price", "exit_reference_price",
+            "entry_price", "exit_price", "stop_price", "target_price",
+            "gross_pnl_usd", "slippage_cost_usd", "commission_cost_usd",
+            "financing_cost_usd", "net_pnl_usd",
+            "risk_equity_before_usd", "risk_equity_after_usd",
+        ):
+            amount = getattr(trade, field)
+            if field == "target_price" and amount is None:
+                continue
+            if type(amount) not in (int, float):
+                raise ValueError(f"trade {field} must be finite numeric")
+            try:
+                if not math.isfinite(amount):
+                    raise ValueError(f"trade {field} must be finite numeric")
+            except OverflowError as exc:
+                raise ValueError(f"trade {field} must be finite numeric") from exc
+            if field.endswith("_price") and amount <= 0:
+                raise ValueError(f"trade {field} must be positive")
+            if field in ("slippage_cost_usd", "commission_cost_usd") and amount < 0:
+                raise ValueError(f"trade {field} must be non-negative")
 
     # RejectionRecord has no dataclass constructor validation. Recheck each
     # evidence field before sorting or writing anything.
