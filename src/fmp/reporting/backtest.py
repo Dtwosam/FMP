@@ -625,8 +625,11 @@ def _open_regular_artifact(path: Path, *, root_fd: int):
     except OSError as exc:
         raise ValueError("artifact evidence must be a regular file") from exc
     try:
-        if not stat.S_ISREG(os.fstat(fd).st_mode):
+        file_state = os.fstat(fd)
+        if not stat.S_ISREG(file_state.st_mode):
             raise ValueError("artifact evidence must be a regular file")
+        if file_state.st_nlink != 1:
+            raise ValueError("artifact evidence must not be hardlinked")
         return os.fdopen(fd, "rb")
     except BaseException:
         os.close(fd)
