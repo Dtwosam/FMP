@@ -1,0 +1,7 @@
+# DEC-1820 — Canonical human-readable seven-source independent handoff
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent source-only child of PR #2066 at `b1abb5ee60919d17515d68b12b37890e405e37d9`.
+
+The original seven-source evidence index provided only JSON. Independent administrator, OS and one-shot inventory reviewers need a human-readable BLOCKED packet showing each exact required role, acceptance criterion, historical fingerprint, frozen 2023/run385/attempt1 identity and downstream blocked stage. A new `--format markdown` choice renders this view **only after a strict `allow_nan=False` canonical sorted JSON comparison** with a freshly reconstructed read-only bundle. It rejects forged proof statuses, extra approval fields, unsupported types and nonfinite numbers. Existing `--format json` remains the default.
+
+Both valid formats are explicitly **BLOCKED** and exit 3; altered worksheet input fails with exit 2 and **no stdout**. These are offline historical source and blank evidence requests, not real current administrator attestations, independent OS isolation proof, fresh one-shot inventory or human run decision. Five adversarial test methods (6,656 cumulative proposed source-defined). No protected 2023 research, ref/workflow/ruleset mutation, broker/demo/live trade, money or profit. Issues #779/#820/#821 and eight independent proofs remain MISSING/BLOCKED. Exact-head Phase3/full CI and qualified review required.

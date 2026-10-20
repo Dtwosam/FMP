@@ -151,6 +151,64 @@ class Phase8ABlockedSevenSourceIndexTests(unittest.TestCase):
         self.assertEqual(out.getvalue(), "")
         self.assertIn("BLOCKED:", err.getvalue())
 
+    def test_human_index_contains_every_missing_owner_and_criterion(self):
+        report = BUILD()
+        md = MOD["format_blocked_review_bundle_markdown"](report)
+        self.assertEqual(md.count("| **MISSING** |"), 8)
+        for row in report["eight_missing_independent_proofs"]:
+            self.assertIn(f"| {row['id']} | {row['review_role']} |", md)
+            self.assertIn(report[
+                "independent_proof_acceptance_criteria"][row["id"]], md)
+
+    def test_human_index_labels_irreversible_scope_and_historical_hashes(self):
+        report = BUILD()
+        md = MOD["format_blocked_review_bundle_markdown"](report)
+        self.assertIn("**BLOCKED.", md)
+        self.assertIn("Annual segment: 2023", md)
+        self.assertIn("Run: 385", md)
+        self.assertIn("Attempt: 1", md)
+        self.assertIn(report["historical_workflow_sha256"], md)
+        self.assertIn(report["blank_worksheet_git_blob_sha1"], md)
+        self.assertIn("NOT current dispatch ref", md)
+
+    def test_human_index_refuses_injected_approval_field_or_proof(self):
+        import copy
+        report = copy.deepcopy(BUILD())
+        report["reviewer_self_approved_run385"] = True
+        with self.assertRaisesRegex(MOD["InvalidReviewBundle"],
+                                    "canonical BLOCKED"):
+            MOD["format_blocked_review_bundle_markdown"](report)
+        report = copy.deepcopy(BUILD())
+        report["eight_missing_independent_proofs"][0]["status"] = "APPROVED"
+        with self.assertRaises(MOD["InvalidReviewBundle"]):
+            MOD["format_blocked_review_bundle_markdown"](report)
+
+    def test_human_index_rejects_nonfinite_and_nonobject_injections(self):
+        import copy
+        report = copy.deepcopy(BUILD())
+        report["after_cost_profit"] = float("nan")
+        with self.assertRaisesRegex(MOD["InvalidReviewBundle"], "nonfinite"):
+            MOD["format_blocked_review_bundle_markdown"](report)
+        with self.assertRaises(MOD["InvalidReviewBundle"]):
+            MOD["format_blocked_review_bundle_markdown"](["APPROVED"])
+
+    def test_human_cli_stays_nonzero_blocked_and_rejects_forged_worksheet(self):
+        out, err = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            code = MOD["main"](["--format", "markdown"])
+        self.assertEqual(code, 3)
+        self.assertEqual(err.getvalue(), "")
+        self.assertIn("**BLOCKED.", out.getvalue())
+        with tempfile.TemporaryDirectory() as folder:
+            forged = Path(folder) / "worksheet.md"
+            forged.write_bytes(b"READY")
+            out, err = io.StringIO(), io.StringIO()
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                code = MOD["main"](["--format", "markdown", "--worksheet", str(forged)])
+        self.assertEqual(code, 2)
+        self.assertEqual(out.getvalue(), "")
+        self.assertIn("BLOCKED:", err.getvalue())
+
     def test_cli_success_is_blocked_and_invalid_has_no_stdout(self):
         out, err = io.StringIO(), io.StringIO()
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
