@@ -207,6 +207,59 @@ class Phase3ContractTests(unittest.TestCase):
                 target_price=None,
             )
 
+    def test_decision_rejects_nonstr_or_control_id(self):
+        original = Decision(
+            decision_id="SYNTHETIC", symbol="EURUSD",
+            decision_timestamp_utc=datetime(2026, 9, 14, tzinfo=timezone.utc),
+            direction=Direction.NO_TRADE,
+            earliest_executable_timestamp_utc=None,
+            requested_risk_fraction=None, stop_price=None, target_price=None
+        )
+        for invalid in (None, [], 17, True, "", "   ", "bad" + chr(10),
+                        "bad" + chr(27), "bad" + chr(127)):
+            with self.subTest(value=repr(invalid)):
+                with self.assertRaisesRegex(ValueError, "decision_id"):
+                    replace(original, decision_id=invalid)
+
+    def test_decision_rejects_untyped_direction_including_string_alias(self):
+        original = Decision(
+            decision_id="SYNTHETIC", symbol="EURUSD",
+            decision_timestamp_utc=datetime(2026, 9, 14, tzinfo=timezone.utc),
+            direction=Direction.NO_TRADE,
+            earliest_executable_timestamp_utc=None,
+            requested_risk_fraction=None, stop_price=None, target_price=None
+        )
+        for invalid in ("NO_TRADE", "LONG", "SHORT", None, 0, True, []):
+            with self.subTest(value=repr(invalid)):
+                with self.assertRaisesRegex(ValueError, "direction"):
+                    replace(original, direction=invalid)
+
+    def test_decision_rejects_boolean_untyped_overflowed_risk_fraction(self):
+        original = Decision(
+            decision_id="SYNTHETIC", symbol="EURUSD",
+            decision_timestamp_utc=datetime(2026, 9, 14, tzinfo=timezone.utc),
+            direction=Direction.NO_TRADE,
+            earliest_executable_timestamp_utc=None,
+            requested_risk_fraction=None, stop_price=None, target_price=None
+        )
+        for invalid in (True, False, "0.0025", [], {}, -1, 0,
+                        float("nan"), float("inf"), 10 ** 400):
+            with self.subTest(value=repr(invalid)):
+                with self.assertRaisesRegex(ValueError, "requested_risk_fraction"):
+                    replace(original, requested_risk_fraction=invalid)
+
+    def test_decision_accepts_valid_enum_and_finite_synthetic_fraction(self):
+        ts = datetime(2026, 9, 14, tzinfo=timezone.utc)
+        valid = Decision(
+            decision_id="SYNTHETIC-1", symbol="EURUSD",
+            decision_timestamp_utc=ts, direction=Direction.LONG,
+            earliest_executable_timestamp_utc=ts + timedelta(minutes=1),
+            requested_risk_fraction=0.0025,
+            stop_price=1.0990, target_price=1.1020
+        )
+        self.assertIs(valid.direction, Direction.LONG)
+        self.assertEqual(valid.requested_risk_fraction, 0.0025)
+
     def test_validate_decisions_rejects_duplicate_ids(self) -> None:
         decision = Decision(
             decision_id="NT-001",

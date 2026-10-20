@@ -118,14 +118,28 @@ class Decision:
     reason_text: str | None = None
 
     def __post_init__(self) -> None:
-        if not self.decision_id.strip():
-            raise ValueError("decision_id must be non-empty")
+        if (
+            type(self.decision_id) is not str
+            or not self.decision_id.strip()
+            or any(ord(ch) < 32 or ord(ch) == 127 for ch in self.decision_id)
+        ):
+            raise ValueError("decision_id must be a nonempty printable string")
         _validate_symbol(self.symbol)
         _validate_utc(self.decision_timestamp_utc, field="decision_timestamp_utc")
+        if type(self.direction) is not Direction:
+            raise ValueError("decision direction must be a Direction enum")
 
         if self.requested_risk_fraction is not None:
-            if not math.isfinite(self.requested_risk_fraction) or self.requested_risk_fraction <= 0:
+            if type(self.requested_risk_fraction) not in (int, float):
                 raise ValueError("requested_risk_fraction must be finite and positive")
+            try:
+                if (
+                    not math.isfinite(self.requested_risk_fraction)
+                    or self.requested_risk_fraction <= 0
+                ):
+                    raise ValueError("requested_risk_fraction must be finite and positive")
+            except OverflowError as exc:
+                raise ValueError("requested_risk_fraction must be finite and positive") from exc
 
         if self.direction is Direction.NO_TRADE:
             return
