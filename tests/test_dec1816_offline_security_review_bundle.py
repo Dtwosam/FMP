@@ -922,6 +922,79 @@ class Phase8ABlockedSevenSourceIndexTests(unittest.TestCase):
                     self.assertEqual(err.getvalue(), "")
                     self.assertIn("BLOCKED", out.getvalue())
 
+    @staticmethod
+    def _write_three_canonical_saved_review_artifacts(root):
+        full = root / "full.json"
+        requests = root / "requests.json"
+        md = root / "human.md"
+        report = BUILD()
+        full.write_text(json.dumps(report), encoding="utf-8")
+        requests.write_text(json.dumps(
+            MOD["format_unfulfilled_review_requests"](report)),
+            encoding="utf-8")
+        md.write_text(MOD["format_blocked_review_bundle_markdown"](report)
+                      + chr(10), encoding="utf-8")
+        return full, requests, md
+
+    def test_three_saved_formats_validate_without_execution_permission(self):
+        with tempfile.TemporaryDirectory() as folder:
+            artifacts = self._write_three_canonical_saved_review_artifacts(
+                Path(folder))
+            result = MOD["verify_complete_blocked_review_triplet"](*artifacts)
+        self.assertEqual(result["disposition"], "BLOCKED_NO_EXECUTION_PERMISSION")
+        self.assertTrue(result["three_saved_formats_consistent_with_pinned_sources"])
+        self.assertTrue(result["all_eight_review_requests_still_missing"])
+        self.assertEqual(result["allowed_actions"], [])
+        self.assertFalse(result["protected_2023_run385_attempt1_authorized"])
+
+    def test_three_saved_formats_reject_tamper_in_any_single_artifact(self):
+        for index in range(3):
+            with self.subTest(artifact=index):
+                with tempfile.TemporaryDirectory() as folder:
+                    files = self._write_three_canonical_saved_review_artifacts(
+                        Path(folder))
+                    target = files[index]
+                    target.write_bytes(target.read_bytes() + b"APPROVED")
+                    with self.assertRaises((OSError, ValueError)):
+                        MOD["verify_complete_blocked_review_triplet"](*files)
+
+    def test_three_saved_formats_cli_stays_blocked_and_rejects_mixed_modes(self):
+        with tempfile.TemporaryDirectory() as folder:
+            files = self._write_three_canonical_saved_review_artifacts(Path(folder))
+            args = ["--verify-triplet"] + list(map(str, files))
+            out, err = io.StringIO(), io.StringIO()
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                status = MOD["main"](args)
+            self.assertEqual(status, 3)
+            self.assertEqual(err.getvalue(), "")
+            self.assertEqual(
+                json.loads(out.getvalue())["disposition"],
+                "BLOCKED_NO_EXECUTION_PERMISSION")
+            for extra in (["--format", "json"], ["--worksheet", str(files[2])],
+                          ["--verify-report", str(files[0])],
+                          ["--verify-markdown", str(files[2])]):
+                with self.subTest(extra=extra):
+                    out, err = io.StringIO(), io.StringIO()
+                    with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                        status = MOD["main"](args + extra)
+                    self.assertEqual(status, 2)
+                    self.assertEqual(out.getvalue(), "")
+                    self.assertIn("BLOCKED:", err.getvalue())
+
+    def test_three_saved_formats_are_read_only_and_offline(self):
+        with tempfile.TemporaryDirectory() as folder:
+            files = self._write_three_canonical_saved_review_artifacts(Path(folder))
+            initial = [f.read_bytes() for f in files]
+            with mock.patch("subprocess.Popen",
+                            side_effect=AssertionError("unexpected subprocess")):
+                with mock.patch("socket.socket",
+                                side_effect=AssertionError("unexpected socket")):
+                    with self._deny_writable_os_opens() as seen:
+                        result = MOD["verify_complete_blocked_review_triplet"](*files)
+            self.assertTrue(seen)
+            self.assertTrue(result["no_external_actions_performed"])
+            self.assertEqual([f.read_bytes() for f in files], initial)
+
     def test_cli_success_is_blocked_and_invalid_has_no_stdout(self):
         out, err = io.StringIO(), io.StringIO()
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):

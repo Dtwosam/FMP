@@ -1,0 +1,7 @@
+# DEC-1839 — Cross-check complete three-format BLOCKED reviewer handoff
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent source-only child of PR #2085 `8a7455803853fa50eaab29663cc0f7c8f8ecd819`.
+
+The offline Phase 8A reviewer handoff is exported as full seven-source JSON, eight-owner compact MISSING requests JSON, and human BLOCKED Markdown. Previously each could be validated separately, but a reviewer could inadvertently pair unrelated file versions. Add `--verify-triplet FULL_JSON REQUESTS_JSON HUMAN_MD` to run all three exact no-follow bounded saved-file verifiers against *fresh pinned historical inputs* and check the common offline request SHA-256, eight MISSING proof rows and unanimous BLOCKED result. The three-way verifier emits a separate small JSON verdict, always BLOCKED/nonzero exit 3, not a signed bundle or security authorization.
+
+Invalid/forged/symlinked files, incompatible output-format options and mixed overrides fail controlled exit 2 with no stdout. Four new test methods (**6,713 cumulative proposed source-defined**) cover valid all-file consistency, tamper of each individual file, CLI conflicts, and no-process/network/writable-file access. All real administrator protection, runner OS isolation, fresh one-shot inventory and independently signed human decision remain external; #779/#820/#821 and eight proofs remain MISSING. No protected 2023/run385/attempt1 research, installed ref/workflow/ruleset changes, broker/demo/live order or profit. Exact-head Phase3/full CI and independent review required.

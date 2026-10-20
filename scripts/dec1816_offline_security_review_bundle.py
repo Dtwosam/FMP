@@ -407,6 +407,40 @@ def verify_saved_blocked_markdown(path):
     return fresh
 
 
+def verify_complete_blocked_review_triplet(full_path, requests_path, markdown_path):
+    """Compare all three saved artifacts to pinned offline evidence, no approval."""
+    full = verify_saved_blocked_review_packet(full_path)
+    requests = verify_saved_unfulfilled_review_requests(requests_path)
+    human = verify_saved_blocked_markdown(markdown_path)
+    if not (
+        full == human
+        and requests["parent_offline_index_sha256"]
+            == full["offline_request_fingerprint_sha256"]
+        and len(requests["unfulfilled_independent_review_requests"]) == 8
+        and all(row["status"] == "MISSING"
+                and row["evidence_ref"] is None
+                and row["reviewer_signoff"] is None
+                for row in requests["unfulfilled_independent_review_requests"])
+    ):
+        raise InvalidReviewBundle(
+            "three saved review formats disagree or claim completed evidence"
+        )
+    return {
+        "schema": "fmp_dec1839_source_only_three_format_review_v1",
+        "disposition": "BLOCKED_NO_EXECUTION_PERMISSION",
+        "three_saved_formats_consistent_with_pinned_sources": True,
+        "source_only_not_independent_attestation": True,
+        "offline_request_fingerprint_sha256":
+            full["offline_request_fingerprint_sha256"],
+        "independent_external_proofs_verified": False,
+        "all_eight_review_requests_still_missing": True,
+        "protected_2023_run385_attempt1_authorized": False,
+        "broker_demo_live_or_real_money_authorized": False,
+        "allowed_actions": [],
+        "no_external_actions_performed": True,
+    }
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(
         description="Seven-source historical BLOCKED independent proof review"
@@ -427,17 +461,24 @@ def main(argv=None):
         help="Check saved exact CLI Markdown against freshly pinned BLOCKED evidence",
     )
     parser.add_argument(
+        "--verify-triplet", type=Path, nargs=3,
+        metavar=("FULL_JSON", "REQUESTS_JSON", "HUMAN_MD"),
+        help="Check the three exported source-only BLOCKED review artifacts together",
+    )
+    parser.add_argument(
         "--format", choices=("json", "markdown", "requests"),
         default=None, help="Report format; defaults to saved input type or JSON",
     )
     args = parser.parse_args(argv)
     active = sum(path is not None for path in (
-        args.verify_report, args.verify_requests, args.verify_markdown
+        args.verify_report, args.verify_requests,
+        args.verify_markdown, args.verify_triplet
     ))
     if (
         active > 1
         or (active and any(x is not None for x in (
             args.docs_root, args.workflow, args.worksheet)))
+        or (args.verify_triplet is not None and args.format is not None)
         or (
             args.verify_markdown is not None
             and args.format not in (None, "markdown")
@@ -457,7 +498,13 @@ def main(argv=None):
         "requests" if args.verify_requests is not None else "json"
     )
     try:
-        if args.verify_markdown is not None:
+        if args.verify_triplet is not None:
+            output = json.dumps(
+                verify_complete_blocked_review_triplet(
+                    *args.verify_triplet),
+                sort_keys=True, indent=2, allow_nan=False,
+            )
+        elif args.verify_markdown is not None:
             output = format_blocked_review_bundle_markdown(
                 verify_saved_blocked_markdown(args.verify_markdown))
         elif args.verify_requests is not None:
