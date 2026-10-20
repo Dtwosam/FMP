@@ -2,6 +2,7 @@
 import contextlib
 import io
 import json
+import os
 from pathlib import Path
 from unittest import mock
 import runpy
@@ -667,6 +668,83 @@ class Phase8ABlockedSevenSourceIndexTests(unittest.TestCase):
                     self.assertEqual(
                         MOD["verify_saved_unfulfilled_review_requests"](requests)[
                             "disposition"], "BLOCKED_NO_EXECUTION_PERMISSION")
+
+    @staticmethod
+    @contextlib.contextmanager
+    def _deny_writable_os_opens():
+        real_open = os.open
+        mutating = (os.O_WRONLY | os.O_RDWR | os.O_CREAT
+                    | os.O_TRUNC | os.O_APPEND)
+        opened = []
+
+        def audit(path, flags, mode=0o777, *, dir_fd=None):
+            if flags & mutating:
+                raise AssertionError("offline seven-source reader attempted a write")
+            opened.append((str(path), flags))
+            if dir_fd is None:
+                return real_open(path, flags, mode)
+            return real_open(path, flags, mode, dir_fd=dir_fd)
+
+        # Keep the actual dirfd capability visible to the nofollow reader:
+        # a patched callable otherwise lacks membership in supports_dir_fd.
+        with mock.patch("os.open", side_effect=audit) as guarded:
+            with mock.patch.object(os, "supports_dir_fd",
+                                   os.supports_dir_fd | {guarded}):
+                yield opened
+
+    def test_seven_source_compilation_never_uses_writable_os_open(self):
+        with self._deny_writable_os_opens() as observed:
+            report = BUILD()
+        self.assertTrue(observed)
+        self.assertEqual(report["allowed_actions"], [])
+        self.assertTrue(report["no_external_actions_performed"])
+
+    def test_saved_full_report_verification_never_uses_writable_os_open(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "packet.json"
+            path.write_text(json.dumps(BUILD()), encoding="utf-8")
+            with self._deny_writable_os_opens() as observed:
+                result = MOD["verify_saved_blocked_review_packet"](path)
+            self.assertTrue(observed)
+            self.assertEqual(result["disposition"], "BLOCKED_NO_EXECUTION_PERMISSION")
+
+    def test_saved_compact_requests_verification_never_uses_writable_os_open(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "requests.json"
+            path.write_text(json.dumps(
+                MOD["format_unfulfilled_review_requests"](BUILD())
+            ), encoding="utf-8")
+            with self._deny_writable_os_opens() as observed:
+                result = MOD["verify_saved_unfulfilled_review_requests"](path)
+            self.assertTrue(observed)
+            self.assertEqual(result["allowed_actions"], [])
+
+    def test_all_cli_review_modes_only_read_files(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            full = root / "full.json"
+            requests = root / "requests.json"
+            full.write_text(json.dumps(BUILD()), encoding="utf-8")
+            requests.write_text(json.dumps(
+                MOD["format_unfulfilled_review_requests"](BUILD())
+            ), encoding="utf-8")
+            modes = (
+                ["--format", "json"],
+                ["--format", "markdown"],
+                ["--format", "requests"],
+                ["--verify-report", str(full)],
+                ["--verify-requests", str(requests)],
+            )
+            for mode in modes:
+                with self.subTest(mode=mode):
+                    out, err = io.StringIO(), io.StringIO()
+                    with self._deny_writable_os_opens() as seen:
+                        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                            status = MOD["main"](mode)
+                    self.assertEqual(status, 3)
+                    self.assertEqual(err.getvalue(), "")
+                    self.assertIn("BLOCKED", out.getvalue())
+                    self.assertTrue(seen)
 
     def test_cli_success_is_blocked_and_invalid_has_no_stdout(self):
         out, err = io.StringIO(), io.StringIO()
