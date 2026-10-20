@@ -31,7 +31,7 @@ class Phase8ABlankWorksheetIntegrityTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             source = WORKSHEET.read_bytes()
             forged = Path(folder) / "worksheet.md"
-            forged.write_bytes(source + b"\\nAPPROVED: dispatch run385\\n")
+            forged.write_bytes(source + bytes((10,)) + b"APPROVED: dispatch run385" + bytes((10,)))
             with self.assertRaisesRegex(MOD["InvalidBlankWorksheet"],
                                         "pinned MISSING-only"):
                 AUDIT(forged)
