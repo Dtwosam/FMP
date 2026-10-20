@@ -387,6 +387,34 @@ class Phase3EngineTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "cannot be snapshotted"):
             replace(config(), decision_config={"unsafe": Uncopyable()})
 
+    def test_run_identity_nested_values_do_not_mutate_source_config(self):
+        conf = replace(
+            config(), decision_config={"scenarios": [{"cost": 30.0}]}
+        )
+        report = _run_identity(conf, ())
+        report["decision_config"]["scenarios"][0]["cost"] = -99.0
+        self.assertEqual(
+            conf.decision_config["scenarios"][0]["cost"], 30.0
+        )
+        self.assertEqual(
+            _run_identity(conf, ())["decision_config"]["scenarios"][0]["cost"],
+            30.0,
+        )
+
+    def test_two_run_identity_snapshots_do_not_share_nested_lists(self):
+        conf = replace(
+            config(), decision_config={"trials": ["synthetic", "offline"]}
+        )
+        first = _run_identity(conf, ())
+        second = _run_identity(conf, ())
+        first["decision_config"]["trials"].append("forged")
+        self.assertEqual(
+            second["decision_config"]["trials"], ["synthetic", "offline"]
+        )
+        self.assertEqual(
+            conf.decision_config["trials"], ["synthetic", "offline"]
+        )
+
     def test_no_trade_is_preserved_as_reasoned_record(self) -> None:
         decision = Decision(
             decision_id="NT-1",
