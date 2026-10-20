@@ -212,8 +212,10 @@ def _artifact_record(path: Path) -> dict[str, object]:
 
 
 def write_backtest_artifacts(run: BacktestRun, out_dir: Path) -> dict[str, object]:
-    out_dir = Path(out_dir)
-    out_dir.mkdir(parents=True, exist_ok=True)
+    # Validate and serialize evidence before the first filesystem mutation.
+    # A malformed run must not create an empty output or partial artifacts.
+    if type(run) is not BacktestRun:
+        raise ValueError("run must be a BacktestRun record")
 
     summary = {
         "protocol": "fmp-phase3-backtest-run-v1",
@@ -235,6 +237,8 @@ def write_backtest_artifacts(run: BacktestRun, out_dir: Path) -> dict[str, objec
         "rejections.jsonl": _stable_jsonl_bytes(rejections),
         "metrics.json": _stable_json_bytes(run.metrics),
     }
+    out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
     for name, data in payloads.items():
         _atomic_write(out_dir / name, data)
 

@@ -4,6 +4,7 @@ import hashlib
 import json
 import tempfile
 import unittest
+from unittest import mock
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -255,6 +256,56 @@ class Phase3ReportingTests(unittest.TestCase):
         )
         self.assertEqual(metrics["max_drawdown_usd"], 110.0)
         self.assertEqual(metrics["max_drawdown_fraction"], 0.1)
+
+    def test_artifact_writer_rejects_untyped_run_without_any_io(self):
+        class HostileRun:
+            @property
+            def run_identity(self):
+                raise AssertionError("unexpected hostile run getter")
+
+        with tempfile.TemporaryDirectory() as root:
+            target = Path(root) / "missing"
+            for invalid in (None, True, {}, "BacktestRun", HostileRun()):
+                with self.subTest(value_type=type(invalid).__name__):
+                    with mock.patch("pathlib.Path.mkdir", side_effect=AssertionError(
+                        "malformed run must not create artifact directory"
+                    )):
+                        with self.assertRaisesRegex(ValueError, "BacktestRun"):
+                            write_backtest_artifacts(invalid, target)
+                    self.assertFalse(target.exists())
+
+    def test_artifact_writer_rejects_nonfinite_metrics_before_directory_creation(self):
+        base = BacktestRun(
+            run_identity={"code_commit": "synthetic"},
+            trades=(), rejections=(), equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            target = Path(root) / "missing"
+            for invalid in (float("nan"), float("inf")):
+                with self.subTest(metric=repr(invalid)):
+                    with mock.patch("pathlib.Path.mkdir", side_effect=AssertionError(
+                        "invalid evidence must not touch filesystem"
+                    )):
+                        with self.assertRaisesRegex(ValueError, "non-finite"):
+                            write_backtest_artifacts(
+                                replace(base, metrics={"net_pnl_usd": invalid}),
+                                target,
+                            )
+                    self.assertFalse(target.exists())
+
+    def test_artifact_writer_rejects_unserializable_identity_before_directory(self):
+        base = BacktestRun(
+            run_identity={"code_commit": object()},
+            trades=(), rejections=(), equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            target = Path(root) / "missing"
+            with mock.patch("pathlib.Path.mkdir", side_effect=AssertionError(
+                "unserializable run must not touch filesystem"
+            )):
+                with self.assertRaises(TypeError):
+                    write_backtest_artifacts(base, target)
+            self.assertFalse(target.exists())
 
     def test_artifact_bytes_and_digests_are_deterministic(self) -> None:
         one_trade = trade(trade_id="T-1", minutes=1, net_pnl_usd=10.0)
