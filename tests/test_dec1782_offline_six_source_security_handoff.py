@@ -897,6 +897,58 @@ class Phase8AConsolidatedSourceOnlyHandoffTests(unittest.TestCase):
                 self.assertEqual(out.getvalue(), "")
                 self.assertIn("BLOCKED:", err.getvalue())
 
+    def test_json_compiler_rejects_forged_documentary_source_hash(self):
+        def forge(report):
+            report["source_sha256"]["annual"] = "0" * 64
+        with self._with_forged_upstream_report(
+                MOD["DOC_AUDIT"], "render_readiness", forge):
+            with self.assertRaisesRegex(
+                    MOD["InvalidHandoff"], "documentary fingerprints"):
+                BUILD()
+
+    def test_json_compiler_rejects_forged_observed_main_ref(self):
+        for key, fake in (
+            ("source_main_sha", "f" * 40),
+            ("source_observation_date_utc", "2099-12-31"),
+        ):
+            with self.subTest(key=key):
+                def forge(report):
+                    report[key] = fake
+                with self._with_forged_upstream_report(
+                        MOD["DOC_AUDIT"], "render_readiness", forge):
+                    with self.assertRaisesRegex(
+                            MOD["InvalidHandoff"], "stale observed ref"):
+                        BUILD()
+
+    def test_json_compiler_rejects_forged_historical_workflow_sha(self):
+        for key, value in (
+            ("historical_source_git_blob_sha1", "f" * 40),
+            ("historical_source_sha256", "f" * 64),
+            ("installed_workflow_file_absent_from_ci_not_an_attestation", False),
+        ):
+            with self.subTest(field=key):
+                def forge(report):
+                    report[key] = value
+                with self._with_forged_upstream_report(
+                        MOD["WORKFLOW_AUDIT"], "report_blocked_admission", forge):
+                    with self.assertRaisesRegex(
+                            MOD["InvalidHandoff"], "historical workflow fingerprints"):
+                        BUILD()
+
+    def test_forged_hashes_fail_both_formats_without_stdout(self):
+        def forge(report):
+            report["historical_source_sha256"] = "0" * 64
+        for fmt in ("json", "markdown"):
+            with self.subTest(fmt=fmt):
+                out, err = io.StringIO(), io.StringIO()
+                with self._with_forged_upstream_report(
+                        MOD["WORKFLOW_AUDIT"], "report_blocked_admission", forge):
+                    with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                        status = MOD["main"](["--format", fmt])
+                self.assertEqual(status, 2)
+                self.assertEqual(out.getvalue(), "")
+                self.assertIn("BLOCKED:", err.getvalue())
+
     def test_consolidated_handoff_never_invokes_external_permission_or_trading(self):
         report = BUILD()
         self.assertIs(report["no_external_actions_performed"], True)

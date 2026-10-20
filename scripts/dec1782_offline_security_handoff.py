@@ -86,6 +86,31 @@ def compile_blocked_handoff(docs_root=DOCS, workflow=WORKFLOW):
         "historical workflow source report has unknown, missing or malformed fields",
     )
     expected_proofs = docs_module["PROOFS"]
+    # JSON and Markdown must agree on the exact reviewed source identity.
+    # Neither hash nor stale public ref proves the current installed runner.
+    _require(
+        type(documentary.get("source_sha256")) is dict
+        and documentary["source_sha256"] == docs_module["PINNED_SOURCE_SHA256"]
+        and tuple(documentary["source_sha256"]) ==
+            tuple(docs_module["FILES"])
+        and type(documentary.get("source_main_sha")) is str
+        and documentary["source_main_sha"] ==
+            docs_module["OBSERVED_PUBLIC_MAIN_SHA"]
+        and documentary.get("source_observation_date_utc") ==
+            docs_module["OBSERVED_PUBLIC_DATE"],
+        "documentary fingerprints or stale observed ref differ from pinned source",
+    )
+    _require(
+        type(installed.get("historical_source_git_blob_sha1")) is str
+        and installed["historical_source_git_blob_sha1"] ==
+            workflow_module["EXPECTED_GIT_BLOB_SHA1"]
+        and type(installed.get("historical_source_sha256")) is str
+        and installed["historical_source_sha256"] ==
+            workflow_module["EXPECTED_HISTORICAL_WORKFLOW_SHA256"]
+        and installed.get("installed_workflow_file_absent_from_ci_not_an_attestation")
+            is True,
+        "historical workflow fingerprints or fixture-only status changed",
+    )
     _require(
         documentary.get("schema") == "fmp_dec1752_offline_blocker_diagnostic_v1"
         and documentary.get("decision") == "DEC-1752"
