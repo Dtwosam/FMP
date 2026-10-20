@@ -85,7 +85,10 @@ class BacktestConfig:
         _require_utc(self.requested_end_utc, field="requested_end_utc")
         if self.requested_end_utc < self.requested_start_utc:
             raise ValueError("requested end must not precede requested start")
-        if self.execution_timing_mode not in _ALLOWED_EXECUTION_TIMING_MODES:
+        if (
+            type(self.execution_timing_mode) is not str
+            or self.execution_timing_mode not in _ALLOWED_EXECUTION_TIMING_MODES
+        ):
             raise ValueError("unsupported execution_timing_mode")
         for field, value in (
             ("processed_data_manifest_id", self.processed_data_manifest_id),
@@ -93,8 +96,10 @@ class BacktestConfig:
             ("timeframe", self.timeframe),
             ("code_commit", self.code_commit),
         ):
-            if not value.strip():
-                raise ValueError(f"{field} must be non-empty")
+            if type(value) is not str or not value.strip():
+                raise ValueError(f"{field} must be a non-empty string")
+            if any(ord(char) < 32 or ord(char) == 127 for char in value):
+                raise ValueError(f"{field} cannot contain control characters")
 
 
 def _rejection(
