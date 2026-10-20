@@ -830,6 +830,32 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
         checkpoints = summary.get("equity_checkpoints")
         if type(checkpoints) is not list or len(checkpoints) != counts["equity_checkpoint_count"]:
             raise ValueError("artifact report equity checkpoint count conflicts with summary")
+        previous_checkpoint: datetime | None = None
+        for checkpoint in checkpoints:
+            if type(checkpoint) is not dict or set(checkpoint) != {
+                "timestamp_utc", "realized_risk_equity_usd",
+            }:
+                raise ValueError("artifact report equity checkpoint fields mismatch")
+            stamp = checkpoint["timestamp_utc"]
+            if type(stamp) is not str or not stamp.endswith("Z"):
+                raise ValueError("artifact report equity checkpoint must use UTC")
+            try:
+                instant = datetime.fromisoformat(stamp)
+            except ValueError as exc:
+                raise ValueError("artifact report equity checkpoint invalid UTC") from exc
+            if instant.tzinfo is None or instant.utcoffset() != timedelta(0):
+                raise ValueError("artifact report equity checkpoint must use UTC")
+            if previous_checkpoint is not None and instant < previous_checkpoint:
+                raise ValueError("artifact report equity checkpoints must be chronological")
+            previous_checkpoint = instant
+            value = checkpoint["realized_risk_equity_usd"]
+            if type(value) not in (int, float):
+                raise ValueError("artifact report equity checkpoint must be finite numeric")
+            try:
+                if not math.isfinite(value):
+                    raise ValueError("artifact report equity checkpoint must be finite numeric")
+            except OverflowError as exc:
+                raise ValueError("artifact report equity checkpoint must be finite numeric") from exc
 
         record_fields = {
             "trades.jsonl": {item.name for item in fields(TradeRecord)},
