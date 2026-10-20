@@ -31,7 +31,8 @@ class SyntheticCostBoundaryDiagnosticTests(unittest.TestCase):
         result = BUILD()
         self.assertIs(result["untyped_buy_string_interpreted_as_sell"], False)
         self.assertIs(result["untyped_buy_string_rejected"], True)
-        self.assertIs(result["fractional_commission_units_currently_accepted"], True)
+        self.assertIs(result["fractional_commission_units_currently_accepted"], False)
+        self.assertIs(result["fractional_commission_units_rejected"], True)
         self.assertTrue(result["known_issues_require_separate_backtester_review"])
 
     def test_diagnostic_is_blocked_and_cannot_be_trading_evidence(self):

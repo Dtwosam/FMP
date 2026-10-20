@@ -121,6 +121,27 @@ class Phase3CostTests(unittest.TestCase):
         model = FixedCommissionPerMillion(usd_per_million_per_side=25.0)
         self.assertAlmostEqual(model.cost_usd(units=-200_000), 5.0)
 
+    def test_fixed_commission_rejects_fractional_units(self):
+        model = FixedCommissionPerMillion(usd_per_million_per_side=30.0)
+        for units in (0.5, -0.5, 1.0, 100_000.5, -100_000.25):
+            with self.subTest(units=units):
+                with self.assertRaisesRegex(ValueError, "whole integer"):
+                    model.cost_usd(units=units)
+
+    def test_fixed_commission_rejects_boolean_or_nonnumeric_units(self):
+        model = FixedCommissionPerMillion(usd_per_million_per_side=30.0)
+        for units in (True, False, None, "100000", float("nan"), float("inf")):
+            with self.subTest(units=repr(units)):
+                with self.assertRaisesRegex(ValueError, "whole integer"):
+                    model.cost_usd(units=units)
+
+    def test_fixed_commission_retains_signed_integer_symmetry(self):
+        model = FixedCommissionPerMillion(usd_per_million_per_side=30.0)
+        for units, expected in ((0, 0.0), (1, 0.00003), (-1, 0.00003),
+                                (100_000, 3.0), (-200_000, 6.0)):
+            with self.subTest(units=units):
+                self.assertAlmostEqual(model.cost_usd(units=units), expected)
+
     def test_fixed_commission_rejects_negative_or_non_finite_rate(self) -> None:
         with self.assertRaisesRegex(ValueError, "commission"):
             FixedCommissionPerMillion(usd_per_million_per_side=-1.0)
