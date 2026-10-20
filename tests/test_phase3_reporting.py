@@ -1486,6 +1486,29 @@ class Phase3ReportingTests(unittest.TestCase):
                 equity_checkpoints=(EquityCheckpoint(BASE_TS, 1e-308),),
             )
 
+    def test_metric_calculator_denies_datetime_subclass_before_getter(self):
+        class HostileTimestamp(datetime):
+            def utcoffset(self):
+                raise AssertionError("hostile datetime getter invoked")
+
+        checkpoint = EquityCheckpoint(
+            HostileTimestamp(2026, 9, 14, tzinfo=timezone.utc),
+            10_000.0,
+        )
+        with self.assertRaisesRegex(ValueError, "checkpoint timestamp"):
+            compute_backtest_metrics(
+                starting_equity_usd=10_000.0,
+                trades=(), equity_checkpoints=(checkpoint,),
+            )
+
+    def test_metric_calculator_keeps_native_utc_checkpoint(self):
+        checkpoint = EquityCheckpoint(BASE_TS, 10_000.0)
+        metrics = compute_backtest_metrics(
+            starting_equity_usd=10_000.0,
+            trades=(), equity_checkpoints=(checkpoint,),
+        )
+        self.assertEqual(metrics["max_drawdown_usd"], 0.0)
+
     def test_artifact_bytes_and_digests_are_deterministic(self) -> None:
         one_trade = trade(trade_id="T-1", minutes=1, net_pnl_usd=10.0)
         rejection = RejectionRecord(
