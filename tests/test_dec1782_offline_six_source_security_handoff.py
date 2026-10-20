@@ -850,6 +850,53 @@ class Phase8AConsolidatedSourceOnlyHandoffTests(unittest.TestCase):
                 self.assertEqual(stdout.getvalue(), "")
                 self.assertIn("BLOCKED:", stderr.getvalue())
 
+    def test_json_compiler_rejects_nonobject_historical_trace_row(self):
+        def forge(report):
+            report["historical_pregate_payloads"]["annual_preflight"][
+                "actual_pregate_setup_and_read_payloads"][0] = None
+        with self._with_forged_upstream_report(
+                MOD["WORKFLOW_AUDIT"], "report_blocked_admission", forge):
+            with self.assertRaisesRegex(MOD["InvalidHandoff"], "pre-gate trace"):
+                BUILD()
+
+    def test_json_compiler_rejects_unknown_historical_step_approval_key(self):
+        def forge(report):
+            report["historical_pregate_payloads"]["annual_cell"][
+                "actual_pregate_setup_and_read_payloads"][0][
+                    "self_certified_early_admission"] = True
+        with self._with_forged_upstream_report(
+                MOD["WORKFLOW_AUDIT"], "report_blocked_admission", forge):
+            with self.assertRaisesRegex(MOD["InvalidHandoff"], "pre-gate trace"):
+                BUILD()
+
+    def test_json_compiler_rejects_bool_and_out_of_gate_step_index(self):
+        for value in (True, -1, 4):
+            with self.subTest(index=repr(value)):
+                def forge(report):
+                    report["historical_pregate_payloads"]["annual_cell"][
+                        "actual_pregate_setup_and_read_payloads"][1][
+                            "zero_based_step_index"] = value
+                with self._with_forged_upstream_report(
+                        MOD["WORKFLOW_AUDIT"], "report_blocked_admission", forge):
+                    with self.assertRaises(MOD["InvalidHandoff"]):
+                        BUILD()
+
+    def test_both_formats_reject_malformed_upstream_pregate_trace(self):
+        def forge(report):
+            report["historical_pregate_payloads"]["annual_freeze"][
+                "actual_pregate_setup_and_read_payloads"][0][
+                    "payload"] = ["unreviewed"]
+        for fmt in ("json", "markdown"):
+            with self.subTest(fmt=fmt):
+                out, err = io.StringIO(), io.StringIO()
+                with self._with_forged_upstream_report(
+                        MOD["WORKFLOW_AUDIT"], "report_blocked_admission", forge):
+                    with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                        status = MOD["main"](["--format", fmt])
+                self.assertEqual(status, 2)
+                self.assertEqual(out.getvalue(), "")
+                self.assertIn("BLOCKED:", err.getvalue())
+
     def test_consolidated_handoff_never_invokes_external_permission_or_trading(self):
         report = BUILD()
         self.assertIs(report["no_external_actions_performed"], True)

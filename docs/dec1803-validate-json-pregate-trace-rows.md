@@ -1,0 +1,9 @@
+# DEC-1803 — Fail closed on malformed JSON pre-gate trace source rows
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent source-only child of PR #2049 at `785548b62cd0e7213ecf1fe989b4587bf6abc7e1`.
+
+The canonical Markdown formatter already validates each nested historic pre-gate step name/payload/index and compares the full frozen trace before rendering. The upstream six-source **JSON compiler**, however, previously inspected only the two static source-only provenance Booleans. A malformed nested step such as an injected list payload, unknown approval key, or a Boolean index could reach machine-readable output if the historical source-report producer drifted, despite the source being merely a fixture and never an installed runner attestation.
+
+Fail closed before building either format unless every historical job trace is an exact three-key dictionary with a list of plain step dictionaries containing exactly `name`, `payload`, `zero_based_step_index`, exact string/string/integer types and a step index from zero up to (but not including) the job's historical runtime-gate index. The static-only/no-admission flags remain required exact True; no permissions are added. The SHA-1/SHA-256-pinned workflow and canonical Markdown comparison remain intact.
+
+Four adversarial tests (6,608 cumulative proposed source-defined): non-object step, unreviewed approval key, Boolean/negative/after-gate index and JSON/Markdown failure without stdout. Normal BLOCKED output still exits 3. These validate only source presentation, not current Github runner admission, control-plane locks, protected market reads, one-shot research, broker/demo/live trading or economics. Independent #779/#820/#821 proofs stay MISSING/BLOCKED. Own Phase3/full regression CI and qualified independent review required.
