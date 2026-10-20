@@ -1203,6 +1203,46 @@ class Phase8ABlockedSevenSourceIndexTests(unittest.TestCase):
         self.assertIn("--verify-report", out.getvalue())
         self.assertEqual(err.getvalue(), "")
 
+    def test_argparse_rejects_control_chars_without_echoing_them(self):
+        cases = (
+            ["--format", "APPROVED" + chr(10) + "RUN385"],
+            ["--unknown" + chr(27) + "[2J"],
+            ["--verify-triplet", "only.json"],
+            ["--format", "demo"],
+        )
+        for args in cases:
+            with self.subTest(args=args):
+                out, err = io.StringIO(), io.StringIO()
+                with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                    code = MOD["main"](args)
+                self.assertEqual(code, 2)
+                self.assertEqual(out.getvalue(), "")
+                self.assertEqual(err.getvalue().count(chr(10)), 1)
+                self.assertNotIn(chr(27), err.getvalue())
+                self.assertNotIn("APPROVED", err.getvalue())
+                self.assertNotIn("usage:", err.getvalue().lower())
+                self.assertIn("BLOCKED: invalid", err.getvalue())
+
+    def test_no_unknown_cli_option_value_is_quoted_into_diagnostic(self):
+        secret_like = "unreviewed-private-credential"
+        out, err = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            code = MOD["main"](["--verify-untrusted", secret_like])
+        self.assertEqual(code, 2)
+        self.assertEqual(out.getvalue(), "")
+        self.assertNotIn(secret_like, err.getvalue())
+        self.assertIn("BLOCKED:", err.getvalue())
+
+    def test_isolated_help_still_returns_informational_zero(self):
+        for args in (["-h"], ["--help"]):
+            with self.subTest(args=args):
+                out, err = io.StringIO(), io.StringIO()
+                with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                    code = MOD["main"](args)
+                self.assertEqual(code, 0)
+                self.assertEqual(err.getvalue(), "")
+                self.assertIn("--verify-triplet", out.getvalue())
+
     def test_builtin_help_exits_without_generating_review_evidence(self):
         out, err = io.StringIO(), io.StringIO()
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
