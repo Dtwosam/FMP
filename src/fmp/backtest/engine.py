@@ -270,6 +270,12 @@ def _scheduled_exit_map(
     decisions: Sequence[Decision],
     scheduled_exits: Sequence[ScheduledExit],
 ) -> dict[str, ScheduledExit]:
+    if (
+        not isinstance(scheduled_exits, Sequence)
+        or isinstance(scheduled_exits, (str, bytes, bytearray))
+        or any(type(exit_) is not ScheduledExit for exit_ in scheduled_exits)
+    ):
+        raise ValueError("scheduled exits must be a sequence of ScheduledExit records")
     decisions_by_id = {decision.decision_id: decision for decision in decisions}
     mapped: dict[str, ScheduledExit] = {}
     for scheduled_exit in scheduled_exits:
