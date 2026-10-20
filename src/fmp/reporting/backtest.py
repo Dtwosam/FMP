@@ -599,3 +599,64 @@ def write_backtest_artifacts(run: BacktestRun, out_dir: Path) -> dict[str, objec
     }
     _atomic_write(out_dir / "manifest.json", _stable_json_bytes(manifest))
     return manifest
+
+
+def verify_backtest_artifacts(out_dir: Path) -> dict[str, object]:
+    """Verify local artifact bytes against an expected-shape Phase3 manifest.
+
+    This checks internal consistency only, not input-data provenance or
+    trading economics. No paths are derived from untrusted manifest names.
+    """
+    root = Path(out_dir)
+    if root.is_symlink() or not root.is_dir():
+        raise ValueError("artifact root must be a direct directory")
+    manifest_file = root / "manifest.json"
+    if manifest_file.is_symlink() or not manifest_file.is_file():
+        raise ValueError("artifact manifest must be a regular file")
+    if manifest_file.stat().st_size > 262_144:
+        raise ValueError("artifact manifest exceeds size limit")
+    try:
+        manifest = json.loads(manifest_file.read_bytes())
+    except (ValueError, UnicodeDecodeError) as exc:
+        raise ValueError("artifact manifest must be valid JSON") from exc
+    if (
+        type(manifest) is not dict
+        or set(manifest) != {"protocol", "artifacts"}
+        or manifest["protocol"] != ARTIFACT_PROTOCOL
+    ):
+        raise ValueError("artifact manifest protocol or shape mismatch")
+    entries = manifest["artifacts"]
+    expected_names = {
+        "summary.json", "trades.jsonl", "rejections.jsonl", "metrics.json"
+    }
+    if type(entries) is not list or len(entries) != len(expected_names):
+        raise ValueError("artifact manifest must list four evidence files")
+    seen: set[str] = set()
+    for entry in entries:
+        if type(entry) is not dict or set(entry) != {
+            "path", "size_bytes", "sha256"
+        }:
+            raise ValueError("artifact entry has an invalid shape")
+        name = entry["path"]
+        if type(name) is not str or name not in expected_names or name in seen:
+            raise ValueError("artifact entry path is duplicate or unsupported")
+        seen.add(name)
+        size = entry["size_bytes"]
+        digest = entry["sha256"]
+        if type(size) is not int or size < 0:
+            raise ValueError("artifact entry size must be a nonnegative integer")
+        if (
+            type(digest) is not str
+            or len(digest) != 64
+            or any(ch not in "0123456789abcdef" for ch in digest)
+        ):
+            raise ValueError("artifact entry digest must be lowercase SHA256")
+        path = root / name
+        if path.is_symlink() or not path.is_file():
+            raise ValueError("artifact evidence must be a regular file")
+        payload = path.read_bytes()
+        if len(payload) != size or hashlib.sha256(payload).hexdigest() != digest:
+            raise ValueError("artifact evidence size or SHA256 mismatch")
+    if seen != expected_names:
+        raise ValueError("artifact evidence filename set mismatch")
+    return manifest

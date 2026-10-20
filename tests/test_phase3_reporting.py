@@ -21,7 +21,11 @@ from fmp.contracts import (
     RejectionRecord,
     TradeRecord,
 )
-from fmp.reporting.backtest import compute_backtest_metrics, write_backtest_artifacts
+from fmp.reporting.backtest import (
+    compute_backtest_metrics,
+    verify_backtest_artifacts,
+    write_backtest_artifacts,
+)
 
 
 BASE_TS = datetime(2026, 9, 14, 0, 0, tzinfo=timezone.utc)
@@ -1572,6 +1576,68 @@ class Phase3ReportingTests(unittest.TestCase):
                         trades=(replace(good, **{field: invalid}),),
                         equity_checkpoints=(),
                     )
+
+    def test_verifier_accepts_writer_output_and_returns_same_manifest(self):
+        run = BacktestRun(
+            run_identity={"code_commit": "synthetic"}, trades=(),
+            rejections=(), equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            path = Path(root) / "artifacts"
+            written = write_backtest_artifacts(run, path)
+            self.assertEqual(verify_backtest_artifacts(path), written)
+
+    def test_verifier_rejects_same_length_payload_tampering(self):
+        run = BacktestRun(
+            run_identity={}, trades=(), rejections=(),
+            equity_checkpoints=(), metrics={"trade_count": 0},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            path = Path(root) / "artifacts"
+            write_backtest_artifacts(run, path)
+            target = path / "metrics.json"
+            raw = target.read_bytes()
+            target.write_bytes(raw.replace(b"trade_count", b"fake__count"))
+            self.assertEqual(len(target.read_bytes()), len(raw))
+            with self.assertRaisesRegex(ValueError, "SHA256 mismatch"):
+                verify_backtest_artifacts(path)
+
+    def test_verifier_refuses_duplicate_or_escape_manifest_names(self):
+        run = BacktestRun(
+            run_identity={}, trades=(), rejections=(),
+            equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            path = Path(root) / "artifacts"
+            manifest = write_backtest_artifacts(run, path)
+            for forged in ("../outside.json", "metrics.json"):
+                with self.subTest(forged=forged):
+                    tampered = json.loads(json.dumps(manifest))
+                    tampered["artifacts"][0]["path"] = forged
+                    (path / "manifest.json").write_text(
+                        json.dumps(tampered), encoding="utf-8",
+                    )
+                    with self.assertRaisesRegex(ValueError, "path"):
+                        verify_backtest_artifacts(path)
+
+    def test_verifier_rejects_symlinked_evidence_payload(self):
+        run = BacktestRun(
+            run_identity={}, trades=(), rejections=(),
+            equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            path = Path(root) / "artifacts"
+            write_backtest_artifacts(run, path)
+            original = path / "metrics.json"
+            alternate = Path(root) / "copied-metrics.json"
+            alternate.write_bytes(original.read_bytes())
+            original.unlink()
+            try:
+                original.symlink_to(alternate)
+            except (OSError, NotImplementedError):
+                self.skipTest("symlink creation unavailable")
+            with self.assertRaisesRegex(ValueError, "regular file"):
+                verify_backtest_artifacts(path)
 
     def test_artifact_bytes_and_digests_are_deterministic(self) -> None:
         one_trade = trade(trade_id="T-1", minutes=1, net_pnl_usd=10.0)
