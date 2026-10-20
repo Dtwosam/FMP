@@ -478,7 +478,19 @@ def main(argv=None):
         "--format", choices=("json", "markdown", "requests"),
         default=None, help="Report format; defaults to saved input type or JSON",
     )
-    tokens = list(sys.argv[1:] if argv is None else argv)
+    try:
+        tokens = list(sys.argv[1:] if argv is None else argv)
+    except TypeError:
+        print("BLOCKED: malformed review argument list", file=sys.stderr)
+        return 2
+    if any(
+        type(token) is not str
+        or not token
+        or any(ord(char) < 32 or ord(char) == 127 for char in token)
+        for token in tokens
+    ):
+        print("BLOCKED: unsafe or non-string review argument", file=sys.stderr)
+        return 2
     # Exit code zero belongs to an isolated help request, never a saved
     # verification mixed with help. Otherwise tools may mistake help for PASS.
     if any(token in ("-h", "--help") for token in tokens) and (

@@ -1243,6 +1243,44 @@ class Phase8ABlockedSevenSourceIndexTests(unittest.TestCase):
                 self.assertEqual(err.getvalue(), "")
                 self.assertIn("--verify-triplet", out.getvalue())
 
+    def test_embedded_review_api_rejects_nonstring_argument_objects(self):
+        for args in ([None], [Path("packet.json")], [True], [0],
+                     ["--verify-report", 123], ["--format", None]):
+            with self.subTest(args=repr(args)):
+                out, err = io.StringIO(), io.StringIO()
+                with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                    code = MOD["main"](args)
+                self.assertEqual(code, 2)
+                self.assertEqual(out.getvalue(), "")
+                self.assertIn("BLOCKED:", err.getvalue())
+
+    def test_terminal_control_or_null_argument_never_reaches_reader(self):
+        for payload in (chr(0), chr(9), chr(10), chr(13), chr(27), chr(127)):
+            with self.subTest(character=ord(payload)):
+                out, err = io.StringIO(), io.StringIO()
+                with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                    status = MOD["main"]([
+                        "--verify-report", "packet" + payload + ".json"
+                    ])
+                self.assertEqual(status, 2)
+                self.assertEqual(out.getvalue(), "")
+                self.assertEqual(err.getvalue().count(chr(10)), 1)
+                self.assertNotIn(payload, err.getvalue().strip())
+
+    def test_uniterable_argv_fails_closed_but_standard_cli_remains_blocked(self):
+        out, err = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            status = MOD["main"](42)
+        self.assertEqual(status, 2)
+        self.assertEqual(out.getvalue(), "")
+        self.assertIn("BLOCKED: malformed", err.getvalue())
+        out, err = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            status = MOD["main"]([])
+        self.assertEqual(status, 3)
+        self.assertEqual(err.getvalue(), "")
+        self.assertIn("BLOCKED_NO_EXECUTION_PERMISSION", out.getvalue())
+
     def test_builtin_help_exits_without_generating_review_evidence(self):
         out, err = io.StringIO(), io.StringIO()
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
