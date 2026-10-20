@@ -216,6 +216,18 @@ def write_backtest_artifacts(run: BacktestRun, out_dir: Path) -> dict[str, objec
     # A malformed run must not create an empty output or partial artifacts.
     if type(run) is not BacktestRun:
         raise ValueError("run must be a BacktestRun record")
+    for field, records, canonical in (
+        ("trades", run.trades, TradeRecord),
+        ("rejections", run.rejections, RejectionRecord),
+        ("equity_checkpoints", run.equity_checkpoints, EquityCheckpoint),
+    ):
+        if (
+            type(records) not in (tuple, list)
+            or any(type(item) is not canonical for item in records)
+        ):
+            raise ValueError(
+                f"{field} must be a list or tuple of {canonical.__name__} records"
+            )
 
     summary = {
         "protocol": "fmp-phase3-backtest-run-v1",

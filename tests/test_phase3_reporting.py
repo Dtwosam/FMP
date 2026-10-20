@@ -307,6 +307,55 @@ class Phase3ReportingTests(unittest.TestCase):
                     write_backtest_artifacts(base, target)
             self.assertFalse(target.exists())
 
+    def test_artifact_writer_rejects_untyped_collections_before_any_io(self):
+        base = BacktestRun(
+            run_identity={"code_commit": "synthetic"},
+            trades=(), rejections=(), equity_checkpoints=(), metrics={},
+        )
+        for field in ("trades", "rejections", "equity_checkpoints"):
+            for invalid in (None, "bad", {}, [None], [object()]):
+                with self.subTest(field=field, collection=repr(invalid)[:50]):
+                    malformed = replace(base, **{field: invalid})
+                    with tempfile.TemporaryDirectory() as root:
+                        target = Path(root) / "not-created"
+                        with mock.patch("pathlib.Path.mkdir", side_effect=AssertionError(
+                            "malformed collections must not reach filesystem"
+                        )):
+                            with self.assertRaisesRegex(ValueError, field):
+                                write_backtest_artifacts(malformed, target)
+                        self.assertFalse(target.exists())
+
+    def test_artifact_writer_does_not_read_hostile_record_getters(self):
+        class HostileTrade:
+            @property
+            def exit_timestamp_utc(self):
+                raise AssertionError("hostile trade getter accessed")
+
+        base = BacktestRun(
+            run_identity={"code_commit": "synthetic"},
+            trades=(HostileTrade(),), rejections=(),
+            equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            target = Path(root) / "not-created"
+            with mock.patch("pathlib.Path.mkdir", side_effect=AssertionError(
+                "hostile record must not create files"
+            )):
+                with self.assertRaisesRegex(ValueError, "TradeRecord"):
+                    write_backtest_artifacts(base, target)
+            self.assertFalse(target.exists())
+
+    def test_artifact_writer_keeps_valid_empty_list_sequence_controls(self):
+        run = BacktestRun(
+            run_identity={"code_commit": "synthetic"},
+            trades=[], rejections=[], equity_checkpoints=[], metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            manifest = write_backtest_artifacts(run, Path(root) / "valid")
+            self.assertEqual(manifest["protocol"], "fmp-phase3-backtest-artifacts-v1")
+            self.assertEqual((Path(root) / "valid/trades.jsonl").read_bytes(), b"")
+            self.assertEqual((Path(root) / "valid/rejections.jsonl").read_bytes(), b"")
+
     def test_artifact_bytes_and_digests_are_deterministic(self) -> None:
         one_trade = trade(trade_id="T-1", minutes=1, net_pnl_usd=10.0)
         rejection = RejectionRecord(
