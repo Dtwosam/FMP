@@ -1,6 +1,7 @@
 """DEC-1865: invented bars only; higher costs may never inflate net P&L."""
 from __future__ import annotations
 
+import math
 import unittest
 from unittest import mock
 from datetime import datetime, timedelta, timezone
@@ -31,11 +32,12 @@ def synthetic_bars():
     return rows
 
 
-def synthetic_trade(*, slippage_pips=0.0, commission_rate=None):
+def synthetic_trade(*, slippage_pips=0.0, commission_rate=None,
+                    commission_model=None):
     commission = (
-        ZeroCommission()
-        if commission_rate is None
-        else FixedCommissionPerMillion(
+        commission_model if commission_model is not None else
+        ZeroCommission() if commission_rate is None else
+        FixedCommissionPerMillion(
             usd_per_million_per_side=commission_rate)
     )
     config = BacktestConfig(
@@ -106,6 +108,34 @@ class SyntheticIntegratedCostOrderingTests(unittest.TestCase):
                 self.assertIn("not_strategy_v1", identity)
                 self.assertNotIn("run385", identity)
                 self.assertNotIn("broker_order", identity)
+
+    def test_sum_of_finite_custom_commissions_cannot_overflow_net_equity(self):
+        class HugeFiniteCommission:
+            def cost_usd(self, *, units):
+                return 1e308
+
+            def to_config(self):
+                return {"model": "SYNTHETIC_HUGE_COST_NOT_MARKET_DATA"}
+
+        with self.assertRaisesRegex(ValueError, "trade economics must be finite"):
+            synthetic_trade(
+                slippage_pips=0.0, commission_model=HugeFiniteCommission()
+            )
+
+    def test_normal_finite_costs_still_close_with_net_after_friction(self):
+        for pips, rate in ((0.0, 0.0), (0.5, 30.0), (1.0, 120.0)):
+            with self.subTest(pips=pips, rate=rate):
+                run, trade = synthetic_trade(
+                    slippage_pips=pips, commission_rate=rate)
+                self.assertEqual(len(run.trades), 1)
+                self.assertTrue(math.isfinite(trade.net_pnl_usd))
+                self.assertTrue(math.isfinite(trade.risk_equity_after_usd))
+                self.assertAlmostEqual(
+                    trade.net_pnl_usd,
+                    trade.gross_pnl_usd - trade.slippage_cost_usd
+                    - trade.commission_cost_usd - trade.financing_cost_usd,
+                    places=8,
+                )
 
     def test_more_commission_never_improves_synthetic_net_trade(self):
         trades = [

@@ -344,6 +344,16 @@ def run_backtest(
         commission_cost = position.entry_commission_usd + exit_fill.exit_commission_usd
         financing_cost = exit_fill.financing_cost_usd
         net_pnl = gross_pnl - slippage_cost - commission_cost - financing_cost
+        # Individually finite commissions can still overflow when combined.
+        # Reject contaminated economics before realized equity is updated.
+        if not all(
+            math.isfinite(value)
+            for value in (
+                gross_pnl, slipped_pnl, slippage_cost,
+                commission_cost, financing_cost, net_pnl,
+            )
+        ):
+            raise ValueError("trade economics must be finite before realization")
 
         release_risk(state, position_id=position.position_id)
         record_realized_pnl(
