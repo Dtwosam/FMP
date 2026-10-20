@@ -276,6 +276,20 @@ class Phase3RiskPolicyTests(unittest.TestCase):
                     reserve_risk(state, position_id="synthetic", amount_usd=value)
                 self.assertEqual(state.reservations_usd, {})
 
+    def test_huge_risk_amount_classifies_invalid_amount_not_aggregate(self):
+        state = RiskState(starting_equity_usd=10_000.0)
+        with self.assertRaisesRegex(ValueError, "risk amount"):
+            reserve_risk(state, position_id="huge", amount_usd=10 ** 400)
+        self.assertEqual(state.reservations_usd, {})
+        self.assertEqual(state.total_reserved_risk_usd, 0.0)
+
+    def test_real_aggregate_overflow_remains_atomic_and_distinct(self):
+        state = RiskState(starting_equity_usd=1e308)
+        reserve_risk(state, position_id="first", amount_usd=1e308)
+        with self.assertRaisesRegex(ValueError, "aggregate"):
+            reserve_risk(state, position_id="second", amount_usd=1e308)
+        self.assertEqual(state.reservations_usd, {"first": 1e308})
+
     def test_risk_reservation_rejects_invalid_identifier_before_mutation(self):
         for bad in (None, [], {}, 17, True, "", " ",
                     "bad" + chr(10), "bad" + chr(27)):

@@ -110,6 +110,9 @@ def reserve_risk(state: RiskState, *, position_id: str, amount_usd: float) -> No
     try:
         if not math.isfinite(amount_usd) or amount_usd <= 0:
             raise ValueError("reserved risk amount must be finite and positive")
+    except OverflowError as exc:
+        raise ValueError("reserved risk amount must be finite and positive") from exc
+    try:
         combined = state.total_reserved_risk_usd + amount_usd
     except OverflowError as exc:
         raise ValueError("reserved risk aggregate must remain finite") from exc
