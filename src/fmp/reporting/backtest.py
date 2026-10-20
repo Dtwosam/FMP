@@ -12,8 +12,8 @@ from types import MappingProxyType
 from typing import Mapping, Sequence
 
 from fmp.contracts import (
-    BacktestRun, EquityCheckpoint, RejectionCode, RejectionRecord,
-    SUPPORTED_SYMBOLS, TradeRecord,
+    BacktestRun, Direction, EquityCheckpoint, ExitReason, RejectionCode,
+    RejectionRecord, SUPPORTED_SYMBOLS, TradeRecord,
 )
 
 ARTIFACT_PROTOCOL = "fmp-phase3-backtest-artifacts-v1"
@@ -257,6 +257,40 @@ def write_backtest_artifacts(run: BacktestRun, out_dir: Path) -> dict[str, objec
             raise ValueError(
                 f"{field} must be a list or tuple of {canonical.__name__} records"
             )
+
+    # TradeRecord also permits caller-constructed malformed values. Validate
+    # identity, direction, size and chronology before evidence publication.
+    for trade in run.trades:
+        for field, value in (
+            ("trade_id", trade.trade_id),
+            ("decision_id", trade.decision_id),
+        ):
+            if (
+                type(value) is not str or not value.strip()
+                or len(value) > 512 or not value.isprintable()
+            ):
+                raise ValueError(f"trade {field} must be bounded printable text")
+        if type(trade.symbol) is not str or trade.symbol not in SUPPORTED_SYMBOLS:
+            raise ValueError("trade symbol must be an exact supported FX symbol")
+        if type(trade.direction) is not Direction or trade.direction not in (
+            Direction.LONG, Direction.SHORT,
+        ):
+            raise ValueError("trade direction must be LONG or SHORT")
+        if type(trade.exit_reason) is not ExitReason:
+            raise ValueError("trade exit_reason must be an ExitReason enum")
+        if type(trade.units) is not int or not (0 < trade.units <= 2 ** 63 - 1):
+            raise ValueError("trade units must be a supported positive integer")
+        for field, value in (
+            ("entry_timestamp_utc", trade.entry_timestamp_utc),
+            ("exit_timestamp_utc", trade.exit_timestamp_utc),
+        ):
+            if (
+                type(value) is not datetime or value.tzinfo is None
+                or value.utcoffset() != timedelta(0)
+            ):
+                raise ValueError(f"trade {field} must use UTC")
+        if trade.exit_timestamp_utc < trade.entry_timestamp_utc:
+            raise ValueError("trade exit cannot precede entry")
 
     # RejectionRecord has no dataclass constructor validation. Recheck each
     # evidence field before sorting or writing anything.

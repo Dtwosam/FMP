@@ -628,6 +628,63 @@ class Phase3ReportingTests(unittest.TestCase):
                         write_backtest_artifacts(run, target)
                     self.assertFalse(target.exists())
 
+    def test_trade_evidence_rejects_malformed_identity_enums_and_size(self):
+        good = trade(trade_id="SYNTHETIC", minutes=1, net_pnl_usd=10.0)
+        for field, invalid in (
+            ("trade_id", None), ("trade_id", "bad\nline"),
+            ("decision_id", True), ("symbol", "AUDUSD"),
+            ("direction", "LONG"), ("exit_reason", "TARGET"),
+            ("units", True), ("units", 0), ("units", 2 ** 63),
+        ):
+            with self.subTest(field=field, value=repr(invalid)):
+                run = BacktestRun(
+                    run_identity={}, trades=(replace(good, **{field: invalid}),),
+                    rejections=(), equity_checkpoints=(), metrics={},
+                )
+                with tempfile.TemporaryDirectory() as root:
+                    target = Path(root) / "invalid"
+                    with mock.patch("pathlib.Path.mkdir", side_effect=AssertionError(
+                        "malformed trade must fail before publication"
+                    )):
+                        with self.assertRaisesRegex(ValueError, "trade"):
+                            write_backtest_artifacts(run, target)
+                    self.assertFalse(target.exists())
+
+    def test_trade_evidence_rejects_non_utc_and_backdated_exit(self):
+        good = trade(trade_id="SYNTHETIC", minutes=1, net_pnl_usd=10.0)
+        for field, invalid in (
+            ("entry_timestamp_utc", "2026-09-14"),
+            ("exit_timestamp_utc", datetime(2026, 9, 14)),
+            ("exit_timestamp_utc", good.entry_timestamp_utc - timedelta(minutes=1)),
+        ):
+            with self.subTest(field=field, value=repr(invalid)):
+                run = BacktestRun(
+                    run_identity={}, trades=(replace(good, **{field: invalid}),),
+                    rejections=(), equity_checkpoints=(), metrics={},
+                )
+                with tempfile.TemporaryDirectory() as root:
+                    target = Path(root) / "invalid"
+                    with self.assertRaisesRegex(ValueError, "trade"):
+                        write_backtest_artifacts(run, target)
+                    self.assertFalse(target.exists())
+
+    def test_trade_evidence_keeps_same_bar_exit_allowed(self):
+        good = trade(trade_id="SYNTHETIC", minutes=1, net_pnl_usd=10.0)
+        same_bar = replace(good, exit_timestamp_utc=good.entry_timestamp_utc)
+        run = BacktestRun(
+            run_identity={}, trades=(same_bar,), rejections=(),
+            equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            target = Path(root) / "valid"
+            write_backtest_artifacts(run, target)
+            rows = (target / "trades.jsonl").read_text("utf-8").splitlines()
+            self.assertEqual(len(rows), 1)
+            record = json.loads(rows[0])
+            self.assertEqual(record["direction"], "LONG")
+            self.assertEqual(record["entry_timestamp_utc"],
+                             record["exit_timestamp_utc"])
+
     def test_artifact_bytes_and_digests_are_deterministic(self) -> None:
         one_trade = trade(trade_id="T-1", minutes=1, net_pnl_usd=10.0)
         rejection = RejectionRecord(
