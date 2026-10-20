@@ -1,0 +1,9 @@
+# DEC-1786 — Harden human review renderer against forged presentation fields
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent child of #2032 at `5ba0a4821203bec3259f2d351b5a0d618c194d63`.
+
+The offline security handoff's Markdown formatter previously required top-level BLOCKED status and all eight proof rows to remain MISSING, but would still render an altered **proof ID/review role**, misleading future observation date, false source SHA, modified approval message or fictitious early gate position if a program passed it a modified dictionary. These are presentation-stage spoofing opportunities, not evidence of a deployed privilege escalation.
+
+DEC-1786 makes the formatter fail closed by cross-checking each of the eight exact **proof IDs, reviewer roles and MISSING statuses**, the five pinned documentary SHA-256s, the historical fixture's separate Git SHA-1 and SHA-256, stale published main SHA/date, fixed one-shot 2023/run385/attempt1 identity, all eight blocked research/trading stages, three historical authorization-step positions (7/4/4), 18-cell scope, literal security/trading denial flags, and the exact human review request. It also labels the workflow input as a **frozen historical fixture, NOT the currently installed workflow** to prevent conflating CI portability with a live GitHub admission proof.
+
+Adds **7** focused adversarial presentation checks (6549 cumulative proposed source-defined), including false proof name, fake reviewer, changed SHA, artificially early gate, future observation date and injected approval wording. This renderer cannot authorize anything, run GitHub workflows, inspect protected annual data, change repo security/refs or place broker orders. #779/#820/#821 stay BLOCKED, previous red CI runs remain failed; own exact-head full historical/general and Phase3 CI plus separate qualified review required.

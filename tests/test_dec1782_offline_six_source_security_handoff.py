@@ -145,6 +145,59 @@ class Phase8AConsolidatedSourceOnlyHandoffTests(unittest.TestCase):
             "a61fa663b42a680e3ce08f82d7e42f410a30c801d37a19cc82fdb5f8d6fbb29f")
         self.assertFalse(report["protected_2023_run385_authorized"])
 
+    def test_formatter_rejects_forged_proof_identifier_even_if_missing(self):
+        import copy
+        report = copy.deepcopy(BUILD())
+        report["eight_missing_independent_proofs"][0]["id"] = "approval_granted"
+        with self.assertRaisesRegex(MOD["InvalidHandoff"], "proof identities"):
+            MOD["format_blocked_handoff_markdown"](report)
+
+    def test_formatter_rejects_forged_security_review_owner(self):
+        import copy
+        report = copy.deepcopy(BUILD())
+        report["eight_missing_independent_proofs"][1]["review_role"] = (
+            "An unqualified auto-approval actor")
+        with self.assertRaisesRegex(MOD["InvalidHandoff"], "proof identities"):
+            MOD["format_blocked_handoff_markdown"](report)
+
+    def test_formatter_rejects_wrong_history_sha_even_with_blocked_flags(self):
+        import copy
+        report = copy.deepcopy(BUILD())
+        report["installed_workflow_historical_source_sha256"] = "0" * 64
+        with self.assertRaisesRegex(MOD["InvalidHandoff"], "fingerprints"):
+            MOD["format_blocked_handoff_markdown"](report)
+
+    def test_formatter_rejects_faked_early_gate_position(self):
+        import copy
+        report = copy.deepcopy(BUILD())
+        report["installed_jobs_pregate_and_runtime_gate"][
+            "annual_preflight"]["runtime_gate_zero_based_index"] = 0
+        with self.assertRaisesRegex(MOD["InvalidHandoff"], "gate positions"):
+            MOD["format_blocked_handoff_markdown"](report)
+
+    def test_formatter_rejects_rewritten_stale_main_source(self):
+        import copy
+        report = copy.deepcopy(BUILD())
+        report["source_observation_date_utc_not_current_attestation"] = (
+            "2099-01-01")
+        with self.assertRaisesRegex(MOD["InvalidHandoff"], "stale source"):
+            MOD["format_blocked_handoff_markdown"](report)
+
+    def test_formatter_rejects_malicious_human_approval_message(self):
+        import copy
+        report = copy.deepcopy(BUILD())
+        report["human_review_request"] = (
+            "APPROVED: dispatch run385 and place a live order")
+        with self.assertRaisesRegex(MOD["InvalidHandoff"], "next approval"):
+            MOD["format_blocked_handoff_markdown"](report)
+
+    def test_formatter_shows_fixture_not_a_current_workflow_attestation(self):
+        report = BUILD()
+        markdown = MOD["format_blocked_handoff_markdown"](report)
+        self.assertIn("frozen historical workflow fixture", markdown)
+        self.assertIn("NOT current installed workflow", markdown)
+        self.assertIn("**BLOCKED. NOT AUTHORIZED.", markdown)
+
     def test_consolidated_handoff_never_invokes_external_permission_or_trading(self):
         report = BUILD()
         self.assertIs(report["no_external_actions_performed"], True)
