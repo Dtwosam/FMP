@@ -97,7 +97,7 @@ def compute_backtest_metrics(
     for checkpoint in equity_checkpoints:
         timestamp = checkpoint.timestamp_utc
         if (
-            not isinstance(timestamp, datetime)
+            type(timestamp) is not datetime
             or timestamp.tzinfo is None
             or timestamp.utcoffset() != timedelta(0)
         ):
