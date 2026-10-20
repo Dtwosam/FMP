@@ -1,0 +1,9 @@
+# DEC-1876 — Unmerged Phase3 config and synthetic cost review through PR #2123
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent documentation-only child of #2123 `3fb61738beee5d21d94067cf157113b68383dbd1`.
+
+The current source-only working lineage from #2115 through #2123 has eight exact-parent commits and **6,807 cumulative proposed source-defined test methods**. New protections validate supported FX pair identifiers, model-input numeric and date types, risk/decision metadata and basic commission/financing model callable interfaces, plus local mock-denial of network/process/file access in invented-bar tests. They do not validate any real market strategy or constitute a signed administrator, runner-OS, security, source-provenance or trading authorization.
+
+**Own exact-head GitHub checks observed:** #2106 and #2113–#2115 Phase3 and full historical/general PASS. Older #2100 and #2104 full suites FAILED due to two false CLI error-message expectations; corrected test-only #2106's own suites PASS, but the old failures stay on record. #2116–#2122 Phase3 PASS while full historical/general in progress. At documentation creation #2123 Phase3 and full in progress. No latest-head full success can be claimed.
+
+**Security/economics remain hard-blocked:** accepted discovery ends with 2022/run384. Independent protection/no-bypass or vetted immutable dispatch, actual privileged runner OS and installed preaccess witness, authenticated DEC609/610 source provenance, current complete one-shot inventory and distinct human 2023/run385/attempt1 decision remain MISSING (#779/#820/#821 OPEN). No protected 2023 research dispatch/retry or future-year source access, Strategy V1 positive expectancy, installed workflow/ref/ruleset/runner mutation, shadow/demo/live trade, capital or realized profit. Qualified independent security/cost-model review and each draft's own CI remain required.
