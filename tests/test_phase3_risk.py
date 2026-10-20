@@ -393,6 +393,29 @@ class Phase3RiskPolicyTests(unittest.TestCase):
                     with self.assertRaisesRegex(ValueError, field):
                         RiskConfig(**{field: value})
 
+    def test_risk_fraction_config_rejects_any_value_over_one(self):
+        for field in (
+            "default_risk_fraction",
+            "max_risk_fraction",
+            "max_simultaneous_risk_fraction",
+            "daily_loss_halt_fraction",
+        ):
+            for value in (1.000001, 2, 100.0):
+                with self.subTest(field=field, value=value):
+                    with self.assertRaisesRegex(ValueError, field):
+                        RiskConfig(**{field: value})
+
+    def test_risk_fraction_config_accepts_consistent_one_bounds(self):
+        cfg = RiskConfig(
+            default_risk_fraction=1.0,
+            max_risk_fraction=1.0,
+            max_simultaneous_risk_fraction=1.0,
+            daily_loss_halt_fraction=1.0,
+        )
+        self.assertEqual(cfg.max_risk_fraction, 1.0)
+        self.assertEqual(cfg.daily_loss_halt_fraction, 1.0)
+        self.assertEqual(RiskConfig().default_risk_fraction, 0.0025)
+
     def test_risk_fraction_defaults_remain_positive_and_ordered(self):
         cfg = RiskConfig()
         self.assertGreater(cfg.default_risk_fraction, 0)

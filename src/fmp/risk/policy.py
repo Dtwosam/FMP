@@ -39,6 +39,8 @@ class RiskConfig:
                     raise ValueError(f"{name} must be finite and positive")
             except OverflowError as exc:
                 raise ValueError(f"{name} must be finite and positive") from exc
+            if value > 1:
+                raise ValueError(f"{name} cannot exceed 100 percent")
         if self.default_risk_fraction > self.max_risk_fraction:
             raise ValueError("default risk fraction must not exceed maximum risk fraction")
         if self.max_risk_fraction > self.max_simultaneous_risk_fraction:
