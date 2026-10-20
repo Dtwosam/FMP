@@ -1,0 +1,9 @@
+# DEC-1970 — Audit trade net PnL versus explicit execution costs
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** One exact-parent source/tests/docs child of PR #2218 at `00f2e1868516a97888a09646c8487bf01340d6d5`.
+
+The optional stored Phase3 artifact audit already checks canonical trade member names, manifest hashes, record counts and decision identity, but a self-rehashed stored trade can assert `gross_pnl_usd`, explicit slippage/commission/financing costs and `net_pnl_usd` that contradict one another. Require exact ordinary finite numeric values for all five economic fields, nonnegative slippage and commission (negative financing credits remain permitted), and gross minus explicit costs agreeing with net PnL within a narrowly scoped floating-point tolerance (relative 1e-12, absolute $1e-8). Refuse false arithmetic with a controlled error. This does not impose an additional requirement on the canonical writer and therefore preserves valid historical writer behavior.
+
+Three source-defined synthetic methods forge and rehash a mismatched net PnL, confirm legitimate negative financing credit, and refuse a rehashed negative slippage cost even where gross/net have been adjusted to balance. **7,016 cumulative proposed methods**. Exact-head Phase3/full historical/general CI and qualified financial-evidence review required. Arithmetic self-consistency does not establish correct source data, realistic spreads, profitability or security admission.
+
+All historical failed full regressions stay recorded as failed. External Phase8A #779/#820/#821 and eight independent security proofs remain MISSING/BLOCKED. Accepted historical catalogue ends 2022/run384. Protected 2023/run385/attempt1, later annual-first research, Strategy V1 economics, shadow/demo/live broker capital and installed GitHub refs/workflows/rulesets/runners blocked. No protected dispatch, merges, live orders or real funds.

@@ -2344,6 +2344,68 @@ class Phase3ReportingTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "chronological"):
                 audit_backtest_artifact_structure(folder)
 
+    def test_audit_rejects_rehashed_inconsistent_net_pnl(self):
+        original = trade(trade_id="COST", minutes=1, net_pnl_usd=10.0)
+        run = BacktestRun(
+            run_identity={}, trades=(original,), rejections=(),
+            equity_checkpoints=(), metrics={"trade_count": 1},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            folder = Path(root) / "artifacts"
+            manifest = write_backtest_artifacts(run, folder)
+            target = folder / "trades.jsonl"
+            row = json.loads(target.read_text("utf-8"))
+            row["net_pnl_usd"] = 17.0
+            forged = (json.dumps(row) + "\n").encode("utf-8")
+            target.write_bytes(forged)
+            for entry in manifest["artifacts"]:
+                if entry["path"] == "trades.jsonl":
+                    entry["size_bytes"] = len(forged)
+                    entry["sha256"] = hashlib.sha256(forged).hexdigest()
+            (folder / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "cost reconciliation"):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_accepts_valid_financing_credit_economics(self):
+        original = trade(
+            trade_id="FINANCE-CREDIT", minutes=1, net_pnl_usd=10.0,
+            slippage_cost_usd=1.0, commission_cost_usd=2.0,
+            financing_cost_usd=-0.5,
+        )
+        run = BacktestRun(
+            run_identity={}, trades=(original,), rejections=(),
+            equity_checkpoints=(), metrics={"trade_count": 1},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            folder = Path(root) / "artifacts"
+            write_backtest_artifacts(run, folder)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 1,
+            )
+
+    def test_audit_rejects_rehashed_negative_slippage_cost(self):
+        original = trade(trade_id="COST-SIGN", minutes=1, net_pnl_usd=10.0)
+        run = BacktestRun(
+            run_identity={}, trades=(original,), rejections=(),
+            equity_checkpoints=(), metrics={"trade_count": 1},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            folder = Path(root) / "artifacts"
+            manifest = write_backtest_artifacts(run, folder)
+            target = folder / "trades.jsonl"
+            row = json.loads(target.read_text("utf-8"))
+            row["slippage_cost_usd"] = -1.0
+            row["gross_pnl_usd"] = 9.0
+            forged = (json.dumps(row) + "\n").encode("utf-8")
+            target.write_bytes(forged)
+            for entry in manifest["artifacts"]:
+                if entry["path"] == "trades.jsonl":
+                    entry["size_bytes"] = len(forged)
+                    entry["sha256"] = hashlib.sha256(forged).hexdigest()
+            (folder / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "costs must be nonnegative"):
+                audit_backtest_artifact_structure(folder)
+
     def test_artifact_bytes_and_digests_are_deterministic(self) -> None:
         one_trade = trade(trade_id="T-1", minutes=1, net_pnl_usd=10.0)
         rejection = RejectionRecord(

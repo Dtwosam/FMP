@@ -891,6 +891,42 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                             raise ValueError("artifact report duplicate trade_id")
                         if decision in seen_trade_decisions:
                             raise ValueError("artifact report duplicate trade decision_id")
+                        amounts: dict[str, int | float] = {}
+                        for economic in (
+                            "gross_pnl_usd", "slippage_cost_usd",
+                            "commission_cost_usd", "financing_cost_usd",
+                            "net_pnl_usd",
+                        ):
+                            amount = record[economic]
+                            if type(amount) not in (int, float):
+                                raise ValueError("artifact report trade economics must be finite numeric")
+                            try:
+                                if not math.isfinite(amount):
+                                    raise ValueError("artifact report trade economics must be finite numeric")
+                            except OverflowError as exc:
+                                raise ValueError("artifact report trade economics must be finite numeric") from exc
+                            amounts[economic] = amount
+                        if (
+                            amounts["slippage_cost_usd"] < 0
+                            or amounts["commission_cost_usd"] < 0
+                        ):
+                            raise ValueError("artifact report trade execution costs must be nonnegative")
+                        try:
+                            expected_net = (
+                                amounts["gross_pnl_usd"] - amounts["slippage_cost_usd"]
+                                - amounts["commission_cost_usd"] - amounts["financing_cost_usd"]
+                            )
+                            reconciled = (
+                                math.isfinite(expected_net)
+                                and math.isclose(
+                                    expected_net, amounts["net_pnl_usd"],
+                                    rel_tol=1e-12, abs_tol=1e-8,
+                                )
+                            )
+                        except OverflowError:
+                            reconciled = False
+                        if not reconciled:
+                            raise ValueError("artifact report trade net PnL cost reconciliation mismatch")
                         seen_trade_ids.add(trade_id)
                         seen_trade_decisions.add(decision)
                     else:
