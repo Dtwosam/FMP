@@ -1430,6 +1430,53 @@ class Phase3ReportingTests(unittest.TestCase):
                             write_backtest_artifacts(run, target)
                     self.assertFalse(target.exists())
 
+    def test_writer_refuses_integer_financing_subtotal_before_mixed_sum(self):
+        biggest = 10 ** 308
+        rows = tuple(
+            replace(
+                trade(trade_id=f"BIG-{i}", minutes=i * 2 + 1,
+                      net_pnl_usd=0.0),
+                financing_cost_usd=biggest,
+            )
+            for i in range(2)
+        )
+        run = BacktestRun(
+            run_identity={}, trades=rows, rejections=(),
+            equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            target = Path(root) / "should-not-exist"
+            with mock.patch("pathlib.Path.mkdir", side_effect=AssertionError(
+                "financing aggregate must fail before artifact I/O"
+            )):
+                with self.assertRaisesRegex(
+                    ValueError, "financing_cost_usd aggregate",
+                ):
+                    write_backtest_artifacts(run, target)
+            self.assertFalse(target.exists())
+
+    def test_writer_financing_subtotal_remains_valid_for_finite_ints(self):
+        rows = tuple(
+            replace(
+                trade(trade_id=f"SMALL-{i}", minutes=i * 2 + 1,
+                      net_pnl_usd=0.0),
+                financing_cost_usd=2 ** 32,
+            )
+            for i in range(2)
+        )
+        run = BacktestRun(
+            run_identity={}, trades=rows, rejections=(),
+            equity_checkpoints=(), metrics={
+                "financing_cost_usd": 2 ** 33,
+                "total_explicit_cost_usd": float(2 ** 33),
+            },
+        )
+        with tempfile.TemporaryDirectory() as root:
+            target = Path(root) / "valid"
+            write_backtest_artifacts(run, target)
+            saved = json.loads((target / "metrics.json").read_text("utf-8"))
+            self.assertEqual(saved["financing_cost_usd"], 2 ** 33)
+
     def test_artifact_bytes_and_digests_are_deterministic(self) -> None:
         one_trade = trade(trade_id="T-1", minutes=1, net_pnl_usd=10.0)
         rejection = RejectionRecord(
