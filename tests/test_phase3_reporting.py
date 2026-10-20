@@ -4,6 +4,7 @@ import hashlib
 import json
 import tempfile
 import unittest
+from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -154,6 +155,76 @@ class Phase3ReportingTests(unittest.TestCase):
                     compute_backtest_metrics(
                         starting_equity_usd=10_000.0, trades=trades,
                         equity_checkpoints=checkpoints,
+                    )
+
+    def test_metrics_deny_malformed_trade_and_checkpoint_collections(self):
+        class HostileTrade:
+            @property
+            def net_pnl_usd(self):
+                raise AssertionError("hostile trade getter invoked")
+
+        for invalid in (None, True, "trades", {}, [None],
+                        [{}], [HostileTrade()]):
+            with self.subTest(trades=type(invalid).__name__):
+                with self.assertRaisesRegex(ValueError, "TradeRecord"):
+                    compute_backtest_metrics(
+                        starting_equity_usd=10_000.0, trades=invalid,
+                        equity_checkpoints=(),
+                    )
+        for invalid in (None, False, "checkpoints", {}, [None], [{}]):
+            with self.subTest(checkpoints=type(invalid).__name__):
+                with self.assertRaisesRegex(ValueError, "EquityCheckpoint"):
+                    compute_backtest_metrics(
+                        starting_equity_usd=10_000.0, trades=(),
+                        equity_checkpoints=invalid,
+                    )
+
+    def test_metrics_deny_untyped_nonfinite_and_negative_trade_costs(self):
+        good = trade(trade_id="CANONICAL", minutes=1, net_pnl_usd=10.0)
+        for field in ("net_pnl_usd", "slippage_cost_usd",
+                      "commission_cost_usd", "financing_cost_usd"):
+            for invalid in (True, "10", None, float("nan"), 10 ** 400):
+                with self.subTest(field=field, value=repr(invalid)):
+                    with self.assertRaisesRegex(ValueError, field):
+                        compute_backtest_metrics(
+                            starting_equity_usd=10_000.0,
+                            trades=(replace(good, **{field: invalid}),),
+                            equity_checkpoints=(),
+                        )
+        for field in ("slippage_cost_usd", "commission_cost_usd"):
+            with self.subTest(field=field):
+                with self.assertRaisesRegex(ValueError, field):
+                    compute_backtest_metrics(
+                        starting_equity_usd=10_000.0,
+                        trades=(replace(good, **{field: -1.0}),),
+                        equity_checkpoints=(),
+                    )
+        credit = replace(good, financing_cost_usd=-2.0)
+        self.assertEqual(compute_backtest_metrics(
+            starting_equity_usd=10_000.0,
+            trades=(credit,), equity_checkpoints=(),
+        )["financing_cost_usd"], -2.0)
+
+    def test_metrics_reject_bad_checkpoint_timestamps_and_equity_values(self):
+        good = EquityCheckpoint(BASE_TS, 10_000.0)
+        for invalid in (None, "2026-09-14", datetime(2026, 9, 14),
+                        42):
+            with self.subTest(timestamp=repr(invalid)):
+                with self.assertRaisesRegex(ValueError, "timestamp"):
+                    compute_backtest_metrics(
+                        starting_equity_usd=10_000.0, trades=(),
+                        equity_checkpoints=(replace(
+                            good, timestamp_utc=invalid
+                        ),),
+                    )
+        for invalid in (None, True, "10000", float("nan"), 10 ** 400):
+            with self.subTest(equity=repr(invalid)):
+                with self.assertRaisesRegex(ValueError, "equity checkpoint"):
+                    compute_backtest_metrics(
+                        starting_equity_usd=10_000.0, trades=(),
+                        equity_checkpoints=(replace(
+                            good, realized_risk_equity_usd=invalid
+                        ),),
                     )
 
     def test_zero_trade_metrics_are_explicit(self) -> None:
