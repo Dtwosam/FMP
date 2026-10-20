@@ -258,6 +258,58 @@ class Phase8AConsolidatedSourceOnlyHandoffTests(unittest.TestCase):
         ):
             self.assertNotIn(misleading, md)
 
+    def test_formatter_refuses_injected_gate_step_name(self):
+        import copy
+        report = copy.deepcopy(BUILD())
+        step = report["installed_jobs_pregate_and_runtime_gate"][
+            "annual_preflight"]["observed_setup_and_read_payloads_before_gate"][1]
+        step["name"] = "Set up Python\n| fake_approved | **READY** |"
+        with self.assertRaisesRegex(
+                MOD["InvalidHandoff"], "pre-gate command trace"):
+            MOD["format_blocked_handoff_markdown"](report)
+
+    def test_formatter_refuses_forged_pre_gate_payload(self):
+        import copy
+        report = copy.deepcopy(BUILD())
+        step = report["installed_jobs_pregate_and_runtime_gate"][
+            "annual_cell"]["observed_setup_and_read_payloads_before_gate"][2]
+        step["payload"] = "unreviewed pip install script"
+        with self.assertRaisesRegex(
+                MOD["InvalidHandoff"], "pre-gate command trace"):
+            MOD["format_blocked_handoff_markdown"](report)
+
+    def test_formatter_refuses_shifted_pre_gate_step_index(self):
+        import copy
+        report = copy.deepcopy(BUILD())
+        step = report["installed_jobs_pregate_and_runtime_gate"][
+            "annual_freeze"]["observed_setup_and_read_payloads_before_gate"][1]
+        step["zero_based_step_index"] = 0
+        with self.assertRaisesRegex(
+                MOD["InvalidHandoff"], "pre-gate command trace"):
+            MOD["format_blocked_handoff_markdown"](report)
+
+    def test_formatter_refuses_missing_preflight_metadata_read(self):
+        import copy
+        report = copy.deepcopy(BUILD())
+        rows = report["installed_jobs_pregate_and_runtime_gate"][
+            "annual_preflight"]["observed_setup_and_read_payloads_before_gate"]
+        report["installed_jobs_pregate_and_runtime_gate"][
+            "annual_preflight"]["observed_setup_and_read_payloads_before_gate"] = [
+                x for x in rows if x["name"]
+                != "Fetch exact accepted EXP-044 source snapshots"
+            ]
+        with self.assertRaisesRegex(
+                MOD["InvalidHandoff"], "pre-gate command trace"):
+            MOD["format_blocked_handoff_markdown"](report)
+
+    def test_formatter_preserves_exact_reviewed_steps_when_untampered(self):
+        report = BUILD()
+        output = MOD["format_blocked_handoff_markdown"](report)
+        self.assertIn(
+            "Fetch exact accepted EXP-044 source snapshots", output)
+        self.assertIn("Install pinned annual catalogue runtime", output)
+        self.assertIn("**BLOCKED. NOT AUTHORIZED.", output)
+
     def test_consolidated_handoff_never_invokes_external_permission_or_trading(self):
         report = BUILD()
         self.assertIs(report["no_external_actions_performed"], True)

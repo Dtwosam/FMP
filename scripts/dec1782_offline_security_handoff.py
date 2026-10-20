@@ -226,6 +226,26 @@ def _assert_human_review_evidence_is_frozen(report):
         ),
         "installed historical gate positions and matrix cannot be rewritten",
     )
+    # A field-by-field snapshot comparison prevents a mutated human-facing
+    # trace (step names, command labels, indexes, or injected Markdown rows)
+    # from being rendered as the pinned workflow's reviewed command evidence.
+    # This is NOT current GitHub or runner attestation.
+    pinned_static = historical["report_blocked_admission"]()
+    expected_trace = {
+        job: {
+            "runtime_gate_zero_based_index":
+                pinned_static["observed_jobs"][job]["zero_based_in_job_gate_index"],
+            "observed_setup_and_read_payloads_before_gate":
+                pinned_static["historical_pregate_payloads"][job][
+                    "actual_pregate_setup_and_read_payloads"],
+            "static_only_not_runner_trace": True,
+        }
+        for job in REVIEWED_RUNTIME_GATES
+    }
+    _require(
+        jobs == expected_trace,
+        "human-facing pre-gate command trace differs from pinned source",
+    )
     _require(
         all(report.get(flag) is False for flag in (
             "continuous_admin_ref_lock_verified",
