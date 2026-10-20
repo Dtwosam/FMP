@@ -666,8 +666,17 @@ def verify_backtest_artifacts(out_dir: Path) -> dict[str, object]:
         path = root / name
         if path.is_symlink() or not path.is_file():
             raise ValueError("artifact evidence must be a regular file")
-        payload = path.read_bytes()
-        if len(payload) != size or hashlib.sha256(payload).hexdigest() != digest:
+        # Hash bounded chunks rather than materializing an entire historical
+        # evidence JSONL file in memory.
+        observed_size = 0
+        observed_hash = hashlib.sha256()
+        with path.open("rb") as handle:
+            while block := handle.read(1024 * 1024):
+                observed_size += len(block)
+                if observed_size > size:
+                    raise ValueError("artifact evidence size or SHA256 mismatch")
+                observed_hash.update(block)
+        if observed_size != size or observed_hash.hexdigest() != digest:
             raise ValueError("artifact evidence size or SHA256 mismatch")
     if seen != expected_names:
         raise ValueError("artifact evidence filename set mismatch")
