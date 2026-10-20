@@ -105,7 +105,15 @@ def compile_blocked_handoff(docs_root=DOCS, workflow=WORKFLOW):
     )
     identity = documentary["one_shot_run_identity"]
     _require(
-        identity == {
+        type(identity) is dict
+        and set(identity) == {
+            "segment", "run_number", "attempt_number", "authorization"
+        }
+        and type(identity["segment"]) is str
+        and type(identity["run_number"]) is int
+        and type(identity["attempt_number"]) is int
+        and type(identity["authorization"]) is str
+        and identity == {
             "segment": "2023", "run_number": 385, "attempt_number": 1,
             "authorization": "BLOCKED",
         },
