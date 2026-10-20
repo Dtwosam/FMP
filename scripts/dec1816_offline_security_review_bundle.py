@@ -12,6 +12,49 @@ SIX = ROOT / "scripts" / "dec1782_offline_security_handoff.py"
 BLANK = ROOT / "scripts" / "dec1814_offline_blank_review_worksheet.py"
 
 
+# Reviewed upstream report schemas are intentionally exact; projecting an
+# unreviewed approval field away would mask a source producer inconsistency.
+SIX_SOURCE_KEYS = frozenset((
+    "schema",
+    "disposition",
+    "one_shot_run_identity",
+    "source_observation_date_utc_not_current_attestation",
+    "source_main_sha_not_current_dispatch_ref",
+    "documentary_packet_source_sha256",
+    "installed_workflow_historical_git_blob_sha1",
+    "installed_workflow_historical_source_sha256",
+    "installed_workflow_historical_fixture_only",
+    "eight_missing_independent_proofs",
+    "independent_proof_acceptance_criteria",
+    "blocked_downstream_stages",
+    "installed_jobs_pregate_and_runtime_gate",
+    "installed_historical_cell_count",
+    "installed_historical_pair_timeframe_source_count",
+    "continuous_admin_ref_lock_verified",
+    "real_runner_os_isolation_verified",
+    "fresh_one_shot_inventory_verified",
+    "preregistered_strategy_v1_profit",
+    "protected_2023_run385_authorized",
+    "annual_dispatch_or_retry_authorized",
+    "broker_order_or_real_money_authorized",
+    "allowed_actions",
+    "no_external_actions_performed",
+    "human_review_request",
+))
+BLANK_WORKSHEET_KEYS = frozenset((
+    "schema",
+    "disposition",
+    "source_material",
+    "pinned_historical_worksheet_git_blob_sha1",
+    "eight_independent_proofs",
+    "independent_actual_evidence_verified",
+    "2023_run385_attempt1_authorized",
+    "broker_demo_live_or_real_money_authorized",
+    "allowed_actions",
+    "no_external_actions_performed",
+))
+
+
 class InvalidReviewBundle(ValueError):
     """Fail closed when one source-only review packet drifts."""
 
@@ -24,6 +67,13 @@ def compile_blocked_review_bundle(docs_root=None, workflow=None, worksheet=None)
     blank_path = blank["WORKSHEET"] if worksheet is None else Path(worksheet)
     first = six["compile_blocked_handoff"](docs, fixture)
     second = blank["report_blocked_blank_worksheet"](blank_path)
+    if not (
+        type(first) is dict and set(first) == SIX_SOURCE_KEYS
+        and type(second) is dict and set(second) == BLANK_WORKSHEET_KEYS
+    ):
+        raise InvalidReviewBundle(
+            "unreviewed, missing or malformed upstream review evidence fields"
+        )
     if not (
         type(first) is dict and type(second) is dict
         and first.get("schema") == "fmp_dec1782_offline_six_source_security_handoff_v1"
