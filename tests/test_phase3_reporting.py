@@ -1977,6 +1977,68 @@ class Phase3ReportingTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "digest"):
                     verify_backtest_artifacts(folder)
 
+    def test_verifier_refuses_forged_payload_length_before_hashing(self):
+        run = BacktestRun(
+            run_identity={}, trades=(), rejections=(),
+            equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            folder = Path(root) / "artifacts"
+            manifest = write_backtest_artifacts(run, folder)
+            tampered = json.loads(json.dumps(manifest))
+            for item in tampered["artifacts"]:
+                if item["path"] == "trades.jsonl":
+                    item["size_bytes"] += 1
+            (folder / "manifest.json").write_text(
+                json.dumps(tampered), encoding="utf-8",
+            )
+            with mock.patch(
+                "fmp.reporting.backtest.hashlib.sha256",
+                side_effect=AssertionError("should reject size before hashing"),
+            ):
+                with self.assertRaisesRegex(ValueError, "size or SHA256 mismatch"):
+                    verify_backtest_artifacts(folder)
+
+    def test_verifier_rejects_in_place_file_change_during_hashing(self):
+        run = BacktestRun(
+            run_identity={}, trades=(), rejections=(),
+            equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            folder = Path(root) / "artifacts"
+            write_backtest_artifacts(run, folder)
+            target = folder / "metrics.json"
+            from fmp.reporting import backtest as reporting_backtest
+            original = reporting_backtest._open_regular_artifact
+
+            def perturb_on_read(path, *, root_fd):
+                handle = original(path, root_fd=root_fd)
+                if path.name != "metrics.json":
+                    return handle
+                class MutatingStream:
+                    def __enter__(self):
+                        handle.__enter__()
+                        return self
+                    def __exit__(self, *args):
+                        return handle.__exit__(*args)
+                    def fileno(self):
+                        return handle.fileno()
+                    def read(self, size):
+                        data = handle.read(size)
+                        if data:
+                            target.write_bytes(b"x" + data[1:])
+                        return data
+                return MutatingStream()
+
+            with mock.patch(
+                "fmp.reporting.backtest._open_regular_artifact",
+                side_effect=perturb_on_read,
+            ):
+                with self.assertRaisesRegex(
+                    ValueError, "changed during verification",
+                ):
+                    verify_backtest_artifacts(folder)
+
     def test_artifact_bytes_and_digests_are_deterministic(self) -> None:
         one_trade = trade(trade_id="T-1", minutes=1, net_pnl_usd=10.0)
         rejection = RejectionRecord(
