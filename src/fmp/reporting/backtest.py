@@ -779,6 +779,18 @@ def _audit_load_json(payload: bytes) -> object:
         raise ValueError("artifact report must contain valid JSON") from exc
 
 
+def _audit_parse_utc_timestamp(value: object, label: str) -> datetime:
+    if type(value) is not str or not value.endswith("Z"):
+        raise ValueError(f"artifact report {label} must use UTC")
+    try:
+        stamp = datetime.fromisoformat(value)
+    except ValueError as exc:
+        raise ValueError(f"artifact report {label} invalid UTC timestamp") from exc
+    if stamp.tzinfo is None or stamp.utcoffset() != timedelta(0):
+        raise ValueError(f"artifact report {label} must use UTC")
+    return stamp
+
+
 def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
     """Independently inspect cross-file counts after digest verification.
 
@@ -836,15 +848,9 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                 "timestamp_utc", "realized_risk_equity_usd",
             }:
                 raise ValueError("artifact report equity checkpoint fields mismatch")
-            stamp = checkpoint["timestamp_utc"]
-            if type(stamp) is not str or not stamp.endswith("Z"):
-                raise ValueError("artifact report equity checkpoint must use UTC")
-            try:
-                instant = datetime.fromisoformat(stamp)
-            except ValueError as exc:
-                raise ValueError("artifact report equity checkpoint invalid UTC") from exc
-            if instant.tzinfo is None or instant.utcoffset() != timedelta(0):
-                raise ValueError("artifact report equity checkpoint must use UTC")
+            instant = _audit_parse_utc_timestamp(
+                checkpoint["timestamp_utc"], "equity checkpoint"
+            )
             if previous_checkpoint is not None and instant < previous_checkpoint:
                 raise ValueError("artifact report equity checkpoints must be chronological")
             previous_checkpoint = instant
@@ -880,6 +886,24 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                         raise ValueError("artifact report JSONL record must be an object")
                     if set(record) != record_fields[name]:
                         raise ValueError("artifact report JSONL canonical fields mismatch")
+                    if name == "trades.jsonl":
+                        entry_stamp = _audit_parse_utc_timestamp(
+                            record["entry_timestamp_utc"], "trade entry timestamp"
+                        )
+                        exit_stamp = _audit_parse_utc_timestamp(
+                            record["exit_timestamp_utc"], "trade exit timestamp"
+                        )
+                        if exit_stamp < entry_stamp:
+                            raise ValueError("artifact report trade exit precedes entry")
+                    else:
+                        decision_stamp = _audit_parse_utc_timestamp(
+                            record["decision_timestamp_utc"], "rejection decision timestamp"
+                        )
+                        evaluated_stamp = _audit_parse_utc_timestamp(
+                            record["evaluated_timestamp_utc"], "rejection evaluation timestamp"
+                        )
+                        if evaluated_stamp < decision_stamp:
+                            raise ValueError("artifact report rejection evaluation precedes decision")
                     decision = record["decision_id"]
                     if type(decision) is not str or not decision.strip():
                         raise ValueError("artifact report decision_id must be nonempty")
