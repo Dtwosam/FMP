@@ -1221,7 +1221,20 @@ class Phase8ABlockedSevenSourceIndexTests(unittest.TestCase):
                 self.assertNotIn(chr(27), err.getvalue())
                 self.assertNotIn("APPROVED", err.getvalue())
                 self.assertNotIn("usage:", err.getvalue().lower())
-                self.assertIn("BLOCKED: invalid", err.getvalue())
+                self.assertIn("BLOCKED:", err.getvalue())
+                if any(
+                    ord(char) < 32 or ord(char) == 127
+                    for token in args for char in token
+                ):
+                    self.assertIn(
+                        "BLOCKED: unsafe or non-string review argument",
+                        err.getvalue(),
+                    )
+                else:
+                    self.assertIn(
+                        "BLOCKED: invalid or abbreviated review argument",
+                        err.getvalue(),
+                    )
 
     def test_no_unknown_cli_option_value_is_quoted_into_diagnostic(self):
         secret_like = "unreviewed-private-credential"
