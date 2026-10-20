@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import math
 import unittest
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from fmp.contracts import Decision, Direction, RejectionCode
 from fmp.risk import (
@@ -245,6 +245,33 @@ class Phase3RiskPolicyTests(unittest.TestCase):
         self.assertAlmostEqual(state.day_realized_pnl_usd, 10.0)
         self.assertEqual(state.current_utc_date, self.ts.date())
         self.assertFalse(state.daily_halt_active)
+
+    def test_risk_utc_rolling_rejects_non_datetime_without_state_changes(self):
+        for bad in (None, "2026-09-14T00:00Z", 123, {}, date(2026, 9, 14)):
+            with self.subTest(value=repr(bad)):
+                state = RiskState(starting_equity_usd=10_000.0)
+                with self.assertRaisesRegex(ValueError, "UTC"):
+                    roll_utc_day(state, timestamp_utc=bad)
+                self.assertIsNone(state.current_utc_date)
+                self.assertEqual(state.risk_equity_usd, 10_000.0)
+
+    def test_risk_record_rejects_invalid_time_before_pnl_update(self):
+        for bad in (None, [], "2026-09-14", 1):
+            with self.subTest(value=repr(bad)):
+                state = RiskState(starting_equity_usd=10_000.0)
+                with self.assertRaisesRegex(ValueError, "UTC"):
+                    record_realized_pnl(
+                        state, timestamp_utc=bad, pnl_usd=10.0,
+                        config=self.config,
+                    )
+                self.assertEqual(state.risk_equity_usd, 10_000.0)
+                self.assertIsNone(state.current_utc_date)
+
+    def test_risk_utc_rolling_still_accepts_real_utc_dates(self):
+        state = RiskState(starting_equity_usd=10_000.0)
+        roll_utc_day(state, timestamp_utc=self.ts)
+        self.assertEqual(state.current_utc_date, self.ts.date())
+        self.assertEqual(state.day_start_equity_usd, 10_000.0)
 
     def test_realized_risk_equity_changes_only_by_realized_net_pnl(self) -> None:
         record_realized_pnl(
