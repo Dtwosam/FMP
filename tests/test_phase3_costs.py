@@ -28,6 +28,34 @@ class Phase3CostTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "unsupported symbol"):
             pip_size("AUDUSD")
 
+    def test_pip_size_rejects_unhashable_and_nonstr_symbol_types(self):
+        for symbol in ([], {}, ["EURUSD"], None, True, 1, b"EURUSD"):
+            with self.subTest(symbol=repr(symbol)):
+                with self.assertRaisesRegex(ValueError, "unsupported symbol"):
+                    pip_size(symbol)
+
+    def test_adverse_slippage_rejects_unhashable_symbol_with_value_error(self):
+        for symbol in ([], {}, ["USDJPY"]):
+            with self.subTest(symbol=repr(symbol)):
+                with self.assertRaisesRegex(ValueError, "unsupported symbol"):
+                    apply_adverse_slippage(
+                        1.2, side=OrderSide.BUY, pips=1.0, symbol=symbol,
+                    )
+
+    def test_exact_supported_symbol_lookups_keep_frozen_pip_sizes(self):
+        for symbol, expected in (
+            ("EURUSD", 0.0001), ("GBPUSD", 0.0001),
+            ("USDJPY", 0.01),
+        ):
+            with self.subTest(symbol=symbol):
+                self.assertEqual(pip_size(symbol), expected)
+                self.assertAlmostEqual(
+                    apply_adverse_slippage(
+                        2.0, side=OrderSide.BUY, pips=2.0, symbol=symbol
+                    ),
+                    2.0 + 2.0 * expected,
+                )
+
     def test_adverse_slippage_moves_buy_up(self) -> None:
         self.assertAlmostEqual(
             apply_adverse_slippage(
