@@ -64,6 +64,8 @@ class FinancingModel(Protocol):
 @dataclass(frozen=True, slots=True)
 class ZeroCommission:
     def cost_usd(self, *, units: int) -> float:
+        if type(units) is not int:
+            raise ValueError("commission units must be a whole integer position size")
         return 0.0
 
     def to_config(self) -> Mapping[str, object]:

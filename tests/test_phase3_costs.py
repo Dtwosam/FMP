@@ -106,6 +106,27 @@ class Phase3CostTests(unittest.TestCase):
         self.assertEqual(model.cost_usd(units=100_000), 0.0)
         self.assertEqual(model.to_config(), {"model": "zero_commission"})
 
+    def test_zero_commission_rejects_fractional_and_boolean_units(self):
+        model = ZeroCommission()
+        for units in (0.5, -1.5, 1.0, True, False):
+            with self.subTest(units=repr(units)):
+                with self.assertRaisesRegex(ValueError, "whole integer"):
+                    model.cost_usd(units=units)
+
+    def test_zero_commission_rejects_nonfinite_and_nonnumeric_units(self):
+        model = ZeroCommission()
+        for units in (None, "100000", float("nan"), float("inf")):
+            with self.subTest(units=repr(units)):
+                with self.assertRaisesRegex(ValueError, "whole integer"):
+                    model.cost_usd(units=units)
+
+    def test_zero_commission_remains_exact_for_signed_whole_units(self):
+        model = ZeroCommission()
+        for units in (0, 1, -1, 100_000, -200_000):
+            with self.subTest(units=units):
+                self.assertEqual(model.cost_usd(units=units), 0.0)
+        self.assertEqual(model.to_config(), {"model": "zero_commission"})
+
     def test_fixed_commission_is_per_million_per_execution_side(self) -> None:
         model = FixedCommissionPerMillion(usd_per_million_per_side=30.0)
         self.assertAlmostEqual(model.cost_usd(units=100_000), 3.0)
