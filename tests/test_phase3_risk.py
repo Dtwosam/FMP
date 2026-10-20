@@ -239,6 +239,60 @@ class Phase3RiskPolicyTests(unittest.TestCase):
                         config=self.config, state=invalid_state,
                     )
 
+    def test_risk_assessment_honors_loss_ledger_even_if_halt_flag_is_reset(self):
+        state = RiskState(starting_equity_usd=10_000.0)
+        record_realized_pnl(
+            state, timestamp_utc=self.ts, pnl_usd=-200.0,
+            config=self.config,
+        )
+        self.assertTrue(state.daily_halt_active)
+        state.daily_halt_active = False
+        result = assess_decision(
+            decision=directional_decision(),
+            reference_entry_price=1.1,
+            timestamp_utc=self.ts + timedelta(minutes=1),
+            config=self.config, state=state,
+        )
+        self.assertFalse(result.approved)
+        self.assertEqual(result.rejection_code, RejectionCode.DAILY_HALT)
+        self.assertEqual(state.reservations_usd, {})
+
+    def test_corrupted_daily_ledger_fails_closed_at_utc_and_risk_admission(self):
+        for field in ("day_start_equity_usd", "day_realized_pnl_usd"):
+            for bad in (None, True, "10000", float("nan"), float("inf"),
+                        10 ** 400):
+                with self.subTest(field=field, value=repr(bad)):
+                    state = RiskState(starting_equity_usd=10_000.0)
+                    roll_utc_day(state, timestamp_utc=self.ts)
+                    setattr(state, field, bad)
+                    with self.assertRaisesRegex(ValueError, field):
+                        roll_utc_day(
+                            state, timestamp_utc=self.ts + timedelta(minutes=1),
+                        )
+                    with self.assertRaisesRegex(ValueError, field):
+                        assess_decision(
+                            decision=directional_decision(),
+                            reference_entry_price=1.1, timestamp_utc=self.ts,
+                            config=self.config, state=state,
+                        )
+                    self.assertEqual(state.reservations_usd, {})
+                    self.assertEqual(state.current_utc_date, self.ts.date())
+
+    def test_valid_subthreshold_daily_loss_retains_trade_approval(self):
+        state = RiskState(starting_equity_usd=10_000.0)
+        record_realized_pnl(
+            state, timestamp_utc=self.ts, pnl_usd=-50.0,
+            config=self.config,
+        )
+        result = assess_decision(
+            decision=directional_decision(),
+            reference_entry_price=1.1,
+            timestamp_utc=self.ts + timedelta(minutes=1),
+            config=self.config, state=state,
+        )
+        self.assertTrue(result.approved)
+        self.assertIsNone(result.rejection_code)
+
     def test_default_quarter_percent_risk_is_approved(self) -> None:
         result = assess_decision(
             decision=directional_decision(),

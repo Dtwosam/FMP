@@ -112,11 +112,24 @@ def _require_finite_state_equity(state: RiskState) -> None:
         raise ValueError("risk equity must remain finite numeric") from exc
 
 
+def _require_finite_day_ledger(state: RiskState) -> None:
+    for field_name in ("day_start_equity_usd", "day_realized_pnl_usd"):
+        value = getattr(state, field_name)
+        if type(value) not in (int, float):
+            raise ValueError(f"{field_name} must remain finite numeric")
+        try:
+            if not math.isfinite(value):
+                raise ValueError(f"{field_name} must remain finite numeric")
+        except OverflowError as exc:
+            raise ValueError(f"{field_name} must remain finite numeric") from exc
+
+
 def roll_utc_day(state: RiskState, *, timestamp_utc: datetime) -> None:
     _require_utc(timestamp_utc, field_name="timestamp_utc")
     if type(state) is not RiskState:
         raise ValueError("state must be a RiskState record")
     _require_finite_state_equity(state)
+    _require_finite_day_ledger(state)
     target_date = timestamp_utc.date()
     if state.current_utc_date == target_date:
         return
@@ -271,7 +284,13 @@ def assess_decision(
     existing_reserved_risk_usd = state.total_reserved_risk_usd
     roll_utc_day(state, timestamp_utc=timestamp_utc)
 
-    if state.daily_halt_active:
+    # Fail closed if the halt Boolean was lost while the loss ledger proves
+    # that the daily loss threshold has already been crossed.
+    if (
+        state.daily_halt_active
+        or state.day_realized_pnl_usd
+        <= -config.daily_loss_halt_fraction * state.day_start_equity_usd
+    ):
         return _rejected(RejectionCode.DAILY_HALT, "daily realized-loss halt is active")
 
     if decision.direction not in {Direction.LONG, Direction.SHORT}:
