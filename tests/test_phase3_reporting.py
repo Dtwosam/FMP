@@ -1809,6 +1809,45 @@ class Phase3ReportingTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "valid JSON"):
                 verify_backtest_artifacts(path)
 
+    def test_verifier_rejects_symlinked_ancestor_directory(self):
+        run = BacktestRun(
+            run_identity={}, trades=(), rejections=(),
+            equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            home = Path(root)
+            actual_parent = home / "actual"
+            target = actual_parent / "artifacts"
+            write_backtest_artifacts(run, target)
+            alias = home / "alias"
+            try:
+                alias.symlink_to(actual_parent, target_is_directory=True)
+            except (OSError, NotImplementedError):
+                self.skipTest("directory symlinks unavailable")
+            with self.assertRaisesRegex(ValueError, "symlink ancestors"):
+                verify_backtest_artifacts(alias / "artifacts")
+            self.assertEqual(
+                verify_backtest_artifacts(target)["protocol"],
+                "fmp-phase3-backtest-artifacts-v1",
+            )
+
+    def test_verifier_rejects_relative_symlinked_parent(self):
+        run = BacktestRun(
+            run_identity={}, trades=(), rejections=(),
+            equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            home = Path(root)
+            (home / "source").mkdir()
+            write_backtest_artifacts(run, home / "source" / "artifacts")
+            alias = home / "redirect"
+            try:
+                alias.symlink_to(home / "source", target_is_directory=True)
+            except (OSError, NotImplementedError):
+                self.skipTest("directory symlinks unavailable")
+            with self.assertRaisesRegex(ValueError, "symlink ancestors"):
+                verify_backtest_artifacts(alias / "artifacts")
+
     def test_artifact_bytes_and_digests_are_deterministic(self) -> None:
         one_trade = trade(trade_id="T-1", minutes=1, net_pnl_usd=10.0)
         rejection = RejectionRecord(

@@ -637,6 +637,11 @@ def verify_backtest_artifacts(out_dir: Path) -> dict[str, object]:
     trading economics. No paths are derived from untrusted manifest names.
     """
     root = Path(out_dir)
+    # Reject obvious linked ancestors rather than trusting an output leaf
+    # whose apparent parent resolves to a different evidence directory.
+    for component in (root.absolute(), *root.absolute().parents):
+        if component.is_symlink():
+            raise ValueError("artifact root cannot contain symlink ancestors")
     if root.is_symlink() or not root.is_dir():
         raise ValueError("artifact root must be a direct directory")
     manifest_file = root / "manifest.json"
