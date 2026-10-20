@@ -142,6 +142,28 @@ class Phase3SizingTests(unittest.TestCase):
                         units=units, entry_price=1.1, exit_price=1.101,
                     )
 
+    def test_position_sizing_rejects_unrealistically_huge_unit_count(self):
+        with self.assertRaisesRegex(ValueError, "safety limit"):
+            size_units(
+                symbol="EURUSD", entry_price=1.1, stop_price=1.099,
+                allowed_risk_usd=1e30,
+            )
+
+    def test_jpy_loss_per_unit_rejects_infinite_derived_conversion(self):
+        with self.assertRaisesRegex(ValueError, "loss per unit must remain finite"):
+            loss_usd_per_unit("USDJPY", 1e308, 1e-308)
+
+    def test_usd_pnl_rejects_nonfinite_derived_result(self):
+        for symbol in ("EURUSD", "USDJPY"):
+            with self.subTest(symbol=symbol):
+                with self.assertRaisesRegex(ValueError, "trade PnL must remain finite"):
+                    pnl_usd(
+                        symbol=symbol, direction=Direction.LONG,
+                        units=10 ** 310,
+                        entry_price=1e308 if symbol == "USDJPY" else 1.0,
+                        exit_price=1e-308 if symbol == "USDJPY" else 1.1,
+                    )
+
     def test_sizing_rejects_zero_stop_distance(self) -> None:
         with self.assertRaisesRegex(ValueError, "stop distance"):
             size_units(
