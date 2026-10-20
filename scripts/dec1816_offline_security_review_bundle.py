@@ -56,6 +56,20 @@ BLANK_WORKSHEET_KEYS = frozenset((
 ))
 
 
+# Historical reviewer issue references are navigation only. Open issues
+# are NOT attestations, signatures, or permissions to dispatch/trade.
+REVIEW_ISSUE_REFERENCES = {
+    "effective_github_admin_and_inherited_ruleset_inventory": ("https://github.com/Dtwosam/FMP/issues/779",),
+    "exclusive_continuous_ref_lock_and_no_bypass": ("https://github.com/Dtwosam/FMP/issues/779", "https://github.com/Dtwosam/FMP/pull/821"),
+    "independent_reviewed_source_sha_workflow_identity": ("https://github.com/Dtwosam/FMP/pull/821",),
+    "installed_three_job_precheckout_preinstall_preaccess_enforcement": ("https://github.com/Dtwosam/FMP/pull/820", "https://github.com/Dtwosam/FMP/pull/821"),
+    "privileged_runner_os_isolation_and_publisher_witness": ("https://github.com/Dtwosam/FMP/pull/820",),
+    "frozen_dec609_dec610_provenance_reauthentication": ("https://github.com/Dtwosam/FMP/issues/779",),
+    "fresh_complete_authoritative_one_shot_annual_run_inventory": ("https://github.com/Dtwosam/FMP/issues/779", "https://github.com/Dtwosam/FMP/pull/821"),
+    "separate_2023_run385_attempt1_human_execution_decision": ("https://github.com/Dtwosam/FMP/issues/779", "https://github.com/Dtwosam/FMP/pull/821"),
+}
+
+
 class InvalidReviewBundle(ValueError):
     """Fail closed when one source-only review packet drifts."""
 
@@ -102,6 +116,9 @@ def compile_blocked_review_bundle(docs_root=None, workflow=None, worksheet=None)
                 for row in proofs)
         and tuple(first["independent_proof_acceptance_criteria"]) ==
             tuple(row["id"] for row in proofs)
+        and set(REVIEW_ISSUE_REFERENCES) == {
+            row["id"] for row in proofs
+        }
     ):
         raise InvalidReviewBundle("eight MISSING independent owners disagree")
     payload = {
@@ -133,6 +150,9 @@ def compile_blocked_review_bundle(docs_root=None, workflow=None, worksheet=None)
                 "status": "MISSING",
                 "evidence_ref": None,
                 "reviewer_signoff": None,
+                "tracking_refs_not_approvals": list(
+                    REVIEW_ISSUE_REFERENCES[row["id"]]
+                ),
             }
             for row in proofs
         ],
@@ -227,6 +247,8 @@ def format_blocked_review_bundle_markdown(report):
             row["acceptance_requirement"],
             "",
             "Evidence reference: MISSING; reviewer signoff: MISSING.",
+            "Related unresolved review: " + ", ".join(
+                row["tracking_refs_not_approvals"]),
             "",
         ])
     lines.extend([

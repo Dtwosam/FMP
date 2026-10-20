@@ -232,7 +232,8 @@ class Phase8ABlockedSevenSourceIndexTests(unittest.TestCase):
         requests = BUILD()["unfulfilled_independent_review_requests"]
         expected_fields = {
             "id", "review_role", "acceptance_requirement",
-            "status", "evidence_ref", "reviewer_signoff"
+            "status", "evidence_ref", "reviewer_signoff",
+            "tracking_refs_not_approvals"
         }
         for request in requests:
             with self.subTest(request=request["id"]):
@@ -745,6 +746,44 @@ class Phase8ABlockedSevenSourceIndexTests(unittest.TestCase):
                     self.assertEqual(err.getvalue(), "")
                     self.assertIn("BLOCKED", out.getvalue())
                     self.assertTrue(seen)
+
+    def test_all_eight_proofs_have_exact_review_issue_traceability(self):
+        report = BUILD()
+        rows = report["unfulfilled_independent_review_requests"]
+        expected = MOD["REVIEW_ISSUE_REFERENCES"]
+        self.assertEqual({row["id"] for row in rows}, set(expected))
+        self.assertEqual(len(rows), 8)
+        for row in rows:
+            with self.subTest(proof=row["id"]):
+                self.assertEqual(
+                    row["tracking_refs_not_approvals"], list(expected[row["id"]]))
+                self.assertTrue(all(
+                    ref.startswith("https://github.com/Dtwosam/FMP/")
+                    for ref in row["tracking_refs_not_approvals"]
+                ))
+
+    def test_all_issue_tracking_refs_are_navigation_not_approval(self):
+        report = BUILD()
+        rows = report["unfulfilled_independent_review_requests"]
+        md = MOD["format_blocked_review_bundle_markdown"](report)
+        self.assertEqual(md.count("Related unresolved review:"), 8)
+        self.assertTrue(all(
+            row["status"] == "MISSING"
+            and row["evidence_ref"] is None
+            and row["reviewer_signoff"] is None
+            for row in rows
+        ))
+        self.assertFalse(report["2023_run385_attempt1_authorized"])
+
+    def test_compact_requests_preserve_issue_refs_without_permissions(self):
+        report = MOD["format_unfulfilled_review_requests"](BUILD())
+        self.assertEqual(len(report["unfulfilled_independent_review_requests"]), 8)
+        self.assertEqual(report["allowed_actions"], [])
+        self.assertFalse(report["annual_dispatch_or_retry_authorized"])
+        self.assertTrue(all(
+            row["tracking_refs_not_approvals"]
+            for row in report["unfulfilled_independent_review_requests"]
+        ))
 
     def test_cli_success_is_blocked_and_invalid_has_no_stdout(self):
         out, err = io.StringIO(), io.StringIO()
