@@ -1413,6 +1413,23 @@ class Phase3ReportingTests(unittest.TestCase):
             self.assertEqual(manifest["protocol"], "fmp-phase3-backtest-artifacts-v1")
             self.assertTrue((path / "manifest.json").is_file())
 
+    def test_nonfinite_net_pnl_claim_is_classified_before_conflict(self):
+        for malformed in (float("nan"), float("inf"), -float("inf")):
+            with self.subTest(value=repr(malformed)):
+                run = BacktestRun(
+                    run_identity={}, trades=(), rejections=(),
+                    equity_checkpoints=(),
+                    metrics={"net_pnl_usd": malformed},
+                )
+                with tempfile.TemporaryDirectory() as root:
+                    target = Path(root) / "blocked"
+                    with mock.patch("pathlib.Path.mkdir", side_effect=AssertionError(
+                        "non-finite net PnL cannot create financial artifacts"
+                    )):
+                        with self.assertRaisesRegex(ValueError, "non-finite"):
+                            write_backtest_artifacts(run, target)
+                    self.assertFalse(target.exists())
+
     def test_artifact_bytes_and_digests_are_deterministic(self) -> None:
         one_trade = trade(trade_id="T-1", minutes=1, net_pnl_usd=10.0)
         rejection = RejectionRecord(
