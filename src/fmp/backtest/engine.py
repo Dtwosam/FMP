@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import math
-from copy import deepcopy
 from collections import defaultdict
 from dataclasses import dataclass
 from types import MappingProxyType
@@ -59,6 +58,47 @@ def _require_utc(value: datetime, *, field: str) -> None:
         raise ValueError(f"{field} must use UTC")
 
 
+def _freeze_decision_metadata(value: object, *, depth: int = 0) -> object:
+    """Accept bounded finite JSON values and recursively freeze containers."""
+    if depth > 32:
+        raise ValueError("decision_config exceeds maximum nesting depth")
+    if type(value) in (dict, MappingProxyType):
+        snapshot: dict[str, object] = {}
+        for key, item in value.items():
+            if type(key) is not str or not key or any(
+                ord(char) < 32 or ord(char) == 127 for char in key
+            ):
+                raise ValueError(
+                    "decision_config keys must be nonempty printable strings"
+                )
+            snapshot[key] = _freeze_decision_metadata(item, depth=depth + 1)
+        return MappingProxyType(snapshot)
+    if type(value) in (list, tuple):
+        return tuple(
+            _freeze_decision_metadata(item, depth=depth + 1)
+            for item in value
+        )
+    if value is None or type(value) in (bool, int, str):
+        return value
+    if type(value) is float and math.isfinite(value):
+        return value
+    raise ValueError(
+        "decision_config values must be finite JSON-compatible data"
+    )
+
+
+def _thaw_decision_metadata(value: object) -> object:
+    """Return a fresh ordinary JSON-like tree for reporting."""
+    if type(value) is MappingProxyType:
+        return {
+            key: _thaw_decision_metadata(item)
+            for key, item in value.items()
+        }
+    if type(value) is tuple:
+        return [_thaw_decision_metadata(item) for item in value]
+    return value
+
+
 @dataclass(frozen=True, slots=True)
 class BacktestConfig:
     starting_equity_usd: float
@@ -109,17 +149,12 @@ class BacktestConfig:
                 raise ValueError(
                     "decision_config keys must be nonempty printable strings"
                 )
-        # Freeze top-level edits and detach nested caller-owned dictionaries,
-        # lists and other deepcopy-compatible values. This protects run
-        # provenance from changes to the original objects, but is not a
-        # guarantee of deep immutability of the retained config.
-        try:
-            metadata_snapshot = deepcopy(dict(self.decision_config))
-        except (TypeError, ValueError, RecursionError) as exc:
-            raise ValueError("decision_config cannot be snapshotted") from exc
+        # No opaque __deepcopy__ hooks and no writable nested references.
+        # Stored metadata is recursively immutable, while run identity
+        # reconstructs fresh ordinary dict/list values for its public schema.
         object.__setattr__(
             self, "decision_config",
-            MappingProxyType(metadata_snapshot),
+            _freeze_decision_metadata(dict(self.decision_config)),
         )
         _require_utc(self.requested_start_utc, field="requested_start_utc")
         _require_utc(self.requested_end_utc, field="requested_end_utc")
@@ -177,7 +212,7 @@ def _run_identity(
         "commission_model": dict(config.commission_model.to_config()),
         "financing_model": dict(config.financing_model.to_config()),
         # Never expose aliases to nested config objects in run evidence.
-        "decision_config": deepcopy(dict(config.decision_config)),
+        "decision_config": _thaw_decision_metadata(config.decision_config),
     }
     if config.execution_timing_mode != NEXT_SUPPLIED_BAR:
         identity["execution_timing_mode"] = config.execution_timing_mode
