@@ -11,6 +11,7 @@ from fmp.contracts import (
     OrderSide,
     QuoteBar,
     RejectionCode,
+    ScheduledExit,
     validate_decisions,
     validate_quote_bars,
 )
@@ -259,6 +260,45 @@ class Phase3ContractTests(unittest.TestCase):
         )
         self.assertIs(valid.direction, Direction.LONG)
         self.assertEqual(valid.requested_risk_fraction, 0.0025)
+
+    def test_scheduled_exit_rejects_nonstr_or_unprintable_decision_id(self):
+        ts = datetime(2026, 9, 14, 12, tzinfo=timezone.utc)
+        for invalid in (None, [], {}, True, 7, "", "  ", "bad" + chr(10),
+                        "bad" + chr(27), "bad" + chr(127)):
+            with self.subTest(value=repr(invalid)):
+                with self.assertRaisesRegex(ValueError, "decision_id"):
+                    ScheduledExit(
+                        decision_id=invalid, symbol="EURUSD",
+                        timestamp_utc=ts,
+                    )
+
+    def test_scheduled_exit_rejects_malformed_symbol_and_timestamp(self):
+        ts = datetime(2026, 9, 14, 12, tzinfo=timezone.utc)
+        for invalid in ([], {}, "eurusd", None, True):
+            with self.subTest(value=repr(invalid)):
+                with self.assertRaisesRegex(ValueError, "unsupported symbol"):
+                    ScheduledExit(
+                        decision_id="SYNTHETIC-EX", symbol=invalid,
+                        timestamp_utc=ts,
+                    )
+        for invalid in (None, "2026-09-14T12:00Z",
+                        datetime(2026, 9, 14, 12)):
+            with self.subTest(timestamp=repr(invalid)):
+                with self.assertRaisesRegex(ValueError, "UTC"):
+                    ScheduledExit(
+                        decision_id="SYNTHETIC-EX", symbol="EURUSD",
+                        timestamp_utc=invalid,
+                    )
+
+    def test_scheduled_exit_keeps_valid_source_bound_fields(self):
+        ts = datetime(2026, 9, 14, 12, tzinfo=timezone.utc)
+        record = ScheduledExit(
+            decision_id="SYNTHETIC-EX", symbol="GBPUSD",
+            timestamp_utc=ts
+        )
+        self.assertEqual(record.decision_id, "SYNTHETIC-EX")
+        self.assertEqual(record.symbol, "GBPUSD")
+        self.assertEqual(record.timestamp_utc, ts)
 
     def test_validate_decisions_rejects_duplicate_ids(self) -> None:
         decision = Decision(
