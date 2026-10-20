@@ -1128,6 +1128,54 @@ class Phase8ABlockedSevenSourceIndexTests(unittest.TestCase):
             self.assertEqual(out.getvalue(), "")
             self.assertIn("BLOCKED:", err.getvalue())
 
+    def test_duplicate_verifier_and_format_flags_fail_before_any_output(self):
+        cases = (
+            ["--verify-report", "first.json", "--verify-report", "second.json"],
+            ["--verify-requests=a.json", "--verify-requests=b.json"],
+            ["--format", "markdown", "--format", "json"],
+            ["--verify-triplet", "a.json", "b.json", "c.md",
+             "--verify-triplet", "d.json", "e.json", "f.md"],
+        )
+        for args in cases:
+            with self.subTest(args=args):
+                out, err = io.StringIO(), io.StringIO()
+                with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                    code = MOD["main"](args)
+                self.assertEqual(code, 2)
+                self.assertEqual(out.getvalue(), "")
+                self.assertIn("BLOCKED: repeated", err.getvalue())
+
+    def test_abbreviated_verifier_arguments_are_rejected_without_output(self):
+        for flag in ("--verify-mark", "--verify-rep", "--verify-tri",
+                     "--workfl", "--forma"):
+            with self.subTest(flag=flag):
+                out, err = io.StringIO(), io.StringIO()
+                with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                    code = MOD["main"]([flag, "fake"])
+                self.assertEqual(code, 2)
+                self.assertEqual(out.getvalue(), "")
+                self.assertIn("BLOCKED:", err.getvalue())
+
+    def test_unknown_review_cli_flags_fail_with_controlled_blocked_status(self):
+        for args in (["--authorize-385"], ["--format", "approved"],
+                     ["--verify-triplet", "only.json"]):
+            with self.subTest(args=args):
+                out, err = io.StringIO(), io.StringIO()
+                with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                    code = MOD["main"](args)
+                self.assertEqual(code, 2)
+                self.assertEqual(out.getvalue(), "")
+                self.assertIn("BLOCKED: invalid", err.getvalue())
+
+    def test_builtin_help_exits_without_generating_review_evidence(self):
+        out, err = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            code = MOD["main"](["--help"])
+        self.assertEqual(code, 0)
+        self.assertIn("--verify-triplet", out.getvalue())
+        self.assertIn("--verify-markdown", out.getvalue())
+        self.assertEqual(err.getvalue(), "")
+
     def test_cli_success_is_blocked_and_invalid_has_no_stdout(self):
         out, err = io.StringIO(), io.StringIO()
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):

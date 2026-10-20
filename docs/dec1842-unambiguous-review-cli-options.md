@@ -1,0 +1,9 @@
+# DEC-1842 — Unambiguous fail-closed saved review command-line options
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent source-only child of PR #2088 `9c36955e87b4638e0f7e9cb8f79290e51d52ccc3`.
+
+The seven-source offline review CLI exposes multiple sensitive evidence-file selectors and output choices. Python argparse normally accepts abbreviated long option names and silently treats repeated singleton options as last-value wins. This could let an operator accidentally verify an unintended file while retaining an apparently successful BLOCKED output. Disable long-option abbreviation; reject repeated --docs-root/--workflow/--worksheet/--verify-report/--verify-requests/--verify-markdown/--verify-triplet/--format options, including `--name=value` spellings. Catch normal argparse error exits to return controlled **BLOCKED exit 2 with no stdout** rather than letting an embedding application receive an uncaught SystemExit. Plain `--help` remains informative and returns zero **without constructing or authorizing evidence**.
+
+Four tests (**6,725 cumulative proposed source-defined methods**) cover repeated selectors, abbreviated flags, unknown or approval-like arguments, and the normal help path. Previously reviewed valid formats and packet verifications remain unchanged: valid input means BLOCKED/no execution permission and exits 3; invalid request means exit 2. This is local command-line hardening, **not** actual administrator/OS permission enforcement or a signed evidence witness.
+
+All external #779/#820/#821 and eight independent proof packages remain MISSING, protected 2023/run385/attempt1 and later research, demo/live orders and capital remain BLOCKED. No installed GitHub workflow/ref/ruleset changes or broker activity. Own exact-head Phase3/full CI and qualified independent review required.

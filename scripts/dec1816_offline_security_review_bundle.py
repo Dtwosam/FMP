@@ -444,7 +444,8 @@ def verify_complete_blocked_review_triplet(full_path, requests_path, markdown_pa
 
 def main(argv=None):
     parser = argparse.ArgumentParser(
-        description="Seven-source historical BLOCKED independent proof review"
+        description="Seven-source historical BLOCKED independent proof review",
+        allow_abbrev=False,
     )
     parser.add_argument("--docs-root", type=Path)
     parser.add_argument("--workflow", type=Path)
@@ -470,7 +471,30 @@ def main(argv=None):
         "--format", choices=("json", "markdown", "requests"),
         default=None, help="Report format; defaults to saved input type or JSON",
     )
-    args = parser.parse_args(argv)
+    tokens = list(sys.argv[1:] if argv is None else argv)
+    singleton = (
+        "--docs-root", "--workflow", "--worksheet",
+        "--verify-report", "--verify-requests",
+        "--verify-markdown", "--verify-triplet", "--format",
+    )
+    for name in singleton:
+        uses = sum(
+            token == name or token.startswith(name + "=")
+            for token in tokens
+        )
+        if uses > 1:
+            print(
+                "BLOCKED: repeated review option " + name,
+                file=sys.stderr,
+            )
+            return 2
+    try:
+        args = parser.parse_args(tokens)
+    except SystemExit as exc:
+        if exc.code == 0:  # Built-in --help is not a security decision.
+            return 0
+        print("BLOCKED: invalid or abbreviated review argument", file=sys.stderr)
+        return 2
     active = sum(path is not None for path in (
         args.verify_report, args.verify_requests,
         args.verify_markdown, args.verify_triplet
