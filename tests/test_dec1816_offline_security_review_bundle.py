@@ -547,6 +547,90 @@ class Phase8ABlockedSevenSourceIndexTests(unittest.TestCase):
             with self.assertRaises((OSError, ValueError)):
                 MOD["verify_saved_blocked_review_packet"](Path(folder))
 
+    def test_saved_compact_requests_revalidate_only_when_all_missing(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "requests.json"
+            expected = MOD["format_unfulfilled_review_requests"](BUILD())
+            path.write_text(json.dumps(expected), encoding="utf-8")
+            actual = MOD["verify_saved_unfulfilled_review_requests"](path)
+            self.assertEqual(actual, expected)
+            self.assertEqual(len(actual["unfulfilled_independent_review_requests"]), 8)
+            self.assertFalse(actual["annual_dispatch_or_retry_authorized"])
+
+    def test_saved_compact_requests_reject_forged_signoff_with_unchanged_parent(self):
+        import copy
+        expected = MOD["format_unfulfilled_review_requests"](BUILD())
+        forged = copy.deepcopy(expected)
+        forged["unfulfilled_independent_review_requests"][0][
+            "reviewer_signoff"] = "APPROVED"
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "requests.json"
+            path.write_text(json.dumps(forged), encoding="utf-8")
+            with self.assertRaisesRegex(
+                    MOD["InvalidReviewBundle"], "fresh MISSING-only"):
+                MOD["verify_saved_unfulfilled_review_requests"](path)
+
+    def test_compact_request_reader_rejects_nested_duplicates_and_nonfinite(self):
+        for payload in (
+            '{"proofs":[{"status":"MISSING","status":"APPROVED"}]}',
+            '{"profit": NaN}', '{"profit": 1e999}', "[]" * 2,
+        ):
+            with self.subTest(value=payload):
+                with tempfile.TemporaryDirectory() as folder:
+                    path = Path(folder) / "requests.json"
+                    path.write_text(payload, encoding="utf-8")
+                    with self.assertRaises(MOD["InvalidReviewBundle"]):
+                        MOD["verify_saved_unfulfilled_review_requests"](path)
+
+    def test_compact_request_reader_rejects_symlink_and_oversized_input(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            real = root / "requests.json"
+            real.write_text(json.dumps(
+                MOD["format_unfulfilled_review_requests"](BUILD())),
+                encoding="utf-8")
+            link = root / "requests-link.json"
+            link.symlink_to(real)
+            with self.assertRaises((OSError, ValueError)):
+                MOD["verify_saved_unfulfilled_review_requests"](link)
+            real.write_bytes(b" " * (1024 * 1024 + 1))
+            with self.assertRaises((OSError, ValueError)):
+                MOD["verify_saved_unfulfilled_review_requests"](real)
+
+    def test_compact_verification_cli_rejects_mixed_modes_and_forgery(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            path = root / "requests.json"
+            path.write_text(json.dumps(
+                MOD["format_unfulfilled_review_requests"](BUILD())),
+                encoding="utf-8")
+            out, err = io.StringIO(), io.StringIO()
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                code = MOD["main"](["--verify-requests", str(path)])
+            self.assertEqual(code, 3)
+            self.assertEqual(err.getvalue(), "")
+            self.assertEqual(json.loads(out.getvalue())["disposition"],
+                             "BLOCKED_NO_EXECUTION_PERMISSION")
+            for addition in (
+                ["--verify-report", str(path)],
+                ["--docs-root", str(root)],
+                ["--format", "markdown"],
+            ):
+                with self.subTest(extra=addition):
+                    out, err = io.StringIO(), io.StringIO()
+                    with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                        code = MOD["main"](["--verify-requests", str(path)] + addition)
+                    self.assertEqual(code, 2)
+                    self.assertEqual(out.getvalue(), "")
+                    self.assertIn("BLOCKED:", err.getvalue())
+            path.write_bytes(b"APPROVED")
+            out, err = io.StringIO(), io.StringIO()
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                code = MOD["main"](["--verify-requests", str(path)])
+            self.assertEqual(code, 2)
+            self.assertEqual(out.getvalue(), "")
+            self.assertIn("BLOCKED:", err.getvalue())
+
     def test_cli_success_is_blocked_and_invalid_has_no_stdout(self):
         out, err = io.StringIO(), io.StringIO()
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
