@@ -216,9 +216,20 @@ def _assert_human_review_evidence_is_frozen(report):
             and jobs[name].get("static_only_not_runner_trace") is True
             and type(jobs[name].get(
                 "observed_setup_and_read_payloads_before_gate")) is list
+            and all(
+                type(item) is dict
+                and set(item) == {
+                    "name", "payload", "zero_based_step_index"
+                }
+                and type(item["name"]) is str
+                and type(item["payload"]) is str
+                and type(item["zero_based_step_index"]) is int
+                for item in jobs[name][
+                    "observed_setup_and_read_payloads_before_gate"]
+            )
             and any(
-                item.get("name") == "Checkout"
-                and item.get("zero_based_step_index") == 0
+                item["name"] == "Checkout"
+                and item["zero_based_step_index"] == 0
                 for item in jobs[name][
                     "observed_setup_and_read_payloads_before_gate"]
             )

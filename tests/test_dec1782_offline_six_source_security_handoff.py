@@ -310,6 +310,45 @@ class Phase8AConsolidatedSourceOnlyHandoffTests(unittest.TestCase):
         self.assertIn("Install pinned annual catalogue runtime", output)
         self.assertIn("**BLOCKED. NOT AUTHORIZED.", output)
 
+    def test_malformed_nested_step_row_fails_closed_not_attribute_error(self):
+        import copy
+        for bad in (None, [], "injected", 123, True):
+            with self.subTest(value=repr(bad)):
+                report = copy.deepcopy(BUILD())
+                report["installed_jobs_pregate_and_runtime_gate"][
+                    "annual_preflight"][
+                        "observed_setup_and_read_payloads_before_gate"] = [
+                            bad
+                        ]
+                with self.assertRaises(MOD["InvalidHandoff"]):
+                    MOD["format_blocked_handoff_markdown"](report)
+
+    def test_nested_step_extra_key_is_not_implicitly_authorized(self):
+        import copy
+        report = copy.deepcopy(BUILD())
+        step = report["installed_jobs_pregate_and_runtime_gate"][
+            "annual_cell"]["observed_setup_and_read_payloads_before_gate"][0]
+        step["new_unknown_approved"] = True
+        with self.assertRaisesRegex(
+                MOD["InvalidHandoff"], "gate positions"):
+            MOD["format_blocked_handoff_markdown"](report)
+
+    def test_nested_step_name_index_and_payload_require_exact_types(self):
+        import copy
+        for field, invalid in (
+            ("name", None),
+            ("zero_based_step_index", True),
+            ("payload", ["untrusted"]),
+        ):
+            with self.subTest(field=field):
+                report = copy.deepcopy(BUILD())
+                step = report["installed_jobs_pregate_and_runtime_gate"][
+                    "annual_freeze"][
+                        "observed_setup_and_read_payloads_before_gate"][0]
+                step[field] = invalid
+                with self.assertRaises(MOD["InvalidHandoff"]):
+                    MOD["format_blocked_handoff_markdown"](report)
+
     def test_consolidated_handoff_never_invokes_external_permission_or_trading(self):
         report = BUILD()
         self.assertIs(report["no_external_actions_performed"], True)
