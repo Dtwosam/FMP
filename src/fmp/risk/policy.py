@@ -197,6 +197,16 @@ def assess_decision(
     state: RiskState,
 ) -> RiskAssessment:
     _require_utc(timestamp_utc, field_name="timestamp_utc")
+    # A malformed reference price should never roll or otherwise mutate
+    # the UTC risk-day state before being rejected.
+    if type(reference_entry_price) not in (int, float):
+        return _rejected(RejectionCode.INVALID_SIZE, "reference entry price is invalid")
+    try:
+        if not math.isfinite(reference_entry_price) or reference_entry_price <= 0:
+            return _rejected(RejectionCode.INVALID_SIZE, "reference entry price is invalid")
+    except OverflowError:
+        return _rejected(RejectionCode.INVALID_SIZE, "reference entry price is invalid")
+
     roll_utc_day(state, timestamp_utc=timestamp_utc)
 
     if state.daily_halt_active:
@@ -204,9 +214,6 @@ def assess_decision(
 
     if decision.direction not in {Direction.LONG, Direction.SHORT}:
         return _rejected(RejectionCode.INVALID_STOP_TARGET, "directional risk assessment requires LONG or SHORT")
-
-    if not math.isfinite(reference_entry_price) or reference_entry_price <= 0:
-        return _rejected(RejectionCode.INVALID_SIZE, "reference entry price is invalid")
 
     if not _valid_geometry(decision, reference_entry_price):
         return _rejected(RejectionCode.INVALID_STOP_TARGET, "stop/target geometry is invalid for direction")

@@ -474,6 +474,34 @@ class Phase3RiskPolicyTests(unittest.TestCase):
         self.assertAlmostEqual(self.state.day_start_equity_usd, 9_850.0)
         self.assertAlmostEqual(self.state.day_realized_pnl_usd, 0.0)
 
+    def test_risk_assessment_rejects_malformed_reference_without_state_change(self):
+        for value in (True, False, None, [], {}, "1.1000", 0,
+                      -1.0, float("nan"), float("inf"), 10 ** 400):
+            with self.subTest(value=repr(value)):
+                state = RiskState(starting_equity_usd=10_000.0)
+                assessed = assess_decision(
+                    decision=directional_decision(),
+                    reference_entry_price=value,
+                    timestamp_utc=self.ts,
+                    config=self.config, state=state,
+                )
+                self.assertFalse(assessed.approved)
+                self.assertEqual(assessed.rejection_code, RejectionCode.INVALID_SIZE)
+                self.assertIsNone(state.current_utc_date)
+                self.assertEqual(state.risk_equity_usd, 10_000.0)
+                self.assertEqual(state.reservations_usd, {})
+
+    def test_risk_assessment_still_rolls_valid_reference_and_approves(self):
+        state = RiskState(starting_equity_usd=10_000.0)
+        assessed = assess_decision(
+            decision=directional_decision(),
+            reference_entry_price=1.1000, timestamp_utc=self.ts,
+            config=self.config, state=state,
+        )
+        self.assertTrue(assessed.approved)
+        self.assertEqual(state.current_utc_date, self.ts.date())
+        self.assertEqual(state.risk_equity_usd, 10_000.0)
+
     def test_invalid_stop_geometry_is_rejected(self) -> None:
         result = assess_decision(
             decision=directional_decision(stop_price=1.1010),
