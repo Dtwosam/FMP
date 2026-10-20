@@ -252,10 +252,28 @@ def compile_blocked_handoff(docs_root=DOCS, workflow=WORKFLOW):
         "independently read historical fixture hash no longer matches",
     )
     fixture_text = fixture_bytes.decode("utf-8")
+    try:
+        observed_json = json.dumps(
+            {"jobs": jobs, "matrix": matrix, "trace": trace},
+            sort_keys=True, separators=(",", ":"), allow_nan=False,
+        )
+        reference_json = json.dumps(
+            {
+                "jobs": workflow_module["classify_reviewed_step_order"](
+                    fixture_text),
+                "matrix": workflow_module["inspect_installed_cell_matrix"](
+                    fixture_text),
+                "trace": workflow_module["inspect_pregate_step_payloads"](
+                    fixture_text),
+            },
+            sort_keys=True, separators=(",", ":"), allow_nan=False,
+        )
+    except (TypeError, ValueError) as exc:
+        raise InvalidHandoff(
+            "historical fixture report has unsupported or nonfinite data"
+        ) from exc
     _require(
-        jobs == workflow_module["classify_reviewed_step_order"](fixture_text)
-        and matrix == workflow_module["inspect_installed_cell_matrix"](fixture_text)
-        and trace == workflow_module["inspect_pregate_step_payloads"](fixture_text),
+        observed_json == reference_json,
         "machine-readable historical observations differ from pinned fixture",
     )
     _require(
