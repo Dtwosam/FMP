@@ -55,6 +55,7 @@ def inspect_synthetic_cost_boundaries():
         "untyped_buy_string_rejected": mistyped_buy is None,
         "fractional_commission_units_currently_accepted":
             fractional_units_cost is not None,
+        "fractional_commission_units_rejected": fractional_units_cost is None,
         "known_issues_require_separate_backtester_review": True,
         "economic_expectancy_or_profitable_strategy_verified": False,
         "protected_2023_run385_attempt1_authorized": False,
