@@ -1,0 +1,9 @@
+# DEC-1863 — Fail-closed input validation for zero-financing backtests
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent source-only child of #2110 `3d7b28d797b20cdd3e358bb78c53d64f08f7d4f0`. Pure cost-calculation contract proposal only; requires separate cost-model human review and passing exact-head Phase3/full regression before any future promotion.
+
+The `ZeroFinancing.cost_usd` function returned 0.0 for any symbol, direction, units or timestamps because its financial charge is zero. This can conceal corrupted position data and impossible temporal ordering behind an apparently valid zero-cost hypothetical backtest. Enforce the documented protocol inputs even when the computed charge is zero: an exact supported EURUSD/GBPUSD/USDJPY symbol, `Direction.LONG` or `Direction.SHORT` enum, built-in whole-integer signed unit quantity, timezone-aware UTC entry/exit datetimes, and exit time **not before** entry. Valid same-time or later exits still return exactly 0.0, as does ordinary negative/positive whole-unit sizing. No new financing charge, strategy rule or broker behavior is introduced.
+
+Five new Phase3 methods (**6,773 cumulative proposed source-defined tests**) cover invalid symbols/directions, fractional/Boolean units, naïve or non-UTC times, exit-before-entry and valid synthetic cases. All inputs are invented constants, not downloaded or protected market data or evidence of returns. Earlier correct strict slippage/commission contract drafts remain subject to full regression and human review.
+
+Phase8A accepted annual research ends at 2022/run384; protected 2023/run385/attempt1, later-year discovery and Strategy V1 after-cost synthesis, shadow/demo/real-money orders and installed workflow/ref/ruleset changes are BLOCKED. Independent security/inventory/human proofs #779/#820/#821 remain MISSING. No merge or promotion from this proposal.

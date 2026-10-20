@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Mapping, Protocol
 
 from fmp.contracts import Direction, OrderSide
@@ -110,6 +110,26 @@ class ZeroFinancing:
         entry_timestamp_utc: datetime,
         exit_timestamp_utc: datetime,
     ) -> float:
+        if type(symbol) is not str or symbol not in PIP_SIZES:
+            raise ValueError("financing symbol must be a supported FX pair")
+        if type(direction) is not Direction or direction not in (
+            Direction.LONG, Direction.SHORT
+        ):
+            raise ValueError("financing direction must be LONG or SHORT")
+        if type(units) is not int:
+            raise ValueError("financing units must be a whole integer position size")
+        for field, value in (
+            ("entry_timestamp_utc", entry_timestamp_utc),
+            ("exit_timestamp_utc", exit_timestamp_utc),
+        ):
+            if (
+                not isinstance(value, datetime)
+                or value.tzinfo is None
+                or value.utcoffset() != timedelta(0)
+            ):
+                raise ValueError(f"financing {field} must use UTC")
+        if exit_timestamp_utc < entry_timestamp_utc:
+            raise ValueError("financing exit cannot precede entry")
         return 0.0
 
     def to_config(self) -> Mapping[str, object]:
