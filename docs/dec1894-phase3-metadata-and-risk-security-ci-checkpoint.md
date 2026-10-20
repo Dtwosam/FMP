@@ -1,0 +1,9 @@
+# DEC-1894 — Latest exact-head synthetic audit/risk quality checkpoint
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Documentation-only exact-parent child of #2142 `8ef96af7f57541de218b7f4442066e0d9ba4005f`.
+
+From source-only PR #2133 through #2142, eight exact-parent commits propose locally bounded recursively immutable decision metadata and stricter synthetic risk pricing, finite P&L and reservation bookkeeping. Draft #2134 separately explored similar metadata work but is an unmerged parallel alternative, *not* the currently selected working chain. Proposed source-defined test-method count on the active lineage: **6,855**. No live/forward market signal, historical future-year catalogue, genuine positive expectancy, broker order or deployed control is claimed.
+
+Exact-head checks as actually verified on October 20: PR #2133 and #2135 passed Phase3 **and** full historical/general suites. PRs **#2136–#2142** passed Phase3 only at the latest observation; their full suites remain **IN PROGRESS** and should not be reported as passed. PR #2134 is separate (Phase3 passed, full pending at review). All proposed semantic changes need explicit independent human cost/risk review and full exact-head regression before any merging, which is not authorized here.
+
+Eight independently authenticated external security/provenance/inventory/human decision proof packages remain **MISSING**; #779, #820 and #821 remain **OPEN**. Current Phase8A approved annual evidence ends with 2022/run384. Protected 2023/run385/attempt1, later annual data/research, Strategy V1 economics, shadow/demo/live and real-money broker activity remain **BLOCKED**. No installed GitHub `main` ref, ruleset, workflow, privileged runner or broker/capital mutation occurred. This document is solely an offline unfilled review-state artifact and cannot authorize dispatch or profitability.
