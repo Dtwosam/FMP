@@ -1154,6 +1154,67 @@ class Phase3ReportingTests(unittest.TestCase):
                 expected,
             )
 
+    def test_writer_rejects_forged_gross_profit_loss_and_profit_factor(self):
+        winner = trade(trade_id="W", minutes=1, net_pnl_usd=100.0)
+        loser = trade(trade_id="L", minutes=3, net_pnl_usd=-50.0)
+        for field, wrong in (
+            ("gross_profit_usd", 120.0),
+            ("gross_loss_usd", 40.0),
+            ("profit_factor", 3.0),
+        ):
+            with self.subTest(field=field):
+                run = BacktestRun(
+                    run_identity={}, trades=(winner, loser),
+                    rejections=(), equity_checkpoints=(),
+                    metrics={field: wrong},
+                )
+                with tempfile.TemporaryDirectory() as root:
+                    target = Path(root) / "blocked"
+                    with mock.patch("pathlib.Path.mkdir", side_effect=AssertionError(
+                        "forged profitability must not publish"
+                    )):
+                        with self.assertRaisesRegex(ValueError, field):
+                            write_backtest_artifacts(run, target)
+                    self.assertFalse(target.exists())
+
+    def test_writer_refuses_defined_profit_factor_without_trade_losses(self):
+        winner = trade(trade_id="W", minutes=1, net_pnl_usd=100.0)
+        run = BacktestRun(
+            run_identity={}, trades=(winner,), rejections=(),
+            equity_checkpoints=(), metrics={"profit_factor": 1000.0},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            target = Path(root) / "blocked"
+            with self.assertRaisesRegex(ValueError, "profit_factor"):
+                write_backtest_artifacts(run, target)
+            self.assertFalse(target.exists())
+
+    def test_writer_keeps_reconciled_gross_profit_and_undefined_factor(self):
+        winner = trade(trade_id="W", minutes=1, net_pnl_usd=100.0)
+        loser = trade(trade_id="L", minutes=3, net_pnl_usd=-50.0)
+        for trades, metrics in (
+            ((winner, loser), {
+                "gross_profit_usd": 100.0, "gross_loss_usd": 50.0,
+                "profit_factor": 2.0,
+            }),
+            ((winner,), {
+                "gross_profit_usd": 100.0, "gross_loss_usd": 0.0,
+                "profit_factor": None,
+            }),
+        ):
+            with self.subTest(trades=len(trades)):
+                run = BacktestRun(
+                    run_identity={}, trades=trades, rejections=(),
+                    equity_checkpoints=(), metrics=metrics,
+                )
+                with tempfile.TemporaryDirectory() as root:
+                    target = Path(root) / "valid"
+                    write_backtest_artifacts(run, target)
+                    self.assertEqual(
+                        json.loads((target / "metrics.json").read_text("utf-8")),
+                        metrics,
+                    )
+
     def test_artifact_bytes_and_digests_are_deterministic(self) -> None:
         one_trade = trade(trade_id="T-1", minutes=1, net_pnl_usd=10.0)
         rejection = RejectionRecord(

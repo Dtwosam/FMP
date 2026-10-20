@@ -457,6 +457,33 @@ def write_backtest_artifacts(run: BacktestRun, out_dir: Path) -> dict[str, objec
         except OverflowError as exc:
             raise ValueError(f"metric {name} must be finite numeric") from exc
 
+    # Recompute core win/loss economics so a self-consistent artifact hash
+    # cannot mask a claimed profit factor unrelated to published trades.
+    pnls = [trade.net_pnl_usd for trade in run.trades]
+    profit_usd = sum(value for value in pnls if value > 0)
+    loss_usd = -sum(value for value in pnls if value < 0)
+    for name, expected in (
+        ("gross_profit_usd", profit_usd),
+        ("gross_loss_usd", loss_usd),
+        ("profit_factor", profit_usd / loss_usd if loss_usd > 0 else None),
+    ):
+        if expected is not None and not math.isfinite(expected):
+            raise ValueError(f"trade {name} aggregate must remain finite")
+        if name not in run.metrics:
+            continue
+        claimed = run.metrics[name]
+        if expected is None:
+            if claimed is not None:
+                raise ValueError(f"metric {name} conflicts with trade ledger")
+            continue
+        if type(claimed) not in (int, float):
+            raise ValueError(f"metric {name} must be finite numeric")
+        try:
+            if not math.isfinite(claimed) or claimed != expected:
+                raise ValueError(f"metric {name} conflicts with trade ledger")
+        except OverflowError as exc:
+            raise ValueError(f"metric {name} must be finite numeric") from exc
+
     summary = {
         "protocol": "fmp-phase3-backtest-run-v1",
         "run_identity": run.run_identity,
