@@ -430,6 +430,33 @@ def write_backtest_artifacts(run: BacktestRun, out_dir: Path) -> dict[str, objec
         except OverflowError as exc:
             raise ValueError("metric net_pnl_usd must be finite numeric") from exc
 
+    # Reconcile optional explicit cost metrics to the same trades being
+    # written; a self-consistent hash cannot rescue forged cost totals.
+    summed_costs = {
+        name: sum(getattr(trade, name) for trade in run.trades)
+        for name in (
+            "slippage_cost_usd", "commission_cost_usd", "financing_cost_usd",
+        )
+    }
+    summed_costs["total_explicit_cost_usd"] = (
+        summed_costs["slippage_cost_usd"]
+        + summed_costs["commission_cost_usd"]
+        + summed_costs["financing_cost_usd"]
+    )
+    for name, expected in summed_costs.items():
+        if not math.isfinite(expected):
+            raise ValueError(f"trade {name} aggregate must remain finite")
+        if name not in run.metrics:
+            continue
+        claimed = run.metrics[name]
+        if type(claimed) not in (int, float):
+            raise ValueError(f"metric {name} must be finite numeric")
+        try:
+            if not math.isfinite(claimed) or claimed != expected:
+                raise ValueError(f"metric {name} conflicts with trade ledger")
+        except OverflowError as exc:
+            raise ValueError(f"metric {name} must be finite numeric") from exc
+
     summary = {
         "protocol": "fmp-phase3-backtest-run-v1",
         "run_identity": run.run_identity,

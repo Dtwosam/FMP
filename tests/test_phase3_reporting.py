@@ -1093,6 +1093,67 @@ class Phase3ReportingTests(unittest.TestCase):
             self.assertEqual(list(target.glob(".*.tmp")), [])
             self.assertFalse((target / "summary.json").exists())
 
+    def test_writer_rejects_mismatched_explicit_cost_metrics(self):
+        good = trade(trade_id="VALID", minutes=1, net_pnl_usd=10.0,
+                     slippage_cost_usd=1.0, commission_cost_usd=2.0,
+                     financing_cost_usd=-0.5)
+        for field, wrong in (
+            ("slippage_cost_usd", 2.0),
+            ("commission_cost_usd", 1.0),
+            ("financing_cost_usd", 0.5),
+            ("total_explicit_cost_usd", 3.5),
+        ):
+            with self.subTest(field=field):
+                run = BacktestRun(
+                    run_identity={}, trades=(good,), rejections=(),
+                    equity_checkpoints=(), metrics={field: wrong},
+                )
+                with tempfile.TemporaryDirectory() as root:
+                    target = Path(root) / "blocked"
+                    with mock.patch("pathlib.Path.mkdir", side_effect=AssertionError(
+                        "mismatched cost metrics cannot publish"
+                    )):
+                        with self.assertRaisesRegex(ValueError, field):
+                            write_backtest_artifacts(run, target)
+                    self.assertFalse(target.exists())
+
+    def test_writer_rejects_non_numeric_or_nonfinite_cost_metric_claim(self):
+        good = trade(trade_id="VALID", minutes=1, net_pnl_usd=10.0)
+        for wrong in (True, "0", None, float("nan"), 10 ** 400):
+            with self.subTest(value=repr(wrong)[:40]):
+                run = BacktestRun(
+                    run_identity={}, trades=(good,), rejections=(),
+                    equity_checkpoints=(),
+                    metrics={"commission_cost_usd": wrong},
+                )
+                with tempfile.TemporaryDirectory() as root:
+                    target = Path(root) / "blocked"
+                    with self.assertRaisesRegex(ValueError, "commission_cost_usd"):
+                        write_backtest_artifacts(run, target)
+                    self.assertFalse(target.exists())
+
+    def test_writer_preserves_reconciled_costs_with_financing_credit(self):
+        good = trade(trade_id="VALID", minutes=1, net_pnl_usd=10.0,
+                     slippage_cost_usd=1.0, commission_cost_usd=2.0,
+                     financing_cost_usd=-0.5)
+        expected = {
+            "slippage_cost_usd": 1.0,
+            "commission_cost_usd": 2.0,
+            "financing_cost_usd": -0.5,
+            "total_explicit_cost_usd": 2.5,
+        }
+        run = BacktestRun(
+            run_identity={}, trades=(good,), rejections=(),
+            equity_checkpoints=(), metrics=expected,
+        )
+        with tempfile.TemporaryDirectory() as root:
+            target = Path(root) / "valid"
+            write_backtest_artifacts(run, target)
+            self.assertEqual(
+                json.loads((target / "metrics.json").read_text("utf-8")),
+                expected,
+            )
+
     def test_artifact_bytes_and_digests_are_deterministic(self) -> None:
         one_trade = trade(trade_id="T-1", minutes=1, net_pnl_usd=10.0)
         rejection = RejectionRecord(
