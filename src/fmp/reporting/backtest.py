@@ -440,11 +440,24 @@ def write_backtest_artifacts(run: BacktestRun, out_dir: Path) -> dict[str, objec
             "slippage_cost_usd", "commission_cost_usd", "financing_cost_usd",
         )
     }
-    summed_costs["total_explicit_cost_usd"] = (
-        summed_costs["slippage_cost_usd"]
-        + summed_costs["commission_cost_usd"]
-        + summed_costs["financing_cost_usd"]
-    )
+    # Validate subtotal conversion before mixed int/float addition: a
+    # finite individual integer can yield a non-float-convertible sum.
+    for name, subtotal in summed_costs.items():
+        try:
+            if not math.isfinite(subtotal):
+                raise ValueError(f"trade {name} aggregate must remain finite")
+        except OverflowError as exc:
+            raise ValueError(f"trade {name} aggregate must remain finite") from exc
+    try:
+        summed_costs["total_explicit_cost_usd"] = (
+            summed_costs["slippage_cost_usd"]
+            + summed_costs["commission_cost_usd"]
+            + summed_costs["financing_cost_usd"]
+        )
+    except OverflowError as exc:
+        raise ValueError(
+            "trade total_explicit_cost_usd aggregate must remain finite"
+        ) from exc
     for name, expected in summed_costs.items():
         try:
             if not math.isfinite(expected):
