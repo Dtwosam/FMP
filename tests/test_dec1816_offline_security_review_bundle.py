@@ -260,6 +260,48 @@ class Phase8ABlockedSevenSourceIndexTests(unittest.TestCase):
         ))
         self.assertFalse(report["2023_run385_attempt1_authorized"])
 
+    def test_review_fingerprint_matches_full_canonical_index(self):
+        import hashlib
+        report = BUILD()
+        self.assertTrue(MOD["validate_review_index_fingerprint"](report))
+        fingerprint = report["offline_request_fingerprint_sha256"]
+        self.assertEqual(len(fingerprint), 64)
+        canonical = json.dumps({
+            k: v for k, v in report.items()
+            if k != "offline_request_fingerprint_sha256"
+        }, sort_keys=True, separators=(",", ":"), allow_nan=False)
+        self.assertEqual(hashlib.sha256(canonical.encode()).hexdigest(), fingerprint)
+
+    def test_review_fingerprint_is_deterministic_across_source_reads(self):
+        first, second = BUILD(), BUILD()
+        self.assertEqual(first["offline_request_fingerprint_sha256"],
+                         second["offline_request_fingerprint_sha256"])
+        self.assertEqual(first, second)
+
+    def test_review_fingerprint_rejects_edited_or_nonfinite_report(self):
+        import copy
+        report = copy.deepcopy(BUILD())
+        report["2023_run385_attempt1_authorized"] = True
+        with self.assertRaises(MOD["InvalidReviewBundle"]):
+            MOD["validate_review_index_fingerprint"](report)
+        report = copy.deepcopy(BUILD())
+        report["claimed_profit"] = float("inf")
+        with self.assertRaisesRegex(MOD["InvalidReviewBundle"], "nonfinite"):
+            MOD["validate_review_index_fingerprint"](report)
+
+    def test_markdown_and_json_include_same_local_index_digest(self):
+        report = BUILD()
+        md = MOD["format_blocked_review_bundle_markdown"](report)
+        self.assertIn(report["offline_request_fingerprint_sha256"], md)
+        out, err = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            code = MOD["main"](["--format", "json"])
+        self.assertEqual(code, 3)
+        self.assertEqual(err.getvalue(), "")
+        self.assertEqual(
+            json.loads(out.getvalue())["offline_request_fingerprint_sha256"],
+            report["offline_request_fingerprint_sha256"])
+
     def test_cli_success_is_blocked_and_invalid_has_no_stdout(self):
         out, err = io.StringIO(), io.StringIO()
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):

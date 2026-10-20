@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 import runpy
@@ -103,7 +104,7 @@ def compile_blocked_review_bundle(docs_root=None, workflow=None, worksheet=None)
             tuple(row["id"] for row in proofs)
     ):
         raise InvalidReviewBundle("eight MISSING independent owners disagree")
-    return {
+    payload = {
         "schema": "fmp_dec1816_source_only_security_review_bundle_v1",
         "disposition": "BLOCKED_NO_EXECUTION_PERMISSION",
         "material": "six_historical_sources_and_one_pinned_blank_worksheet",
@@ -141,6 +142,35 @@ def compile_blocked_review_bundle(docs_root=None, workflow=None, worksheet=None)
         "allowed_actions": [],
         "no_external_actions_performed": True,
     }
+    encoded = json.dumps(
+        payload, sort_keys=True, separators=(",", ":"), allow_nan=False,
+    ).encode("utf-8")
+    payload["offline_request_fingerprint_sha256"] = hashlib.sha256(
+        encoded).hexdigest()
+    return payload
+
+
+def validate_review_index_fingerprint(report):
+    """Check exact local JSON identity, NOT any external witness/signature."""
+    if type(report) is not dict:
+        raise InvalidReviewBundle("frozen index must be an ordinary dict")
+    fingerprint = report.get("offline_request_fingerprint_sha256")
+    if not (
+        type(fingerprint) is str and len(fingerprint) == 64
+        and all(c in "0123456789abcdef" for c in fingerprint)
+    ):
+        raise InvalidReviewBundle("source-only index digest is missing/malformed")
+    data = {k: v for k, v in report.items()
+            if k != "offline_request_fingerprint_sha256"}
+    try:
+        canonical = json.dumps(
+            data, sort_keys=True, separators=(",", ":"), allow_nan=False,
+        ).encode("utf-8")
+    except (TypeError, ValueError) as exc:
+        raise InvalidReviewBundle("source-only index has unsupported/nonfinite fields") from exc
+    if hashlib.sha256(canonical).hexdigest() != fingerprint:
+        raise InvalidReviewBundle("source-only index contents differ from SHA-256")
+    return True
 
 
 def format_blocked_review_bundle_markdown(report):
@@ -159,6 +189,7 @@ def format_blocked_review_bundle_markdown(report):
     if actual != canonical:
         raise InvalidReviewBundle(
             "human-readable bundle differs from canonical BLOCKED review index")
+    validate_review_index_fingerprint(report)
     identity = report["next_irreversible_annual_identity_no_dispatch"]
     lines = [
         "# Phase 8A — seven-source independent-review handoff",
@@ -209,6 +240,8 @@ def format_blocked_review_bundle_markdown(report):
         + report["historical_workflow_sha256"],
         "Pinned blank worksheet Git blob SHA-1: "
         + report["blank_worksheet_git_blob_sha1"],
+        "Offline request identity SHA-256 (NOT an attestation): "
+        + report["offline_request_fingerprint_sha256"],
     ])
     for key, value in report["five_documentary_source_sha256"].items():
         lines.append(f"{key}: sha256:{value}")
