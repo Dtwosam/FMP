@@ -868,6 +868,14 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
             "trades.jsonl": {item.name for item in fields(TradeRecord)},
             "rejections.jsonl": {item.name for item in fields(RejectionRecord)},
         }
+        # Economic totals must agree with the stored ledger, not just
+        # individual row arithmetic and a self-rehashed manifest.
+        ledger_totals: dict[str, int | float] = {
+            name: 0 for name in (
+                "net_pnl_usd", "slippage_cost_usd",
+                "commission_cost_usd", "financing_cost_usd",
+            )
+        }
         seen_trade_ids: set[str] = set()
         seen_trade_decisions: set[str] = set()
         seen_rejection_decisions: set[str] = set()
@@ -952,6 +960,8 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                             reconciled = False
                         if not reconciled:
                             raise ValueError("artifact report trade net PnL cost reconciliation mismatch")
+                        for economic in ledger_totals:
+                            ledger_totals[economic] += amounts[economic]
                         seen_trade_ids.add(trade_id)
                         seen_trade_decisions.add(decision)
                     else:
@@ -968,6 +978,33 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                 raise ValueError("artifact report changed since verification")
             if observed != counts[field]:
                 raise ValueError(f"artifact report {field} conflicts with JSONL records")
+        ledger_totals["total_explicit_cost_usd"] = (
+            ledger_totals["slippage_cost_usd"]
+            + ledger_totals["commission_cost_usd"]
+            + ledger_totals["financing_cost_usd"]
+        )
+        for name, expected in ledger_totals.items():
+            try:
+                finite = math.isfinite(expected)
+            except OverflowError:
+                finite = False
+            if not finite:
+                raise ValueError("artifact report aggregate trade economics must be finite")
+            if name not in metrics:
+                continue
+            claimed = metrics[name]
+            if type(claimed) not in (int, float):
+                raise ValueError(f"artifact report metric {name} must be finite numeric")
+            try:
+                # Serialized trades use canonical exit-time order; allow
+                # tiny summation drift versus the input order of the writer.
+                matches = math.isfinite(claimed) and math.isclose(
+                    claimed, expected, rel_tol=1e-12, abs_tol=1e-8,
+                )
+            except OverflowError:
+                matches = False
+            if not matches:
+                raise ValueError(f"artifact report metric {name} conflicts with trade ledger")
         if "trade_count" in metrics and (
             type(metrics["trade_count"]) is not int
             or metrics["trade_count"] != counts["trade_count"]
