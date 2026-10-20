@@ -22,7 +22,7 @@ def report_blocked_blank_worksheet(path=WORKSHEET):
     source = runpy.run_path(str(SOURCE_AUDIT))
     raw = source["_read_regular_nofollow"](Path(path))
     actual = hashlib.sha1(
-        b"blob " + str(len(raw)).encode("ascii") + b"\\0" + raw
+        b"blob " + str(len(raw)).encode("ascii") + bytes((0,)) + raw
     ).hexdigest()
     if actual != PINNED_BLANK_WORKSHEET_GIT_BLOB_SHA1:
         raise InvalidBlankWorksheet(
