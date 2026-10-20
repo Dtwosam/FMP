@@ -1332,6 +1332,53 @@ class Phase3ReportingTests(unittest.TestCase):
                     write_backtest_artifacts(run, path)
             self.assertFalse(path.exists())
 
+    def test_writer_rejects_overflowed_integer_cost_sum_cleanly(self):
+        gigantic = 10 ** 308
+        first = replace(
+            trade(trade_id="C1", minutes=1, net_pnl_usd=0.0),
+            financing_cost_usd=gigantic,
+        )
+        second = replace(
+            trade(trade_id="C2", minutes=3, net_pnl_usd=0.0),
+            financing_cost_usd=gigantic,
+        )
+        run = BacktestRun(
+            run_identity={}, trades=(first, second), rejections=(),
+            equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            path = Path(root) / "blocked"
+            with mock.patch("pathlib.Path.mkdir", side_effect=AssertionError(
+                "overflowed cost aggregation must not touch files"
+            )):
+                with self.assertRaisesRegex(ValueError, "aggregate"):
+                    write_backtest_artifacts(run, path)
+            self.assertFalse(path.exists())
+
+    def test_writer_rejects_overflowed_integer_gross_profit_cleanly(self):
+        gigantic = 10 ** 308
+        amounts = (gigantic, gigantic, -gigantic, -gigantic)
+        trades = tuple(
+            replace(
+                trade(trade_id=f"G{i}", minutes=i * 2 + 1,
+                      net_pnl_usd=0.0),
+                net_pnl_usd=value,
+            )
+            for i, value in enumerate(amounts)
+        )
+        run = BacktestRun(
+            run_identity={}, trades=trades, rejections=(),
+            equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            path = Path(root) / "blocked"
+            with mock.patch("pathlib.Path.mkdir", side_effect=AssertionError(
+                "integer gross PnL overflow must not create files"
+            )):
+                with self.assertRaisesRegex(ValueError, "aggregate"):
+                    write_backtest_artifacts(run, path)
+            self.assertFalse(path.exists())
+
     def test_artifact_bytes_and_digests_are_deterministic(self) -> None:
         one_trade = trade(trade_id="T-1", minutes=1, net_pnl_usd=10.0)
         rejection = RejectionRecord(
