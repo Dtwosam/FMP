@@ -212,7 +212,7 @@ def format_blocked_review_bundle_markdown(report):
         "operation is authorized.**",
         "",
     ])
-    return "\\n".join(lines)
+    return chr(10).join(lines)
 
 
 def main(argv=None):

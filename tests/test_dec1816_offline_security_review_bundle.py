@@ -171,6 +171,12 @@ class Phase8ABlockedSevenSourceIndexTests(unittest.TestCase):
         self.assertIn(report["blank_worksheet_git_blob_sha1"], md)
         self.assertIn("NOT current dispatch ref", md)
 
+    def test_human_index_uses_actual_markdown_lines_not_escaped_text(self):
+        md = MOD["format_blocked_review_bundle_markdown"](BUILD())
+        self.assertIn(chr(10) + "## Eight independently owned proofs", md)
+        self.assertNotIn(chr(92) + "n##", md)
+        self.assertGreater(md.count(chr(10)), 25)
+
     def test_human_index_refuses_injected_approval_field_or_proof(self):
         import copy
         report = copy.deepcopy(BUILD())
