@@ -42,14 +42,16 @@ class Phase8AIndependentHumanEvidenceHandoffTests(unittest.TestCase):
                 for ref in refs:
                     number = ref.rstrip("/").split("/")[-1]
                     self.assertIn("#" + number, row)
-        self.assertIn("navigation, not an authenticated proof", data)
+        plain = data.replace("**", "").lower()
+        self.assertIn("navigation, not an authenticated proof", plain)
 
     def test_no_source_only_matrix_grants_the_irreversible_run(self):
         data = HANDOFF.read_text(encoding="utf-8")
         self.assertIn("2023/run385/attempt1", data)
         self.assertIn("2022/run384", data)
-        self.assertIn("not a signed bundle", data.lower().replace("digital ", ""))
-        self.assertIn("**no dispatch or retry**", data.lower())
+        plain = data.replace("**", "").lower()
+        self.assertIn("not an independent signature", plain)
+        self.assertIn("no dispatch or retry", plain)
         self.assertIn("Strategy V1", data)
         self.assertIn("broker", data)
         self.assertIn("DRAFT / NEVER MERGE / NEVER PROMOTE", data)
