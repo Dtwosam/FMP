@@ -101,6 +101,40 @@ class Phase3CostTests(unittest.TestCase):
                 symbol="EURUSD",
             )
 
+    def test_slippage_rejects_boolean_or_nonnumeric_quote_price(self):
+        for price in (True, False, "1.200", None, 10 ** 400):
+            with self.subTest(price=repr(price)):
+                with self.assertRaisesRegex(ValueError, "price"):
+                    apply_adverse_slippage(
+                        price, side=OrderSide.BUY, pips=1.0,
+                        symbol="EURUSD",
+                    )
+
+    def test_slippage_rejects_boolean_or_nonnumeric_pip_amount(self):
+        for pips in (True, False, "1.0", None, 10 ** 400):
+            with self.subTest(pips=repr(pips)):
+                with self.assertRaisesRegex(ValueError, "pips|finite"):
+                    apply_adverse_slippage(
+                        1.2, side=OrderSide.SELL, pips=pips,
+                        symbol="EURUSD",
+                    )
+
+    def test_fixed_commission_rate_rejects_boolean_or_untyped_input(self):
+        for rate in (True, False, "30.0", None, 10 ** 400):
+            with self.subTest(rate=repr(rate)):
+                with self.assertRaisesRegex(ValueError, "commission rate"):
+                    FixedCommissionPerMillion(usd_per_million_per_side=rate)
+
+    def test_valid_int_and_float_slippage_inputs_still_adverse(self):
+        for price in (1, 1.2):
+            for pips in (0, 1, 1.0):
+                with self.subTest(price=price, pips=pips):
+                    out = apply_adverse_slippage(
+                        price, side=OrderSide.BUY, pips=pips,
+                        symbol="EURUSD",
+                    )
+                    self.assertGreaterEqual(out, price)
+
     def test_zero_commission_is_exact_and_serializable(self) -> None:
         model = ZeroCommission()
         self.assertEqual(model.cost_usd(units=100_000), 0.0)
