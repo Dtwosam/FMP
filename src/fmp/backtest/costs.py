@@ -30,10 +30,17 @@ def apply_adverse_slippage(
 ) -> float:
     if type(side) is not OrderSide:
         raise ValueError("slippage side must be an OrderSide enum")
-    if not math.isfinite(price) or price <= 0:
-        raise ValueError("price must be finite and positive")
-    if not math.isfinite(pips) or pips < 0:
-        raise ValueError("slippage pips must be finite and non-negative")
+    if type(price) not in (int, float):
+        raise ValueError("price must be a finite positive number, not a boolean")
+    if type(pips) not in (int, float):
+        raise ValueError("slippage pips must be finite numeric, not a boolean")
+    try:
+        if not math.isfinite(price) or price <= 0:
+            raise ValueError("price must be finite and positive")
+        if not math.isfinite(pips) or pips < 0:
+            raise ValueError("slippage pips must be finite and non-negative")
+    except OverflowError as exc:
+        raise ValueError("price and slippage pips must be finite") from exc
     delta = pips * pip_size(symbol)
     out = price + delta if side is OrderSide.BUY else price - delta
     if not math.isfinite(out) or out <= 0:
@@ -78,8 +85,13 @@ class FixedCommissionPerMillion:
 
     def __post_init__(self) -> None:
         value = self.usd_per_million_per_side
-        if not math.isfinite(value) or value < 0:
-            raise ValueError("commission rate must be finite and non-negative")
+        if type(value) not in (int, float):
+            raise ValueError("commission rate must be finite numeric, not a boolean")
+        try:
+            if not math.isfinite(value) or value < 0:
+                raise ValueError("commission rate must be finite and non-negative")
+        except OverflowError as exc:
+            raise ValueError("commission rate must be finite and non-negative") from exc
 
     def cost_usd(self, *, units: int) -> float:
         if type(units) is not int:
