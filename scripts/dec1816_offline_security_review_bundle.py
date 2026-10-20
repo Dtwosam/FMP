@@ -131,6 +131,90 @@ def compile_blocked_review_bundle(docs_root=None, workflow=None, worksheet=None)
     }
 
 
+def format_blocked_review_bundle_markdown(report):
+    """Human-review display of exact re-derived offline evidence, never approval."""
+    if type(report) is not dict:
+        raise InvalidReviewBundle("human-readable bundle must be a frozen dict")
+    try:
+        actual = json.dumps(
+            report, sort_keys=True, separators=(",", ":"), allow_nan=False)
+        canonical = json.dumps(
+            compile_blocked_review_bundle(),
+            sort_keys=True, separators=(",", ":"), allow_nan=False)
+    except (TypeError, ValueError) as exc:
+        raise InvalidReviewBundle(
+            "unsupported or nonfinite seven-source review data") from exc
+    if actual != canonical:
+        raise InvalidReviewBundle(
+            "human-readable bundle differs from canonical BLOCKED review index")
+    identity = report["next_irreversible_annual_identity_no_dispatch"]
+    lines = [
+        "# Phase 8A — seven-source independent-review handoff",
+        "",
+        "**BLOCKED. NO PROTECTED RESEARCH, BROKER ORDER OR TRADING PERMISSION.**",
+        "",
+        "This is a frozen historical source-only request, NOT current GitHub "
+        "administrator, runner, OS or one-shot inventory attestation.",
+        "",
+        "## Irreversible next annual identity — STILL BLOCKED",
+        "",
+        f"Annual segment: {identity['segment']}",
+        f"Run: {identity['run_number']}",
+        f"Attempt: {identity['attempt_number']}",
+        f"Authorization: **{identity['authorization']}**",
+        "",
+        "## Eight independently owned proofs — all MISSING",
+        "",
+        "| Required proof | Reviewer role | Status |",
+        "| --- | --- | --- |",
+    ]
+    for row in report["eight_missing_independent_proofs"]:
+        lines.append(
+            f"| {row['id']} | {row['review_role']} | **{row['status']}** |"
+        )
+    lines.extend([
+        "",
+        "## External acceptance requirements — NOT attestations",
+        "",
+    ])
+    for row in report["eight_missing_independent_proofs"]:
+        lines.extend([
+            f"**{row['id']}** — {row['review_role']} (MISSING)",
+            "",
+            report["independent_proof_acceptance_criteria"][row["id"]],
+            "",
+        ])
+    lines.extend([
+        "## Historical reviewed source identities — NOT LIVE",
+        "",
+        "Observation date (stale): "
+        + report["observed_date_utc_not_current_attestation"],
+        "Public main SHA (NOT current dispatch ref): "
+        + report["observed_main_sha_not_live_ref"],
+        "Pinned historical workflow SHA-256: "
+        + report["historical_workflow_sha256"],
+        "Pinned blank worksheet Git blob SHA-1: "
+        + report["blank_worksheet_git_blob_sha1"],
+    ])
+    for key, value in report["five_documentary_source_sha256"].items():
+        lines.append(f"{key}: sha256:{value}")
+    lines.extend([
+        "",
+        "## Downstream research and trading — BLOCKED",
+        "",
+    ])
+    for stage in report["blocked_downstream_research_and_trading_stages"]:
+        lines.append(f"- {stage}: **BLOCKED**")
+    lines.extend([
+        "",
+        "**No reviewer evidence was collected. No phase advancement, "
+        "run385 dispatch/retry, shadow/demo/live broker action or real-money "
+        "operation is authorized.**",
+        "",
+    ])
+    return "\\n".join(lines)
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(
         description="Seven-source historical BLOCKED independent proof review"
@@ -138,16 +222,22 @@ def main(argv=None):
     parser.add_argument("--docs-root", type=Path)
     parser.add_argument("--workflow", type=Path)
     parser.add_argument("--worksheet", type=Path)
+    parser.add_argument("--format", choices=("json", "markdown"), default="json")
     args = parser.parse_args(argv)
     try:
         report = compile_blocked_review_bundle(
             args.docs_root, args.workflow, args.worksheet
         )
+        output = (
+            format_blocked_review_bundle_markdown(report)
+            if args.format == "markdown"
+            else json.dumps(report, sort_keys=True, indent=2, allow_nan=False)
+        )
     except (OSError, UnicodeError, TypeError, ValueError, KeyError) as exc:
         print("BLOCKED: invalid source-only review: " + str(exc),
               file=sys.stderr)
         return 2
-    print(json.dumps(report, sort_keys=True, indent=2, allow_nan=False))
+    print(output)
     return 3  # No action permission can be inferred from a valid report.
 
 
