@@ -454,6 +454,52 @@ class Phase3ReportingTests(unittest.TestCase):
             self.assertEqual(summary["equity_checkpoints"][0]["realized_risk_equity_usd"], 10_000.0)
             self.assertEqual(rejection["code"], "NO_TRADE")
 
+    def test_artifact_writer_rejects_surrogate_text_before_io(self):
+        for string in ("bad\ud800text", "\udfff", "before\ud812after"):
+            with self.subTest(value=ascii(string)):
+                run = BacktestRun(
+                    run_identity={"reason": string}, trades=(), rejections=(),
+                    equity_checkpoints=(), metrics={},
+                )
+                with tempfile.TemporaryDirectory() as root:
+                    target = Path(root) / "missing"
+                    with mock.patch("pathlib.Path.mkdir", side_effect=AssertionError(
+                        "invalid unicode cannot write output"
+                    )):
+                        with self.assertRaisesRegex(ValueError, "surrogate"):
+                            write_backtest_artifacts(run, target)
+                    self.assertFalse(target.exists())
+
+    def test_artifact_writer_rejects_giant_integer_metadata_before_io(self):
+        for value in (2 ** 512, -(2 ** 512), 10 ** 400):
+            with self.subTest(bits=value.bit_length()):
+                run = BacktestRun(
+                    run_identity={"unsafe_counter": value}, trades=(),
+                    rejections=(), equity_checkpoints=(), metrics={},
+                )
+                with tempfile.TemporaryDirectory() as root:
+                    target = Path(root) / "missing"
+                    with mock.patch("pathlib.Path.mkdir", side_effect=AssertionError(
+                        "giant integer cannot write output"
+                    )):
+                        with self.assertRaisesRegex(ValueError, "safe width"):
+                            write_backtest_artifacts(run, target)
+                    self.assertFalse(target.exists())
+
+    def test_artifact_writer_keeps_valid_unicode_and_integer_boundaries(self):
+        run = BacktestRun(
+            run_identity={
+                "message": "Café 日本語 - synthetic",
+                "count": 2 ** 511,
+                "line": "regular text",
+            }, trades=(), rejections=(), equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            target = Path(root) / "valid"
+            write_backtest_artifacts(run, target)
+            saved = json.loads((target / "summary.json").read_text("utf-8"))
+            self.assertEqual(saved["run_identity"], run.run_identity)
+
     def test_artifact_bytes_and_digests_are_deterministic(self) -> None:
         one_trade = trade(trade_id="T-1", minutes=1, net_pnl_usd=10.0)
         rejection = RejectionRecord(

@@ -173,9 +173,17 @@ def _jsonable(value: object) -> object:
         return {key: _jsonable(item) for key, item in value.items()}
     if isinstance(value, (tuple, list)):
         return [_jsonable(item) for item in value]
-    if isinstance(value, float) and not math.isfinite(value):
+    if type(value) is float and not math.isfinite(value):
         raise ValueError("cannot serialize non-finite float")
-    if value is None or isinstance(value, (str, int, float, bool)):
+    if type(value) is str:
+        if any(0xD800 <= ord(char) <= 0xDFFF for char in value):
+            raise ValueError("serialized string cannot contain Unicode surrogates")
+        return value
+    if type(value) is int:
+        if value.bit_length() > 512:
+            raise ValueError("serialized integer exceeds safe width")
+        return value
+    if value is None or type(value) in (float, bool):
         return value
     raise TypeError(f"unsupported deterministic serialization type: {type(value).__name__}")
 
