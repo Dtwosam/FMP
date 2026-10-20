@@ -123,6 +123,18 @@ def compile_blocked_review_bundle(docs_root=None, workflow=None, worksheet=None)
         "eight_missing_independent_proofs": proofs,
         "independent_proof_acceptance_criteria":
             first["independent_proof_acceptance_criteria"],
+        "unfulfilled_independent_review_requests": [
+            {
+                "id": row["id"],
+                "review_role": row["review_role"],
+                "acceptance_requirement":
+                    first["independent_proof_acceptance_criteria"][row["id"]],
+                "status": "MISSING",
+                "evidence_ref": None,
+                "reviewer_signoff": None,
+            }
+            for row in proofs
+        ],
         "independent_external_admin_runner_proof_verified": False,
         "2023_run385_attempt1_authorized": False,
         "broker_demo_live_or_real_money_authorized": False,
@@ -177,11 +189,13 @@ def format_blocked_review_bundle_markdown(report):
         "## External acceptance requirements — NOT attestations",
         "",
     ])
-    for row in report["eight_missing_independent_proofs"]:
+    for row in report["unfulfilled_independent_review_requests"]:
         lines.extend([
             f"**{row['id']}** — {row['review_role']} (MISSING)",
             "",
-            report["independent_proof_acceptance_criteria"][row["id"]],
+            row["acceptance_requirement"],
+            "",
+            "Evidence reference: MISSING; reviewer signoff: MISSING.",
             "",
         ])
     lines.extend([

@@ -215,6 +215,51 @@ class Phase8ABlockedSevenSourceIndexTests(unittest.TestCase):
         self.assertEqual(out.getvalue(), "")
         self.assertIn("BLOCKED:", err.getvalue())
 
+    def test_eight_review_requests_bind_roles_and_exact_criteria(self):
+        report = BUILD()
+        requests = report["unfulfilled_independent_review_requests"]
+        self.assertEqual(len(requests), 8)
+        for request, proof in zip(requests, report["eight_missing_independent_proofs"]):
+            with self.subTest(proof=proof["id"]):
+                self.assertEqual(request["id"], proof["id"])
+                self.assertEqual(request["review_role"], proof["review_role"])
+                self.assertEqual(
+                    request["acceptance_requirement"],
+                    report["independent_proof_acceptance_criteria"][proof["id"]])
+
+    def test_review_requests_contain_no_signoffs_evidence_or_execution(self):
+        requests = BUILD()["unfulfilled_independent_review_requests"]
+        expected_fields = {
+            "id", "review_role", "acceptance_requirement",
+            "status", "evidence_ref", "reviewer_signoff"
+        }
+        for request in requests:
+            with self.subTest(request=request["id"]):
+                self.assertEqual(set(request), expected_fields)
+                self.assertEqual(request["status"], "MISSING")
+                self.assertIsNone(request["evidence_ref"])
+                self.assertIsNone(request["reviewer_signoff"])
+
+    def test_human_render_shows_no_collected_owner_evidence(self):
+        md = MOD["format_blocked_review_bundle_markdown"](BUILD())
+        self.assertEqual(md.count("Evidence reference: MISSING; reviewer signoff: MISSING."), 8)
+        self.assertIn("NOT attestations", md)
+        self.assertIn("**BLOCKED.", md)
+
+    def test_json_cli_review_requests_are_all_unfulfilled(self):
+        out, err = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            code = MOD["main"](["--format", "json"])
+        self.assertEqual(code, 3)
+        self.assertEqual(err.getvalue(), "")
+        report = json.loads(out.getvalue())
+        self.assertEqual(len(report["unfulfilled_independent_review_requests"]), 8)
+        self.assertTrue(all(
+            row["evidence_ref"] is None and row["reviewer_signoff"] is None
+            for row in report["unfulfilled_independent_review_requests"]
+        ))
+        self.assertFalse(report["2023_run385_attempt1_authorized"])
+
     def test_cli_success_is_blocked_and_invalid_has_no_stdout(self):
         out, err = io.StringIO(), io.StringIO()
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
