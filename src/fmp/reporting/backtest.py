@@ -16,8 +16,13 @@ ARTIFACT_PROTOCOL = "fmp-phase3-backtest-artifacts-v1"
 
 
 def _validate_starting_equity(value: float) -> None:
-    if not math.isfinite(value) or value <= 0:
+    if type(value) not in (int, float):
         raise ValueError("starting equity must be finite and positive")
+    try:
+        if not math.isfinite(value) or value <= 0:
+            raise ValueError("starting equity must be finite and positive")
+    except OverflowError as exc:
+        raise ValueError("starting equity must be finite and positive") from exc
 
 
 def _longest_streak(values: Sequence[float], *, winning: bool) -> int:
@@ -75,7 +80,7 @@ def compute_backtest_metrics(
     commission_cost = sum(trade.commission_cost_usd for trade in trades)
     financing_cost = sum(trade.financing_cost_usd for trade in trades)
 
-    return {
+    metrics = {
         "net_pnl_usd": net_pnl,
         "net_return": net_pnl / starting_equity_usd,
         "trade_count": trade_count,
@@ -96,6 +101,12 @@ def compute_backtest_metrics(
         "financing_cost_usd": financing_cost,
         "total_explicit_cost_usd": slippage_cost + commission_cost + financing_cost,
     }
+    # Finite individual trades can still overflow during aggregation or
+    # ratio calculation. Never return non-finite economic evidence.
+    for name, value in metrics.items():
+        if type(value) is float and not math.isfinite(value):
+            raise ValueError(f"backtest metric {name} must remain finite")
+    return metrics
 
 
 def _jsonable(value: object) -> object:
