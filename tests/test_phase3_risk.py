@@ -315,6 +315,37 @@ class Phase3RiskPolicyTests(unittest.TestCase):
         self.assertEqual(release_risk(self.state, position_id="P-1"), 25.0)
         self.assertEqual(self.state.total_reserved_risk_usd, 0.0)
 
+    def test_realized_pnl_rejects_untyped_config_without_state_mutation(self):
+        for invalid in (None, True, 0, "RiskConfig", {}, [], object()):
+            with self.subTest(config_type=type(invalid).__name__):
+                state = RiskState(starting_equity_usd=10_000.0)
+                reserve_risk(state, position_id="existing", amount_usd=25.0)
+                with self.assertRaisesRegex(ValueError, "RiskConfig"):
+                    record_realized_pnl(
+                        state, timestamp_utc=self.ts, pnl_usd=-20.0,
+                        config=invalid,
+                    )
+                self.assertEqual(state.risk_equity_usd, 10_000.0)
+                self.assertIsNone(state.current_utc_date)
+                self.assertEqual(state.day_realized_pnl_usd, 0.0)
+                self.assertEqual(state.reservations_usd, {"existing": 25.0})
+                self.assertFalse(state.daily_halt_active)
+
+    def test_realized_pnl_does_not_read_hostile_config_getters(self):
+        class HostileConfig:
+            @property
+            def daily_loss_halt_fraction(self):
+                raise AssertionError("unexpected config property access")
+
+        state = RiskState(starting_equity_usd=10_000.0)
+        with self.assertRaisesRegex(ValueError, "RiskConfig"):
+            record_realized_pnl(
+                state, timestamp_utc=self.ts, pnl_usd=25.0,
+                config=HostileConfig(),
+            )
+        self.assertEqual(state.risk_equity_usd, 10_000.0)
+        self.assertIsNone(state.current_utc_date)
+
     def test_realized_equity_overflow_fails_before_mutating_risk_state(self):
         state = RiskState(starting_equity_usd=1e308)
         self.assertIsNone(state.current_utc_date)

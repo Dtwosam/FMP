@@ -137,6 +137,10 @@ def record_realized_pnl(
     config: RiskConfig,
 ) -> None:
     _require_utc(timestamp_utc, field_name="timestamp_utc")
+    # Validate before changing the UTC day or realized equity. A hostile or
+    # malformed config must never leave partial PnL state behind.
+    if type(config) is not RiskConfig:
+        raise ValueError("config must be a RiskConfig record")
     if type(pnl_usd) not in (int, float):
         raise ValueError("realized PnL must be a finite number")
     try:
