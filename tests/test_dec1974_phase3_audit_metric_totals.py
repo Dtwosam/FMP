@@ -6,6 +6,7 @@ import hashlib
 import json
 import tempfile
 import unittest
+from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -123,6 +124,91 @@ class Phase3AuditLedgerMetricTotalsTests(unittest.TestCase):
             _forge_metrics(folder, manifest, "net_pnl_usd", True)
             self.assertEqual(verify_backtest_artifacts(folder), manifest)
             with self.assertRaisesRegex(ValueError, "metric net_pnl_usd must be finite"):
+                audit_backtest_artifact_structure(folder)
+
+
+def _run_winning_and_losing(metrics: dict[str, object]) -> BacktestRun:
+    winner = _sample_trade()
+    loser = replace(
+        winner,
+        trade_id="AUDIT-T2",
+        decision_id="AUDIT-D2",
+        entry_timestamp_utc=STAMP + timedelta(minutes=5),
+        exit_timestamp_utc=STAMP + timedelta(minutes=6),
+        gross_pnl_usd=-4.0,
+        slippage_cost_usd=0.0,
+        commission_cost_usd=0.0,
+        financing_cost_usd=0.0,
+        net_pnl_usd=-4.0,
+        risk_equity_before_usd=10_011.0,
+        risk_equity_after_usd=10_007.0,
+    )
+    return BacktestRun(
+        run_identity={},
+        trades=(winner, loser),
+        rejections=(),
+        equity_checkpoints=(),
+        metrics=metrics,
+    )
+
+
+class Phase3AuditProfitabilityMetricTests(unittest.TestCase):
+    def test_audit_accepts_valid_gross_profit_loss_factor(self):
+        metrics = {
+            "trade_count": 2,
+            "net_pnl_usd": 7.0,
+            "gross_profit_usd": 11.0,
+            "gross_loss_usd": 4.0,
+            "profit_factor": 2.75,
+        }
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(_run_winning_and_losing(metrics), folder)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 2,
+            )
+
+    def test_audit_accepts_null_profit_factor_without_losses(self):
+        metrics = {
+            "trade_count": 1,
+            "gross_profit_usd": 11.0,
+            "gross_loss_usd": 0.0,
+            "profit_factor": None,
+        }
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(_run(metrics), folder)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 1,
+            )
+
+    def test_audit_refuses_rehashed_gross_profit_or_profit_factor(self):
+        metrics = {
+            "trade_count": 2,
+            "gross_profit_usd": 11.0,
+            "gross_loss_usd": 4.0,
+            "profit_factor": 2.75,
+        }
+        for name in ("gross_profit_usd", "profit_factor"):
+            with self.subTest(metric=name), tempfile.TemporaryDirectory() as home:
+                folder = Path(home) / "evidence"
+                manifest = write_backtest_artifacts(
+                    _run_winning_and_losing(metrics), folder
+                )
+                _forge_metrics(folder, manifest, name, 88.0)
+                self.assertEqual(verify_backtest_artifacts(folder), manifest)
+                with self.assertRaisesRegex(ValueError, "conflicts with trade ledger"):
+                    audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_nonnull_profit_factor_without_loss(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _run({"trade_count": 1, "profit_factor": None}), folder
+            )
+            _forge_metrics(folder, manifest, "profit_factor", 9.0)
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "metric profit_factor conflicts"):
                 audit_backtest_artifact_structure(folder)
 
 
