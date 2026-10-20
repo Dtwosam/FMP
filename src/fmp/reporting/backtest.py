@@ -611,14 +611,17 @@ def _manifest_unique_object_pairs(pairs: list[tuple[str, object]]) -> dict[str, 
     return result
 
 
-def _open_regular_artifact(path: Path):
+def _open_regular_artifact(path: Path, *, root_fd: int):
     """Open a no-follow regular file without blocking on a FIFO leaf."""
     nofollow = getattr(os, "O_NOFOLLOW", None)
     nonblock = getattr(os, "O_NONBLOCK", None)
     if type(nofollow) is not int or type(nonblock) is not int:
         raise ValueError("artifact verification requires no-follow file opening")
     try:
-        fd = os.open(path, os.O_RDONLY | nofollow | nonblock)
+        fd = os.open(
+            path.name, os.O_RDONLY | nofollow | nonblock,
+            dir_fd=root_fd,
+        )
     except OSError as exc:
         raise ValueError("artifact evidence must be a regular file") from exc
     try:
@@ -644,10 +647,27 @@ def verify_backtest_artifacts(out_dir: Path) -> dict[str, object]:
             raise ValueError("artifact root cannot contain symlink ancestors")
     if root.is_symlink() or not root.is_dir():
         raise ValueError("artifact root must be a direct directory")
+    directory_flag = getattr(os, "O_DIRECTORY", None)
+    nofollow = getattr(os, "O_NOFOLLOW", None)
+    if type(directory_flag) is not int or type(nofollow) is not int:
+        raise ValueError("artifact verification requires no-follow directory opening")
+    try:
+        root_fd = os.open(root, os.O_RDONLY | directory_flag | nofollow)
+    except OSError as exc:
+        raise ValueError("artifact root must be a direct directory") from exc
+    try:
+        if not stat.S_ISDIR(os.fstat(root_fd).st_mode):
+            raise ValueError("artifact root must be a direct directory")
+        return _verify_artifacts_in_root(root, root_fd)
+    finally:
+        os.close(root_fd)
+
+
+def _verify_artifacts_in_root(root: Path, root_fd: int) -> dict[str, object]:
     manifest_file = root / "manifest.json"
     if manifest_file.is_symlink() or not manifest_file.is_file():
         raise ValueError("artifact manifest must be a regular file")
-    with _open_regular_artifact(manifest_file) as handle:
+    with _open_regular_artifact(manifest_file, root_fd=root_fd) as handle:
         if os.fstat(handle.fileno()).st_size > 262_144:
             raise ValueError("artifact manifest exceeds size limit")
         raw_manifest = handle.read(262_145)
@@ -700,7 +720,7 @@ def verify_backtest_artifacts(out_dir: Path) -> dict[str, object]:
         # evidence JSONL file in memory.
         observed_size = 0
         observed_hash = hashlib.sha256()
-        with _open_regular_artifact(path) as handle:
+        with _open_regular_artifact(path, root_fd=root_fd) as handle:
             while block := handle.read(1024 * 1024):
                 observed_size += len(block)
                 if observed_size > size:
