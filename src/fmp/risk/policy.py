@@ -102,11 +102,26 @@ def record_realized_pnl(
     config: RiskConfig,
 ) -> None:
     _require_utc(timestamp_utc, field_name="timestamp_utc")
-    if not math.isfinite(pnl_usd):
-        raise ValueError("realized PnL must be finite")
+    if type(pnl_usd) not in (int, float):
+        raise ValueError("realized PnL must be a finite number")
+    try:
+        if not math.isfinite(pnl_usd):
+            raise ValueError("realized PnL must be finite")
+        next_equity = state.risk_equity_usd + pnl_usd
+        day_base = (
+            state.day_realized_pnl_usd
+            if state.current_utc_date == timestamp_utc.date()
+            else 0.0
+        )
+        next_day_realized = day_base + pnl_usd
+    except OverflowError as exc:
+        raise ValueError("realized equity and daily PnL must remain finite") from exc
+    if not math.isfinite(next_equity) or not math.isfinite(next_day_realized):
+        raise ValueError("realized equity and daily PnL must remain finite")
+    # Reject all invalid arithmetic before changing day status or equity.
     roll_utc_day(state, timestamp_utc=timestamp_utc)
-    state.risk_equity_usd += pnl_usd
-    state.day_realized_pnl_usd += pnl_usd
+    state.risk_equity_usd = next_equity
+    state.day_realized_pnl_usd = next_day_realized
     threshold = -config.daily_loss_halt_fraction * state.day_start_equity_usd
     if not state.daily_halt_active and state.day_realized_pnl_usd <= threshold:
         state.daily_halt_active = True
