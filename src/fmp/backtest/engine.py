@@ -176,7 +176,8 @@ def _run_identity(
         "risk_config": config.risk_config.to_config(),
         "commission_model": dict(config.commission_model.to_config()),
         "financing_model": dict(config.financing_model.to_config()),
-        "decision_config": dict(config.decision_config),
+        # Never expose aliases to nested config objects in run evidence.
+        "decision_config": deepcopy(dict(config.decision_config)),
     }
     if config.execution_timing_mode != NEXT_SUPPLIED_BAR:
         identity["execution_timing_mode"] = config.execution_timing_mode
