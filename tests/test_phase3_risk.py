@@ -199,6 +199,46 @@ class Phase3RiskPolicyTests(unittest.TestCase):
         self.state = RiskState(starting_equity_usd=10_000.0)
         self.ts = datetime(2026, 9, 14, 0, 1, tzinfo=timezone.utc)
 
+    def test_risk_assessment_rejects_untyped_config_without_day_mutation(self):
+        for invalid in (None, True, "RiskConfig", [], {}, object()):
+            with self.subTest(config_type=type(invalid).__name__):
+                state = RiskState(starting_equity_usd=10_000.0)
+                reserve_risk(state, position_id="held", amount_usd=15.0)
+                with self.assertRaisesRegex(ValueError, "RiskConfig"):
+                    assess_decision(
+                        decision=directional_decision(),
+                        reference_entry_price=1.1,
+                        timestamp_utc=self.ts,
+                        config=invalid,
+                        state=state,
+                    )
+                self.assertIsNone(state.current_utc_date)
+                self.assertEqual(state.risk_equity_usd, 10_000.0)
+                self.assertEqual(state.reservations_usd, {"held": 15.0})
+                self.assertFalse(state.daily_halt_active)
+
+    def test_risk_assessment_rejects_hostile_decision_and_invalid_state(self):
+        class HostileDecision:
+            @property
+            def direction(self):
+                raise AssertionError("hostile decision getter was evaluated")
+
+        state = RiskState(starting_equity_usd=10_000.0)
+        with self.assertRaisesRegex(ValueError, "Decision"):
+            assess_decision(
+                decision=HostileDecision(), reference_entry_price=1.1,
+                timestamp_utc=self.ts, config=self.config, state=state,
+            )
+        self.assertIsNone(state.current_utc_date)
+        for invalid_state in (None, {}, object()):
+            with self.subTest(state=type(invalid_state).__name__):
+                with self.assertRaisesRegex(ValueError, "RiskState"):
+                    assess_decision(
+                        decision=directional_decision(),
+                        reference_entry_price=1.1, timestamp_utc=self.ts,
+                        config=self.config, state=invalid_state,
+                    )
+
     def test_default_quarter_percent_risk_is_approved(self) -> None:
         result = assess_decision(
             decision=directional_decision(),
