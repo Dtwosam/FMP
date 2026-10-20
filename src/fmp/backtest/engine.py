@@ -59,6 +59,14 @@ def _require_utc(value: datetime, *, field: str) -> None:
         raise ValueError(f"{field} must use UTC")
 
 
+def _has_unprintable_decision_character(value: str) -> bool:
+    return any(
+        ord(char) < 32 or ord(char) == 127
+        or 0xD800 <= ord(char) <= 0xDFFF
+        for char in value
+    )
+
+
 def _freeze_decision_metadata(
     value: object, *, depth: int = 0,
     budget: list[int] | None = None,
@@ -74,8 +82,9 @@ def _freeze_decision_metadata(
     if type(value) in (dict, MappingProxyType):
         snapshot: dict[str, object] = {}
         for key, item in value.items():
-            if type(key) is not str or not key or any(
-                ord(char) < 32 or ord(char) == 127 for char in key
+            if (
+                type(key) is not str or not key
+                or _has_unprintable_decision_character(key)
             ):
                 raise ValueError(
                     "decision_config keys must be nonempty printable strings"
@@ -87,7 +96,13 @@ def _freeze_decision_metadata(
             _freeze_decision_metadata(item, depth=depth + 1, budget=budget)
             for item in value
         )
-    if value is None or type(value) in (bool, str):
+    if type(value) is str:
+        if _has_unprintable_decision_character(value):
+            raise ValueError(
+                "decision_config string values must contain printable characters"
+            )
+        return value
+    if value is None or type(value) is bool:
         return value
     if type(value) is int:
         if value.bit_length() > 512:
