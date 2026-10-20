@@ -652,7 +652,9 @@ def verify_backtest_artifacts(out_dir: Path) -> dict[str, object]:
         manifest = json.loads(
             raw_manifest, object_pairs_hook=_manifest_unique_object_pairs,
         )
-    except (ValueError, UnicodeDecodeError) as exc:
+    except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+        # Deliberately retain the duplicate-key ValueError from the
+        # object_pairs_hook, rather than hiding a precise tamper reason.
         raise ValueError("artifact manifest must be valid JSON") from exc
     if (
         type(manifest) is not dict
