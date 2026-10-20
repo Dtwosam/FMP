@@ -240,6 +240,36 @@ class Phase3EngineTests(unittest.TestCase):
         self.assertEqual(instance.timeframe, "1m")
         self.assertEqual(instance.code_commit, "reviewed-synthetic-test-hash")
 
+    def test_backtest_time_window_rejects_nondatetime_inputs(self):
+        for field in ("requested_start_utc", "requested_end_utc"):
+            for value in (None, "2026-09-14T00:00:00Z", 42, {},
+                          DAY.date()):
+                with self.subTest(field=field, value=repr(value)):
+                    with self.assertRaisesRegex(ValueError, field):
+                        replace(config(), **{field: value})
+
+    def test_backtest_time_window_rejects_naive_or_non_utc_datetimes(self):
+        for field in ("requested_start_utc", "requested_end_utc"):
+            for value in (
+                datetime(2026, 9, 14),
+                datetime(
+                    2026, 9, 14,
+                    tzinfo=timezone(timedelta(hours=1))
+                ),
+            ):
+                with self.subTest(field=field, value=repr(value)):
+                    with self.assertRaisesRegex(ValueError, "UTC"):
+                        replace(config(), **{field: value})
+
+    def test_backtest_time_window_allows_valid_utc_interval(self):
+        value = replace(
+            config(), requested_start_utc=DAY,
+            requested_end_utc=DAY + timedelta(hours=2)
+        )
+        self.assertEqual(value.requested_start_utc, DAY)
+        self.assertGreater(value.requested_end_utc,
+                           value.requested_start_utc)
+
     def test_no_trade_is_preserved_as_reasoned_record(self) -> None:
         decision = Decision(
             decision_id="NT-1",
