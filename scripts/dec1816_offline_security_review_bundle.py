@@ -64,6 +64,12 @@ def compile_blocked_review_bundle(docs_root=None, workflow=None, worksheet=None)
             second["pinned_historical_worksheet_git_blob_sha1"],
         "observed_main_sha_not_live_ref":
             first["source_main_sha_not_current_dispatch_ref"],
+        "observed_date_utc_not_current_attestation":
+            first["source_observation_date_utc_not_current_attestation"],
+        "next_irreversible_annual_identity_no_dispatch":
+            first["one_shot_run_identity"],
+        "blocked_downstream_research_and_trading_stages":
+            first["blocked_downstream_stages"],
         "eight_missing_independent_proofs": proofs,
         "independent_proof_acceptance_criteria":
             first["independent_proof_acceptance_criteria"],
