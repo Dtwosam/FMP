@@ -115,6 +115,42 @@ class Phase3ContractTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "ask.*bid"):
             quote_bar(ask_close=1.1000)
 
+    def test_validate_quote_bars_fails_closed_on_wrong_sequence_entries(self):
+        good = quote_bar()
+        for rows in (None, "EURUSD", b"EURUSD", 42,
+                     [good, None], [good, {}], [good, "EURUSD"]):
+            with self.subTest(rows=repr(rows)[:90]):
+                with self.assertRaisesRegex(ValueError, "QuoteBar"):
+                    validate_quote_bars(rows)
+
+    def test_validate_decisions_fails_closed_on_wrong_sequence_entries(self):
+        good = Decision(
+            decision_id="SYNTHETIC-NO-TRADE", symbol="EURUSD",
+            decision_timestamp_utc=datetime(2026, 9, 14, tzinfo=timezone.utc),
+            direction=Direction.NO_TRADE,
+            earliest_executable_timestamp_utc=None, requested_risk_fraction=None,
+            stop_price=None, target_price=None,
+        )
+        for rows in (None, "NO_TRADE", b"NO_TRADE", 42,
+                     [good, None], [good, {}], [good, "NO_TRADE"]):
+            with self.subTest(rows=repr(rows)[:90]):
+                with self.assertRaisesRegex(ValueError, "Decision"):
+                    validate_decisions(rows)
+
+    def test_typed_quote_and_decision_sequences_preserve_existing_checks(self):
+        quote_rows = [quote_bar()]
+        validate_quote_bars(quote_rows)
+        decision = Decision(
+            decision_id="SYNTHETIC-VALID", symbol="EURUSD",
+            decision_timestamp_utc=datetime(2026, 9, 14, tzinfo=timezone.utc),
+            direction=Direction.NO_TRADE,
+            earliest_executable_timestamp_utc=None, requested_risk_fraction=None,
+            stop_price=None, target_price=None,
+        )
+        validate_decisions([decision])
+        with self.assertRaisesRegex(ValueError, "duplicate"):
+            validate_decisions([decision, decision])
+
     def test_validate_quote_bars_requires_global_timestamp_symbol_order(self) -> None:
         first = quote_bar(
             timestamp=datetime(2026, 9, 14, 0, 1, tzinfo=timezone.utc),
