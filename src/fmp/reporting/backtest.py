@@ -785,7 +785,10 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
     This is a non-atomic local consistency audit, not source authentication.
     """
     root = Path(out_dir)
-    verify_backtest_artifacts(root)
+    manifest = verify_backtest_artifacts(root)
+    expected_records = {
+        entry["path"]: entry for entry in manifest["artifacts"]
+    }
     directory_flag = getattr(os, "O_DIRECTORY", None)
     nofollow = getattr(os, "O_NOFOLLOW", None)
     if type(directory_flag) is not int or type(nofollow) is not int:
@@ -800,6 +803,11 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                 data = handle.read(1024 * 1024 + 1)
             if len(data) > 1024 * 1024:
                 raise ValueError("artifact report JSON exceeds audit size limit")
+            if (
+                len(data) != expected_records[name]["size_bytes"]
+                or hashlib.sha256(data).hexdigest() != expected_records[name]["sha256"]
+            ):
+                raise ValueError("artifact report changed since verification")
             return _audit_load_json(data)
 
         summary = read_small_json("summary.json")
@@ -819,13 +827,22 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
         for name, field in (("trades.jsonl", "trade_count"),
                             ("rejections.jsonl", "rejection_count")):
             observed = 0
+            observed_size = 0
+            observed_hash = hashlib.sha256()
             with _open_regular_artifact(root / name, root_fd=root_fd) as handle:
                 while line := handle.readline(1024 * 1024 + 1):
                     if len(line) > 1024 * 1024:
                         raise ValueError("artifact report JSONL line exceeds audit size limit")
+                    observed_size += len(line)
+                    observed_hash.update(line)
                     if type(_audit_load_json(line)) is not dict:
                         raise ValueError("artifact report JSONL record must be an object")
                     observed += 1
+            if (
+                observed_size != expected_records[name]["size_bytes"]
+                or observed_hash.hexdigest() != expected_records[name]["sha256"]
+            ):
+                raise ValueError("artifact report changed since verification")
             if observed != counts[field]:
                 raise ValueError(f"artifact report {field} conflicts with JSONL records")
         if "trade_count" in metrics and (
