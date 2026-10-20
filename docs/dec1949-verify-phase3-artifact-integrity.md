@@ -1,0 +1,9 @@
+# DEC-1949 — Verify local Phase3 artifact manifest and payload integrity
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent source/tests/docs child of #2197 at `18bbd61f1c22d0340fe4970ed2947e2e25c18907`.
+
+Introduce read-only `verify_backtest_artifacts(out_dir)` with a public reporting export. It refuses an output-directory or artifact leaf symlink, oversized/malformed manifest, unexpected protocol/keys, duplicate/unsafe/unexpected names, invalid integer size or lowercase SHA256 digest fields and any stored payload whose actual size/hash disagree with the manifest. The verifier reads only the four fixed source-defined filenames and never constructs a filesystem path from a manifest-provided path. Four synthetic regression methods check a normal writer/verifier roundtrip; same-length payload tampering; duplicate/traversal manifest entries; and symlinked evidence payload rejection.
+
+**6,982 cumulative proposed source-defined test methods**. Own exact-head Phase3/full historical/general CI and independent artifact-security review required. This checks **internal file consistency only**: SHA256 plus a self-created manifest does not authenticate historical quotes, external provenance, authorized execution, strategy economics, or the real runner's OS isolation. It is not multi-file crash-atomicity or concurrency-safe against a malicious actor racing the directory.
+
+Historical #2178–#2191 full test failures remain FAILED. #2192–#2197 full suites remain to be checked independently. Phase8A #779/#820/#821 and eight independent external security proof packages remain MISSING/BLOCKED; accepted catalogue through 2022/run384. Protected 2023/run385/attempt1, later research, Strategy V1 economics, shadow/demo/live brokers/capital and installed GitHub refs/workflows/rulesets/runners are forbidden. No protected research, merge, order or capital.
