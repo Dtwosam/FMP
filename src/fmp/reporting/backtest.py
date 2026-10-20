@@ -152,13 +152,20 @@ def compute_backtest_metrics(
     return metrics
 
 
-def _jsonable(value: object) -> object:
+def _jsonable(value: object, *, depth: int = 0) -> object:
+    # The supported config tree may be 32 levels deep. Leave headroom for
+    # run-envelope nesting while preventing uncontrolled Python recursion.
+    if depth > 64:
+        raise ValueError("deterministic evidence exceeds maximum nesting depth")
     if is_dataclass(value) and not isinstance(value, type):
         # Caller-defined dataclasses may override field getters; evidence
         # serialization accepts only the source-defined record contracts.
         if type(value) not in (TradeRecord, RejectionRecord, EquityCheckpoint):
             raise ValueError("unsupported deterministic evidence dataclass")
-        return {item.name: _jsonable(getattr(value, item.name)) for item in fields(value)}
+        return {
+            item.name: _jsonable(getattr(value, item.name), depth=depth + 1)
+            for item in fields(value)
+        }
     if isinstance(value, Enum):
         return value.value
     if isinstance(value, datetime):
@@ -173,9 +180,12 @@ def _jsonable(value: object) -> object:
         for key in value:
             if type(key) is not str or not key.isprintable():
                 raise ValueError("serialized mapping keys must be printable strings")
-        return {key: _jsonable(item) for key, item in value.items()}
-    if isinstance(value, (tuple, list)):
-        return [_jsonable(item) for item in value]
+        return {
+            key: _jsonable(item, depth=depth + 1)
+            for key, item in value.items()
+        }
+    if type(value) in (tuple, list):
+        return [_jsonable(item, depth=depth + 1) for item in value]
     if type(value) is float and not math.isfinite(value):
         raise ValueError("cannot serialize non-finite float")
     if type(value) is str:
