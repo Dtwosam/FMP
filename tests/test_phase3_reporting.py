@@ -4,6 +4,7 @@ import hashlib
 import json
 import tempfile
 import unittest
+from dataclasses import dataclass
 from unittest import mock
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
@@ -396,6 +397,62 @@ class Phase3ReportingTests(unittest.TestCase):
             write_backtest_artifacts(run, target)
             payload = json.loads((target / "summary.json").read_text("utf-8"))
             self.assertEqual(payload["run_identity"], run.run_identity)
+
+    def test_artifact_writer_refuses_opaque_dataclasses_before_io(self):
+        @dataclass(frozen=True)
+        class HostileMetadata:
+            key: str = "synthetic"
+
+            def __getattribute__(self, name):
+                if name == "key":
+                    raise AssertionError("user dataclass getter ran")
+                return object.__getattribute__(self, name)
+
+        run = BacktestRun(
+            run_identity={"opaque": HostileMetadata()},
+            trades=(), rejections=(), equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            target = Path(root) / "should-not-exist"
+            with mock.patch("pathlib.Path.mkdir", side_effect=AssertionError(
+                "untrusted dataclass must not access filesystem"
+            )):
+                with self.assertRaisesRegex(ValueError, "dataclass"):
+                    write_backtest_artifacts(run, target)
+            self.assertFalse(target.exists())
+
+    def test_artifact_writer_refuses_nested_backtest_run_as_identity_value(self):
+        nested = BacktestRun(
+            run_identity={}, trades=(), rejections=(),
+            equity_checkpoints=(), metrics={},
+        )
+        wrapper = replace(nested, run_identity={"nested": nested})
+        with tempfile.TemporaryDirectory() as root:
+            target = Path(root) / "blocked"
+            with self.assertRaisesRegex(ValueError, "dataclass"):
+                write_backtest_artifacts(wrapper, target)
+            self.assertFalse(target.exists())
+
+    def test_artifact_writer_keeps_source_record_dataclass_serialization(self):
+        checkpoint = EquityCheckpoint(BASE_TS, 10_000.0)
+        record = RejectionRecord(
+            decision_id="NO", symbol="EURUSD",
+            decision_timestamp_utc=BASE_TS,
+            evaluated_timestamp_utc=BASE_TS,
+            code=RejectionCode.NO_TRADE, explanation="synthetic",
+        )
+        run = BacktestRun(
+            run_identity={"code_commit": "synthetic"},
+            trades=(), rejections=(record,),
+            equity_checkpoints=(checkpoint,), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            target = Path(root) / "ok"
+            write_backtest_artifacts(run, target)
+            summary = json.loads((target / "summary.json").read_text("utf-8"))
+            rejection = json.loads((target / "rejections.jsonl").read_text("utf-8"))
+            self.assertEqual(summary["equity_checkpoints"][0]["realized_risk_equity_usd"], 10_000.0)
+            self.assertEqual(rejection["code"], "NO_TRADE")
 
     def test_artifact_bytes_and_digests_are_deterministic(self) -> None:
         one_trade = trade(trade_id="T-1", minutes=1, net_pnl_usd=10.0)
