@@ -577,6 +577,32 @@ class Phase3EngineTests(unittest.TestCase):
                             scheduled_exits=exits,
                         )
 
+    def test_engine_rejects_untyped_config_before_trade_simulation(self):
+        bars = [eurusd_bar(0), eurusd_bar(1)]
+        decision = long_decision(
+            "SYNTHETIC-CONFIG", decision_minute=0, executable_minute=1,
+        )
+        for invalid in (None, True, 0, "BacktestConfig", {}, [], object()):
+            with self.subTest(config_type=type(invalid).__name__):
+                with self._deny_external_calls():
+                    with self.assertRaisesRegex(ValueError, "BacktestConfig"):
+                        run_backtest(
+                            bars=bars, decisions=[decision], config=invalid,
+                        )
+
+    def test_engine_rejects_config_with_side_effecting_attribute_getter(self):
+        class HostileConfig:
+            @property
+            def execution_timing_mode(self):
+                raise AssertionError("engine accessed hostile config getter")
+
+        with self._deny_external_calls():
+            with self.assertRaisesRegex(ValueError, "BacktestConfig"):
+                run_backtest(
+                    bars=[eurusd_bar(0)], decisions=[],
+                    config=HostileConfig(),
+                )
+
     def test_engine_retains_unicode_no_trade_reason_as_plain_text(self):
         explanation = "Café 日本語 - filtered"
         decision = Decision(
