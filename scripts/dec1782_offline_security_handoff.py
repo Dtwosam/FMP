@@ -180,9 +180,17 @@ def compile_blocked_handoff(docs_root=DOCS, workflow=WORKFLOW):
     _require(
         type(proof_requirements) is dict
         and tuple(proof_requirements) == expected_proofs
-        and all(type(proof_requirements[key]) is str
-                and proof_requirements[key].strip()
-                for key in expected_proofs),
+        and all(
+            type(proof_requirements[key]) is str
+            and proof_requirements[key].strip()
+            and all(char not in proof_requirements[key] for char in ("|", "\\n", "\\r", "`"))
+            and not any(
+                command in proof_requirements[key].lower()
+                for command in ("gh workflow run ", "git push ",
+                                "order_send(", "broker.order_send(")
+            )
+            for key in expected_proofs
+        ),
         "missing exact external-proof acceptance criteria",
     )
     owners = docs_module["OWNERS"]

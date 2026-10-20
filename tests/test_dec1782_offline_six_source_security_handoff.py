@@ -1084,6 +1084,69 @@ class Phase8AConsolidatedSourceOnlyHandoffTests(unittest.TestCase):
                 self.assertEqual(out.getvalue(), "")
                 self.assertIn("BLOCKED:", err.getvalue())
 
+    @staticmethod
+    def _with_forged_proof_acceptance(mutate):
+        import copy
+        real_run = runpy.run_path
+        target = str(MOD["DOC_AUDIT"])
+        audit = real_run(target)
+
+        def patched_run(path):
+            if str(path) != target:
+                return real_run(path)
+            result = dict(audit)
+            criteria = copy.deepcopy(audit["PROOF_ACCEPTANCE_CRITERIA"])
+            mutate(criteria)
+            result["PROOF_ACCEPTANCE_CRITERIA"] = criteria
+            return result
+
+        return mock.patch.object(MOD["runpy"], "run_path", side_effect=patched_run)
+
+    def test_machine_handoff_rejects_multiline_and_table_proof_criteria(self):
+        first = runpy.run_path(str(MOD["DOC_AUDIT"]))["PROOFS"][0]
+        for extra in ("\\n| GRANTED |", "\\rAUTHORIZED", " | FALSE APPROVAL",
+                      " `gh workflow run 385`"):
+            with self.subTest(extra=repr(extra)):
+                def forge(criteria):
+                    criteria[first] += extra
+                with self._with_forged_proof_acceptance(forge):
+                    with self.assertRaisesRegex(
+                            MOD["InvalidHandoff"], "acceptance criteria"):
+                        BUILD()
+
+    def test_machine_handoff_rejects_direct_dispatch_or_broker_instruction(self):
+        first = runpy.run_path(str(MOD["DOC_AUDIT"]))["PROOFS"][1]
+        for unsafe in ("gh workflow run protected-annual",
+                       "git push origin main", "order_send(", "broker.order_send("):
+            with self.subTest(unsafe=unsafe):
+                def forge(criteria):
+                    criteria[first] += " " + unsafe
+                with self._with_forged_proof_acceptance(forge):
+                    with self.assertRaises(MOD["InvalidHandoff"]):
+                        BUILD()
+
+    def test_machine_handoff_rejects_nonstring_proof_acceptance(self):
+        def forge(criteria):
+            first = next(iter(criteria))
+            criteria[first] = True
+        with self._with_forged_proof_acceptance(forge):
+            with self.assertRaises(MOD["InvalidHandoff"]):
+                BUILD()
+
+    def test_both_cli_formats_refuse_unreviewed_executable_proof_text(self):
+        def forge(criteria):
+            first = next(iter(criteria))
+            criteria[first] += " gh workflow run annual-protected"
+        for fmt in ("json", "markdown"):
+            with self.subTest(fmt=fmt):
+                out, err = io.StringIO(), io.StringIO()
+                with self._with_forged_proof_acceptance(forge):
+                    with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                        code = MOD["main"](["--format", fmt])
+                self.assertEqual(code, 2)
+                self.assertEqual(out.getvalue(), "")
+                self.assertIn("BLOCKED:", err.getvalue())
+
     def test_consolidated_handoff_never_invokes_external_permission_or_trading(self):
         report = BUILD()
         self.assertIs(report["no_external_actions_performed"], True)
