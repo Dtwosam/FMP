@@ -169,12 +169,23 @@ def compile_blocked_handoff(docs_root=DOCS, workflow=WORKFLOW):
     trace = installed["historical_pregate_payloads"]
     matrix = installed["historical_matrix_inventory"]
     _require(
-        tuple(jobs) == ("annual_preflight", "annual_cell", "annual_freeze")
+        type(jobs) is dict
+        and type(trace) is dict
+        and type(matrix) is dict
+        and tuple(jobs) == ("annual_preflight", "annual_cell", "annual_freeze")
         and tuple(trace) == tuple(jobs)
+        and type(installed["job_count"]) is int
         and installed["job_count"] == 3
+        and type(matrix.get("historical_cell_count")) is int
         and matrix["historical_cell_count"] == 18
+        and type(matrix.get("historical_unique_pair_timeframe_inputs")) is int
         and matrix["historical_unique_pair_timeframe_inputs"] == 9
-        and matrix["dataset_artifact_ids_and_hashes_not_reauthenticated"] is True,
+        and matrix["dataset_artifact_ids_and_hashes_not_reauthenticated"] is True
+        and all(
+            type(jobs[job]) is dict
+            and type(jobs[job].get("zero_based_in_job_gate_index")) is int
+            for job in jobs
+        ),
         "installed job, pre-gate command or 18-cell scope evidence changed",
     )
     _require(

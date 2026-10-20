@@ -805,6 +805,51 @@ class Phase8AConsolidatedSourceOnlyHandoffTests(unittest.TestCase):
                 self.assertEqual(out.getvalue(), "")
                 self.assertIn("BLOCKED:", err.getvalue())
 
+    def test_compiler_rejects_float_alias_for_historical_job_count(self):
+        def forge(report):
+            report["job_count"] = 3.0
+        with self._with_forged_upstream_report(
+                MOD["WORKFLOW_AUDIT"], "report_blocked_admission", forge):
+            with self.assertRaisesRegex(MOD["InvalidHandoff"], "18-cell scope"):
+                BUILD()
+
+    def test_compiler_rejects_float_alias_for_historical_matrix_count(self):
+        for key, invalid in (
+            ("historical_cell_count", 18.0),
+            ("historical_unique_pair_timeframe_inputs", 9.0),
+        ):
+            with self.subTest(key=key):
+                def forge(report):
+                    report["historical_matrix_inventory"][key] = invalid
+                with self._with_forged_upstream_report(
+                        MOD["WORKFLOW_AUDIT"], "report_blocked_admission", forge):
+                    with self.assertRaises(MOD["InvalidHandoff"]):
+                        BUILD()
+
+    def test_compiler_rejects_float_alias_for_runtime_gate_index(self):
+        def forge(report):
+            report["observed_jobs"]["annual_freeze"][
+                "zero_based_in_job_gate_index"] = 4.0
+        with self._with_forged_upstream_report(
+                MOD["WORKFLOW_AUDIT"], "report_blocked_admission", forge):
+            with self.assertRaisesRegex(MOD["InvalidHandoff"], "18-cell scope"):
+                BUILD()
+
+    def test_both_cli_formats_reject_noninteger_historical_gate_index(self):
+        def forge(report):
+            report["observed_jobs"]["annual_cell"][
+                "zero_based_in_job_gate_index"] = 4.0
+        for fmt in ("json", "markdown"):
+            with self.subTest(fmt=fmt):
+                stdout, stderr = io.StringIO(), io.StringIO()
+                with self._with_forged_upstream_report(
+                        MOD["WORKFLOW_AUDIT"], "report_blocked_admission", forge):
+                    with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+                        status = MOD["main"](["--format", fmt])
+                self.assertEqual(status, 2)
+                self.assertEqual(stdout.getvalue(), "")
+                self.assertIn("BLOCKED:", stderr.getvalue())
+
     def test_consolidated_handoff_never_invokes_external_permission_or_trading(self):
         report = BUILD()
         self.assertIs(report["no_external_actions_performed"], True)
