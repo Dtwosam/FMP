@@ -18,6 +18,21 @@ DOC_AUDIT = ROOT / "scripts" / "dec1752_phase8a_readiness_report.py"
 WORKFLOW_AUDIT = ROOT / "scripts" / "dec1779_annual_workflow_admission_audit.py"
 
 
+HUMAN_REVIEW_REQUEST = (
+    "Independent admins and security reviewers: validate inherited "
+    "rulesets and bypass principals; continuous main freeze or separately "
+    "approved immutable-ref amendment, installed early preaccess checks "
+    "and privileged runner OS isolation; authenticate exact current "
+    "source and complete fresh one-shot run inventory. Then require a "
+    "separate human run385/attempt1 decision. This handoff grants none."
+)
+
+REVIEWED_RUNTIME_GATES = {
+    "annual_preflight": 7,
+    "annual_cell": 4,
+    "annual_freeze": 4,
+}
+
 class InvalidHandoff(ValueError):
     """Any mismatched source/readiness state must reject the complete report."""
 
@@ -145,15 +160,84 @@ def compile_blocked_handoff(docs_root=DOCS, workflow=WORKFLOW):
         "broker_order_or_real_money_authorized": False,
         "allowed_actions": [],
         "no_external_actions_performed": True,
-        "human_review_request": (
-            "Independent admins and security reviewers: validate inherited "
-            "rulesets and bypass principals; continuous main freeze or separately "
-            "approved immutable-ref amendment, installed early preaccess checks "
-            "and privileged runner OS isolation; authenticate exact current "
-            "source and complete fresh one-shot run inventory. Then require a "
-            "separate human run385/attempt1 decision. This handoff grants none."
-        ),
+        "human_review_request": HUMAN_REVIEW_REQUEST,
     }
+
+
+def _assert_human_review_evidence_is_frozen(report):
+    """The Markdown renderer must reject forged *presentation* fields.
+
+    These local source pins cannot grant admin, runner, run385 or trade access.
+    They only ensure a rendered review packet did not change after creation.
+    """
+    docs = runpy.run_path(str(DOC_AUDIT))
+    historical = runpy.run_path(str(WORKFLOW_AUDIT))
+    expected_proofs = [
+        {"id": key, "review_role": owner, "status": "MISSING"}
+        for key, owner in zip(docs["PROOFS"], docs["OWNERS"])
+    ]
+    _require(
+        type(report.get("eight_missing_independent_proofs")) is list
+        and report["eight_missing_independent_proofs"] == expected_proofs,
+        "proof identities, roles and missing states cannot be rewritten",
+    )
+    _require(
+        report.get("documentary_packet_source_sha256")
+            == docs["PINNED_SOURCE_SHA256"]
+        and report.get("installed_workflow_historical_git_blob_sha1")
+            == historical["EXPECTED_GIT_BLOB_SHA1"]
+        and report.get("installed_workflow_historical_source_sha256")
+            == historical["EXPECTED_HISTORICAL_WORKFLOW_SHA256"]
+        and report.get("installed_workflow_historical_fixture_only") is True,
+        "exact six-source historical fingerprints and fixture provenance required",
+    )
+    _require(
+        report.get("one_shot_run_identity") == {
+            "segment": "2023", "run_number": 385,
+            "attempt_number": 1, "authorization": "BLOCKED",
+        }
+        and report.get("source_observation_date_utc_not_current_attestation")
+            == "2026-10-19"
+        and report.get("source_main_sha_not_current_dispatch_ref")
+            == docs["OBSERVED_PUBLIC_MAIN_SHA"]
+        and report.get("blocked_downstream_stages") == list(docs["STAGES"])
+        and report.get("human_review_request") == HUMAN_REVIEW_REQUEST,
+        "historical one-shot identity, stale source and next approval need review",
+    )
+    jobs = report.get("installed_jobs_pregate_and_runtime_gate")
+    _require(
+        type(jobs) is dict
+        and tuple(jobs) == tuple(REVIEWED_RUNTIME_GATES)
+        and report.get("installed_historical_cell_count") == 18
+        and report.get("installed_historical_pair_timeframe_source_count") == 9
+        and all(
+            type(jobs[name]) is dict
+            and jobs[name].get("runtime_gate_zero_based_index") == index
+            and jobs[name].get("static_only_not_runner_trace") is True
+            and type(jobs[name].get(
+                "observed_setup_and_read_payloads_before_gate")) is list
+            and any(
+                item.get("name") == "Checkout"
+                and item.get("zero_based_step_index") == 0
+                for item in jobs[name][
+                    "observed_setup_and_read_payloads_before_gate"]
+            )
+            for name, index in REVIEWED_RUNTIME_GATES.items()
+        ),
+        "installed historical gate positions and matrix cannot be rewritten",
+    )
+    _require(
+        all(report.get(flag) is False for flag in (
+            "continuous_admin_ref_lock_verified",
+            "real_runner_os_isolation_verified",
+            "fresh_one_shot_inventory_verified",
+            "protected_2023_run385_authorized",
+            "annual_dispatch_or_retry_authorized",
+            "broker_order_or_real_money_authorized",
+        ))
+        and report.get("preregistered_strategy_v1_profit") is None,
+        "cannot render a claim of security or trading permission",
+    )
 
 
 def format_blocked_handoff_markdown(report):
@@ -167,19 +251,16 @@ def format_blocked_handoff_markdown(report):
         and report.get("no_external_actions_performed") is True,
         "human handoff must be BLOCKED and without executable actions",
     )
+    _assert_human_review_evidence_is_frozen(report)
     proof_rows = report["eight_missing_independent_proofs"]
-    _require(
-        len(proof_rows) == 8
-        and all(row["status"] == "MISSING" for row in proof_rows),
-        "must show all eight missing independent proofs",
-    )
     entries = [
         "# Phase 8A — consolidated independent security-review handoff",
         "",
         "**BLOCKED. NOT AUTHORIZED. NO DISPATCH OR BROKER ORDERS.**",
         "",
-        "Five exact source-only document packets and one reviewed historical "
-        "installed workflow definition; nothing was executed or refreshed.",
+        "Five exact source-only documentary packets and one frozen historical "
+        "workflow fixture (NOT current installed workflow); nothing was executed "
+        "or refreshed.",
         "Public main observation is stale, not proof of current server "
         "ref continuity or an effective no-bypass admin lock.",
         "",
