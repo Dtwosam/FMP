@@ -535,6 +535,46 @@ class Phase3RiskPolicyTests(unittest.TestCase):
                 self.assertEqual(state.risk_equity_usd, 10_000.0)
                 self.assertIsNone(state.current_utc_date)
 
+    def test_risk_day_rejects_corrupted_equity_before_mutation(self):
+        for invalid in (None, True, "10000", float("nan"),
+                        float("inf"), 10 ** 400):
+            with self.subTest(value=repr(invalid)):
+                state = RiskState(starting_equity_usd=10_000.0)
+                state.risk_equity_usd = invalid
+                with self.assertRaisesRegex(ValueError, "risk equity"):
+                    roll_utc_day(state, timestamp_utc=self.ts)
+                self.assertIsNone(state.current_utc_date)
+                self.assertFalse(state.daily_halt_active)
+                self.assertIs(state.risk_equity_usd, invalid)
+
+    def test_realized_pnl_rejects_corrupted_equity_before_day_change(self):
+        for invalid in (None, "10000", float("nan"), 10 ** 400):
+            with self.subTest(value=repr(invalid)):
+                state = RiskState(starting_equity_usd=10_000.0)
+                state.risk_equity_usd = invalid
+                reserve_risk(state, position_id="held", amount_usd=25.0)
+                with self.assertRaisesRegex(ValueError, "risk equity"):
+                    record_realized_pnl(
+                        state, timestamp_utc=self.ts, pnl_usd=-50.0,
+                        config=self.config,
+                    )
+                self.assertIsNone(state.current_utc_date)
+                self.assertEqual(state.reservations_usd, {"held": 25.0})
+
+    def test_assessment_rejects_corrupted_equity_before_utc_roll(self):
+        for invalid in (None, False, float("inf"), float("nan")):
+            with self.subTest(value=repr(invalid)):
+                state = RiskState(starting_equity_usd=10_000.0)
+                state.risk_equity_usd = invalid
+                with self.assertRaisesRegex(ValueError, "risk equity"):
+                    assess_decision(
+                        decision=directional_decision(),
+                        reference_entry_price=1.1, timestamp_utc=self.ts,
+                        config=self.config, state=state,
+                    )
+                self.assertIsNone(state.current_utc_date)
+                self.assertEqual(state.reservations_usd, {})
+
     def test_risk_day_rejects_backward_roll_without_resetting_halt(self):
         state = RiskState(starting_equity_usd=10_000.0)
         record_realized_pnl(

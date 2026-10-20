@@ -101,10 +101,22 @@ class RiskState:
         return total
 
 
+def _require_finite_state_equity(state: RiskState) -> None:
+    value = state.risk_equity_usd
+    if type(value) not in (int, float):
+        raise ValueError("risk equity must remain finite numeric")
+    try:
+        if not math.isfinite(value):
+            raise ValueError("risk equity must remain finite numeric")
+    except OverflowError as exc:
+        raise ValueError("risk equity must remain finite numeric") from exc
+
+
 def roll_utc_day(state: RiskState, *, timestamp_utc: datetime) -> None:
     _require_utc(timestamp_utc, field_name="timestamp_utc")
     if type(state) is not RiskState:
         raise ValueError("state must be a RiskState record")
+    _require_finite_state_equity(state)
     target_date = timestamp_utc.date()
     if state.current_utc_date == target_date:
         return
@@ -172,6 +184,7 @@ def record_realized_pnl(
         raise ValueError("config must be a RiskConfig record")
     if type(state) is not RiskState:
         raise ValueError("state must be a RiskState record")
+    _require_finite_state_equity(state)
     if type(pnl_usd) not in (int, float):
         raise ValueError("realized PnL must be a finite number")
     try:
