@@ -995,6 +995,65 @@ class Phase8ABlockedSevenSourceIndexTests(unittest.TestCase):
             self.assertTrue(result["no_external_actions_performed"])
             self.assertEqual([f.read_bytes() for f in files], initial)
 
+    @contextlib.contextmanager
+    def _deny_external_actions_on_invalid_review(self):
+        with mock.patch("subprocess.Popen",
+                        side_effect=AssertionError("unexpected subprocess")):
+            with mock.patch("socket.socket",
+                            side_effect=AssertionError("unexpected socket")):
+                with self._deny_writable_os_opens() as opened:
+                    yield opened
+
+    def test_forged_full_saved_report_is_rejected_without_external_io(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "full.json"
+            tampered = BUILD()
+            tampered["2023_run385_attempt1_authorized"] = True
+            path.write_text(json.dumps(tampered), encoding="utf-8")
+            with self._deny_external_actions_on_invalid_review() as opened:
+                with self.assertRaises(MOD["InvalidReviewBundle"]):
+                    MOD["verify_saved_blocked_review_packet"](path)
+            self.assertTrue(opened)
+
+    def test_forged_compact_signoff_is_rejected_without_external_io(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "requests.json"
+            tampered = MOD["format_unfulfilled_review_requests"](BUILD())
+            tampered["unfulfilled_independent_review_requests"][0][
+                "reviewer_signoff"] = "APPROVED"
+            path.write_text(json.dumps(tampered), encoding="utf-8")
+            with self._deny_external_actions_on_invalid_review() as opened:
+                with self.assertRaises(MOD["InvalidReviewBundle"]):
+                    MOD["verify_saved_unfulfilled_review_requests"](path)
+            self.assertTrue(opened)
+
+    def test_forged_saved_markdown_is_rejected_without_external_io(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "human.md"
+            original = MOD["format_blocked_review_bundle_markdown"](BUILD())
+            path.write_text(original.replace("MISSING", "APPROVED", 1)
+                            + chr(10), encoding="utf-8")
+            with self._deny_external_actions_on_invalid_review() as opened:
+                with self.assertRaises(MOD["InvalidReviewBundle"]):
+                    MOD["verify_saved_blocked_markdown"](path)
+            self.assertTrue(opened)
+
+    def test_forged_three_format_cli_returns_no_output_under_denials(self):
+        with tempfile.TemporaryDirectory() as folder:
+            files = self._write_three_canonical_saved_review_artifacts(
+                Path(folder))
+            files[2].write_bytes(files[2].read_bytes() + b"APPROVED")
+            out, err = io.StringIO(), io.StringIO()
+            with self._deny_external_actions_on_invalid_review() as opened:
+                with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                    status = MOD["main"]([
+                        "--verify-triplet", *map(str, files)
+                    ])
+            self.assertEqual(status, 2)
+            self.assertEqual(out.getvalue(), "")
+            self.assertIn("BLOCKED:", err.getvalue())
+            self.assertTrue(opened)
+
     def test_cli_success_is_blocked_and_invalid_has_no_stdout(self):
         out, err = io.StringIO(), io.StringIO()
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
