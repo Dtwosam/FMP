@@ -553,6 +553,81 @@ class Phase3ReportingTests(unittest.TestCase):
                 {"code_commit": "synthetic"},
             )
 
+    def test_rejection_evidence_rejects_invalid_enum_and_identity_before_io(self):
+        good = RejectionRecord(
+            decision_id="SYNTHETIC", symbol="EURUSD",
+            decision_timestamp_utc=BASE_TS,
+            evaluated_timestamp_utc=BASE_TS,
+            code=RejectionCode.NO_TRADE, explanation="filtered",
+        )
+        for field, invalid in (
+            ("code", "NO_TRADE"), ("code", None),
+            ("symbol", "eurusd"), ("symbol", None),
+            ("decision_id", None), ("decision_id", "bad\nline"),
+        ):
+            with self.subTest(field=field, value=repr(invalid)):
+                run = BacktestRun(
+                    run_identity={}, trades=(),
+                    rejections=(replace(good, **{field: invalid}),),
+                    equity_checkpoints=(), metrics={},
+                )
+                with tempfile.TemporaryDirectory() as root:
+                    target = Path(root) / "invalid"
+                    with mock.patch("pathlib.Path.mkdir", side_effect=AssertionError(
+                        "invalid rejection cannot publish artifacts"
+                    )):
+                        with self.assertRaisesRegex(ValueError, "rejection"):
+                            write_backtest_artifacts(run, target)
+                    self.assertFalse(target.exists())
+
+    def test_rejection_evidence_rejects_invalid_explanation_before_io(self):
+        good = RejectionRecord(
+            decision_id="SYNTHETIC", symbol="EURUSD",
+            decision_timestamp_utc=BASE_TS,
+            evaluated_timestamp_utc=BASE_TS,
+            code=RejectionCode.NO_TRADE, explanation="filtered",
+        )
+        for invalid in (None, 17, "", "\x00bad", "bad\nline",
+                        "x" * 4097):
+            with self.subTest(value=repr(invalid)[:50]):
+                run = BacktestRun(
+                    run_identity={}, trades=(),
+                    rejections=(replace(good, explanation=invalid),),
+                    equity_checkpoints=(), metrics={},
+                )
+                with tempfile.TemporaryDirectory() as root:
+                    target = Path(root) / "invalid"
+                    with mock.patch("pathlib.Path.mkdir", side_effect=AssertionError(
+                        "invalid explanation cannot publish"
+                    )):
+                        with self.assertRaisesRegex(ValueError, "explanation"):
+                            write_backtest_artifacts(run, target)
+                    self.assertFalse(target.exists())
+
+    def test_rejection_evidence_rejects_backdated_or_non_utc_times(self):
+        good = RejectionRecord(
+            decision_id="SYNTHETIC", symbol="EURUSD",
+            decision_timestamp_utc=BASE_TS,
+            evaluated_timestamp_utc=BASE_TS + timedelta(minutes=1),
+            code=RejectionCode.NO_TRADE, explanation="filtered",
+        )
+        for field, invalid in (
+            ("decision_timestamp_utc", "2026-09-14"),
+            ("evaluated_timestamp_utc", datetime(2026, 9, 14)),
+            ("evaluated_timestamp_utc", BASE_TS - timedelta(minutes=1)),
+        ):
+            run = BacktestRun(
+                run_identity={}, trades=(),
+                rejections=(replace(good, **{field: invalid}),),
+                equity_checkpoints=(), metrics={},
+            )
+            with self.subTest(field=field, value=repr(invalid)):
+                with tempfile.TemporaryDirectory() as root:
+                    target = Path(root) / "invalid"
+                    with self.assertRaisesRegex(ValueError, "rejection"):
+                        write_backtest_artifacts(run, target)
+                    self.assertFalse(target.exists())
+
     def test_artifact_bytes_and_digests_are_deterministic(self) -> None:
         one_trade = trade(trade_id="T-1", minutes=1, net_pnl_usd=10.0)
         rejection = RejectionRecord(

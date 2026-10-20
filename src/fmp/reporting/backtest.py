@@ -11,7 +11,10 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import Mapping, Sequence
 
-from fmp.contracts import BacktestRun, EquityCheckpoint, RejectionRecord, TradeRecord
+from fmp.contracts import (
+    BacktestRun, EquityCheckpoint, RejectionCode, RejectionRecord,
+    SUPPORTED_SYMBOLS, TradeRecord,
+)
 
 ARTIFACT_PROTOCOL = "fmp-phase3-backtest-artifacts-v1"
 
@@ -254,6 +257,34 @@ def write_backtest_artifacts(run: BacktestRun, out_dir: Path) -> dict[str, objec
             raise ValueError(
                 f"{field} must be a list or tuple of {canonical.__name__} records"
             )
+
+    # RejectionRecord has no dataclass constructor validation. Recheck each
+    # evidence field before sorting or writing anything.
+    for rejection in run.rejections:
+        for field, value, limit in (
+            ("decision_id", rejection.decision_id, 512),
+            ("explanation", rejection.explanation, 4096),
+        ):
+            if (
+                type(value) is not str or not value.strip()
+                or len(value) > limit or not value.isprintable()
+            ):
+                raise ValueError(f"rejection {field} must be bounded printable text")
+        if type(rejection.symbol) is not str or rejection.symbol not in SUPPORTED_SYMBOLS:
+            raise ValueError("rejection symbol must be an exact supported FX symbol")
+        if type(rejection.code) is not RejectionCode:
+            raise ValueError("rejection code must be a RejectionCode enum")
+        for field, value in (
+            ("decision_timestamp_utc", rejection.decision_timestamp_utc),
+            ("evaluated_timestamp_utc", rejection.evaluated_timestamp_utc),
+        ):
+            if (
+                type(value) is not datetime or value.tzinfo is None
+                or value.utcoffset() != timedelta(0)
+            ):
+                raise ValueError(f"rejection {field} must use UTC")
+        if rejection.evaluated_timestamp_utc < rejection.decision_timestamp_utc:
+            raise ValueError("rejection evaluation cannot precede decision")
 
     summary = {
         "protocol": "fmp-phase3-backtest-run-v1",
