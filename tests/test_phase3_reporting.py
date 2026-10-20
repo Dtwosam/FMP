@@ -765,6 +765,76 @@ class Phase3ReportingTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "intrabar_ambiguous"):
                     write_backtest_artifacts(run, Path("never-created"))
 
+    def test_artifact_writer_rejects_invalid_checkpoint_times_before_io(self):
+        checkpoint = EquityCheckpoint(BASE_TS, 10_000.0)
+        for invalid in (None, "2026-09-14", datetime(2026, 9, 14), 7):
+            with self.subTest(timestamp=repr(invalid)):
+                run = BacktestRun(
+                    run_identity={}, trades=(), rejections=(),
+                    equity_checkpoints=(replace(
+                        checkpoint, timestamp_utc=invalid,
+                    ),), metrics={},
+                )
+                with tempfile.TemporaryDirectory() as root:
+                    target = Path(root) / "blocked"
+                    with mock.patch("pathlib.Path.mkdir", side_effect=AssertionError(
+                        "malformed checkpoint must not create files"
+                    )):
+                        with self.assertRaisesRegex(ValueError, "checkpoint timestamp"):
+                            write_backtest_artifacts(run, target)
+                    self.assertFalse(target.exists())
+
+    def test_artifact_writer_rejects_invalid_checkpoint_equity_before_io(self):
+        checkpoint = EquityCheckpoint(BASE_TS, 10_000.0)
+        for invalid in (None, True, "10000", float("nan"),
+                        float("inf"), 10 ** 400):
+            with self.subTest(value=repr(invalid)):
+                run = BacktestRun(
+                    run_identity={}, trades=(), rejections=(),
+                    equity_checkpoints=(replace(
+                        checkpoint, realized_risk_equity_usd=invalid,
+                    ),), metrics={},
+                )
+                with tempfile.TemporaryDirectory() as root:
+                    target = Path(root) / "blocked"
+                    with mock.patch("pathlib.Path.mkdir", side_effect=AssertionError(
+                        "malformed equity must not create files"
+                    )):
+                        with self.assertRaisesRegex(ValueError, "equity checkpoint"):
+                            write_backtest_artifacts(run, target)
+                    self.assertFalse(target.exists())
+
+    def test_artifact_writer_rejects_backdated_checkpoint_sequence(self):
+        run = BacktestRun(
+            run_identity={}, trades=(), rejections=(),
+            equity_checkpoints=(
+                EquityCheckpoint(BASE_TS + timedelta(minutes=1), 10_100.0),
+                EquityCheckpoint(BASE_TS, 10_000.0),
+            ), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            target = Path(root) / "blocked"
+            with mock.patch("pathlib.Path.mkdir", side_effect=AssertionError(
+                "backdated equity checkpoint must not publish"
+            )):
+                with self.assertRaisesRegex(ValueError, "chronological"):
+                    write_backtest_artifacts(run, target)
+            self.assertFalse(target.exists())
+
+    def test_artifact_writer_preserves_equal_time_checkpoints(self):
+        run = BacktestRun(
+            run_identity={}, trades=(), rejections=(),
+            equity_checkpoints=(
+                EquityCheckpoint(BASE_TS, 10_000.0),
+                EquityCheckpoint(BASE_TS, 10_025.0),
+            ), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as root:
+            target = Path(root) / "valid"
+            write_backtest_artifacts(run, target)
+            summary = json.loads((target / "summary.json").read_text("utf-8"))
+            self.assertEqual(len(summary["equity_checkpoints"]), 2)
+
     def test_artifact_bytes_and_digests_are_deterministic(self) -> None:
         one_trade = trade(trade_id="T-1", minutes=1, net_pnl_usd=10.0)
         rejection = RejectionRecord(
