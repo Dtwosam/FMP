@@ -236,6 +236,28 @@ class Phase8AConsolidatedSourceOnlyHandoffTests(unittest.TestCase):
                 self.assertTrue(output.getvalue())
         self.assertIs(BUILD()["protected_2023_run385_authorized"], False)
 
+
+    def test_markdown_numeric_values_never_have_accidental_currency_prefix(self):
+        result = BUILD()
+        md = MOD["format_blocked_handoff_markdown"](result)
+        for exact in (
+            "Annual segment: 2023",
+            "Frozen next run: 385",
+            "Attempt: 1",
+            "Declared historical research cells: 18 ",
+            "Declared historical distinct pair/timeframe input sources: 9.",
+        ):
+            with self.subTest(field=exact):
+                self.assertIn(exact, md)
+        for misleading in (
+            "Annual segment: $",
+            "Frozen next run: $",
+            "Attempt: $",
+            "Declared historical research cells: $",
+            "Declared historical distinct pair/timeframe input sources: $",
+        ):
+            self.assertNotIn(misleading, md)
+
     def test_consolidated_handoff_never_invokes_external_permission_or_trading(self):
         report = BUILD()
         self.assertIs(report["no_external_actions_performed"], True)

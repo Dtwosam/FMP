@@ -277,9 +277,9 @@ def format_blocked_handoff_markdown(report):
         "",
         "## Irreversible annual research identity — NO DISPATCH",
         "",
-        f"Annual segment: ${report['one_shot_run_identity']['segment']}",
-        f"Frozen next run: ${report['one_shot_run_identity']['run_number']}",
-        f"Attempt: ${report['one_shot_run_identity']['attempt_number']}",
+        f"Annual segment: {report['one_shot_run_identity']['segment']}",
+        f"Frozen next run: {report['one_shot_run_identity']['run_number']}",
+        f"Attempt: {report['one_shot_run_identity']['attempt_number']}",
         "**Action status: BLOCKED — no one-shot run may be consumed.**",
         "",
         "## All downstream research and trading stages — BLOCKED",
@@ -294,10 +294,10 @@ def format_blocked_handoff_markdown(report):
         "## Historical installed-workflow fixture scope (NOT CURRENT)",
         "",
         f"Declared historical research cells: "
-        f"${report['installed_historical_cell_count']} "
+        f"{report['installed_historical_cell_count']} "
         "(EURUSD, GBPUSD, USDJPY × 5m, 15m, 1h × 60/240-minute horizons).",
         f"Declared historical distinct pair/timeframe input sources: "
-        f"${report['installed_historical_pair_timeframe_source_count']}.",
+        f"{report['installed_historical_pair_timeframe_source_count']}.",
         "These declarations were not reauthenticated against any live runner "
         "or protected market dataset.",
         "",
