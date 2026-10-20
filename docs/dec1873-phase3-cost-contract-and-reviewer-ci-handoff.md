@@ -1,0 +1,9 @@
+# DEC-1873 — Exact-head quality checkpoint through draft PR #2120
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent documentation-only child of #2120 `de27cb9632376c95f43a6bcf6f7348f828e500a1`. The latest source-only test lineage has **6,799 proposed source-defined test methods**.
+
+**CI as actually checked on 20 October 2026:** #2100 and #2104 full historical/general FAILED on older `BLOCKED: invalid` assertions when correct C0/DEL prevalidation returned `BLOCKED: unsafe or non-string review argument`. The independent exact-head repair #2106 subsequently PASSED both Phase3 and full tests; neither earlier failure is relabeled PASS. #2113, #2114 and #2115 also passed both own exact-head suites. #2116–#2120 Phase3 PASS, full historical/general IN PROGRESS; these are not claimed green. The entire development remains unmerged draft-only.
+
+The current changes strictly validate supported FX cost-helper symbols, keep the invented EURUSD engine fixture file/socket/process isolated under local mocks, reject malformed Boolean/nonnumeric backtest config equity/slippage, require printable typed source-identity metadata, reject malformed unhashable timing modes and ensure real datetime UTC input windows. These are synthetic regression and source contracts, **not** audited external source provenance, independently attested runner isolation, live broker testing or strategy expectancy.
+
+External issues #779/#820/#821 and eight independently acquired protection/OS/provenance/one-shot/human decision proofs remain OPEN/MISSING. The 2023/run385/attempt1 protected annual run, future-year discovery, after-cost Strategy V1 validation, shadow/demo/live broker orders and real-money capital remain BLOCKED. No protected data read, one-shot dispatch/retry, installed workflow/ref/ruleset changes, broker order or profit. Own exact-head CI and independent qualified code/security review remain prerequisites.
