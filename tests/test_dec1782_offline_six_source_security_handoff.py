@@ -2,6 +2,7 @@
 import contextlib
 import io
 import json
+import os
 from pathlib import Path
 import runpy
 import tempfile
@@ -705,6 +706,53 @@ class Phase8AConsolidatedSourceOnlyHandoffTests(unittest.TestCase):
                 self.assertEqual(status, 2)
                 self.assertEqual(out.getvalue(), "")
                 self.assertIn("BLOCKED:", err.getvalue())
+
+    def test_offline_compiler_never_spawns_processes(self):
+        with mock.patch("subprocess.Popen",
+                        side_effect=AssertionError("unexpected subprocess")):
+            report = BUILD()
+        self.assertEqual(report["allowed_actions"], [])
+        self.assertFalse(report["annual_dispatch_or_retry_authorized"])
+
+    def test_offline_compiler_never_opens_network_sockets(self):
+        with mock.patch("socket.socket",
+                        side_effect=AssertionError("unexpected network socket")):
+            report = BUILD()
+        self.assertEqual(report["disposition"], "BLOCKED_NO_EXECUTION_PERMISSION")
+        self.assertFalse(report["broker_order_or_real_money_authorized"])
+
+    def test_offline_compiler_opens_no_files_for_writing(self):
+        real_open = os.open
+        write_flags = (os.O_WRONLY | os.O_RDWR | os.O_CREAT |
+                       os.O_TRUNC | os.O_APPEND)
+        seen = []
+
+        def audited_open(path, flags, mode=0o777, *, dir_fd=None):
+            self.assertEqual(flags & write_flags, 0,
+                             "offline compiler attempted a writable file open")
+            seen.append((str(path), flags))
+            if dir_fd is None:
+                return real_open(path, flags, mode)
+            return real_open(path, flags, mode, dir_fd=dir_fd)
+
+        with mock.patch("os.open", side_effect=audited_open):
+            report = BUILD()
+        self.assertTrue(seen, "no documented source file was opened")
+        self.assertTrue(report["no_external_actions_performed"])
+
+    def test_both_blocked_formats_work_under_no_external_action_guards(self):
+        with mock.patch("subprocess.Popen",
+                        side_effect=AssertionError("unexpected subprocess")):
+            with mock.patch("socket.socket",
+                            side_effect=AssertionError("unexpected socket")):
+                for fmt in ("json", "markdown"):
+                    with self.subTest(fmt=fmt):
+                        out, err = io.StringIO(), io.StringIO()
+                        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                            status = MOD["main"](["--format", fmt])
+                        self.assertEqual(status, 3)
+                        self.assertEqual(err.getvalue(), "")
+                        self.assertIn("BLOCKED", out.getvalue())
 
     def test_consolidated_handoff_never_invokes_external_permission_or_trading(self):
         report = BUILD()
