@@ -365,7 +365,7 @@ class Phase3EngineTests(unittest.TestCase):
         nested["labels"]["scope"] = "FORGED-AFTER-CREATION"
         original["scenario"] = {"thresholds": [-1]}
         self.assertEqual(
-            instance.decision_config["scenario"],
+            _run_identity(instance, ())["decision_config"]["scenario"],
             {"thresholds": [1, 2], "labels": {"scope": "SYNTHETIC"}},
         )
 
@@ -384,7 +384,7 @@ class Phase3EngineTests(unittest.TestCase):
             def __deepcopy__(self, memo):
                 raise TypeError("cannot copy unsafe mutable identity")
 
-        with self.assertRaisesRegex(ValueError, "cannot be snapshotted"):
+        with self.assertRaisesRegex(ValueError, "JSON-compatible"):
             replace(config(), decision_config={"unsafe": Uncopyable()})
 
     def test_run_identity_nested_values_do_not_mutate_source_config(self):
@@ -412,8 +412,53 @@ class Phase3EngineTests(unittest.TestCase):
             second["decision_config"]["trials"], ["synthetic", "offline"]
         )
         self.assertEqual(
-            conf.decision_config["trials"], ["synthetic", "offline"]
+            conf.decision_config["trials"], ("synthetic", "offline")
         )
+
+    def test_recursively_frozen_metadata_rejects_nested_mutations(self):
+        c = replace(config(), decision_config={
+            "nested": {"trials": [1, {"commission": 30.0}]}
+        })
+        with self.assertRaises(TypeError):
+            c.decision_config["nested"]["trials"] = [999]
+        with self.assertRaises(AttributeError):
+            c.decision_config["nested"]["trials"].append(999)
+        with self.assertRaises(TypeError):
+            c.decision_config["nested"]["trials"][1]["commission"] = -30.0
+        self.assertEqual(
+            _run_identity(c, ())["decision_config"],
+            {"nested": {"trials": [1, {"commission": 30.0}]}},
+        )
+
+    def test_decision_metadata_denies_nonfinite_cycles_and_opaque_values(self):
+        cyclic = []
+        cyclic.append(cyclic)
+        for value in (cyclic, {"nan": float("nan")},
+                      {"inf": float("inf")}, {"custom": object()},
+                      {"nested": {True: "invalid key"}},
+                      {"nested": {2: "invalid key"}}):
+            with self.subTest(type=type(value).__name__):
+                with self.assertRaisesRegex(ValueError, "decision_config"):
+                    replace(config(), decision_config={"scenario": value})
+
+    def test_run_identity_nested_report_is_fresh_each_time(self):
+        original = {"trials": [1, {"fees": [0.0, 0.5]}]}
+        c = replace(config(), decision_config=original)
+        original["trials"][1]["fees"].append(100)
+        first = _run_identity(c, ())
+        self.assertEqual(first["decision_config"],
+                         {"trials": [1, {"fees": [0.0, 0.5]}]})
+        first["decision_config"]["trials"][1]["fees"].append(-1)
+        second = _run_identity(c, ())
+        self.assertEqual(second["decision_config"],
+                         {"trials": [1, {"fees": [0.0, 0.5]}]})
+
+    def test_decision_metadata_depth_limit_is_fail_closed(self):
+        deeply_nested = []
+        for _ in range(36):
+            deeply_nested = [deeply_nested]
+        with self.assertRaisesRegex(ValueError, "maximum nesting"):
+            replace(config(), decision_config={"scenario": deeply_nested})
 
     def test_no_trade_is_preserved_as_reasoned_record(self) -> None:
         decision = Decision(
