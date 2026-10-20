@@ -49,7 +49,11 @@ from fmp.risk import (
 
 
 def _require_utc(value: datetime, *, field: str) -> None:
-    if value.tzinfo is None or value.utcoffset() != timedelta(0):
+    if (
+        not isinstance(value, datetime)
+        or value.tzinfo is None
+        or value.utcoffset() != timedelta(0)
+    ):
         raise ValueError(f"{field} must use UTC")
 
 
