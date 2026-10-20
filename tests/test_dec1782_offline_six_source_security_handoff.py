@@ -949,6 +949,49 @@ class Phase8AConsolidatedSourceOnlyHandoffTests(unittest.TestCase):
                 self.assertEqual(out.getvalue(), "")
                 self.assertIn("BLOCKED:", err.getvalue())
 
+    def test_json_compiler_refuses_plausible_unreviewed_command_payload(self):
+        def forge(report):
+            report["historical_pregate_payloads"]["annual_cell"][
+                "actual_pregate_setup_and_read_payloads"][0][
+                    "payload"] = "actions/checkout@v99"
+        with self._with_forged_upstream_report(
+                MOD["WORKFLOW_AUDIT"], "report_blocked_admission", forge):
+            with self.assertRaisesRegex(MOD["InvalidHandoff"], "pinned fixture"):
+                BUILD()
+
+    def test_json_compiler_refuses_unreviewed_historical_matrix_details(self):
+        def forge(report):
+            report["historical_matrix_inventory"]["self_reported_approval"] = True
+        with self._with_forged_upstream_report(
+                MOD["WORKFLOW_AUDIT"], "report_blocked_admission", forge):
+            with self.assertRaisesRegex(MOD["InvalidHandoff"], "pinned fixture"):
+                BUILD()
+
+    def test_json_compiler_refuses_extra_historical_job_metadata(self):
+        def forge(report):
+            report["observed_jobs"]["annual_preflight"][
+                "early_admission_approved"] = True
+        with self._with_forged_upstream_report(
+                MOD["WORKFLOW_AUDIT"], "report_blocked_admission", forge):
+            with self.assertRaisesRegex(MOD["InvalidHandoff"], "pinned fixture"):
+                BUILD()
+
+    def test_both_cli_formats_refuse_valid_shaped_rewritten_step_payload(self):
+        def forge(report):
+            report["historical_pregate_payloads"]["annual_freeze"][
+                "actual_pregate_setup_and_read_payloads"][1][
+                    "payload"] = "unreviewed-command"
+        for fmt in ("json", "markdown"):
+            with self.subTest(fmt=fmt):
+                out, err = io.StringIO(), io.StringIO()
+                with self._with_forged_upstream_report(
+                        MOD["WORKFLOW_AUDIT"], "report_blocked_admission", forge):
+                    with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                        code = MOD["main"](["--format", fmt])
+                self.assertEqual(code, 2)
+                self.assertEqual(out.getvalue(), "")
+                self.assertIn("BLOCKED:", err.getvalue())
+
     def test_consolidated_handoff_never_invokes_external_permission_or_trading(self):
         report = BUILD()
         self.assertIs(report["no_external_actions_performed"], True)
