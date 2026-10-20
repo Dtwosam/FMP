@@ -460,6 +460,26 @@ class Phase3EngineTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "maximum nesting"):
             replace(config(), decision_config={"scenario": deeply_nested})
 
+    def test_decision_metadata_rejects_excessive_node_count(self):
+        with self.assertRaisesRegex(ValueError, "node budget"):
+            replace(config(), decision_config={"values": list(range(8300))})
+
+    def test_decision_metadata_rejects_oversized_serialized_input(self):
+        with self.assertRaisesRegex(ValueError, "64 KiB"):
+            replace(config(), decision_config={"payload": "x" * 70000})
+
+    def test_decision_metadata_rejects_unbounded_integer_values(self):
+        for value in (1 << 600, -(1 << 600)):
+            with self.subTest(negative=value < 0):
+                with self.assertRaisesRegex(ValueError, "integer exceeds"):
+                    replace(config(), decision_config={"integer": value})
+
+    def test_small_unicode_and_finite_nested_metadata_round_trip(self):
+        sample = {"note": "invented 测试", "levels": [-1, 0.5, True, None]}
+        c = replace(config(), decision_config=sample)
+        self.assertEqual(_run_identity(c, ())["decision_config"], sample)
+        self.assertEqual(_run_identity(c, ())["decision_config"], sample)
+
     def test_no_trade_is_preserved_as_reasoned_record(self) -> None:
         decision = Decision(
             decision_id="NT-1",

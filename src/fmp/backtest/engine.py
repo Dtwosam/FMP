@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+import json
 from collections import defaultdict
 from dataclasses import dataclass
 from types import MappingProxyType
@@ -58,8 +59,16 @@ def _require_utc(value: datetime, *, field: str) -> None:
         raise ValueError(f"{field} must use UTC")
 
 
-def _freeze_decision_metadata(value: object, *, depth: int = 0) -> object:
+def _freeze_decision_metadata(
+    value: object, *, depth: int = 0,
+    budget: list[int] | None = None,
+) -> object:
     """Accept bounded finite JSON values and recursively freeze containers."""
+    if budget is None:
+        budget = [8192]
+    budget[0] -= 1
+    if budget[0] < 0:
+        raise ValueError("decision_config exceeds maximum node budget")
     if depth > 32:
         raise ValueError("decision_config exceeds maximum nesting depth")
     if type(value) in (dict, MappingProxyType):
@@ -71,14 +80,18 @@ def _freeze_decision_metadata(value: object, *, depth: int = 0) -> object:
                 raise ValueError(
                     "decision_config keys must be nonempty printable strings"
                 )
-            snapshot[key] = _freeze_decision_metadata(item, depth=depth + 1)
+            snapshot[key] = _freeze_decision_metadata(item, depth=depth + 1, budget=budget)
         return MappingProxyType(snapshot)
     if type(value) in (list, tuple):
         return tuple(
-            _freeze_decision_metadata(item, depth=depth + 1)
+            _freeze_decision_metadata(item, depth=depth + 1, budget=budget)
             for item in value
         )
-    if value is None or type(value) in (bool, int, str):
+    if value is None or type(value) in (bool, str):
+        return value
+    if type(value) is int:
+        if value.bit_length() > 512:
+            raise ValueError("decision_config integer exceeds safe width")
         return value
     if type(value) is float and math.isfinite(value):
         return value
@@ -152,10 +165,17 @@ class BacktestConfig:
         # No opaque __deepcopy__ hooks and no writable nested references.
         # Stored metadata is recursively immutable, while run identity
         # reconstructs fresh ordinary dict/list values for its public schema.
-        object.__setattr__(
-            self, "decision_config",
-            _freeze_decision_metadata(dict(self.decision_config)),
-        )
+        frozen_metadata = _freeze_decision_metadata(dict(self.decision_config))
+        try:
+            encoded_metadata = json.dumps(
+                _thaw_decision_metadata(frozen_metadata),
+                sort_keys=True, separators=(",", ":"), allow_nan=False,
+            ).encode("utf-8")
+        except (TypeError, ValueError, OverflowError, RecursionError) as exc:
+            raise ValueError("decision_config cannot be serialized safely") from exc
+        if len(encoded_metadata) > 65536:
+            raise ValueError("decision_config exceeds 64 KiB serialized limit")
+        object.__setattr__(self, "decision_config", frozen_metadata)
         _require_utc(self.requested_start_utc, field="requested_start_utc")
         _require_utc(self.requested_end_utc, field="requested_end_utc")
         if self.requested_end_utc < self.requested_start_utc:
