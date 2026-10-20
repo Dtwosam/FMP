@@ -1,0 +1,7 @@
+# DEC-1840 — Deny external effects even when saved review evidence is forged
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent test-only child of PR #2086 `3160dac373374cbf0524822db9af55393135f33f`.
+
+The seven-source review packet system verifies full JSON, compact MISSING-only requests, human Markdown and their three-format set. Positive-path unit tests already deny writable `os.open`, `subprocess.Popen` and `socket.socket`, but corrupted input must be equally non-executing. Four new adversarial tests inject a forbidden protected-run authorization, reviewer signoff, Markdown `APPROVED` label and tampered triplet and require controlled rejection while the same process/network/write primitives are denied. CLI failures must use exit 2 and **no stdout**, without initiating GitHub workflows, running commands or opening network sockets.
+
+These local mocks are **not** real privileged runner OS isolation, inherited GitHub ruleset enforcement, a signed review or a protected one-shot inventory. Four new source-defined methods (**6,717 cumulative proposed**), no production behavior/permission relaxation. Normal canonical packets continue exit 3, permanently BLOCKED. All eight independent external proof packages and #779/#820/#821 remain MISSING. No protected 2023/run385/attempt1, downstream strategies, installed workflow/ref/ruleset mutation, broker/demo/live order, real money or profit. Exact-head Phase3/full CI and independent qualified review required.
