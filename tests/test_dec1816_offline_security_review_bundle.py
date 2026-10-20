@@ -1299,6 +1299,87 @@ class Phase8ABlockedSevenSourceIndexTests(unittest.TestCase):
         self.assertIn("BLOCKED:", err.getvalue())
         self.assertNotIn(chr(10) + "APPROVED", err.getvalue())
 
+    def test_rehashed_forged_historical_identity_and_permission_fields_fail(self):
+        import copy
+        import hashlib
+        cases = (
+            ("irreversible authorization",
+             ("next_irreversible_annual_identity_no_dispatch", "authorization"),
+             "APPROVED"),
+            ("wrong attempt",
+             ("next_irreversible_annual_identity_no_dispatch", "attempt_number"),
+             2),
+            ("forge current main",
+             ("observed_main_sha_not_live_ref",),
+             "f" * 40),
+            ("workflow bytes",
+             ("historical_workflow_sha256",),
+             "0" * 64),
+            ("real runner witness",
+             ("independent_external_admin_runner_proof_verified",),
+             True),
+            ("broker permission",
+             ("broker_demo_live_or_real_money_authorized",),
+             True),
+            ("missing proof role",
+             ("eight_missing_independent_proofs", 0, "review_role"),
+             "automated approver"),
+            ("missing acceptance",
+             ("independent_proof_acceptance_criteria",
+              "exclusive_continuous_ref_lock_and_no_bypass"),
+             "CI approval is sufficient"),
+        )
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "full.json"
+            for label, segments, forged_value in cases:
+                with self.subTest(field=label):
+                    report = copy.deepcopy(BUILD())
+                    target = report
+                    for segment in segments[:-1]:
+                        target = target[segment]
+                    target[segments[-1]] = forged_value
+                    material = json.dumps({
+                        key: value for key, value in report.items()
+                        if key != "offline_request_fingerprint_sha256"
+                    }, sort_keys=True, separators=(",", ":"), allow_nan=False)
+                    report["offline_request_fingerprint_sha256"] = hashlib.sha256(
+                        material.encode("utf-8")).hexdigest()
+                    self.assertTrue(MOD["validate_review_index_fingerprint"](report))
+                    path.write_text(json.dumps(report), encoding="utf-8")
+                    with self.assertRaisesRegex(
+                            MOD["InvalidReviewBundle"], "differs from freshly"):
+                        MOD["verify_saved_blocked_review_packet"](path)
+
+    def test_every_independent_owner_forged_signoff_fails_saved_requests(self):
+        import copy
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "requests.json"
+            for index in range(8):
+                with self.subTest(index=index):
+                    requests = copy.deepcopy(
+                        MOD["format_unfulfilled_review_requests"](BUILD()))
+                    requests["unfulfilled_independent_review_requests"][index][
+                        "reviewer_signoff"] = "APPROVED"
+                    path.write_text(json.dumps(requests), encoding="utf-8")
+                    with self.assertRaises(MOD["InvalidReviewBundle"]):
+                        MOD["verify_saved_unfulfilled_review_requests"](path)
+
+    def test_every_missing_owner_human_status_edit_is_rejected(self):
+        text = MOD["format_blocked_review_bundle_markdown"](BUILD()) + chr(10)
+        for index in range(8):
+            with self.subTest(index=index):
+                needle = "| **MISSING** |"
+                parts = text.split(needle)
+                self.assertEqual(len(parts), 9)
+                forged = needle.join(parts[:index + 1]) + (
+                    "| **APPROVED** |" + needle.join(parts[index + 1:])
+                )
+                with tempfile.TemporaryDirectory() as folder:
+                    path = Path(folder) / "human.md"
+                    path.write_text(forged, encoding="utf-8")
+                    with self.assertRaises(MOD["InvalidReviewBundle"]):
+                        MOD["verify_saved_blocked_markdown"](path)
+
     def test_cli_success_is_blocked_and_invalid_has_no_stdout(self):
         out, err = io.StringIO(), io.StringIO()
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
