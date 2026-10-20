@@ -79,7 +79,22 @@ def compute_backtest_metrics(
                 raise ValueError(f"trade {field_name} must be finite numeric") from exc
             if field_name in ("slippage_cost_usd", "commission_cost_usd") and value < 0:
                 raise ValueError(f"trade {field_name} must be non-negative")
+    # Align win/loss streaks with the writer's canonical exit-time order.
+    for trade in trades:
+        if type(trade.trade_id) is not str or not trade.trade_id:
+            raise ValueError("trade ID must be a nonempty string")
+        stamp = trade.exit_timestamp_utc
+        if (
+            type(stamp) is not datetime or stamp.tzinfo is None
+            or stamp.utcoffset() != timedelta(0)
+        ):
+            raise ValueError("trade exit timestamp must use UTC")
     pnls = [trade.net_pnl_usd for trade in trades]
+    streak_pnls = [
+        item.net_pnl_usd for item in sorted(
+            trades, key=lambda item: (item.exit_timestamp_utc, item.trade_id)
+        )
+    ]
     if any(not math.isfinite(value) for value in pnls):
         raise ValueError("trade net PnL must be finite")
 
@@ -139,8 +154,8 @@ def compute_backtest_metrics(
         "max_drawdown_usd": max_drawdown_usd,
         "max_drawdown_fraction": max_drawdown_fraction,
         "recovery_factor": (net_pnl / max_drawdown_usd) if max_drawdown_usd > 0 else None,
-        "longest_winning_streak": _longest_streak(pnls, winning=True),
-        "longest_losing_streak": _longest_streak(pnls, winning=False),
+        "longest_winning_streak": _longest_streak(streak_pnls, winning=True),
+        "longest_losing_streak": _longest_streak(streak_pnls, winning=False),
         "slippage_cost_usd": slippage_cost,
         "commission_cost_usd": commission_cost,
         "financing_cost_usd": financing_cost,
