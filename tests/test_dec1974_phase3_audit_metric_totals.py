@@ -1762,5 +1762,50 @@ class Phase3AuditSourceSlippageCostReconciliationTests(unittest.TestCase):
                 audit_backtest_artifact_structure(folder)
 
 
+def _same_exit_source_engine_run() -> BacktestRun:
+    original = _source_engine_checkpoint_run()
+    first, second = original.trades
+    # Engine closes Z before A but writer sorts equal-exit rows by A then Z.
+    first = replace(first, trade_id="Z-CLOSE", decision_id="Z-CLOSE")
+    second = replace(
+        second, trade_id="A-CLOSE", decision_id="A-CLOSE",
+        exit_timestamp_utc=STAMP + timedelta(minutes=1),
+    )
+    return replace(
+        original, trades=(first, second),
+        equity_checkpoints=(
+            EquityCheckpoint(STAMP, 10000.0),
+            EquityCheckpoint(STAMP + timedelta(minutes=1), 10011.0),
+            EquityCheckpoint(STAMP + timedelta(minutes=1), 10022.0),
+        ),
+    )
+
+
+class Phase3AuditEqualExitTimeSourceCheckpointTests(unittest.TestCase):
+    def test_audit_accepts_close_order_different_from_same_time_id_order(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(_same_exit_source_engine_run(), folder)
+            rows = [
+                json.loads(line)
+                for line in (folder / "trades.jsonl").read_text("utf-8").splitlines()
+            ]
+            self.assertEqual(
+                [row["trade_id"] for row in rows], ["A-CLOSE", "Z-CLOSE"]
+            )
+            self.assertEqual(audit_backtest_artifact_structure(folder)["trade_count"], 2)
+
+    def test_audit_refuses_rehashed_same_time_checkpoint_without_transition(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(_same_exit_source_engine_run(), folder)
+            _forge_checkpoint_summary(
+                folder, manifest, 1, "realized_risk_equity_usd", 10022.0
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "checkpoint conflicts with trade close"):
+                audit_backtest_artifact_structure(folder)
+
+
 if __name__ == "__main__":
     unittest.main()

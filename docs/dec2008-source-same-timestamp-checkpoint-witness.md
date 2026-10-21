@@ -1,0 +1,11 @@
+# DEC-2008 — Same-timestamp source close ordering and checkpoint evidence
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact parent PR #2256 at `b4436344c57b17f0ce4f77d45649b1f8c4b60575`.
+
+The Phase3 engine may close several existing or newly entered positions at the same bar timestamp. The writer then sorts published `trades.jsonl` by (exit_timestamp_utc, trade_id), but `equity_checkpoints` retain the **actual realization order**. In particular, an existing position with ID Z may close before a newly filled position with ID A at the same timestamp. The earlier DEC-1999 cross-trade ledger chaining and DEC-2003 positional checkpoint parity erroneously presumed tie-sorted trade ID order equals realization order. This could reject an entirely legitimate engine result.
+
+For exact installed source-engine artifacts with starting equity, use the actual checkpoint sequence as a witness of realized ledger transitions: build a multiset of each validated (exit_timestamp, risk_equity_before, risk_equity_after) transition and consume exactly one for each checkpoint after the initial checkpoint, beginning with initial equity. This is O(n) average time and honors repeated identical transitions and close order independent of lexicographic trade ID tie breaks. Exact equality is appropriate to the same source risk_state value copied into both TradeRecord and EquityCheckpoint, without eroding semantic checks or manifest integrity. Preserve existing strict sorted-order continuity checks for generic/synthetic reports without the installed engine version.
+
+Two new synthetic source-defined tests cover a valid Z-before-A realization at the same timestamp despite writer output A-before-Z, and a rehashed checkpoint jump for which no source transition exists. **7,123 cumulative proposed source-defined methods** (+2). This repair is a source-grounded correctness claim, not confirmed CI success until its exact-head Phase3 and full historical/general regressions pass. Earlier failed suites remain FAILED.
+
+Phase8A issues #779/#820/#821 and eight independently provided security proof packages remain outstanding. No protected annual 2023/run385/attempt1 research, installed runner/ref/workflow settings, brokerage orders, strategy promotion, merges or real capital.
