@@ -4719,5 +4719,74 @@ class Phase3AuditSourceRejectedOnlyPerformanceWitnessTests(unittest.TestCase):
                 audit_backtest_artifact_structure(folder)
 
 
+def _source_same_time_all_wins_distribution_run() -> BacktestRun:
+    source = _same_exit_source_engine_run()
+    net = sum(trade.net_pnl_usd for trade in source.trades)
+    assert len(source.trades) == 2
+    assert all(trade.net_pnl_usd > 0 for trade in source.trades)
+    return replace(source, metrics={
+        "trade_count": 2,
+        "net_pnl_usd": net,
+        "gross_profit_usd": net,
+        "gross_loss_usd": 0.0,
+        "profit_factor": None,
+        "win_rate": 1.0,
+        "average_win_usd": net / 2,
+        "average_loss_usd": None,
+        "expectancy_usd": net / 2,
+        "longest_winning_streak": 2,
+        "longest_losing_streak": 0,
+    })
+
+
+class Phase3AuditSourceSameTimeAllWinDistributionTests(unittest.TestCase):
+    def test_audit_accepts_two_wins_with_same_timestamp_reverse_id_order(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(
+                _source_same_time_all_wins_distribution_run(), folder,
+            )
+            trades = [
+                json.loads(line) for line in
+                (folder / "trades.jsonl").read_text("utf-8").splitlines()
+            ]
+            self.assertEqual(
+                [trade["trade_id"] for trade in trades], ["A-CLOSE", "Z-CLOSE"],
+            )
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 2,
+            )
+
+    def test_audit_refuses_rehashed_shorter_same_time_winning_streak(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _source_same_time_all_wins_distribution_run(), folder,
+            )
+            _forge_canonical_metric(
+                folder, manifest, "longest_winning_streak", 1,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric longest_winning_streak conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_near_equal_same_time_average_win(self):
+        run = _source_same_time_all_wins_distribution_run()
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(run, folder)
+            _forge_canonical_metric(
+                folder, manifest, "average_win_usd",
+                run.metrics["average_win_usd"] + 1e-9,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric average_win_usd conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+
 if __name__ == "__main__":
     unittest.main()
