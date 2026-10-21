@@ -1529,9 +1529,11 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                                 amounts["gross_pnl_usd"] - amounts["slippage_cost_usd"]
                                 - amounts["commission_cost_usd"] - amounts["financing_cost_usd"]
                             )
-                            reconciled = (
-                                math.isfinite(expected_net)
-                                and math.isclose(
+                            reconciled = math.isfinite(expected_net) and (
+                                amounts["net_pnl_usd"] == expected_net
+                                if source_identity.get("backtest_engine_version")
+                                == BACKTEST_ENGINE_VERSION
+                                else math.isclose(
                                     expected_net, amounts["net_pnl_usd"],
                                     rel_tol=1e-12, abs_tol=1e-8,
                                 )
