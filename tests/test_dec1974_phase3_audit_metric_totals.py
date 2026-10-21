@@ -2700,5 +2700,95 @@ class Phase3AuditSourceScheduledExitChronologyTests(unittest.TestCase):
             )
 
 
+def _source_no_trade_rejection_run() -> BacktestRun:
+    source = _zero_trade_source_engine_run()
+    no_trade = RejectionRecord(
+        decision_id="SOURCE-NO-TRADE", symbol="EURUSD",
+        decision_timestamp_utc=STAMP,
+        evaluated_timestamp_utc=STAMP,
+        code=RejectionCode.NO_TRADE,
+        explanation="directional signal deliberately absent",
+    )
+    return replace(source, rejections=(no_trade,))
+
+
+class Phase3AuditSourceNoTradeRejectionContractTests(unittest.TestCase):
+    def test_audit_accepts_source_no_trade_at_decision_time(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(_source_no_trade_rejection_run(), folder)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["rejection_count"], 1,
+            )
+
+    def test_audit_refuses_rehashed_delayed_source_no_trade_evaluation(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _source_no_trade_rejection_run(), folder,
+            )
+            _forge_rejection_field(
+                folder, manifest, "evaluated_timestamp_utc",
+                (STAMP + timedelta(minutes=1)).isoformat()
+                .replace("+00:00", "Z"),
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "NO_TRADE evaluation differs from decision",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_source_no_trade_with_scheduled_exit(self):
+        source = _source_no_trade_rejection_run()
+        forged = replace(
+            source,
+            run_identity={
+                **source.run_identity,
+                "scheduled_exits": [{
+                    "decision_id": "SOURCE-NO-TRADE",
+                    "symbol": "EURUSD",
+                    "timestamp_utc": (
+                        (STAMP + timedelta(minutes=2)).isoformat()
+                        .replace("+00:00", "Z")
+                    ),
+                }],
+            },
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(forged, folder)
+            with self.assertRaisesRegex(
+                ValueError, "NO_TRADE decision cannot have scheduled exit",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_preserves_generic_delayed_no_trade_and_schedule(self):
+        source = _source_no_trade_rejection_run()
+        generic = replace(
+            source,
+            run_identity={
+                "starting_equity_usd": 10000.0,
+                "scheduled_exits": [{
+                    "decision_id": "SOURCE-NO-TRADE",
+                    "symbol": "EURUSD",
+                    "timestamp_utc": (
+                        (STAMP + timedelta(minutes=2)).isoformat()
+                        .replace("+00:00", "Z")
+                    ),
+                }],
+            },
+            rejections=(replace(
+                source.rejections[0],
+                evaluated_timestamp_utc=STAMP + timedelta(minutes=1),
+            ),),
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(generic, folder)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["rejection_count"], 1,
+            )
+
+
 if __name__ == "__main__":
     unittest.main()
