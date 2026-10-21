@@ -827,5 +827,71 @@ class Phase3AuditSourceEquityNetReturnTests(unittest.TestCase):
                     audit_backtest_artifact_structure(folder)
 
 
+def _drawdown_run() -> BacktestRun:
+    curve = (
+        EquityCheckpoint(STAMP, 10000.0),
+        EquityCheckpoint(STAMP + timedelta(minutes=1), 9900.0),
+        EquityCheckpoint(STAMP + timedelta(minutes=2), 10100.0),
+        EquityCheckpoint(STAMP + timedelta(minutes=3), 9800.0),
+    )
+    return BacktestRun(
+        run_identity={"starting_equity_usd": 10000.0},
+        trades=(), rejections=(), equity_checkpoints=curve,
+        metrics={
+            "trade_count": 0,
+            "max_drawdown_usd": 300.0,
+            "max_drawdown_fraction": 300 / 10100,
+            "recovery_factor": 0.0,
+        },
+    )
+
+
+class Phase3AuditCheckpointDrawdownMetricTests(unittest.TestCase):
+    def test_audit_accepts_checkpoint_curve_maximum_drawdown(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(_drawdown_run(), folder)
+            self.assertEqual(audit_backtest_artifact_structure(folder)["trade_count"], 0)
+
+    def test_audit_refuses_rehashed_false_dollar_drawdown(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(_drawdown_run(), folder)
+            _forge_metrics(folder, manifest, "max_drawdown_usd", 10.0)
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "max_drawdown_usd conflicts"):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_false_drawdown_fraction_and_recovery(self):
+        for field, value in (
+            ("max_drawdown_fraction", 0.8),
+            ("recovery_factor", 8.0),
+        ):
+            with self.subTest(field=field), tempfile.TemporaryDirectory() as home:
+                folder = Path(home) / "evidence"
+                manifest = write_backtest_artifacts(_drawdown_run(), folder)
+                _forge_metrics(folder, manifest, field, value)
+                self.assertEqual(verify_backtest_artifacts(folder), manifest)
+                with self.assertRaisesRegex(ValueError, f"{field} conflicts"):
+                    audit_backtest_artifact_structure(folder)
+
+    def test_audit_accepts_null_recovery_when_curve_never_draws_down(self):
+        run = BacktestRun(
+            run_identity={"starting_equity_usd": 10000.0},
+            trades=(), rejections=(),
+            equity_checkpoints=(EquityCheckpoint(STAMP, 10000.0),),
+            metrics={
+                "trade_count": 0,
+                "max_drawdown_usd": 0.0,
+                "max_drawdown_fraction": 0.0,
+                "recovery_factor": None,
+            },
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(run, folder)
+            self.assertEqual(audit_backtest_artifact_structure(folder)["trade_count"], 0)
+
+
 if __name__ == "__main__":
     unittest.main()
