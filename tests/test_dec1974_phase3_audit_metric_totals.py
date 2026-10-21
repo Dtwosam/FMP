@@ -7371,5 +7371,102 @@ class Phase3AuditSourceFinancedNetLossDrawdownRecoveryTests(unittest.TestCase):
                 audit_backtest_artifact_structure(folder)
 
 
+
+def _source_financed_flat_checkpoint_recovery_run(
+    *, execution_gross_positive: bool,
+) -> BacktestRun:
+    source = (
+        _source_cost_offset_net_flat_distribution_run()
+        if execution_gross_positive
+        else _source_financing_credit_gross_loser_net_flat_run()
+    )
+    computed = compute_backtest_metrics(
+        starting_equity_usd=10000.0,
+        trades=source.trades,
+        equity_checkpoints=source.equity_checkpoints,
+    )
+    assert source.trades[0].net_pnl_usd == 0.0
+    assert computed["max_drawdown_usd"] == 0.0
+    assert computed["max_drawdown_fraction"] == 0.0
+    assert computed["recovery_factor"] is None
+    return replace(source, metrics={
+        **source.metrics,
+        "max_drawdown_usd": 0.0,
+        "max_drawdown_fraction": 0.0,
+        "recovery_factor": None,
+    })
+
+
+class Phase3AuditSourceFinancedFlatNullRecoveryTests(unittest.TestCase):
+    def test_audit_accepts_both_gross_signs_as_zero_drawdown_net_flat(self):
+        for positive in (True, False):
+            with self.subTest(execution_gross_positive=positive):
+                source = _source_financed_flat_checkpoint_recovery_run(
+                    execution_gross_positive=positive,
+                )
+                self.assertEqual(
+                    source.trades[0].gross_pnl_usd > 0.0, positive,
+                )
+                self.assertEqual(source.metrics["max_drawdown_usd"], 0.0)
+                self.assertIsNone(source.metrics["recovery_factor"])
+                with tempfile.TemporaryDirectory() as home:
+                    folder = Path(home) / "evidence"
+                    write_backtest_artifacts(source, folder)
+                    self.assertEqual(
+                        audit_backtest_artifact_structure(folder)["trade_count"], 1,
+                    )
+
+    def test_audit_refuses_rehashed_positive_drawdown_without_equity_loss(self):
+        source = _source_financed_flat_checkpoint_recovery_run(
+            execution_gross_positive=True,
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(source, folder)
+            _forge_canonical_metric(folder, manifest, "max_drawdown_usd", 1e-9)
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric max_drawdown_usd conflicts with checkpoint curve",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_positive_fraction_on_flat_equity_curve(self):
+        source = _source_financed_flat_checkpoint_recovery_run(
+            execution_gross_positive=False,
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(source, folder)
+            _forge_canonical_metric(
+                folder, manifest, "max_drawdown_fraction", 1e-13,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError,
+                "metric max_drawdown_fraction conflicts with checkpoint curve",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_numeric_recovery_without_drawdown(self):
+        for positive in (True, False):
+            with self.subTest(execution_gross_positive=positive):
+                with tempfile.TemporaryDirectory() as home:
+                    folder = Path(home) / "evidence"
+                    manifest = write_backtest_artifacts(
+                        _source_financed_flat_checkpoint_recovery_run(
+                            execution_gross_positive=positive,
+                        ), folder,
+                    )
+                    _forge_canonical_metric(
+                        folder, manifest, "recovery_factor", 0.0,
+                    )
+                    self.assertEqual(verify_backtest_artifacts(folder), manifest)
+                    with self.assertRaisesRegex(
+                        ValueError,
+                        "metric recovery_factor conflicts with checkpoint curve",
+                    ):
+                        audit_backtest_artifact_structure(folder)
+
+
 if __name__ == "__main__":
     unittest.main()
