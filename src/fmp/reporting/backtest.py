@@ -1286,6 +1286,24 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                             }
                         ):
                             raise ValueError("artifact report rejection code is unsupported")
+                        # NO_TRADE originates directly from a source
+                        # decision without an execution attempt. The engine
+                        # evaluates that rejection at the decision instant.
+                        # A scheduled exit requires a directional decision,
+                        # so a NO_TRADE decision cannot carry one.
+                        if (
+                            source_identity.get("backtest_engine_version")
+                            == BACKTEST_ENGINE_VERSION
+                            and record["code"] == RejectionCode.NO_TRADE.value
+                        ):
+                            if evaluated_stamp != decision_stamp:
+                                raise ValueError(
+                                    "artifact report source NO_TRADE evaluation differs from decision instant"
+                                )
+                            if decision in scheduled_exit_by_decision:
+                                raise ValueError(
+                                    "artifact report source NO_TRADE decision cannot have scheduled exit"
+                                )
                         explanation = record["explanation"]
                         if (
                             type(explanation) is not str
