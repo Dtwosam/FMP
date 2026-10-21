@@ -11,7 +11,8 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from fmp.contracts import (
-    BacktestRun, Direction, ExitReason, RejectionCode, RejectionRecord, TradeRecord,
+    BacktestRun, Direction, EquityCheckpoint, ExitReason, RejectionCode,
+    RejectionRecord, TradeRecord,
 )
 from fmp.reporting.backtest import (
     audit_backtest_artifact_structure,
@@ -574,6 +575,63 @@ class Phase3AuditBoundedNumericJsonTests(unittest.TestCase):
             _forge_raw_metric_payload(folder, manifest, payload)
             self.assertEqual(verify_backtest_artifacts(folder), manifest)
             with self.assertRaisesRegex(ValueError, "nesting limit"):
+                audit_backtest_artifact_structure(folder)
+
+
+def _forge_summary_checkpoint(
+    folder: Path, manifest: dict[str, object], timestamp: str,
+) -> None:
+    path = folder / "summary.json"
+    summary = json.loads(path.read_text("utf-8"))
+    summary["equity_checkpoints"][0]["timestamp_utc"] = timestamp
+    payload = (json.dumps(summary, sort_keys=True) + "\n").encode("utf-8")
+    path.write_bytes(payload)
+    for entry in manifest["artifacts"]:
+        if entry["path"] == "summary.json":
+            entry["size_bytes"] = len(payload)
+            entry["sha256"] = hashlib.sha256(payload).hexdigest()
+    (folder / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+
+class Phase3AuditCanonicalUTCStringTests(unittest.TestCase):
+    def test_audit_refuses_rehashed_space_separated_trade_timestamp(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(_run({"trade_count": 1}), folder)
+            _forge_trade_field(
+                folder, manifest, "entry_timestamp_utc",
+                "2026-10-20 00:00:00Z",
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "canonical UTC"):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_short_precision_rejection_timestamp(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(_one_rejection_run(), folder)
+            _forge_rejection_field(
+                folder, manifest, "evaluated_timestamp_utc",
+                "2026-10-20T00:00Z",
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "canonical UTC"):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_noncanonical_checkpoint_fraction(self):
+        run = BacktestRun(
+            run_identity={}, trades=(), rejections=(),
+            equity_checkpoints=(EquityCheckpoint(STAMP, 10000.0),),
+            metrics={"trade_count": 0},
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(run, folder)
+            _forge_summary_checkpoint(
+                folder, manifest, "2026-10-20T00:00:00.000Z",
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "canonical UTC"):
                 audit_backtest_artifact_structure(folder)
 
 
