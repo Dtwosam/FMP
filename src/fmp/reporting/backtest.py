@@ -2116,9 +2116,14 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                     matches_drawdown = (
                         math.isfinite(expected_value)
                         and math.isfinite(claimed)
-                        and math.isclose(
-                            claimed, expected_value,
-                            rel_tol=1e-12, abs_tol=1e-8,
+                        and (
+                            claimed == expected_value
+                            if source_identity.get("backtest_engine_version")
+                            == BACKTEST_ENGINE_VERSION
+                            else math.isclose(
+                                claimed, expected_value,
+                                rel_tol=1e-12, abs_tol=1e-8,
+                            )
                         )
                     )
                 except OverflowError:
