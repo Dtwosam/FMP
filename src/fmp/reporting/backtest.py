@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+from collections import Counter
 import json
 import math
 import os
@@ -1571,7 +1572,16 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
             # and cross-row checks, preserving precise duplicate-ID reports.
             if noncanonical_row_seen:
                 raise ValueError("artifact report JSONL row is not canonical")
-        if "starting_equity_usd" in source_identity:
+        # Generic synthetic evidence has no independent close-sequence
+        # witness, so keep its historical canonical-order chain check.
+        # Source-engine evidence instead uses the checkpoint close sequence
+        # below: trades with equal exit timestamps are sorted by identifier
+        # for publication, which need not be their realized close order.
+        if (
+            "starting_equity_usd" in source_identity
+            and source_identity.get("backtest_engine_version")
+            != BACKTEST_ENGINE_VERSION
+        ):
             last_realized_equity = source_identity["starting_equity_usd"]
             for before, after in trade_equity_transitions:
                 if not math.isclose(
@@ -1603,22 +1613,32 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                 raise ValueError(
                     "artifact report source engine initial checkpoint equity conflicts with starting equity"
                 )
-            for idx, (transition, exit_instant) in enumerate(zip(
-                trade_equity_transitions, trade_exit_instants,
-            ), start=1):
-                checkpoint = checkpoints[idx]
-                if (
-                    _audit_parse_utc_timestamp(
-                        checkpoint["timestamp_utc"], "equity checkpoint"
-                    ) != exit_instant
-                    or not math.isclose(
-                        checkpoint["realized_risk_equity_usd"],
-                        transition[1], rel_tol=1e-12, abs_tol=1e-8,
-                    )
-                ):
+            # Checkpoints preserve engine realization order, while the
+            # canonical trade file sorts same-timestamp closes by ID. Match
+            # each checkpoint against one unconsumed exact source transition.
+            # Source values are direct copies of risk state into both records,
+            # so parsed float equality is exact and needs no rounding guess.
+            witnesses = Counter(
+                (exit_instant, before, after)
+                for (before, after), exit_instant in zip(
+                    trade_equity_transitions, trade_exit_instants,
+                )
+            )
+            previous_realized = initial_equity
+            for checkpoint in checkpoints[1:]:
+                checkpoint_stamp = _audit_parse_utc_timestamp(
+                    checkpoint["timestamp_utc"], "equity checkpoint"
+                )
+                checkpoint_equity = checkpoint["realized_risk_equity_usd"]
+                witness = (
+                    checkpoint_stamp, previous_realized, checkpoint_equity,
+                )
+                if witnesses[witness] <= 0:
                     raise ValueError(
                         "artifact report source engine checkpoint conflicts with trade close"
                     )
+                witnesses[witness] -= 1
+                previous_realized = checkpoint_equity
         ledger_totals["total_explicit_cost_usd"] = (
             ledger_totals["slippage_cost_usd"]
             + ledger_totals["commission_cost_usd"]
