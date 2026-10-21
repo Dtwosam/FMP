@@ -860,6 +860,8 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
     except OSError as exc:
         raise ValueError("artifact audit requires a direct directory") from exc
     try:
+        small_json_payloads: dict[str, bytes] = {}
+
         def read_small_json(name: str) -> object:
             with _open_regular_artifact(root / name, root_fd=root_fd) as handle:
                 data = handle.read(1024 * 1024 + 1)
@@ -870,6 +872,7 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                 or hashlib.sha256(data).hexdigest() != expected_records[name]["sha256"]
             ):
                 raise ValueError("artifact report changed since verification")
+            small_json_payloads[name] = data
             return _audit_load_json(data)
 
         summary = read_small_json("summary.json")
@@ -1302,6 +1305,16 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
             or metrics["trade_count"] != counts["trade_count"]
         ):
             raise ValueError("artifact report metric trade_count conflicts with summary")
+        # Run source-defined semantic checks first so malformed economics
+        # still yields its precise rejection reason. Canonical bytes are a
+        # separate, final opt-in structural requirement.
+        for filename, parsed in (
+            ("summary.json", summary), ("metrics.json", metrics),
+        ):
+            if small_json_payloads[filename] != _stable_json_bytes(parsed):
+                raise ValueError(
+                    f"artifact report {filename} is not canonical JSON"
+                )
         return counts
     finally:
         os.close(root_fd)
