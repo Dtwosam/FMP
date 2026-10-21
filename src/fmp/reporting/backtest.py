@@ -941,6 +941,7 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
             observed = 0
             observed_size = 0
             observed_hash = hashlib.sha256()
+            noncanonical_row_seen = False
             with _open_regular_artifact(root / name, root_fd=root_fd) as handle:
                 while line := handle.readline(1024 * 1024 + 1):
                     if len(line) > 1024 * 1024:
@@ -1174,7 +1175,7 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                         ) + "\n"
                     ).encode("utf-8")
                     if line != expected_line:
-                        raise ValueError("artifact report JSONL row is not canonical")
+                        noncanonical_row_seen = True
                     observed += 1
             if (
                 observed_size != expected_records[name]["size_bytes"]
@@ -1183,6 +1184,10 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                 raise ValueError("artifact report changed since verification")
             if observed != counts[field]:
                 raise ValueError(f"artifact report {field} conflicts with JSONL records")
+            # Defer formatting refusal until every row has passed semantic
+            # and cross-row checks, preserving precise duplicate-ID reports.
+            if noncanonical_row_seen:
+                raise ValueError("artifact report JSONL row is not canonical")
         ledger_totals["total_explicit_cost_usd"] = (
             ledger_totals["slippage_cost_usd"]
             + ledger_totals["commission_cost_usd"]
