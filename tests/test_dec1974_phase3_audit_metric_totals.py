@@ -2195,5 +2195,85 @@ class Phase3AuditSourceSlippageBoundaryWitnessTests(unittest.TestCase):
             )
 
 
+def _ambiguous_stop_source_run() -> BacktestRun:
+    source = _zero_declared_source_slippage_run(Direction.LONG)
+    original = source.trades[0]
+    # A source-engine LONG stop exits at the declared stop; when both
+    # stop and target are touched the result is still a STOP.
+    reference_exit = original.stop_price
+    gross = pnl_usd(
+        symbol=original.symbol, direction=original.direction,
+        units=original.units, entry_price=original.entry_reference_price,
+        exit_price=reference_exit,
+    )
+    stop_trade = replace(
+        original, exit_reason=ExitReason.STOP,
+        intrabar_ambiguous=True, exit_reference_price=reference_exit,
+        exit_price=reference_exit, gross_pnl_usd=gross,
+        net_pnl_usd=gross, slippage_cost_usd=0.0,
+        risk_equity_after_usd=10000.0 + gross,
+    )
+    return replace(
+        source, trades=(stop_trade,),
+        equity_checkpoints=(
+            source.equity_checkpoints[0],
+            EquityCheckpoint(
+                STAMP + timedelta(minutes=1), 10000.0 + gross,
+            ),
+        ),
+    )
+
+
+class Phase3AuditSourceIntrabarAmbiguityWitnessTests(unittest.TestCase):
+    def test_audit_accepts_ambiguous_stop_with_target_present(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(_ambiguous_stop_source_run(), folder)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 1,
+            )
+
+    def test_audit_refuses_rehashed_ambiguous_target_exit(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _zero_declared_source_slippage_run(Direction.LONG), folder,
+            )
+            _forge_versioned_trade_execution(
+                folder, manifest, "intrabar_ambiguous", True,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "ambiguous stop/target exit witness conflicts",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_source_ambiguous_stop_without_target(self):
+        source = _ambiguous_stop_source_run()
+        forged = replace(
+            source, trades=(replace(source.trades[0], target_price=None),),
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(forged, folder)
+            with self.assertRaisesRegex(
+                ValueError, "ambiguous stop/target exit witness conflicts",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_preserves_generic_ambiguous_target_record_compatibility(self):
+        source = _zero_declared_source_slippage_run(Direction.LONG)
+        generic = replace(
+            source, run_identity={"starting_equity_usd": 10000.0},
+            trades=(replace(source.trades[0], intrabar_ambiguous=True),),
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(generic, folder)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 1,
+            )
+
+
 if __name__ == "__main__":
     unittest.main()
