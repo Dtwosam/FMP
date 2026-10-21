@@ -909,6 +909,45 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                     "artifact report requested end precedes requested start"
                 )
 
+        # Mirror source BacktestConfig's scalar contract without pretending
+        # that self-hashed run identity proves external data provenance.
+        for label in (
+            "backtest_engine_version", "code_commit",
+            "processed_data_manifest_id", "schema_version", "timeframe",
+        ):
+            if label not in source_identity:
+                continue
+            scalar = source_identity[label]
+            if (
+                type(scalar) is not str or not scalar.strip()
+                or not scalar.isprintable()
+            ):
+                raise ValueError(
+                    f"artifact report run identity {label} must be printable nonempty text"
+                )
+        if "slippage_pips" in source_identity:
+            slippage = source_identity["slippage_pips"]
+            if type(slippage) not in (int, float):
+                raise ValueError(
+                    "artifact report run identity slippage_pips must be finite nonnegative"
+                )
+            try:
+                slippage_valid = math.isfinite(slippage) and slippage >= 0
+            except OverflowError:
+                slippage_valid = False
+            if not slippage_valid:
+                raise ValueError(
+                    "artifact report run identity slippage_pips must be finite nonnegative"
+                )
+        if "execution_timing_mode" in source_identity:
+            mode = source_identity["execution_timing_mode"]
+            if (
+                type(mode) is not str
+                or mode not in ("NEXT_SUPPLIED_BAR", "DECLARED_EARLIEST_BAR")
+            ):
+                raise ValueError(
+                    "artifact report run identity execution_timing_mode is unsupported"
+                )
         counts: dict[str, int] = {}
         for field in ("trade_count", "rejection_count", "equity_checkpoint_count"):
             count = summary.get(field)
