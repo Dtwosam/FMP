@@ -3749,14 +3749,31 @@ class Phase3AuditExactSourceAggregateMetricTests(unittest.TestCase):
         source = _source_with_complete_economic_metrics()
         generic = replace(
             source, run_identity={"starting_equity_usd": 10000.0},
-            metrics={
-                **source.metrics,
-                "net_pnl_usd": source.metrics["net_pnl_usd"] + 1e-9,
-            },
         )
         with tempfile.TemporaryDirectory() as home:
             folder = Path(home) / "evidence"
-            write_backtest_artifacts(generic, folder)
+            manifest = write_backtest_artifacts(generic, folder)
+            # The writer correctly refuses contradictory claimed metrics.
+            # To test the auditor's generic numeric tolerance, mutate and
+            # rehash an already-written *canonical* metrics payload.
+            payload_path = folder / "metrics.json"
+            metrics = json.loads(payload_path.read_text("utf-8"))
+            metrics["net_pnl_usd"] += 1e-9
+            payload = (
+                json.dumps(
+                    metrics, sort_keys=True, indent=2,
+                    ensure_ascii=False, allow_nan=False,
+                ) + "\n"
+            ).encode("utf-8")
+            payload_path.write_bytes(payload)
+            for record in manifest["artifacts"]:
+                if record["path"] == "metrics.json":
+                    record["size_bytes"] = len(payload)
+                    record["sha256"] = hashlib.sha256(payload).hexdigest()
+            (folder / "manifest.json").write_text(
+                json.dumps(manifest), encoding="utf-8",
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
             self.assertEqual(
                 audit_backtest_artifact_structure(folder)["trade_count"], 1,
             )
@@ -4207,6 +4224,38 @@ class Phase3AuditSourceNoDrawdownNullRecoveryTests(unittest.TestCase):
             self.assertEqual(verify_backtest_artifacts(folder), manifest)
             with self.assertRaisesRegex(
                 ValueError, "metric recovery_factor conflicts with checkpoint curve",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+
+class Phase3AuditPreciseSourceEconomicErrorOrderingTests(unittest.TestCase):
+    def test_audit_identifies_source_gross_before_dependent_net(self):
+        source = _combined_source_economic_model_run()
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(source, folder)
+            _forge_versioned_trade_execution(
+                folder, manifest, "gross_pnl_usd",
+                source.trades[0].gross_pnl_usd + 0.00001,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "gross PnL conflicts with reference-price",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_identifies_source_commission_before_dependent_net(self):
+        source = _combined_source_economic_model_run()
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(source, folder)
+            _forge_versioned_trade_execution(
+                folder, manifest, "commission_cost_usd",
+                source.trades[0].commission_cost_usd + 0.00001,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "source fixed commission conflicts with trade costs",
             ):
                 audit_backtest_artifact_structure(folder)
 

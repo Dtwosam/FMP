@@ -1540,8 +1540,11 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                             )
                         except OverflowError:
                             reconciled = False
-                        if not reconciled:
-                            raise ValueError("artifact report trade net PnL cost reconciliation mismatch")
+                        # Compute the net witness now, but defer refusing it
+                        # until the source's independent gross, slipped-fill
+                        # and built-in cost witnesses have been validated.
+                        # That preserves precise root-cause findings when a
+                        # rehashed trade corrupts one underlying component.
                         # Only the installed source engine commits to this
                         # exact reference-price PnL formula. Generic reporting
                         # envelopes may use synthetic trade economics.
@@ -1695,6 +1698,10 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                                 raise ValueError(
                                     "artifact report source zero financing conflicts with trade costs"
                                 )
+                        if not reconciled:
+                            raise ValueError(
+                                "artifact report trade net PnL cost reconciliation mismatch"
+                            )
                         for economic in ledger_totals:
                             ledger_totals[economic] += amounts[economic]
                         sorted_trade_pnls.append(amounts["net_pnl_usd"])
