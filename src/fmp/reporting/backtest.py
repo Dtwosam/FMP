@@ -1221,6 +1221,7 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
         seen_trade_ids: set[str] = set()
         seen_trade_decisions: set[str] = set()
         seen_rejection_decisions: set[str] = set()
+        observed_decision_symbols: dict[str, str] = {}
         previous_trade_order: tuple[datetime, str] | None = None
         previous_rejection_order: tuple[datetime, str] | None = None
         for name, field in (("trades.jsonl", "trade_count"),
@@ -1704,6 +1705,7 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                         previous_trade_order = trade_order
                         seen_trade_ids.add(trade_id)
                         seen_trade_decisions.add(decision)
+                        observed_decision_symbols[decision] = record["symbol"]
                     else:
                         if decision in seen_rejection_decisions:
                             raise ValueError("artifact report duplicate rejection decision_id")
@@ -1717,6 +1719,7 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                             raise ValueError("artifact report rejections are not in canonical evaluation order")
                         previous_rejection_order = rejection_order
                         seen_rejection_decisions.add(decision)
+                        observed_decision_symbols[decision] = record["symbol"]
                     # Complete semantic, economic, identity and chronology
                     # validation first. The byte-format guard must not mask
                     # a more precise tamper finding in the same JSONL row.
@@ -1743,6 +1746,19 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
             # and cross-row checks, preserving precise duplicate-ID reports.
             if noncanonical_row_seen:
                 raise ValueError("artifact report JSONL row is not canonical")
+        # A scheduled source exit must reference an actual directional
+        # decision submitted to this engine. Every such decision is either
+        # rejected or filled and eventually closed, so it must appear in
+        # one of the validated outcome streams with the same symbol.
+        # Do not require it to reach TIME_EXIT: stop/target may win.
+        if source_identity.get("backtest_engine_version") == BACKTEST_ENGINE_VERSION:
+            for scheduled_decision, (scheduled_symbol, _) in (
+                scheduled_exit_by_decision.items()
+            ):
+                if observed_decision_symbols.get(scheduled_decision) != scheduled_symbol:
+                    raise ValueError(
+                        "artifact report source scheduled exit has no matching decision outcome"
+                    )
         # Generic synthetic evidence has no independent close-sequence
         # witness, so keep its historical canonical-order chain check.
         # Source-engine evidence instead uses the checkpoint close sequence
