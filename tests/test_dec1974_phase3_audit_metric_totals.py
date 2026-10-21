@@ -1807,5 +1807,89 @@ class Phase3AuditEqualExitTimeSourceCheckpointTests(unittest.TestCase):
                 audit_backtest_artifact_structure(folder)
 
 
+def _versioned_builtin_zero_cost_run() -> BacktestRun:
+    source = _source_engine_checkpoint_run()
+    return replace(
+        source,
+        run_identity={
+            "backtest_engine_version": BACKTEST_ENGINE_VERSION,
+            "starting_equity_usd": 10000.0,
+            "commission_model": {"model": "zero_commission"},
+            "financing_model": {"model": "zero_financing"},
+        },
+        trades=tuple(
+            replace(item, commission_cost_usd=0.0, financing_cost_usd=0.0)
+            for item in source.trades
+        ),
+    )
+
+
+def _forge_versioned_trade_costs(
+    folder: Path, manifest: dict[str, object], commission: float,
+    financing: float,
+) -> None:
+    path = folder / "trades.jsonl"
+    records = [json.loads(line) for line in path.read_text("utf-8").splitlines()]
+    records[0]["commission_cost_usd"] = commission
+    records[0]["financing_cost_usd"] = financing
+    payload = ("\n".join(
+        json.dumps(row, sort_keys=True, separators=(",", ":")) for row in records
+    ) + "\n").encode("utf-8")
+    path.write_bytes(payload)
+    for entry in manifest["artifacts"]:
+        if entry["path"] == "trades.jsonl":
+            entry["size_bytes"] = len(payload)
+            entry["sha256"] = hashlib.sha256(payload).hexdigest()
+    (folder / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+
+class Phase3AuditSourceBuiltinCostEconomicsTests(unittest.TestCase):
+    def test_audit_accepts_source_zero_commission_and_financing_trades(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(_versioned_builtin_zero_cost_run(), folder)
+            self.assertEqual(audit_backtest_artifact_structure(folder)["trade_count"], 2)
+
+    def test_audit_refuses_rehashed_hidden_nonzero_commission_under_zero_model(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(_versioned_builtin_zero_cost_run(), folder)
+            # Preserve net= gross - slippage - commission - financing,
+            # but the declared source models cannot charge these costs.
+            _forge_versioned_trade_costs(folder, manifest, 1.0, -1.0)
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "zero commission conflicts"):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_accepts_source_fixed_per_million_commission_rate(self):
+        original = _source_engine_checkpoint_run()
+        run = replace(
+            original,
+            run_identity={
+                "backtest_engine_version": BACKTEST_ENGINE_VERSION,
+                "starting_equity_usd": 10000.0,
+                "commission_model": {
+                    "model": "fixed_per_million_per_side",
+                    "usd_per_million_per_side": 25.0,
+                },
+            },
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(run, folder)
+            self.assertEqual(audit_backtest_artifact_structure(folder)["trade_count"], 2)
+
+    def test_audit_refuses_rehashed_false_zero_financing_model(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(_source_engine_checkpoint_run(), folder)
+            _forge_run_identity_window(
+                folder, manifest, "financing_model", {"model": "zero_financing"}
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "zero financing conflicts"):
+                audit_backtest_artifact_structure(folder)
+
+
 if __name__ == "__main__":
     unittest.main()
