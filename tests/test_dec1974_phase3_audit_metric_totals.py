@@ -1016,5 +1016,71 @@ class Phase3AuditSourceIdentityScalarTests(unittest.TestCase):
                 audit_backtest_artifact_structure(folder)
 
 
+def _scheduled_exits_run() -> BacktestRun:
+    return replace(
+        _run({"trade_count": 1}),
+        run_identity={
+            "scheduled_exits": [
+                {
+                    "decision_id": "DEC-A",
+                    "symbol": "EURUSD",
+                    "timestamp_utc": STAMP + timedelta(minutes=1),
+                },
+                {
+                    "decision_id": "DEC-B",
+                    "symbol": "GBPUSD",
+                    "timestamp_utc": STAMP + timedelta(minutes=2),
+                },
+            ],
+        },
+    )
+
+
+class Phase3AuditScheduledExitIdentityTests(unittest.TestCase):
+    def test_audit_accepts_canonical_source_scheduled_exits(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(_scheduled_exits_run(), folder)
+            self.assertEqual(audit_backtest_artifact_structure(folder)["trade_count"], 1)
+
+    def test_audit_refuses_rehashed_scheduled_exit_unsupported_symbol(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(_scheduled_exits_run(), folder)
+            scheduled = [
+                {"decision_id": "DEC-A", "symbol": "BTCUSD",
+                 "timestamp_utc": "2026-10-20T00:01:00Z"},
+            ]
+            _forge_run_identity_window(folder, manifest, "scheduled_exits", scheduled)
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "scheduled exit symbol is unsupported"):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_scheduled_exit_noncanonical_order(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(_scheduled_exits_run(), folder)
+            scheduled = list(reversed(json.loads(
+                (folder / "summary.json").read_text("utf-8")
+            )["run_identity"]["scheduled_exits"]))
+            _forge_run_identity_window(folder, manifest, "scheduled_exits", scheduled)
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "scheduled exits are not in canonical order"):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_duplicate_scheduled_exit_decision(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(_scheduled_exits_run(), folder)
+            scheduled = json.loads(
+                (folder / "summary.json").read_text("utf-8")
+            )["run_identity"]["scheduled_exits"]
+            scheduled[1]["decision_id"] = scheduled[0]["decision_id"]
+            _forge_run_identity_window(folder, manifest, "scheduled_exits", scheduled)
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "duplicate scheduled exit decision_id"):
+                audit_backtest_artifact_structure(folder)
+
+
 if __name__ == "__main__":
     unittest.main()
