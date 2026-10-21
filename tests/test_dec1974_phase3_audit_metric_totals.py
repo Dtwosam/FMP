@@ -4672,10 +4672,10 @@ class Phase3AuditSourceRejectedOnlyPerformanceWitnessTests(unittest.TestCase):
             write_backtest_artifacts(
                 _source_rejected_only_null_performance_run(), folder,
             )
-            self.assertEqual(
-                audit_backtest_artifact_structure(folder),
-                {"trade_count": 0, "rejection_count": 1},
-            )
+            observed = audit_backtest_artifact_structure(folder)
+            self.assertEqual(observed["trade_count"], 0)
+            self.assertEqual(observed["rejection_count"], 1)
+            self.assertEqual(observed["equity_checkpoint_count"], 1)
 
     def test_audit_refuses_rehashed_rejected_only_win_rate_zero(self):
         with tempfile.TemporaryDirectory() as home:
