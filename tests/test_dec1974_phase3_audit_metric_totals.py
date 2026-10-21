@@ -3870,16 +3870,16 @@ class Phase3AuditExactSourceNetReturnTests(unittest.TestCase):
     def test_audit_preserves_generic_net_return_rounding_tolerance(self):
         source = _source_with_exact_net_return_metric()
         generic = replace(
-            source,
-            run_identity={"starting_equity_usd": 10000.0},
-            metrics={
-                **source.metrics,
-                "net_return": source.metrics["net_return"] + 1e-13,
-            },
+            source, run_identity={"starting_equity_usd": 10000.0},
         )
         with tempfile.TemporaryDirectory() as home:
             folder = Path(home) / "evidence"
-            write_backtest_artifacts(generic, folder)
+            manifest = write_backtest_artifacts(generic, folder)
+            _forge_canonical_metric(
+                folder, manifest, "net_return",
+                source.metrics["net_return"] + 1e-13,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
             self.assertEqual(
                 audit_backtest_artifact_structure(folder)["trade_count"], 1,
             )
@@ -4018,16 +4018,16 @@ class Phase3AuditExactSourceProfitabilityMetricsTests(unittest.TestCase):
     def test_audit_keeps_generic_near_equal_profitability_tolerance(self):
         source = _source_winning_losing_profit_metrics_run()
         generic = replace(
-            source,
-            run_identity={"starting_equity_usd": 10000.0},
-            metrics={
-                **source.metrics,
-                "gross_profit_usd": source.metrics["gross_profit_usd"] + 1e-9,
-            },
+            source, run_identity={"starting_equity_usd": 10000.0},
         )
         with tempfile.TemporaryDirectory() as home:
             folder = Path(home) / "evidence"
-            write_backtest_artifacts(generic, folder)
+            manifest = write_backtest_artifacts(generic, folder)
+            _forge_canonical_metric(
+                folder, manifest, "gross_profit_usd",
+                source.metrics["gross_profit_usd"] + 1e-9,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
             self.assertEqual(
                 audit_backtest_artifact_structure(folder)["trade_count"], 2,
             )
@@ -4093,16 +4093,16 @@ class Phase3AuditExactSourceTradeDistributionMetricsTests(unittest.TestCase):
     def test_audit_preserves_generic_near_equal_trade_win_rate_tolerance(self):
         source = _source_with_exact_trade_distribution_metrics()
         generic = replace(
-            source,
-            run_identity={"starting_equity_usd": 10000.0},
-            metrics={
-                **source.metrics,
-                "win_rate": source.metrics["win_rate"] + 1e-9,
-            },
+            source, run_identity={"starting_equity_usd": 10000.0},
         )
         with tempfile.TemporaryDirectory() as home:
             folder = Path(home) / "evidence"
-            write_backtest_artifacts(generic, folder)
+            manifest = write_backtest_artifacts(generic, folder)
+            _forge_canonical_metric(
+                folder, manifest, "win_rate",
+                source.metrics["win_rate"] + 1e-9,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
             self.assertEqual(
                 audit_backtest_artifact_structure(folder)["trade_count"], 2,
             )
@@ -4165,16 +4165,16 @@ class Phase3AuditExactSourceDrawdownMetricsTests(unittest.TestCase):
     def test_audit_keeps_generic_drawdown_metric_tolerance(self):
         source = _source_with_exact_drawdown_metrics()
         generic = replace(
-            source,
-            run_identity={"starting_equity_usd": 10000.0},
-            metrics={
-                **source.metrics,
-                "max_drawdown_usd": source.metrics["max_drawdown_usd"] + 1e-9,
-            },
+            source, run_identity={"starting_equity_usd": 10000.0},
         )
         with tempfile.TemporaryDirectory() as home:
             folder = Path(home) / "evidence"
-            write_backtest_artifacts(generic, folder)
+            manifest = write_backtest_artifacts(generic, folder)
+            _forge_canonical_metric(
+                folder, manifest, "max_drawdown_usd",
+                source.metrics["max_drawdown_usd"] + 1e-9,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
             self.assertEqual(
                 audit_backtest_artifact_structure(folder)["trade_count"], 2,
             )
@@ -4258,6 +4258,62 @@ class Phase3AuditPreciseSourceEconomicErrorOrderingTests(unittest.TestCase):
                 ValueError, "source fixed commission conflicts with trade costs",
             ):
                 audit_backtest_artifact_structure(folder)
+
+
+def _forge_canonical_metric(
+    folder: Path, manifest: dict[str, object], field: str, value: object,
+) -> None:
+    # Preserve the writer's canonical small-JSON encoding. This isolates
+    # the auditor's intentionally looser generic metric arithmetic from
+    # the writer's correctly strict pre-I/O ledger validation.
+    file = folder / "metrics.json"
+    report = json.loads(file.read_text("utf-8"))
+    report[field] = value
+    payload = (
+        json.dumps(
+            report, sort_keys=True, indent=2,
+            ensure_ascii=False, allow_nan=False,
+        ) + "\n"
+    ).encode("utf-8")
+    file.write_bytes(payload)
+    for record in manifest["artifacts"]:
+        if record["path"] == "metrics.json":
+            record["size_bytes"] = len(payload)
+            record["sha256"] = hashlib.sha256(payload).hexdigest()
+    (folder / "manifest.json").write_text(
+        json.dumps(manifest), encoding="utf-8",
+    )
+
+
+class Phase3AuditGenericCanonicalMetricCompatibilityTests(unittest.TestCase):
+    def test_audit_rejects_rehashed_generic_metric_with_large_drift(self):
+        source = _source_with_exact_trade_distribution_metrics()
+        generic = replace(
+            source, run_identity={"starting_equity_usd": 10000.0},
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(generic, folder)
+            _forge_canonical_metric(folder, manifest, "win_rate", 0.9)
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric win_rate conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_accepts_rehashed_generic_metric_below_legacy_tolerance(self):
+        source = _source_with_exact_trade_distribution_metrics()
+        generic = replace(
+            source, run_identity={"starting_equity_usd": 10000.0},
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(generic, folder)
+            _forge_canonical_metric(folder, manifest, "win_rate", 0.500000001)
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 2,
+            )
 
 
 if __name__ == "__main__":
