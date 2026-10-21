@@ -1292,6 +1292,14 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                             )
                         if trade_id in seen_trade_ids:
                             raise ValueError("artifact report duplicate trade_id")
+                        if (
+                            source_identity.get("backtest_engine_version")
+                            == BACKTEST_ENGINE_VERSION
+                            and trade_id != decision
+                        ):
+                            raise ValueError(
+                                "artifact report source engine trade_id conflicts with decision_id"
+                            )
                         if decision in seen_trade_decisions:
                             raise ValueError("artifact report duplicate trade decision_id")
                         # Enforce source-defined trade domains as well as
