@@ -1308,6 +1308,46 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                     raise ValueError(
                         f"artifact report metric {name} conflicts with trade ledger"
                     )
+        # The engine records the starting equity in run_identity. Reconcile
+        # its optional net-return claim only when that source-defined base is
+        # available; arbitrary synthetic BacktestRun identity dicts may omit it.
+        identity = summary["run_identity"]
+        if "starting_equity_usd" in identity:
+            starting_equity = identity["starting_equity_usd"]
+            if type(starting_equity) not in (int, float):
+                raise ValueError(
+                    "artifact report starting equity must be finite positive"
+                )
+            try:
+                valid_start = math.isfinite(starting_equity) and starting_equity > 0
+            except OverflowError:
+                valid_start = False
+            if not valid_start:
+                raise ValueError(
+                    "artifact report starting equity must be finite positive"
+                )
+            if "net_return" in metrics:
+                expected_return = ledger_totals["net_pnl_usd"] / starting_equity
+                claimed_return = metrics["net_return"]
+                if type(claimed_return) not in (int, float):
+                    raise ValueError(
+                        "artifact report metric net_return must be finite numeric"
+                    )
+                try:
+                    matches_return = (
+                        math.isfinite(expected_return)
+                        and math.isfinite(claimed_return)
+                        and math.isclose(
+                            claimed_return, expected_return,
+                            rel_tol=1e-12, abs_tol=1e-12,
+                        )
+                    )
+                except OverflowError:
+                    matches_return = False
+                if not matches_return:
+                    raise ValueError(
+                        "artifact report metric net_return conflicts with starting equity and trade ledger"
+                    )
         if "trade_count" in metrics and (
             type(metrics["trade_count"]) is not int
             or metrics["trade_count"] != counts["trade_count"]

@@ -790,5 +790,42 @@ class Phase3AuditCanonicalSummaryMetricsBytesTests(unittest.TestCase):
                 audit_backtest_artifact_structure(folder)
 
 
+class Phase3AuditSourceEquityNetReturnTests(unittest.TestCase):
+    def test_audit_accepts_writer_consistent_net_return_with_start_equity(self):
+        run = replace(
+            _run({"trade_count": 1, "net_return": 0.0011}),
+            run_identity={"starting_equity_usd": 10000.0},
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(run, folder)
+            self.assertEqual(audit_backtest_artifact_structure(folder)["trade_count"], 1)
+
+    def test_audit_refuses_rehashed_false_net_return_with_valid_identity(self):
+        run = replace(
+            _run({"trade_count": 1, "net_return": 0.0011}),
+            run_identity={"starting_equity_usd": 10000.0},
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(run, folder)
+            _forge_metrics(folder, manifest, "net_return", 0.5)
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "net_return conflicts"):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_nonpositive_or_boolean_start_equity_in_identity(self):
+        for start in (0, False, -100):
+            with self.subTest(start=start), tempfile.TemporaryDirectory() as home:
+                run = replace(
+                    _run({"trade_count": 1}),
+                    run_identity={"starting_equity_usd": start},
+                )
+                folder = Path(home) / "evidence"
+                write_backtest_artifacts(run, folder)
+                with self.assertRaisesRegex(ValueError, "starting equity must be finite positive"):
+                    audit_backtest_artifact_structure(folder)
+
+
 if __name__ == "__main__":
     unittest.main()
