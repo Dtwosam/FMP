@@ -19,6 +19,7 @@ from fmp.contracts import (
 )
 from fmp.reporting.backtest import (
     audit_backtest_artifact_structure,
+    compute_backtest_metrics,
     verify_backtest_artifacts,
     write_backtest_artifacts,
 )
@@ -6687,6 +6688,97 @@ class Phase3AuditSourceChronologicalNeutralLossStreakTests(unittest.TestCase):
                 ValueError, "checkpoint conflicts with trade close",
             ):
                 audit_backtest_artifact_structure(folder)
+
+
+
+def _source_recomputed_full_metric_run(source: BacktestRun) -> BacktestRun:
+    computed = compute_backtest_metrics(
+        starting_equity_usd=10000.0,
+        trades=source.trades,
+        equity_checkpoints=source.equity_checkpoints,
+    )
+    return replace(source, metrics=computed)
+
+
+class Phase3AuditSourceComputedPerformanceParityTests(unittest.TestCase):
+    def test_computed_all_flat_metrics_round_trip_through_source_audit(self):
+        source = _source_recomputed_full_metric_run(
+            _source_all_flat_same_time_distribution_run(),
+        )
+        self.assertEqual(source.metrics["trade_count"], 2)
+        self.assertEqual(source.metrics["win_rate"], 0.0)
+        self.assertEqual(source.metrics["expectancy_usd"], 0.0)
+        self.assertIsNone(source.metrics["profit_factor"])
+        self.assertIsNone(source.metrics["average_win_usd"])
+        self.assertIsNone(source.metrics["average_loss_usd"])
+        self.assertEqual(source.metrics["longest_winning_streak"], 0)
+        self.assertEqual(source.metrics["longest_losing_streak"], 0)
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(source, folder)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 2,
+            )
+
+    def test_computed_win_flat_win_streak_uses_canonical_flat_gap(self):
+        source = _source_recomputed_full_metric_run(
+            _source_same_time_win_flat_win_distribution_run(),
+        )
+        self.assertEqual(source.metrics["longest_winning_streak"], 1)
+        self.assertEqual(source.metrics["win_rate"], 2 / 3)
+        self.assertEqual(source.metrics["average_win_usd"], 11.0)
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(source, folder)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 3,
+            )
+
+    def test_computed_canonical_win_win_flat_streak_overrides_realization_order(self):
+        source = _source_recomputed_full_metric_run(
+            _source_same_time_canonical_win_win_flat_run(),
+        )
+        self.assertEqual(
+            [item.net_pnl_usd for item in source.trades],
+            [11.0, 0.0, 11.0],
+        )
+        self.assertEqual(source.metrics["longest_winning_streak"], 2)
+        self.assertEqual(source.metrics["win_rate"], 2 / 3)
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(source, folder)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 3,
+            )
+
+    def test_computed_cross_time_flat_then_two_losses_uses_published_streak(self):
+        source = _source_recomputed_full_metric_run(
+            _source_cross_time_canonical_flat_losses_run(),
+        )
+        self.assertEqual(
+            [item.net_pnl_usd < 0 for item in source.trades],
+            [True, False, True],
+        )
+        self.assertEqual(source.metrics["longest_losing_streak"], 2)
+        self.assertEqual(source.metrics["win_rate"], 0.0)
+        self.assertEqual(source.metrics["profit_factor"], 0.0)
+        self.assertIsNone(source.metrics["average_win_usd"])
+
+    def test_computed_reverse_realization_preserves_mixed_distribution(self):
+        source = _source_recomputed_full_metric_run(
+            _source_reverse_realization_win_flat_loss_run(),
+        )
+        self.assertEqual(
+            [item.net_pnl_usd < 0 for item in source.trades],
+            [True, False, False],
+        )
+        self.assertEqual(source.metrics["trade_count"], 3)
+        self.assertEqual(source.metrics["win_rate"], 1 / 3)
+        self.assertEqual(source.metrics["longest_winning_streak"], 1)
+        self.assertEqual(source.metrics["longest_losing_streak"], 1)
+        self.assertGreater(source.metrics["profit_factor"], 0.0)
+        self.assertIsNotNone(source.metrics["average_win_usd"])
+        self.assertIsNotNone(source.metrics["average_loss_usd"])
 
 
 if __name__ == "__main__":
