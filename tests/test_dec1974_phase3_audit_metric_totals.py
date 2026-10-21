@@ -6781,5 +6781,107 @@ class Phase3AuditSourceComputedPerformanceParityTests(unittest.TestCase):
         self.assertIsNotNone(source.metrics["average_loss_usd"])
 
 
+
+def _source_cost_offset_net_flat_distribution_run() -> BacktestRun:
+    original = _combined_source_economic_model_run().trades[0]
+    assert original.gross_pnl_usd > 0
+    financing = (
+        original.gross_pnl_usd - original.slippage_cost_usd
+        - original.commission_cost_usd
+    )
+    assert financing > 0
+    source = _source_custom_financing_run(financing)
+    trade = source.trades[0]
+    assert trade.gross_pnl_usd > 0
+    assert trade.financing_cost_usd == financing
+    assert trade.net_pnl_usd == 0.0
+    assert trade.risk_equity_after_usd == 10000.0
+    return replace(source, metrics={
+        "trade_count": 1,
+        "net_pnl_usd": 0.0,
+        "gross_profit_usd": 0.0,
+        "gross_loss_usd": 0.0,
+        "profit_factor": None,
+        "win_rate": 0.0,
+        "average_win_usd": None,
+        "average_loss_usd": None,
+        "expectancy_usd": 0.0,
+        "longest_winning_streak": 0,
+        "longest_losing_streak": 0,
+        "financing_cost_usd": financing,
+    })
+
+
+class Phase3AuditSourceFinancingOffsetNetFlatMetricsTests(unittest.TestCase):
+    def test_audit_accepts_positive_gross_zero_net_cost_offset_trade(self):
+        source = _source_cost_offset_net_flat_distribution_run()
+        self.assertGreater(source.trades[0].gross_pnl_usd, 0.0)
+        self.assertEqual(source.trades[0].net_pnl_usd, 0.0)
+        self.assertEqual(source.metrics["win_rate"], 0.0)
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(source, folder)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 1,
+            )
+
+    def test_computed_metrics_do_not_count_gross_profit_as_net_win(self):
+        source = _source_cost_offset_net_flat_distribution_run()
+        computed = compute_backtest_metrics(
+            starting_equity_usd=10000.0,
+            trades=source.trades,
+            equity_checkpoints=source.equity_checkpoints,
+        )
+        self.assertEqual(computed["trade_count"], 1)
+        self.assertEqual(computed["win_rate"], 0.0)
+        self.assertEqual(computed["gross_profit_usd"], 0.0)
+        self.assertEqual(computed["gross_loss_usd"], 0.0)
+        self.assertEqual(computed["expectancy_usd"], 0.0)
+        self.assertIsNone(computed["average_win_usd"])
+        self.assertIsNone(computed["profit_factor"])
+        self.assertEqual(computed["financing_cost_usd"], source.trades[0].financing_cost_usd)
+
+    def test_audit_refuses_rehashed_full_win_rate_from_positive_trade_gross(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _source_cost_offset_net_flat_distribution_run(), folder,
+            )
+            _forge_canonical_metric(folder, manifest, "win_rate", 1.0)
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric win_rate conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_gross_profit_from_raw_trade_gross(self):
+        source = _source_cost_offset_net_flat_distribution_run()
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(source, folder)
+            _forge_canonical_metric(
+                folder, manifest, "gross_profit_usd",
+                source.trades[0].gross_pnl_usd,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric gross_profit_usd conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_nonnull_profit_factor_from_raw_gross(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _source_cost_offset_net_flat_distribution_run(), folder,
+            )
+            _forge_canonical_metric(folder, manifest, "profit_factor", 1.0)
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric profit_factor conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+
 if __name__ == "__main__":
     unittest.main()
