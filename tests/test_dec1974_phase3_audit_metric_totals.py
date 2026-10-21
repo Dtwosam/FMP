@@ -3032,5 +3032,51 @@ class Phase3AuditSameTimeMixedSourceExitWitnessTests(unittest.TestCase):
             )
 
 
+class Phase3AuditSourceInitialEquityExactCopyTests(unittest.TestCase):
+    def test_audit_accepts_exact_source_initial_checkpoint_copy(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(
+                _zero_trade_source_engine_run(), folder,
+            )
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 0,
+            )
+
+    def test_audit_refuses_rehashed_sub_tolerance_initial_equity_drift(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _zero_trade_source_engine_run(), folder,
+            )
+            # Former isclose(rel_tol=1e-12, abs_tol=1e-8) admitted this
+            # drift even though both source fields copy one numeric value.
+            _forge_checkpoint_summary(
+                folder, manifest, 0, "realized_risk_equity_usd",
+                10000.000000001,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "initial checkpoint equity conflicts with starting equity",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_preserves_generic_initial_equity_numeric_tolerance(self):
+        source = _zero_trade_source_engine_run()
+        generic = replace(
+            source,
+            run_identity={"starting_equity_usd": 10000.0},
+            equity_checkpoints=(
+                EquityCheckpoint(STAMP, 10000.000000001),
+            ),
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(generic, folder)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 0,
+            )
+
+
 if __name__ == "__main__":
     unittest.main()
