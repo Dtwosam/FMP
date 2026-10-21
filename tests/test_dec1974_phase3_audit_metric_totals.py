@@ -3762,5 +3762,61 @@ class Phase3AuditExactSourceAggregateMetricTests(unittest.TestCase):
             )
 
 
+def _source_same_time_with_aggregate_economics() -> BacktestRun:
+    source = _same_exit_source_engine_run()
+    trades = source.trades
+    slippage = sum(trade.slippage_cost_usd for trade in trades)
+    commission = sum(trade.commission_cost_usd for trade in trades)
+    financing = sum(trade.financing_cost_usd for trade in trades)
+    return replace(source, metrics={
+        "trade_count": len(trades),
+        "net_pnl_usd": sum(trade.net_pnl_usd for trade in trades),
+        "slippage_cost_usd": slippage,
+        "commission_cost_usd": commission,
+        "financing_cost_usd": financing,
+        "total_explicit_cost_usd": slippage + commission + financing,
+    })
+
+
+class Phase3AuditZeroAndSameTimeSourceMetricTests(unittest.TestCase):
+    def test_audit_accepts_same_time_source_metrics_in_publication_order(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            source = _source_same_time_with_aggregate_economics()
+            write_backtest_artifacts(source, folder)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 2,
+            )
+
+    def test_audit_accepts_zero_trade_source_zero_metric_economics(self):
+        source = _zero_trade_source_engine_run()
+        zero = replace(source, metrics={
+            "trade_count": 0, "net_pnl_usd": 0,
+            "slippage_cost_usd": 0, "commission_cost_usd": 0,
+            "financing_cost_usd": 0, "total_explicit_cost_usd": 0,
+        })
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(zero, folder)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 0,
+            )
+
+    def test_audit_refuses_rehashed_near_zero_metric_without_trades(self):
+        source = _zero_trade_source_engine_run()
+        zero = replace(source, metrics={
+            "trade_count": 0, "net_pnl_usd": 0.0,
+        })
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(zero, folder)
+            _forge_metrics(folder, manifest, "net_pnl_usd", 1e-9)
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric net_pnl_usd conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+
 if __name__ == "__main__":
     unittest.main()
