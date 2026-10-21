@@ -212,5 +212,48 @@ class Phase3AuditProfitabilityMetricTests(unittest.TestCase):
                 audit_backtest_artifact_structure(folder)
 
 
+def _forge_trade_field(
+    folder: Path, manifest: dict[str, object], name: str, value: object,
+) -> None:
+    path = folder / "trades.jsonl"
+    row = json.loads(path.read_text("utf-8"))
+    row[name] = value
+    payload = (json.dumps(row, sort_keys=True) + "\n").encode("utf-8")
+    path.write_bytes(payload)
+    for entry in manifest["artifacts"]:
+        if entry["path"] == "trades.jsonl":
+            entry["size_bytes"] = len(payload)
+            entry["sha256"] = hashlib.sha256(payload).hexdigest()
+    (folder / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+
+class Phase3AuditRealizedEquityArithmeticTests(unittest.TestCase):
+    def test_audit_accepts_writer_trade_realized_equity(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(_run({"trade_count": 1}), folder)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 1
+            )
+
+    def test_audit_refuses_rehashed_trade_equity_after_not_matching_net_pnl(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(_run({"trade_count": 1}), folder)
+            _forge_trade_field(folder, manifest, "risk_equity_after_usd", 10009.0)
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "realized equity conflicts"):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_boolean_equity_alias(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(_run({"trade_count": 1}), folder)
+            _forge_trade_field(folder, manifest, "risk_equity_before_usd", True)
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "risk_equity_before_usd.*numeric"):
+                audit_backtest_artifact_structure(folder)
+
+
 if __name__ == "__main__":
     unittest.main()
