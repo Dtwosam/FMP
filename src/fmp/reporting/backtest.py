@@ -948,6 +948,50 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                 raise ValueError(
                     "artifact report run identity execution_timing_mode is unsupported"
                 )
+        # The engine's scheduled-exit run identity is a sorted list of
+        # canonical ScheduledExit descriptors, not arbitrary JSON metadata.
+        if "scheduled_exits" in source_identity:
+            scheduled = source_identity["scheduled_exits"]
+            if type(scheduled) is not list or not scheduled:
+                raise ValueError(
+                    "artifact report scheduled exits must be a nonempty list"
+                )
+            previous_exit: tuple[datetime, str, str] | None = None
+            scheduled_decisions: set[str] = set()
+            for item in scheduled:
+                if type(item) is not dict or set(item) != {
+                    "decision_id", "symbol", "timestamp_utc",
+                }:
+                    raise ValueError(
+                        "artifact report scheduled exit fields mismatch"
+                    )
+                decision_id = item["decision_id"]
+                if (
+                    type(decision_id) is not str or not decision_id.strip()
+                    or len(decision_id) > 512 or not decision_id.isprintable()
+                ):
+                    raise ValueError(
+                        "artifact report scheduled exit decision_id must be bounded printable text"
+                    )
+                symbol = item["symbol"]
+                if type(symbol) is not str or symbol not in SUPPORTED_SYMBOLS:
+                    raise ValueError(
+                        "artifact report scheduled exit symbol is unsupported"
+                    )
+                timestamp = _audit_parse_utc_timestamp(
+                    item["timestamp_utc"], "scheduled exit"
+                )
+                ordering = (timestamp, symbol, decision_id)
+                if previous_exit is not None and ordering < previous_exit:
+                    raise ValueError(
+                        "artifact report scheduled exits are not in canonical order"
+                    )
+                if decision_id in scheduled_decisions:
+                    raise ValueError(
+                        "artifact report duplicate scheduled exit decision_id"
+                    )
+                previous_exit = ordering
+                scheduled_decisions.add(decision_id)
         counts: dict[str, int] = {}
         for field in ("trade_count", "rejection_count", "equity_checkpoint_count"):
             count = summary.get(field)
