@@ -1394,6 +1394,23 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                             raise ValueError(
                                 "artifact report trade stop/target geometry conflicts with direction"
                             )
+                        # The installed evaluator marks ambiguity only
+                        # when stop and target are both touched in one bar.
+                        # Its conservative policy exits at the stop, never
+                        # at the target, time exit or end-of-data price.
+                        if (
+                            source_identity.get("backtest_engine_version")
+                            == BACKTEST_ENGINE_VERSION
+                            and record["intrabar_ambiguous"]
+                            and (
+                                record["exit_reason"] != ExitReason.STOP.value
+                                or target is None
+                                or exit_ref != stop
+                            )
+                        ):
+                            raise ValueError(
+                                "artifact report source ambiguous stop/target exit witness conflicts"
+                            )
                         amounts: dict[str, int | float] = {}
                         for economic in (
                             "gross_pnl_usd", "slippage_cost_usd",
