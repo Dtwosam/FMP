@@ -2063,5 +2063,64 @@ class Phase3AuditDeclaredSourceSlippagePipsTests(unittest.TestCase):
             )
 
 
+class Phase3AuditSourceInitialCheckpointTradeEntryChronologyTests(unittest.TestCase):
+    def test_audit_accepts_initial_checkpoint_before_first_trade_entry(self):
+        source = _declared_source_slippage_run(Direction.LONG, "EURUSD")
+        run = replace(
+            source, equity_checkpoints=(
+                replace(
+                    source.equity_checkpoints[0],
+                    timestamp_utc=STAMP - timedelta(minutes=1),
+                ),
+                source.equity_checkpoints[1],
+            ),
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(run, folder)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 1,
+            )
+
+    def test_audit_refuses_rehashed_initial_checkpoint_after_trade_entry(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _declared_source_slippage_run(Direction.LONG, "EURUSD"), folder,
+            )
+            forged_initial = (
+                (STAMP + timedelta(seconds=30)).isoformat()
+                .replace("+00:00", "Z")
+            )
+            _forge_checkpoint_summary(
+                folder, manifest, 0, "timestamp_utc", forged_initial,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "initial checkpoint follows trade entry",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_preserves_generic_initial_checkpoint_timing_flexibility(self):
+        source = _declared_source_slippage_run(Direction.LONG, "EURUSD")
+        generic = replace(
+            source,
+            run_identity={"starting_equity_usd": 10000.0},
+            equity_checkpoints=(
+                replace(
+                    source.equity_checkpoints[0],
+                    timestamp_utc=STAMP + timedelta(seconds=30),
+                ),
+                source.equity_checkpoints[1],
+            ),
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(generic, folder)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 1,
+            )
+
+
 if __name__ == "__main__":
     unittest.main()
