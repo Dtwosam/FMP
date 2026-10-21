@@ -1849,10 +1849,11 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                     "artifact report source engine initial checkpoint follows trade entry"
                 )
             initial_equity = checkpoints[0]["realized_risk_equity_usd"]
-            if not math.isclose(
-                initial_equity, source_identity["starting_equity_usd"],
-                rel_tol=1e-12, abs_tol=1e-8,
-            ):
+            # Both fields are direct serializations of the same source
+            # config.starting_equity_usd value. In the installed engine,
+            # tolerance is not justified: even a tiny rehashed divergence
+            # is inconsistent with the source's initial checkpoint writer.
+            if initial_equity != source_identity["starting_equity_usd"]:
                 raise ValueError(
                     "artifact report source engine initial checkpoint equity conflicts with starting equity"
                 )
