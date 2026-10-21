@@ -4512,5 +4512,75 @@ class Phase3AuditSignedFinancingAggregateWitnessTests(unittest.TestCase):
             )
 
 
+def _zero_trade_source_with_null_performance_metrics() -> BacktestRun:
+    base = _zero_trade_source_engine_run()
+    return replace(base, metrics={
+        "trade_count": 0,
+        "net_pnl_usd": 0.0,
+        "gross_profit_usd": 0.0,
+        "gross_loss_usd": 0.0,
+        "profit_factor": None,
+        "win_rate": None,
+        "average_win_usd": None,
+        "average_loss_usd": None,
+        "expectancy_usd": None,
+        "longest_winning_streak": 0,
+        "longest_losing_streak": 0,
+    })
+
+
+class Phase3AuditSourceZeroTradeNullPerformanceWitnessTests(unittest.TestCase):
+    def test_audit_accepts_null_profit_and_distribution_metrics_without_trades(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(
+                _zero_trade_source_with_null_performance_metrics(), folder,
+            )
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 0,
+            )
+
+    def test_audit_refuses_rehashed_zero_win_rate_instead_of_null(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _zero_trade_source_with_null_performance_metrics(), folder,
+            )
+            _forge_canonical_metric(folder, manifest, "win_rate", 0.0)
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric win_rate conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_zero_profit_factor_instead_of_null(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _zero_trade_source_with_null_performance_metrics(), folder,
+            )
+            _forge_canonical_metric(folder, manifest, "profit_factor", 0.0)
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric profit_factor conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_nonzero_winning_streak_without_trades(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _zero_trade_source_with_null_performance_metrics(), folder,
+            )
+            _forge_canonical_metric(
+                folder, manifest, "longest_winning_streak", 1,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric longest_winning_streak conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+
 if __name__ == "__main__":
     unittest.main()
