@@ -2924,5 +2924,113 @@ class Phase3AuditSourceScheduledExitClosePrecedenceTests(unittest.TestCase):
             )
 
 
+def _mixed_same_time_scheduled_source_run() -> BacktestRun:
+    source = _same_exit_source_engine_run()
+    first, second = source.trades
+    # Source realization order: Z TIME_EXIT, then A TARGET; the writer
+    # publishes equal-time trade rows in A/Z trade-ID order.
+    scheduled = [{
+        "decision_id": first.decision_id,
+        "symbol": first.symbol,
+        "timestamp_utc": first.exit_timestamp_utc.isoformat()
+        .replace("+00:00", "Z"),
+    }]
+    return replace(
+        source,
+        run_identity={**source.run_identity, "scheduled_exits": scheduled},
+        trades=(
+            replace(first, exit_reason=ExitReason.TIME_EXIT),
+            second,
+        ),
+    )
+
+
+class Phase3AuditSameTimeMixedSourceExitWitnessTests(unittest.TestCase):
+    def test_audit_accepts_mixed_scheduled_and_target_equal_time_closes(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(
+                _mixed_same_time_scheduled_source_run(), folder,
+            )
+            rows = [
+                json.loads(line) for line in
+                (folder / "trades.jsonl").read_text("utf-8").splitlines()
+            ]
+            self.assertEqual(
+                [row["trade_id"] for row in rows], ["A-CLOSE", "Z-CLOSE"],
+            )
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 2,
+            )
+
+    def test_audit_refuses_rehashed_target_with_new_same_time_schedule(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _mixed_same_time_scheduled_source_run(), folder,
+            )
+            same_time = (
+                (STAMP + timedelta(minutes=1)).isoformat()
+                .replace("+00:00", "Z")
+            )
+            _forge_run_identity_window(
+                folder, manifest, "scheduled_exits", [
+                    {
+                        "decision_id": "A-CLOSE",
+                        "symbol": "EURUSD",
+                        "timestamp_utc": same_time,
+                    },
+                    {
+                        "decision_id": "Z-CLOSE",
+                        "symbol": "EURUSD",
+                        "timestamp_utc": same_time,
+                    },
+                ],
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "scheduled close conflicts with exit reason",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_unscheduled_time_exit_in_same_time_group(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _mixed_same_time_scheduled_source_run(), folder,
+            )
+            # Canonical order places A before Z, despite Z closing first.
+            _forge_versioned_trade_execution(
+                folder, manifest, "exit_reason", ExitReason.TIME_EXIT.value,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "time exit conflicts with scheduled exit identity",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_keeps_generic_target_same_time_schedule_compatibility(self):
+        source = _declared_source_slippage_run(Direction.LONG, "EURUSD")
+        generic = replace(
+            source, run_identity={
+                "starting_equity_usd": 10000.0,
+                "scheduled_exits": [{
+                    "decision_id": source.trades[0].decision_id,
+                    "symbol": source.trades[0].symbol,
+                    "timestamp_utc": (
+                        source.trades[0].exit_timestamp_utc.isoformat()
+                        .replace("+00:00", "Z")
+                    ),
+                }],
+            },
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(generic, folder)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 1,
+            )
+
+
 if __name__ == "__main__":
     unittest.main()
