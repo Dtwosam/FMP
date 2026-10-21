@@ -5910,5 +5910,97 @@ class Phase3AuditSourceBreakevenInterruptsLossStreakTests(unittest.TestCase):
                 audit_backtest_artifact_structure(folder)
 
 
+
+def _source_same_time_canonical_win_win_flat_run() -> BacktestRun:
+    source = _source_same_time_win_flat_win_distribution_run()
+    first, flat, last = source.trades
+    # Checkpoint realization is W/FLAT/W but published ID order is W/W/FLAT.
+    return replace(
+        source,
+        trades=(
+            first,
+            replace(flat, trade_id="Z-FLAT", decision_id="Z-FLAT"),
+            replace(last, trade_id="B-WIN", decision_id="B-WIN"),
+        ),
+        metrics={
+            **source.metrics,
+            "longest_winning_streak": 2,
+        },
+    )
+
+
+class Phase3AuditSourceCanonicalWinFlatReorderingTests(unittest.TestCase):
+    def test_audit_accepts_published_two_win_streak_with_realized_flat_gap(self):
+        run = _source_same_time_canonical_win_win_flat_run()
+        self.assertEqual(
+            [trade.net_pnl_usd for trade in run.trades],
+            [11.0, 0.0, 11.0],
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(run, folder)
+            rows = [
+                json.loads(line) for line in
+                (folder / "trades.jsonl").read_text("utf-8").splitlines()
+            ]
+            self.assertEqual(
+                [row["trade_id"] for row in rows],
+                ["A-WIN", "B-WIN", "Z-FLAT"],
+            )
+            self.assertEqual(
+                [row["net_pnl_usd"] for row in rows],
+                [11.0, 11.0, 0.0],
+            )
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 3,
+            )
+
+    def test_audit_refuses_rehashed_realization_order_winning_streak(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _source_same_time_canonical_win_win_flat_run(), folder,
+            )
+            _forge_canonical_metric(
+                folder, manifest, "longest_winning_streak", 1,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError,
+                "metric longest_winning_streak conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_winner_average_in_flat_tie_report(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _source_same_time_canonical_win_win_flat_run(), folder,
+            )
+            _forge_canonical_metric(
+                folder, manifest, "average_win_usd", 22.0,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric average_win_usd conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_checkpoint_reordering_that_omits_flat_transition(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _source_same_time_canonical_win_win_flat_run(), folder,
+            )
+            _forge_checkpoint_summary(
+                folder, manifest, 1, "realized_risk_equity_usd", 10022.0,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "checkpoint conflicts with trade close",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+
 if __name__ == "__main__":
     unittest.main()
