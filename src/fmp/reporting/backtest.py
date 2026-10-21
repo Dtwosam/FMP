@@ -919,12 +919,45 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                         if evaluated_stamp < decision_stamp:
                             raise ValueError("artifact report rejection evaluation precedes decision")
                     decision = record["decision_id"]
-                    if type(decision) is not str or not decision.strip():
-                        raise ValueError("artifact report decision_id must be nonempty")
+                    if (
+                        type(decision) is not str or not decision.strip()
+                        or len(decision) > 512 or not decision.isprintable()
+                    ):
+                        raise ValueError(
+                            "artifact report decision_id must be bounded printable text"
+                        )
+                    if name == "rejections.jsonl":
+                        if (
+                            type(record["symbol"]) is not str
+                            or record["symbol"] not in SUPPORTED_SYMBOLS
+                        ):
+                            raise ValueError("artifact report rejection symbol is unsupported")
+                        if (
+                            type(record["code"]) is not str
+                            or record["code"] not in {
+                                item.value for item in RejectionCode
+                            }
+                        ):
+                            raise ValueError("artifact report rejection code is unsupported")
+                        explanation = record["explanation"]
+                        if (
+                            type(explanation) is not str
+                            or not explanation.strip()
+                            or len(explanation) > 4096
+                            or not explanation.isprintable()
+                        ):
+                            raise ValueError(
+                                "artifact report rejection explanation must be bounded printable text"
+                            )
                     if name == "trades.jsonl":
                         trade_id = record["trade_id"]
-                        if type(trade_id) is not str or not trade_id.strip():
-                            raise ValueError("artifact report trade_id must be nonempty")
+                        if (
+                            type(trade_id) is not str or not trade_id.strip()
+                            or len(trade_id) > 512 or not trade_id.isprintable()
+                        ):
+                            raise ValueError(
+                                "artifact report trade_id must be bounded printable text"
+                            )
                         if trade_id in seen_trade_ids:
                             raise ValueError("artifact report duplicate trade_id")
                         if decision in seen_trade_decisions:

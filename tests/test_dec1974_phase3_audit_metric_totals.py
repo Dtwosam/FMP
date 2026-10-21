@@ -444,5 +444,79 @@ class Phase3AuditStoredTradeContractTests(unittest.TestCase):
                     audit_backtest_artifact_structure(folder)
 
 
+def _forge_rejection_field(
+    folder: Path, manifest: dict[str, object], name: str, value: object,
+) -> None:
+    path = folder / "rejections.jsonl"
+    row = json.loads(path.read_text("utf-8"))
+    row[name] = value
+    payload = (json.dumps(row, sort_keys=True) + "\n").encode("utf-8")
+    path.write_bytes(payload)
+    for entry in manifest["artifacts"]:
+        if entry["path"] == "rejections.jsonl":
+            entry["size_bytes"] = len(payload)
+            entry["sha256"] = hashlib.sha256(payload).hexdigest()
+    (folder / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+
+def _one_rejection_run() -> BacktestRun:
+    rejection = RejectionRecord(
+        decision_id="DEC-REJECT",
+        symbol="EURUSD",
+        decision_timestamp_utc=STAMP,
+        evaluated_timestamp_utc=STAMP,
+        code=RejectionCode.NO_TRADE,
+        explanation="synthetic",
+    )
+    return BacktestRun(
+        run_identity={}, trades=(), rejections=(rejection,),
+        equity_checkpoints=(), metrics={"trade_count": 0},
+    )
+
+
+class Phase3AuditRejectionContractTests(unittest.TestCase):
+    def test_audit_refuses_rehashed_unknown_rejection_symbol_or_code(self):
+        for field, value in (("symbol", "BTCUSD"), ("code", "NOT_SUPPORTED")):
+            with self.subTest(field=field), tempfile.TemporaryDirectory() as home:
+                folder = Path(home) / "evidence"
+                manifest = write_backtest_artifacts(_one_rejection_run(), folder)
+                _forge_rejection_field(folder, manifest, field, value)
+                self.assertEqual(verify_backtest_artifacts(folder), manifest)
+                with self.assertRaisesRegex(ValueError, "rejection (symbol|code) is unsupported"):
+                    audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_rejection_explanation_aliases(self):
+        for explanation in ("", False, "x" * 4097):
+            with self.subTest(kind=type(explanation).__name__), tempfile.TemporaryDirectory() as home:
+                folder = Path(home) / "evidence"
+                manifest = write_backtest_artifacts(_one_rejection_run(), folder)
+                _forge_rejection_field(folder, manifest, "explanation", explanation)
+                self.assertEqual(verify_backtest_artifacts(folder), manifest)
+                with self.assertRaisesRegex(ValueError, "explanation must be bounded"):
+                    audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_invalid_decision_identifier(self):
+        for identifier in ("", "INVALID\nID", "x" * 513):
+            with self.subTest(length=len(identifier)), tempfile.TemporaryDirectory() as home:
+                folder = Path(home) / "evidence"
+                manifest = write_backtest_artifacts(_one_rejection_run(), folder)
+                _forge_rejection_field(folder, manifest, "decision_id", identifier)
+                self.assertEqual(verify_backtest_artifacts(folder), manifest)
+                with self.assertRaisesRegex(ValueError, "decision_id must be bounded"):
+                    audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_invalid_trade_identifier(self):
+        for identifier in ("T\nINVALID", "x" * 513):
+            with self.subTest(length=len(identifier)), tempfile.TemporaryDirectory() as home:
+                folder = Path(home) / "evidence"
+                manifest = write_backtest_artifacts(
+                    _run({"trade_count": 1}), folder
+                )
+                _forge_trade_field(folder, manifest, "trade_id", identifier)
+                self.assertEqual(verify_backtest_artifacts(folder), manifest)
+                with self.assertRaisesRegex(ValueError, "trade_id must be bounded"):
+                    audit_backtest_artifact_structure(folder)
+
+
 if __name__ == "__main__":
     unittest.main()
