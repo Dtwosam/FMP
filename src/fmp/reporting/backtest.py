@@ -1919,8 +1919,15 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
             try:
                 # Serialized trades use canonical exit-time order; allow
                 # tiny summation drift versus the input order of the writer.
-                matches = math.isfinite(claimed) and math.isclose(
-                    claimed, expected, rel_tol=1e-12, abs_tol=1e-8,
+                # Source metrics aggregate the same canonical ledger floats.
+                # Generic providers may use another summation order.
+                matches = math.isfinite(claimed) and (
+                    claimed == expected
+                    if source_identity.get("backtest_engine_version")
+                    == BACKTEST_ENGINE_VERSION
+                    else math.isclose(
+                        claimed, expected, rel_tol=1e-12, abs_tol=1e-8,
+                    )
                 )
             except OverflowError:
                 matches = False
