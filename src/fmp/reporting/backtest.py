@@ -1028,6 +1028,43 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                 raise ValueError(
                     "artifact report risk_config fractions violate risk hierarchy"
                 )
+        # The built-in commission/financing configurations have strict
+        # writer source contracts. A valid custom model's to_config() can
+        # publish a distinct model, so only validate recognized built-ins.
+        for config_key in ("commission_model", "financing_model"):
+            if config_key not in source_identity:
+                continue
+            model_config = source_identity[config_key]
+            if type(model_config) is not dict:
+                raise ValueError(
+                    f"artifact report {config_key} must be an object"
+                )
+            model = model_config.get("model")
+            if model == "zero_commission" or model == "zero_financing":
+                if set(model_config) != {"model"}:
+                    raise ValueError(
+                        f"artifact report {config_key} zero model fields mismatch"
+                    )
+            elif model == "fixed_per_million_per_side":
+                if config_key != "commission_model" or set(model_config) != {
+                    "model", "usd_per_million_per_side",
+                }:
+                    raise ValueError(
+                        "artifact report fixed commission fields mismatch"
+                    )
+                rate = model_config["usd_per_million_per_side"]
+                if type(rate) not in (int, float):
+                    raise ValueError(
+                        "artifact report fixed commission rate must be finite nonnegative"
+                    )
+                try:
+                    valid_rate = math.isfinite(rate) and rate >= 0
+                except OverflowError:
+                    valid_rate = False
+                if not valid_rate:
+                    raise ValueError(
+                        "artifact report fixed commission rate must be finite nonnegative"
+                    )
         counts: dict[str, int] = {}
         for field in ("trade_count", "rejection_count", "equity_checkpoint_count"):
             count = summary.get(field)

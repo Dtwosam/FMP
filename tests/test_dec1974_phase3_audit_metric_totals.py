@@ -1149,5 +1149,75 @@ class Phase3AuditRiskConfigSourceContractTests(unittest.TestCase):
                 audit_backtest_artifact_structure(folder)
 
 
+class Phase3AuditBuiltinCostModelContractTests(unittest.TestCase):
+    def test_audit_accepts_builtin_zero_and_fixed_cost_source_models(self):
+        for commission in (
+            {"model": "zero_commission"},
+            {"model": "fixed_per_million_per_side",
+             "usd_per_million_per_side": 2.25},
+        ):
+            with self.subTest(model=commission["model"]), tempfile.TemporaryDirectory() as home:
+                folder = Path(home) / "evidence"
+                run = replace(
+                    _run({"trade_count": 1}),
+                    run_identity={
+                        "commission_model": commission,
+                        "financing_model": {"model": "zero_financing"},
+                    },
+                )
+                write_backtest_artifacts(run, folder)
+                self.assertEqual(audit_backtest_artifact_structure(folder)["trade_count"], 1)
+
+    def test_audit_refuses_rehashed_negative_or_boolean_fixed_commission_rate(self):
+        for rate in (-1.0, True):
+            with self.subTest(rate=rate), tempfile.TemporaryDirectory() as home:
+                folder = Path(home) / "evidence"
+                run = replace(
+                    _run({"trade_count": 1}),
+                    run_identity={
+                        "commission_model": {
+                            "model": "fixed_per_million_per_side",
+                            "usd_per_million_per_side": 2.25,
+                        }
+                    },
+                )
+                manifest = write_backtest_artifacts(run, folder)
+                _forge_run_identity_window(
+                    folder, manifest, "commission_model", {
+                        "model": "fixed_per_million_per_side",
+                        "usd_per_million_per_side": rate,
+                    }
+                )
+                self.assertEqual(verify_backtest_artifacts(folder), manifest)
+                with self.assertRaisesRegex(ValueError, "fixed commission rate must be finite"):
+                    audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_extra_zero_financing_claim(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            run = replace(
+                _run({"trade_count": 1}),
+                run_identity={"financing_model": {"model": "zero_financing"}},
+            )
+            manifest = write_backtest_artifacts(run, folder)
+            _forge_run_identity_window(
+                folder, manifest, "financing_model",
+                {"model": "zero_financing", "charge_usd": 100},
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "zero model fields mismatch"):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_preserves_custom_model_source_identity(self):
+        run = replace(
+            _run({"trade_count": 1}),
+            run_identity={"commission_model": {"model": "custom", "rate": 1.25}},
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(run, folder)
+            self.assertEqual(audit_backtest_artifact_structure(folder)["trade_count"], 1)
+
+
 if __name__ == "__main__":
     unittest.main()
