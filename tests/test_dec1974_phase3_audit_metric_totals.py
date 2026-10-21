@@ -3918,5 +3918,103 @@ class Phase3AuditZeroAndSameTimeSourceNetReturnTests(unittest.TestCase):
                 audit_backtest_artifact_structure(folder)
 
 
+def _source_winning_losing_profit_metrics_run() -> BacktestRun:
+    winner_source = _combined_source_economic_model_run()
+    loser_source = _source_adverse_gap_stop_run(Direction.LONG)
+    winner = winner_source.trades[0]
+    loser = loser_source.trades[0]
+    after_winner = winner.risk_equity_after_usd
+    realized_after_loss = after_winner + loser.net_pnl_usd
+    loser = replace(
+        loser, decision_id="MIXED-LOSS", trade_id="MIXED-LOSS",
+        entry_timestamp_utc=STAMP + timedelta(minutes=1),
+        exit_timestamp_utc=STAMP + timedelta(minutes=2),
+        risk_equity_before_usd=after_winner,
+        risk_equity_after_usd=realized_after_loss,
+    )
+    gross_profit = winner.net_pnl_usd
+    gross_loss = -loser.net_pnl_usd
+    return BacktestRun(
+        run_identity={
+            "backtest_engine_version": BACKTEST_ENGINE_VERSION,
+            "starting_equity_usd": 10000.0,
+        },
+        trades=(winner, loser), rejections=(),
+        equity_checkpoints=(
+            EquityCheckpoint(STAMP, 10000.0),
+            EquityCheckpoint(STAMP + timedelta(minutes=1), after_winner),
+            EquityCheckpoint(
+                STAMP + timedelta(minutes=2), realized_after_loss,
+            ),
+        ),
+        metrics={
+            "trade_count": 2,
+            "net_pnl_usd": winner.net_pnl_usd + loser.net_pnl_usd,
+            "gross_profit_usd": gross_profit,
+            "gross_loss_usd": gross_loss,
+            "profit_factor": gross_profit / gross_loss,
+        },
+    )
+
+
+class Phase3AuditExactSourceProfitabilityMetricsTests(unittest.TestCase):
+    def test_audit_accepts_source_winning_and_losing_profit_metrics(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(
+                _source_winning_losing_profit_metrics_run(), folder,
+            )
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 2,
+            )
+
+    def test_audit_refuses_rehashed_source_gross_profit_metric_drift(self):
+        source = _source_winning_losing_profit_metrics_run()
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(source, folder)
+            _forge_metrics(
+                folder, manifest, "gross_profit_usd",
+                source.metrics["gross_profit_usd"] + 1e-9,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric gross_profit_usd conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_source_profit_factor_metric_drift(self):
+        source = _source_winning_losing_profit_metrics_run()
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(source, folder)
+            _forge_metrics(
+                folder, manifest, "profit_factor",
+                source.metrics["profit_factor"] + 1e-9,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric profit_factor conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_keeps_generic_near_equal_profitability_tolerance(self):
+        source = _source_winning_losing_profit_metrics_run()
+        generic = replace(
+            source,
+            run_identity={"starting_equity_usd": 10000.0},
+            metrics={
+                **source.metrics,
+                "gross_profit_usd": source.metrics["gross_profit_usd"] + 1e-9,
+            },
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(generic, folder)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 2,
+            )
+
+
 if __name__ == "__main__":
     unittest.main()
