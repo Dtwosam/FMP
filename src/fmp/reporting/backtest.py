@@ -992,6 +992,42 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                     )
                 previous_exit = ordering
                 scheduled_decisions.add(decision_id)
+        if "risk_config" in source_identity:
+            # The source RiskConfig.to_config() publishes exactly four
+            # positive bounded fractions in a monotone risk hierarchy.
+            risk = source_identity["risk_config"]
+            risk_names = (
+                "default_risk_fraction", "max_risk_fraction",
+                "max_simultaneous_risk_fraction", "daily_loss_halt_fraction",
+            )
+            if type(risk) is not dict or set(risk) != set(risk_names):
+                raise ValueError(
+                    "artifact report risk_config fields mismatch"
+                )
+            for key in risk_names:
+                value = risk[key]
+                if type(value) not in (int, float):
+                    raise ValueError(
+                        f"artifact report risk_config {key} must be positive bounded numeric"
+                    )
+                try:
+                    valid_fraction = (
+                        math.isfinite(value) and 0 < value <= 1
+                    )
+                except OverflowError:
+                    valid_fraction = False
+                if not valid_fraction:
+                    raise ValueError(
+                        f"artifact report risk_config {key} must be positive bounded numeric"
+                    )
+            if (
+                risk["default_risk_fraction"] > risk["max_risk_fraction"]
+                or risk["max_risk_fraction"]
+                > risk["max_simultaneous_risk_fraction"]
+            ):
+                raise ValueError(
+                    "artifact report risk_config fractions violate risk hierarchy"
+                )
         counts: dict[str, int] = {}
         for field in ("trade_count", "rejection_count", "equity_checkpoint_count"):
             count = summary.get(field)
