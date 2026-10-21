@@ -13,6 +13,7 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import Mapping, Sequence
 
+from fmp.backtest import BACKTEST_ENGINE_VERSION
 from fmp.contracts import (
     BacktestRun, Direction, EquityCheckpoint, ExitReason, RejectionCode,
     RejectionRecord, SUPPORTED_SYMBOLS, TradeRecord,
@@ -1190,6 +1191,7 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
         # Capture the engine's realized equity transitions in canonical
         # close order. Validate cross-record continuity after row validation.
         trade_equity_transitions: list[tuple[int | float, int | float]] = []
+        trade_exit_instants: list[datetime] = []
         seen_trade_ids: set[str] = set()
         seen_trade_decisions: set[str] = set()
         seen_rejection_decisions: set[str] = set()
@@ -1438,6 +1440,7 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                                 "artifact report trade realized equity conflicts with net PnL"
                             )
                         trade_equity_transitions.append((prior, after))
+                        trade_exit_instants.append(exit_stamp)
                         trade_order = (exit_stamp, trade_id)
                         if (
                             previous_trade_order is not None
@@ -1497,6 +1500,43 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                         "artifact report trade risk equity continuity conflicts with source ledger"
                     )
                 last_realized_equity = after
+        # Engine-produced evidence publishes one initial checkpoint and
+        # then one checkpoint at each realized trade close. Narrow this
+        # invariant to the exact declared source engine version: synthetic
+        # or alternate providers can publish other checkpoint shapes.
+        if (
+            source_identity.get("backtest_engine_version")
+            == BACKTEST_ENGINE_VERSION
+            and "starting_equity_usd" in source_identity
+        ):
+            if len(checkpoints) != len(trade_equity_transitions) + 1:
+                raise ValueError(
+                    "artifact report source engine checkpoint count conflicts with trade closes"
+                )
+            initial_equity = checkpoints[0]["realized_risk_equity_usd"]
+            if not math.isclose(
+                initial_equity, source_identity["starting_equity_usd"],
+                rel_tol=1e-12, abs_tol=1e-8,
+            ):
+                raise ValueError(
+                    "artifact report source engine initial checkpoint equity conflicts with starting equity"
+                )
+            for idx, (transition, exit_instant) in enumerate(zip(
+                trade_equity_transitions, trade_exit_instants,
+            ), start=1):
+                checkpoint = checkpoints[idx]
+                if (
+                    _audit_parse_utc_timestamp(
+                        checkpoint["timestamp_utc"], "equity checkpoint"
+                    ) != exit_instant
+                    or not math.isclose(
+                        checkpoint["realized_risk_equity_usd"],
+                        transition[1], rel_tol=1e-12, abs_tol=1e-8,
+                    )
+                ):
+                    raise ValueError(
+                        "artifact report source engine checkpoint conflicts with trade close"
+                    )
         ledger_totals["total_explicit_cost_usd"] = (
             ledger_totals["slippage_cost_usd"]
             + ledger_totals["commission_cost_usd"]
