@@ -2356,5 +2356,96 @@ class Phase3AuditSourceScheduledTimeExitParityTests(unittest.TestCase):
             )
 
 
+def _source_adverse_gap_stop_run(direction: Direction) -> BacktestRun:
+    source = _zero_declared_source_slippage_run(direction)
+    original = source.trades[0]
+    adverse_gap = (
+        original.stop_price - 0.0002
+        if direction is Direction.LONG
+        else original.stop_price + 0.0002
+    )
+    gross = pnl_usd(
+        symbol=original.symbol, direction=direction,
+        units=original.units, entry_price=original.entry_reference_price,
+        exit_price=adverse_gap,
+    )
+    gap_trade = replace(
+        original, exit_reason=ExitReason.STOP,
+        intrabar_ambiguous=False,
+        exit_reference_price=adverse_gap, exit_price=adverse_gap,
+        gross_pnl_usd=gross, slippage_cost_usd=0.0,
+        net_pnl_usd=gross,
+        risk_equity_after_usd=10000.0 + gross,
+    )
+    return replace(
+        source, trades=(gap_trade,),
+        equity_checkpoints=(
+            source.equity_checkpoints[0],
+            EquityCheckpoint(
+                STAMP + timedelta(minutes=1), 10000.0 + gross,
+            ),
+        ),
+    )
+
+
+class Phase3AuditSourceStopGapPriceBoundTests(unittest.TestCase):
+    def test_audit_accepts_source_long_and_short_adverse_stop_gaps(self):
+        for direction in (Direction.LONG, Direction.SHORT):
+            with self.subTest(direction=direction):
+                with tempfile.TemporaryDirectory() as home:
+                    folder = Path(home) / "evidence"
+                    write_backtest_artifacts(
+                        _source_adverse_gap_stop_run(direction), folder,
+                    )
+                    self.assertEqual(
+                        audit_backtest_artifact_structure(folder)["trade_count"], 1,
+                    )
+
+    def test_audit_refuses_rehashed_favorable_long_stop_reference(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _zero_declared_source_slippage_run(Direction.LONG), folder,
+            )
+            _forge_versioned_trade_execution(
+                folder, manifest, "exit_reason", ExitReason.STOP.value,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "stop exit reference improves beyond stop",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_favorable_short_stop_reference(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _zero_declared_source_slippage_run(Direction.SHORT), folder,
+            )
+            _forge_versioned_trade_execution(
+                folder, manifest, "exit_reason", ExitReason.STOP.value,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "stop exit reference improves beyond stop",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_preserves_generic_favorable_stop_reference_envelope(self):
+        source = _zero_declared_source_slippage_run(Direction.LONG)
+        generic = replace(
+            source, run_identity={"starting_equity_usd": 10000.0},
+            trades=(replace(
+                source.trades[0], exit_reason=ExitReason.STOP,
+            ),),
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(generic, folder)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 1,
+            )
+
+
 if __name__ == "__main__":
     unittest.main()
