@@ -4983,7 +4983,7 @@ class Phase3AuditSourceSameTimeMixedOutcomeDistributionTests(unittest.TestCase):
             _forge_canonical_metric(folder, manifest, "profit_factor", None)
             self.assertEqual(verify_backtest_artifacts(folder), manifest)
             with self.assertRaisesRegex(
-                ValueError, "metric profit_factor conflicts with trade ledger",
+                ValueError, "metric profit_factor must be finite numeric",
             ):
                 audit_backtest_artifact_structure(folder)
 
