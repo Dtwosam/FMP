@@ -4380,5 +4380,71 @@ class Phase3AuditSourceEconomicMultiFaultOrderingTests(unittest.TestCase):
                 audit_backtest_artifact_structure(folder)
 
 
+class Phase3AuditCanonicalSourceVersusGenericMetricPrecisionTests(unittest.TestCase):
+    def test_audit_refuses_near_equal_source_average_loss_in_canonical_metrics(self):
+        source = _source_with_exact_trade_distribution_metrics()
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(source, folder)
+            _forge_canonical_metric(
+                folder, manifest, "average_loss_usd",
+                source.metrics["average_loss_usd"] + 1e-9,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric average_loss_usd conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_accepts_near_equal_generic_average_loss_with_canonical_hash(self):
+        source = _source_with_exact_trade_distribution_metrics()
+        generic = replace(
+            source, run_identity={"starting_equity_usd": 10000.0},
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(generic, folder)
+            _forge_canonical_metric(
+                folder, manifest, "average_loss_usd",
+                source.metrics["average_loss_usd"] + 1e-9,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 2,
+            )
+
+    def test_audit_refuses_near_equal_source_recovery_factor_in_canonical_metrics(self):
+        source = _source_with_exact_drawdown_metrics()
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(source, folder)
+            _forge_canonical_metric(
+                folder, manifest, "recovery_factor",
+                source.metrics["recovery_factor"] + 1e-13,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric recovery_factor conflicts with checkpoint curve",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_accepts_near_equal_generic_recovery_factor_with_canonical_hash(self):
+        source = _source_with_exact_drawdown_metrics()
+        generic = replace(
+            source, run_identity={"starting_equity_usd": 10000.0},
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(generic, folder)
+            _forge_canonical_metric(
+                folder, manifest, "recovery_factor",
+                source.metrics["recovery_factor"] + 1e-13,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 2,
+            )
+
+
 if __name__ == "__main__":
     unittest.main()
