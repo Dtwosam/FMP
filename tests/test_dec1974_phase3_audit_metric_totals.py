@@ -2507,5 +2507,112 @@ class Phase3AuditSourceTargetReferenceWitnessTests(unittest.TestCase):
             )
 
 
+def _source_rejected_scheduled_exit_run() -> BacktestRun:
+    source = _zero_trade_source_engine_run()
+    scheduled = {
+        "decision_id": "REJECTED-SCHEDULE",
+        "symbol": "GBPUSD",
+        "timestamp_utc": (
+            (STAMP + timedelta(minutes=3)).isoformat()
+            .replace("+00:00", "Z")
+        ),
+    }
+    rejection = RejectionRecord(
+        decision_id="REJECTED-SCHEDULE", symbol="GBPUSD",
+        decision_timestamp_utc=STAMP,
+        evaluated_timestamp_utc=STAMP,
+        code=RejectionCode.TIMING_CONTRACT,
+        explanation="synthetic input has no valid execution bar",
+    )
+    return replace(
+        source,
+        run_identity={
+            **source.run_identity, "scheduled_exits": [scheduled],
+        },
+        rejections=(rejection,),
+    )
+
+
+class Phase3AuditSourceScheduledExitOutcomeMembershipTests(unittest.TestCase):
+    def test_audit_accepts_scheduled_source_decision_rejected_before_entry(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(
+                _source_rejected_scheduled_exit_run(), folder,
+            )
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["rejection_count"], 1,
+            )
+
+    def test_audit_refuses_rehashed_orphan_scheduled_decision(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _source_scheduled_time_exit_run(), folder,
+            )
+            source_schedule = json.loads(
+                (folder / "summary.json").read_text("utf-8")
+            )["run_identity"]["scheduled_exits"]
+            source_schedule.append({
+                "decision_id": "ORPHAN",
+                "symbol": "GBPUSD",
+                "timestamp_utc": (
+                    (STAMP + timedelta(minutes=2)).isoformat()
+                    .replace("+00:00", "Z")
+                ),
+            })
+            _forge_run_identity_window(
+                folder, manifest, "scheduled_exits", source_schedule,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "scheduled exit has no matching decision outcome",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_wrong_scheduled_rejection_symbol(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _source_rejected_scheduled_exit_run(), folder,
+            )
+            wrong_schedule = json.loads(
+                (folder / "summary.json").read_text("utf-8")
+            )["run_identity"]["scheduled_exits"]
+            wrong_schedule[0]["symbol"] = "EURUSD"
+            _forge_run_identity_window(
+                folder, manifest, "scheduled_exits", wrong_schedule,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "scheduled exit has no matching decision outcome",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_preserves_generic_scheduled_exit_orphan_flexibility(self):
+        source = _source_scheduled_time_exit_run()
+        schedule = list(source.run_identity["scheduled_exits"])
+        schedule.append({
+            "decision_id": "GENERIC-ORPHAN",
+            "symbol": "GBPUSD",
+            "timestamp_utc": (
+                (STAMP + timedelta(minutes=2)).isoformat()
+                .replace("+00:00", "Z")
+            ),
+        })
+        generic = replace(
+            source, run_identity={
+                "starting_equity_usd": 10000.0,
+                "scheduled_exits": schedule,
+            },
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(generic, folder)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 1,
+            )
+
+
 if __name__ == "__main__":
     unittest.main()
