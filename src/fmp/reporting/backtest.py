@@ -1021,6 +1021,7 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                 )
         # The engine's scheduled-exit run identity is a sorted list of
         # canonical ScheduledExit descriptors, not arbitrary JSON metadata.
+        scheduled_exit_by_decision: dict[str, tuple[str, datetime]] = {}
         if "scheduled_exits" in source_identity:
             scheduled = source_identity["scheduled_exits"]
             if type(scheduled) is not list or not scheduled:
@@ -1063,6 +1064,9 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                     )
                 previous_exit = ordering
                 scheduled_decisions.add(decision_id)
+                scheduled_exit_by_decision[decision_id] = (
+                    symbol, timestamp,
+                )
         if "risk_config" in source_identity:
             # The source RiskConfig.to_config() publishes exactly four
             # positive bounded fractions in a monotone risk hierarchy.
@@ -1337,6 +1341,21 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                             raise ValueError("artifact report trade exit reason is unsupported")
                         if type(record["intrabar_ambiguous"]) is not bool:
                             raise ValueError("artifact report trade ambiguity must be Boolean")
+                        # TIME_EXIT is produced only by a matching
+                        # ScheduledExit for the same decision and symbol,
+                        # executed at its declared timestamp. Scheduled
+                        # exits for decisions rejected or stopped earlier
+                        # need not produce a TIME_EXIT record.
+                        if (
+                            source_identity.get("backtest_engine_version")
+                            == BACKTEST_ENGINE_VERSION
+                            and record["exit_reason"] == ExitReason.TIME_EXIT.value
+                            and scheduled_exit_by_decision.get(decision)
+                            != (record["symbol"], exit_stamp)
+                        ):
+                            raise ValueError(
+                                "artifact report source time exit conflicts with scheduled exit identity"
+                            )
                         for price_field in (
                             "entry_reference_price", "exit_reference_price",
                             "entry_price", "exit_price", "stop_price", "target_price",

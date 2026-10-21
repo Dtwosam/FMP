@@ -2275,5 +2275,86 @@ class Phase3AuditSourceIntrabarAmbiguityWitnessTests(unittest.TestCase):
             )
 
 
+def _source_scheduled_time_exit_run() -> BacktestRun:
+    source = _declared_source_slippage_run(Direction.LONG, "EURUSD")
+    exit_timestamp = source.trades[0].exit_timestamp_utc
+    descriptor = {
+        "decision_id": source.trades[0].decision_id,
+        "symbol": source.trades[0].symbol,
+        "timestamp_utc": exit_timestamp.isoformat().replace("+00:00", "Z"),
+    }
+    return replace(
+        source,
+        run_identity={
+            **source.run_identity,
+            "scheduled_exits": [descriptor],
+        },
+        trades=(replace(
+            source.trades[0], exit_reason=ExitReason.TIME_EXIT,
+        ),),
+    )
+
+
+class Phase3AuditSourceScheduledTimeExitParityTests(unittest.TestCase):
+    def test_audit_accepts_matching_declared_source_time_exit(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(_source_scheduled_time_exit_run(), folder)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 1,
+            )
+
+    def test_audit_refuses_rehashed_changed_source_exit_schedule_timestamp(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _source_scheduled_time_exit_run(), folder,
+            )
+            wrong_timestamp = (
+                (STAMP + timedelta(minutes=2)).isoformat()
+                .replace("+00:00", "Z")
+            )
+            _forge_run_identity_window(
+                folder, manifest, "scheduled_exits", [{
+                    "decision_id": "SOURCE-SLIP-1",
+                    "symbol": "EURUSD",
+                    "timestamp_utc": wrong_timestamp,
+                }],
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "source time exit conflicts with scheduled exit",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_source_time_exit_without_schedule(self):
+        source = _source_scheduled_time_exit_run()
+        forged = replace(
+            source, run_identity={
+                key: val for key, val in source.run_identity.items()
+                if key != "scheduled_exits"
+            },
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(forged, folder)
+            with self.assertRaisesRegex(
+                ValueError, "source time exit conflicts with scheduled exit",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_preserves_generic_unscheduled_time_exit_envelopes(self):
+        source = _source_scheduled_time_exit_run()
+        generic = replace(
+            source, run_identity={"starting_equity_usd": 10000.0},
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(generic, folder)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 1,
+            )
+
+
 if __name__ == "__main__":
     unittest.main()
