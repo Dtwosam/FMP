@@ -963,5 +963,58 @@ class Phase3AuditRequestedWindowContractTests(unittest.TestCase):
                 audit_backtest_artifact_structure(folder)
 
 
+class Phase3AuditSourceIdentityScalarTests(unittest.TestCase):
+    def test_audit_accepts_source_scalar_metadata_domains(self):
+        run = replace(_run({"trade_count": 1}), run_identity={
+            "backtest_engine_version": "v1",
+            "code_commit": "abc123",
+            "processed_data_manifest_id": "manifest-ref",
+            "schema_version": "schema-v1",
+            "timeframe": "1m",
+            "slippage_pips": 0.4,
+            "execution_timing_mode": "DECLARED_EARLIEST_BAR",
+        })
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(run, folder)
+            self.assertEqual(audit_backtest_artifact_structure(folder)["trade_count"], 1)
+
+    def test_audit_refuses_rehashed_bool_or_negative_source_slippage(self):
+        run = replace(_run({"trade_count": 1}), run_identity={"slippage_pips": 0.4})
+        for value in (True, -0.1):
+            with self.subTest(value=value), tempfile.TemporaryDirectory() as home:
+                folder = Path(home) / "evidence"
+                manifest = write_backtest_artifacts(run, folder)
+                _forge_run_identity_window(folder, manifest, "slippage_pips", value)
+                self.assertEqual(verify_backtest_artifacts(folder), manifest)
+                with self.assertRaisesRegex(ValueError, "slippage_pips must be finite nonnegative"):
+                    audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_empty_or_control_source_commit(self):
+        run = replace(_run({"trade_count": 1}), run_identity={"code_commit": "abc123"})
+        for value in ("", "commit\nfake"):
+            with self.subTest(value=value), tempfile.TemporaryDirectory() as home:
+                folder = Path(home) / "evidence"
+                manifest = write_backtest_artifacts(run, folder)
+                _forge_run_identity_window(folder, manifest, "code_commit", value)
+                self.assertEqual(verify_backtest_artifacts(folder), manifest)
+                with self.assertRaisesRegex(ValueError, "code_commit must be printable nonempty"):
+                    audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_unknown_execution_timing_mode(self):
+        run = replace(_run({"trade_count": 1}), run_identity={
+            "execution_timing_mode": "DECLARED_EARLIEST_BAR"
+        })
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(run, folder)
+            _forge_run_identity_window(
+                folder, manifest, "execution_timing_mode", "BEFORE_DECISION"
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "execution_timing_mode is unsupported"):
+                audit_backtest_artifact_structure(folder)
+
+
 if __name__ == "__main__":
     unittest.main()
