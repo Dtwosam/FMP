@@ -3507,5 +3507,56 @@ class Phase3AuditSourceCompensatedEconomicTamperTests(unittest.TestCase):
             )
 
 
+class Phase3AuditExactSourceNetPnLTests(unittest.TestCase):
+    def test_audit_accepts_exact_joint_source_net_pnl(self):
+        for direction, symbol in (
+            (Direction.LONG, "EURUSD"),
+            (Direction.SHORT, "GBPUSD"),
+            (Direction.SHORT, "USDJPY"),
+        ):
+            with self.subTest(direction=direction, symbol=symbol):
+                with tempfile.TemporaryDirectory() as home:
+                    folder = Path(home) / "evidence"
+                    write_backtest_artifacts(
+                        _combined_source_economic_model_run(direction, symbol),
+                        folder,
+                    )
+                    self.assertEqual(
+                        audit_backtest_artifact_structure(folder)["trade_count"], 1,
+                    )
+
+    def test_audit_refuses_rehashed_near_equal_source_net_pnl(self):
+        source = _combined_source_economic_model_run()
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(source, folder)
+            _forge_versioned_trade_execution(
+                folder, manifest, "net_pnl_usd",
+                source.trades[0].net_pnl_usd + 1e-9,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "net PnL cost reconciliation mismatch",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_preserves_generic_near_equal_net_pnl_tolerance(self):
+        source = _combined_source_economic_model_run()
+        generic = replace(
+            source,
+            run_identity={"starting_equity_usd": 10000.0},
+            trades=(replace(
+                source.trades[0],
+                net_pnl_usd=source.trades[0].net_pnl_usd + 1e-9,
+            ),),
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(generic, folder)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 1,
+            )
+
+
 if __name__ == "__main__":
     unittest.main()
