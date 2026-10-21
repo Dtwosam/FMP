@@ -2042,9 +2042,14 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                     matches_return = (
                         math.isfinite(expected_return)
                         and math.isfinite(claimed_return)
-                        and math.isclose(
-                            claimed_return, expected_return,
-                            rel_tol=1e-12, abs_tol=1e-12,
+                        and (
+                            claimed_return == expected_return
+                            if source_identity.get("backtest_engine_version")
+                            == BACKTEST_ENGINE_VERSION
+                            else math.isclose(
+                                claimed_return, expected_return,
+                                rel_tol=1e-12, abs_tol=1e-12,
+                            )
                         )
                     )
                 except OverflowError:
