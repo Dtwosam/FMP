@@ -332,5 +332,72 @@ class Phase3AuditCanonicalJSONLOrderTests(unittest.TestCase):
                 audit_backtest_artifact_structure(folder)
 
 
+class Phase3AuditDistributionMetricTests(unittest.TestCase):
+    def test_audit_accepts_writer_win_loss_distribution(self):
+        metrics = {
+            "trade_count": 2,
+            "win_rate": 0.5,
+            "average_win_usd": 11.0,
+            "average_loss_usd": -4.0,
+            "expectancy_usd": 3.5,
+            "longest_winning_streak": 1,
+            "longest_losing_streak": 1,
+        }
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(_run_winning_and_losing(metrics), folder)
+            self.assertEqual(audit_backtest_artifact_structure(folder)["trade_count"], 2)
+
+    def test_audit_refuses_rehashed_win_rate_or_expectancy(self):
+        metrics = {
+            "trade_count": 2,
+            "win_rate": 0.5,
+            "expectancy_usd": 3.5,
+        }
+        for name, forged in (("win_rate", 0.9), ("expectancy_usd", 9.0)):
+            with self.subTest(field=name), tempfile.TemporaryDirectory() as home:
+                folder = Path(home) / "evidence"
+                manifest = write_backtest_artifacts(
+                    _run_winning_and_losing(metrics), folder
+                )
+                _forge_metrics(folder, manifest, name, forged)
+                self.assertEqual(verify_backtest_artifacts(folder), manifest)
+                with self.assertRaisesRegex(ValueError, "conflicts with trade ledger"):
+                    audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_winning_streak_and_boolean_alias(self):
+        metrics = {
+            "trade_count": 2,
+            "longest_winning_streak": 1,
+        }
+        for forged in (2, True):
+            with self.subTest(forged=forged), tempfile.TemporaryDirectory() as home:
+                folder = Path(home) / "evidence"
+                manifest = write_backtest_artifacts(
+                    _run_winning_and_losing(metrics), folder
+                )
+                _forge_metrics(folder, manifest, "longest_winning_streak", forged)
+                self.assertEqual(verify_backtest_artifacts(folder), manifest)
+                with self.assertRaisesRegex(ValueError, "conflicts with trade ledger"):
+                    audit_backtest_artifact_structure(folder)
+
+    def test_audit_accepts_empty_trade_null_win_rate_and_expectancy(self):
+        run = BacktestRun(
+            run_identity={}, trades=(), rejections=(),
+            equity_checkpoints=(),
+            metrics={
+                "trade_count": 0,
+                "win_rate": None,
+                "expectancy_usd": None,
+                "longest_winning_streak": 0,
+                "longest_losing_streak": 0,
+            },
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(run, folder)
+            self.assertEqual(audit_backtest_artifact_structure(folder)["trade_count"], 0)
+
+
 if __name__ == "__main__":
     unittest.main()
