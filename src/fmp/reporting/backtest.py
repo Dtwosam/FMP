@@ -788,6 +788,55 @@ def _audit_validate_json_tree(value: object, *, depth: int = 0) -> None:
             raise ValueError("artifact report JSON string cannot contain Unicode surrogates")
 
 
+def _audit_decision_config_tree(
+    value: object, *, depth: int = 0, budget: list[int] | None = None,
+) -> None:
+    """Match engine-frozen decision metadata limits without trusting its SHA."""
+    if budget is None:
+        budget = [8192]
+    budget[0] -= 1
+    if budget[0] < 0:
+        raise ValueError("artifact report decision_config exceeds node budget")
+    if depth > 32:
+        raise ValueError("artifact report decision_config exceeds nesting depth")
+    if type(value) is dict:
+        for key, child in value.items():
+            if (
+                type(key) is not str or not key
+                or any(ord(ch) < 32 or ord(ch) == 127 or
+                       0xD800 <= ord(ch) <= 0xDFFF for ch in key)
+            ):
+                raise ValueError(
+                    "artifact report decision_config keys must be printable nonempty strings"
+                )
+            _audit_decision_config_tree(
+                child, depth=depth + 1, budget=budget,
+            )
+    elif type(value) is list:
+        for child in value:
+            _audit_decision_config_tree(
+                child, depth=depth + 1, budget=budget,
+            )
+    elif type(value) is str:
+        if any(
+            ord(ch) < 32 or ord(ch) == 127 or
+            0xD800 <= ord(ch) <= 0xDFFF for ch in value
+        ):
+            raise ValueError(
+                "artifact report decision_config strings must be printable"
+            )
+    elif value is None or type(value) is bool:
+        return
+    elif type(value) is int:
+        if value.bit_length() > 512:
+            raise ValueError("artifact report decision_config integer exceeds safe width")
+    elif type(value) is float:
+        if not math.isfinite(value):
+            raise ValueError("artifact report decision_config float must be finite")
+    else:
+        raise ValueError("artifact report decision_config has unsupported value")
+
+
 def _audit_load_json(payload: bytes) -> object:
     def refuse_nonfinite(value: str) -> object:
         raise ValueError("artifact report contains non-finite JSON constant")
@@ -1073,6 +1122,26 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                     raise ValueError(
                         "artifact report fixed commission rate must be finite nonnegative"
                     )
+        if "decision_config" in source_identity:
+            config = source_identity["decision_config"]
+            if type(config) is not dict:
+                raise ValueError(
+                    "artifact report decision_config must be an object"
+                )
+            _audit_decision_config_tree(config)
+            try:
+                config_size = len(json.dumps(
+                    config, sort_keys=True, separators=(",", ":"),
+                    allow_nan=False,
+                ).encode("utf-8"))
+            except (OverflowError, TypeError, ValueError, RecursionError) as exc:
+                raise ValueError(
+                    "artifact report decision_config cannot serialize safely"
+                ) from exc
+            if config_size > 65536:
+                raise ValueError(
+                    "artifact report decision_config exceeds 64 KiB"
+                )
         counts: dict[str, int] = {}
         for field in ("trade_count", "rejection_count", "equity_checkpoint_count"):
             count = summary.get(field)
