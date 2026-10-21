@@ -4446,5 +4446,71 @@ class Phase3AuditCanonicalSourceVersusGenericMetricPrecisionTests(unittest.TestC
             )
 
 
+def _source_signed_financing_with_complete_metrics(
+    financing: float,
+) -> BacktestRun:
+    source = _source_custom_financing_run(financing)
+    item = source.trades[0]
+    total_cost = (
+        item.slippage_cost_usd + item.commission_cost_usd
+        + item.financing_cost_usd
+    )
+    return replace(source, metrics={
+        "trade_count": 1,
+        "net_pnl_usd": item.net_pnl_usd,
+        "slippage_cost_usd": item.slippage_cost_usd,
+        "commission_cost_usd": item.commission_cost_usd,
+        "financing_cost_usd": financing,
+        "total_explicit_cost_usd": total_cost,
+    })
+
+
+class Phase3AuditSignedFinancingAggregateWitnessTests(unittest.TestCase):
+    def test_audit_accepts_exact_source_credit_and_debit_totals(self):
+        for signed_financing in (-1.25, 1.25):
+            with self.subTest(signed_financing=signed_financing):
+                with tempfile.TemporaryDirectory() as home:
+                    folder = Path(home) / "evidence"
+                    source = _source_signed_financing_with_complete_metrics(
+                        signed_financing,
+                    )
+                    write_backtest_artifacts(source, folder)
+                    self.assertEqual(
+                        audit_backtest_artifact_structure(folder)["trade_count"], 1,
+                    )
+
+    def test_audit_refuses_rehashed_near_equal_source_financing_metric(self):
+        source = _source_signed_financing_with_complete_metrics(-1.25)
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(source, folder)
+            _forge_canonical_metric(
+                folder, manifest, "financing_cost_usd",
+                source.metrics["financing_cost_usd"] + 1e-9,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric financing_cost_usd conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_allows_generic_near_equal_credit_metric_after_rehash(self):
+        source = _source_signed_financing_with_complete_metrics(-1.25)
+        generic = replace(
+            source, run_identity={"starting_equity_usd": 10000.0},
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(generic, folder)
+            _forge_canonical_metric(
+                folder, manifest, "financing_cost_usd",
+                source.metrics["financing_cost_usd"] + 1e-9,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 1,
+            )
+
+
 if __name__ == "__main__":
     unittest.main()
