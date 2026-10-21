@@ -2122,5 +2122,78 @@ class Phase3AuditSourceInitialCheckpointTradeEntryChronologyTests(unittest.TestC
             )
 
 
+def _zero_declared_source_slippage_run(direction: Direction) -> BacktestRun:
+    source = _declared_source_slippage_run(direction, "EURUSD")
+    trade = source.trades[0]
+    zero_slippage_trade = replace(
+        trade,
+        entry_price=trade.entry_reference_price,
+        exit_price=trade.exit_reference_price,
+        slippage_cost_usd=0.0,
+        net_pnl_usd=trade.gross_pnl_usd,
+        risk_equity_after_usd=10000.0 + trade.gross_pnl_usd,
+    )
+    return replace(
+        source,
+        run_identity={**source.run_identity, "slippage_pips": 0.0},
+        trades=(zero_slippage_trade,),
+        equity_checkpoints=(
+            source.equity_checkpoints[0],
+            EquityCheckpoint(
+                STAMP + timedelta(minutes=1),
+                10000.0 + trade.gross_pnl_usd,
+            ),
+        ),
+    )
+
+
+class Phase3AuditSourceSlippageBoundaryWitnessTests(unittest.TestCase):
+    def test_audit_accepts_zero_pips_both_direction_execution_fills(self):
+        for direction in (Direction.LONG, Direction.SHORT):
+            with self.subTest(direction=direction):
+                with tempfile.TemporaryDirectory() as home:
+                    folder = Path(home) / "evidence"
+                    write_backtest_artifacts(
+                        _zero_declared_source_slippage_run(direction), folder,
+                    )
+                    self.assertEqual(
+                        audit_backtest_artifact_structure(folder)["trade_count"], 1,
+                    )
+
+    def test_audit_refuses_rehashed_nonzero_setting_for_zero_slip_fill(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _zero_declared_source_slippage_run(Direction.SHORT), folder,
+            )
+            _forge_run_identity_window(
+                folder, manifest, "slippage_pips", 1.5,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "execution prices conflict with declared slippage_pips",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_accepts_jpy_short_declared_pip_size_and_execution_side(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(
+                _declared_source_slippage_run(Direction.SHORT, "USDJPY"),
+                folder,
+            )
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 1,
+            )
+
+    def test_audit_accepts_source_version_without_optional_pip_identity(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(_source_engine_checkpoint_run(), folder)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 2,
+            )
+
+
 if __name__ == "__main__":
     unittest.main()
