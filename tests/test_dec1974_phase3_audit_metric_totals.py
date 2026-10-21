@@ -11,9 +11,10 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from fmp.backtest import BACKTEST_ENGINE_VERSION
+from fmp.backtest.costs import apply_adverse_slippage
 from fmp.risk import pnl_usd
 from fmp.contracts import (
-    BacktestRun, Direction, EquityCheckpoint, ExitReason, RejectionCode,
+    BacktestRun, Direction, EquityCheckpoint, ExitReason, OrderSide, RejectionCode,
     RejectionRecord, TradeRecord,
 )
 from fmp.reporting.backtest import (
@@ -1943,6 +1944,123 @@ class Phase3AuditSourceCheckpointCountBoundaryTests(unittest.TestCase):
             folder = Path(home) / "evidence"
             write_backtest_artifacts(run, folder)
             self.assertEqual(audit_backtest_artifact_structure(folder)["trade_count"], 2)
+
+
+def _declared_source_slippage_run(
+    direction: Direction, symbol: str,
+) -> BacktestRun:
+    reference_entry = 150.0 if symbol == "USDJPY" else 1.1
+    reference_exit = (
+        (150.2 if direction is Direction.LONG else 149.8)
+        if symbol == "USDJPY"
+        else (1.10125 if direction is Direction.LONG else 1.09875)
+    )
+    entry_side = OrderSide.BUY if direction is Direction.LONG else OrderSide.SELL
+    exit_side = OrderSide.SELL if direction is Direction.LONG else OrderSide.BUY
+    entry_fill = apply_adverse_slippage(
+        reference_entry, side=entry_side, pips=1.5, symbol=symbol,
+    )
+    exit_fill = apply_adverse_slippage(
+        reference_exit, side=exit_side, pips=1.5, symbol=symbol,
+    )
+    gross = pnl_usd(
+        symbol=symbol, direction=direction, units=10000,
+        entry_price=reference_entry, exit_price=reference_exit,
+    )
+    slipped = pnl_usd(
+        symbol=symbol, direction=direction, units=10000,
+        entry_price=entry_fill, exit_price=exit_fill,
+    )
+    slippage_cost = max(0.0, gross - slipped)
+    net_pnl = gross - slippage_cost
+    stop = (
+        (149.9 if direction is Direction.LONG else 150.1)
+        if symbol == "USDJPY"
+        else (1.099 if direction is Direction.LONG else 1.101)
+    )
+    target = (
+        (150.3 if direction is Direction.LONG else 149.7)
+        if symbol == "USDJPY"
+        else (1.102 if direction is Direction.LONG else 1.098)
+    )
+    item = replace(
+        _sample_trade(), trade_id="SOURCE-SLIP-1",
+        decision_id="SOURCE-SLIP-1", symbol=symbol, direction=direction,
+        entry_reference_price=reference_entry,
+        exit_reference_price=reference_exit,
+        entry_price=entry_fill, exit_price=exit_fill,
+        stop_price=stop, target_price=target,
+        gross_pnl_usd=gross, slippage_cost_usd=slippage_cost,
+        commission_cost_usd=0.0, financing_cost_usd=0.0,
+        net_pnl_usd=net_pnl, risk_equity_before_usd=10000.0,
+        risk_equity_after_usd=10000.0 + net_pnl,
+    )
+    return BacktestRun(
+        run_identity={
+            "backtest_engine_version": BACKTEST_ENGINE_VERSION,
+            "starting_equity_usd": 10000.0,
+            "slippage_pips": 1.5,
+        },
+        trades=(item,), rejections=(),
+        equity_checkpoints=(
+            EquityCheckpoint(STAMP, 10000.0),
+            EquityCheckpoint(STAMP + timedelta(minutes=1), 10000.0 + net_pnl),
+        ),
+        metrics={"trade_count": 1},
+    )
+
+
+class Phase3AuditDeclaredSourceSlippagePipsTests(unittest.TestCase):
+    def test_audit_accepts_declared_long_short_and_jpy_fill_prices(self):
+        for direction, symbol in (
+            (Direction.LONG, "EURUSD"),
+            (Direction.SHORT, "GBPUSD"),
+            (Direction.LONG, "USDJPY"),
+        ):
+            with self.subTest(direction=direction, symbol=symbol):
+                with tempfile.TemporaryDirectory() as home:
+                    folder = Path(home) / "evidence"
+                    write_backtest_artifacts(
+                        _declared_source_slippage_run(direction, symbol), folder,
+                    )
+                    self.assertEqual(
+                        audit_backtest_artifact_structure(folder)["trade_count"], 1,
+                    )
+
+    def test_audit_refuses_rehashed_false_declared_pip_displacement(self):
+        for direction, symbol in (
+            (Direction.LONG, "EURUSD"),
+            (Direction.SHORT, "GBPUSD"),
+        ):
+            with self.subTest(direction=direction, symbol=symbol):
+                with tempfile.TemporaryDirectory() as home:
+                    folder = Path(home) / "evidence"
+                    manifest = write_backtest_artifacts(
+                        _declared_source_slippage_run(direction, symbol), folder,
+                    )
+                    _forge_run_identity_window(
+                        folder, manifest, "slippage_pips", 0.0,
+                    )
+                    self.assertEqual(verify_backtest_artifacts(folder), manifest)
+                    with self.assertRaisesRegex(
+                        ValueError, "conflict with declared slippage_pips",
+                    ):
+                        audit_backtest_artifact_structure(folder)
+
+    def test_audit_preserves_generic_synthetic_slippage_identity_flexibility(self):
+        source = _declared_source_slippage_run(Direction.LONG, "EURUSD")
+        synthetic = replace(
+            source, run_identity={
+                "starting_equity_usd": 10000.0,
+                "slippage_pips": 0.0,
+            },
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(synthetic, folder)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 1,
+            )
 
 
 if __name__ == "__main__":
