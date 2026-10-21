@@ -684,6 +684,16 @@ class Phase3AuditJSONTreeWriterParityTests(unittest.TestCase):
 
 
 class Phase3AuditCanonicalJSONLBytesTests(unittest.TestCase):
+    def test_audit_reports_semantic_tamper_before_noncanonical_row_format(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(_run({"trade_count": 1}), folder)
+            # The existing forge helper emits spaced/noncanonical JSON.
+            _forge_trade_field(folder, manifest, "symbol", "INVALIDFX")
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "trade symbol is unsupported"):
+                audit_backtest_artifact_structure(folder)
+
     def test_audit_accepts_canonical_writer_jsonl_bytes(self):
         with tempfile.TemporaryDirectory() as home:
             folder = Path(home) / "evidence"
