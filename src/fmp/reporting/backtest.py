@@ -941,6 +941,24 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
         # backdated source-window claims as malformed evidence, while still
         # admitting synthetic envelopes that omit both optional fields.
         source_identity = summary["run_identity"]
+        # Validate the source equity domain before any ledger chaining or
+        # close-to-checkpoint comparisons. Otherwise a malformed Boolean,
+        # zero or negative identity is mislabeled as a continuity failure.
+        if "starting_equity_usd" in source_identity:
+            identity = source_identity
+            starting_equity = identity["starting_equity_usd"]
+            if type(starting_equity) not in (int, float):
+                raise ValueError(
+                    "artifact report starting equity must be finite positive"
+                )
+            try:
+                valid_start = math.isfinite(starting_equity) and starting_equity > 0
+            except OverflowError:
+                valid_start = False
+            if not valid_start:
+                raise ValueError(
+                    "artifact report starting equity must be finite positive"
+                )
         window_fields = ("requested_start_utc", "requested_end_utc")
         present = [field in source_identity for field in window_fields]
         if any(present):
@@ -1662,19 +1680,6 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
         # available; arbitrary synthetic BacktestRun identity dicts may omit it.
         identity = summary["run_identity"]
         if "starting_equity_usd" in identity:
-            starting_equity = identity["starting_equity_usd"]
-            if type(starting_equity) not in (int, float):
-                raise ValueError(
-                    "artifact report starting equity must be finite positive"
-                )
-            try:
-                valid_start = math.isfinite(starting_equity) and starting_equity > 0
-            except OverflowError:
-                valid_start = False
-            if not valid_start:
-                raise ValueError(
-                    "artifact report starting equity must be finite positive"
-                )
             if "net_return" in metrics:
                 expected_return = ledger_totals["net_pnl_usd"] / starting_equity
                 claimed_return = metrics["net_return"]
