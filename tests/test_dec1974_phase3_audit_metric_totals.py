@@ -2614,5 +2614,91 @@ class Phase3AuditSourceScheduledExitOutcomeMembershipTests(unittest.TestCase):
             )
 
 
+def _source_target_before_scheduled_exit_run() -> BacktestRun:
+    source = _declared_source_slippage_run(Direction.LONG, "EURUSD")
+    scheduled = {
+        "decision_id": source.trades[0].decision_id,
+        "symbol": source.trades[0].symbol,
+        "timestamp_utc": (
+            (STAMP + timedelta(minutes=2)).isoformat()
+            .replace("+00:00", "Z")
+        ),
+    }
+    return replace(
+        source, run_identity={
+            **source.run_identity, "scheduled_exits": [scheduled],
+        },
+    )
+
+
+class Phase3AuditSourceScheduledExitChronologyTests(unittest.TestCase):
+    def test_audit_accepts_source_target_before_later_scheduled_time_exit(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(
+                _source_target_before_scheduled_exit_run(), folder,
+            )
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 1,
+            )
+
+    def test_audit_refuses_rehashed_schedule_at_source_trade_entry(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _source_target_before_scheduled_exit_run(), folder,
+            )
+            _forge_run_identity_window(
+                folder, manifest, "scheduled_exits", [{
+                    "decision_id": "SOURCE-SLIP-1",
+                    "symbol": "EURUSD",
+                    "timestamp_utc": STAMP.isoformat().replace("+00:00", "Z"),
+                }],
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "scheduled exit is not later than decision entry",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_schedule_at_rejection_decision_time(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _source_rejected_scheduled_exit_run(), folder,
+            )
+            _forge_run_identity_window(
+                folder, manifest, "scheduled_exits", [{
+                    "decision_id": "REJECTED-SCHEDULE",
+                    "symbol": "GBPUSD",
+                    "timestamp_utc": STAMP.isoformat().replace("+00:00", "Z"),
+                }],
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "scheduled exit is not later than decision entry",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_preserves_generic_same_time_scheduled_exit_metadata(self):
+        source = _source_target_before_scheduled_exit_run()
+        generic = replace(
+            source, run_identity={
+                "starting_equity_usd": 10000.0,
+                "scheduled_exits": [{
+                    "decision_id": "SOURCE-SLIP-1",
+                    "symbol": "EURUSD",
+                    "timestamp_utc": STAMP.isoformat().replace("+00:00", "Z"),
+                }],
+            },
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(generic, folder)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 1,
+            )
+
+
 if __name__ == "__main__":
     unittest.main()
