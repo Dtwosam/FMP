@@ -3299,8 +3299,11 @@ class Phase3AuditSourceExactReferenceGrossPnLTests(unittest.TestCase):
             )
 
 
-def _combined_source_economic_model_run() -> BacktestRun:
-    source = _declared_source_slippage_run(Direction.LONG, "EURUSD")
+def _combined_source_economic_model_run(
+    direction: Direction = Direction.LONG,
+    symbol: str = "EURUSD",
+) -> BacktestRun:
+    source = _declared_source_slippage_run(direction, symbol)
     trade = source.trades[0]
     commission = 2 * (trade.units / 1_000_000 * 25.0)
     modeled_net = trade.net_pnl_usd - commission
@@ -3377,6 +3380,41 @@ class Phase3AuditCombinedSourceEconomicModelWitnessTests(unittest.TestCase):
             _forge_versioned_trade_execution(
                 folder, manifest, "commission_cost_usd",
                 source.trades[0].commission_cost_usd + 1e-9,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "source fixed commission conflicts with trade costs",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+
+class Phase3AuditCrossPairCombinedSourceEconomicTests(unittest.TestCase):
+    def test_audit_accepts_combined_fixed_fee_on_short_jpy_and_gbp_pairs(self):
+        for symbol in ("USDJPY", "GBPUSD"):
+            with self.subTest(symbol=symbol):
+                with tempfile.TemporaryDirectory() as home:
+                    folder = Path(home) / "evidence"
+                    run = _combined_source_economic_model_run(
+                        Direction.SHORT, symbol,
+                    )
+                    write_backtest_artifacts(run, folder)
+                    self.assertEqual(
+                        audit_backtest_artifact_structure(folder)["trade_count"], 1,
+                    )
+
+    def test_audit_refuses_rehashed_near_equal_fixed_model_rate(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _combined_source_economic_model_run(), folder,
+            )
+            # The rate shift changes expected aggregate source fees by
+            # only 2e-9 for 10,000 units, inside the old 1e-8 tolerance.
+            _forge_run_identity_window(
+                folder, manifest, "commission_model", {
+                    "model": "fixed_per_million_per_side",
+                    "usd_per_million_per_side": 25.0000001,
+                },
             )
             self.assertEqual(verify_backtest_artifacts(folder), manifest)
             with self.assertRaisesRegex(
