@@ -1219,5 +1219,39 @@ class Phase3AuditBuiltinCostModelContractTests(unittest.TestCase):
             self.assertEqual(audit_backtest_artifact_structure(folder)["trade_count"], 1)
 
 
+class Phase3AuditCostModelFamilyIdentityTests(unittest.TestCase):
+    def test_audit_refuses_rehashed_financing_model_in_commission_slot(self):
+        run = replace(
+            _run({"trade_count": 1}),
+            run_identity={"commission_model": {"model": "zero_commission"}},
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(run, folder)
+            _forge_run_identity_window(
+                folder, manifest, "commission_model",
+                {"model": "zero_financing"},
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "commission_model model type is incompatible"):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_commission_model_in_financing_slot(self):
+        run = replace(
+            _run({"trade_count": 1}),
+            run_identity={"financing_model": {"model": "zero_financing"}},
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(run, folder)
+            _forge_run_identity_window(
+                folder, manifest, "financing_model",
+                {"model": "zero_commission"},
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "financing_model model type is incompatible"):
+                audit_backtest_artifact_structure(folder)
+
+
 if __name__ == "__main__":
     unittest.main()
