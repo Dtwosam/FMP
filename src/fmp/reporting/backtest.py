@@ -1619,13 +1619,15 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                                 implied_slippage = max(
                                     0.0, source_gross - slipped_pnl
                                 )
+                                # The installed engine writes precisely
+                                # this max(0, reference - slipped) float,
+                                # using the same published input prices and
+                                # source PnL function. No rounding/tolerance
+                                # is involved in the source copy.
                                 slippage_matches = (
                                     math.isfinite(implied_slippage)
-                                    and math.isclose(
-                                        amounts["slippage_cost_usd"],
-                                        implied_slippage,
-                                        rel_tol=1e-12, abs_tol=1e-8,
-                                    )
+                                    and amounts["slippage_cost_usd"]
+                                    == implied_slippage
                                 )
                             except (ValueError, OverflowError) as exc:
                                 raise ValueError(
