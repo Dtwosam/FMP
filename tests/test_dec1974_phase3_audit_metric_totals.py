@@ -3299,5 +3299,91 @@ class Phase3AuditSourceExactReferenceGrossPnLTests(unittest.TestCase):
             )
 
 
+def _combined_source_economic_model_run() -> BacktestRun:
+    source = _declared_source_slippage_run(Direction.LONG, "EURUSD")
+    trade = source.trades[0]
+    commission = 2 * (trade.units / 1_000_000 * 25.0)
+    modeled_net = trade.net_pnl_usd - commission
+    return replace(
+        source,
+        run_identity={
+            **source.run_identity,
+            "commission_model": {
+                "model": "fixed_per_million_per_side",
+                "usd_per_million_per_side": 25.0,
+            },
+            "financing_model": {"model": "zero_financing"},
+        },
+        trades=(replace(
+            trade, commission_cost_usd=commission,
+            net_pnl_usd=modeled_net,
+            risk_equity_after_usd=10000.0 + modeled_net,
+        ),),
+        equity_checkpoints=(
+            source.equity_checkpoints[0],
+            EquityCheckpoint(
+                STAMP + timedelta(minutes=1), 10000.0 + modeled_net,
+            ),
+        ),
+    )
+
+
+class Phase3AuditCombinedSourceEconomicModelWitnessTests(unittest.TestCase):
+    def test_audit_accepts_joint_pip_gross_slippage_commission_and_net(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(
+                _combined_source_economic_model_run(), folder,
+            )
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 1,
+            )
+
+    def test_audit_refuses_joint_model_near_equal_rehashed_gross(self):
+        source = _combined_source_economic_model_run()
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(source, folder)
+            _forge_versioned_trade_execution(
+                folder, manifest, "gross_pnl_usd",
+                source.trades[0].gross_pnl_usd + 1e-9,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "gross PnL conflicts with reference-price",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_joint_model_near_equal_rehashed_slippage(self):
+        source = _combined_source_economic_model_run()
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(source, folder)
+            _forge_versioned_trade_execution(
+                folder, manifest, "slippage_cost_usd",
+                source.trades[0].slippage_cost_usd + 1e-9,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "slippage cost conflicts with execution prices",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_joint_model_near_equal_rehashed_commission(self):
+        source = _combined_source_economic_model_run()
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(source, folder)
+            _forge_versioned_trade_execution(
+                folder, manifest, "commission_cost_usd",
+                source.trades[0].commission_cost_usd + 1e-9,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "source fixed commission conflicts with trade costs",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+
 if __name__ == "__main__":
     unittest.main()
