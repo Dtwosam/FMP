@@ -1448,6 +1448,35 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                                 raise ValueError(
                                     "artifact report source engine gross PnL conflicts with reference-price economics"
                                 )
+                            # Engine stores the adverse execution penalty
+                            # as reference gross minus slipped fill PnL.
+                            try:
+                                slipped_pnl = pnl_usd(
+                                    symbol=record["symbol"],
+                                    direction=Direction(record["direction"]),
+                                    units=record["units"],
+                                    entry_price=record["entry_price"],
+                                    exit_price=record["exit_price"],
+                                )
+                                implied_slippage = max(
+                                    0.0, source_gross - slipped_pnl
+                                )
+                                slippage_matches = (
+                                    math.isfinite(implied_slippage)
+                                    and math.isclose(
+                                        amounts["slippage_cost_usd"],
+                                        implied_slippage,
+                                        rel_tol=1e-12, abs_tol=1e-8,
+                                    )
+                                )
+                            except (ValueError, OverflowError) as exc:
+                                raise ValueError(
+                                    "artifact report source engine slipped PnL cannot be calculated"
+                                ) from exc
+                            if not slippage_matches:
+                                raise ValueError(
+                                    "artifact report source engine slippage cost conflicts with execution prices"
+                                )
                         for economic in ledger_totals:
                             ledger_totals[economic] += amounts[economic]
                         sorted_trade_pnls.append(amounts["net_pnl_usd"])
