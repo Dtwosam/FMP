@@ -1964,8 +1964,13 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
             if type(claimed) not in (int, float):
                 raise ValueError(f"artifact report metric {name} must be finite numeric")
             try:
-                matches = math.isfinite(claimed) and math.isclose(
-                    claimed, expected, rel_tol=1e-12, abs_tol=1e-8,
+                matches = math.isfinite(claimed) and (
+                    claimed == expected
+                    if source_identity.get("backtest_engine_version")
+                    == BACKTEST_ENGINE_VERSION
+                    else math.isclose(
+                        claimed, expected, rel_tol=1e-12, abs_tol=1e-8,
+                    )
                 )
             except OverflowError:
                 matches = False
