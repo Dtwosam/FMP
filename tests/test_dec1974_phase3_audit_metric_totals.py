@@ -4091,5 +4091,77 @@ class Phase3AuditExactSourceTradeDistributionMetricsTests(unittest.TestCase):
             )
 
 
+def _source_with_exact_drawdown_metrics() -> BacktestRun:
+    source = _source_winning_losing_profit_metrics_run()
+    first_peak = source.equity_checkpoints[1].realized_risk_equity_usd
+    final_equity = source.equity_checkpoints[2].realized_risk_equity_usd
+    maximum_drawdown = first_peak - final_equity
+    return replace(source, metrics={
+        **source.metrics,
+        "max_drawdown_usd": maximum_drawdown,
+        "max_drawdown_fraction": maximum_drawdown / first_peak,
+        "recovery_factor": source.metrics["net_pnl_usd"] / maximum_drawdown,
+    })
+
+
+class Phase3AuditExactSourceDrawdownMetricsTests(unittest.TestCase):
+    def test_audit_accepts_source_drawdown_fraction_and_recovery_metrics(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(
+                _source_with_exact_drawdown_metrics(), folder,
+            )
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 2,
+            )
+
+    def test_audit_refuses_rehashed_near_equal_source_drawdown_usd(self):
+        source = _source_with_exact_drawdown_metrics()
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(source, folder)
+            _forge_metrics(
+                folder, manifest, "max_drawdown_usd",
+                source.metrics["max_drawdown_usd"] + 1e-9,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric max_drawdown_usd conflicts with checkpoint curve",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_near_equal_source_drawdown_fraction(self):
+        source = _source_with_exact_drawdown_metrics()
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(source, folder)
+            _forge_metrics(
+                folder, manifest, "max_drawdown_fraction",
+                source.metrics["max_drawdown_fraction"] + 1e-13,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric max_drawdown_fraction conflicts with checkpoint curve",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_keeps_generic_drawdown_metric_tolerance(self):
+        source = _source_with_exact_drawdown_metrics()
+        generic = replace(
+            source,
+            run_identity={"starting_equity_usd": 10000.0},
+            metrics={
+                **source.metrics,
+                "max_drawdown_usd": source.metrics["max_drawdown_usd"] + 1e-9,
+            },
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(generic, folder)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 2,
+            )
+
+
 if __name__ == "__main__":
     unittest.main()
