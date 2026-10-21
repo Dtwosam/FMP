@@ -893,5 +893,75 @@ class Phase3AuditCheckpointDrawdownMetricTests(unittest.TestCase):
             self.assertEqual(audit_backtest_artifact_structure(folder)["trade_count"], 0)
 
 
+def _requested_window_run() -> BacktestRun:
+    return replace(
+        _run({"trade_count": 1}),
+        run_identity={
+            "requested_start_utc": STAMP,
+            "requested_end_utc": STAMP + timedelta(minutes=5),
+        },
+    )
+
+
+def _forge_run_identity_window(
+    folder: Path, manifest: dict[str, object], key: str,
+    value: object, *, drop: bool = False,
+) -> None:
+    path = folder / "summary.json"
+    summary = json.loads(path.read_text("utf-8"))
+    if drop:
+        summary["run_identity"].pop(key)
+    else:
+        summary["run_identity"][key] = value
+    payload = (json.dumps(summary, sort_keys=True) + "\n").encode("utf-8")
+    path.write_bytes(payload)
+    for entry in manifest["artifacts"]:
+        if entry["path"] == "summary.json":
+            entry["size_bytes"] = len(payload)
+            entry["sha256"] = hashlib.sha256(payload).hexdigest()
+    (folder / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+
+class Phase3AuditRequestedWindowContractTests(unittest.TestCase):
+    def test_audit_accepts_canonical_source_requested_interval(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(_requested_window_run(), folder)
+            self.assertEqual(audit_backtest_artifact_structure(folder)["trade_count"], 1)
+
+    def test_audit_refuses_rehashed_backdated_requested_end(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(_requested_window_run(), folder)
+            _forge_run_identity_window(
+                folder, manifest, "requested_end_utc", "2026-10-19T00:00:00Z"
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "requested end precedes"):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_noncanonical_requested_end_timestamp(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(_requested_window_run(), folder)
+            _forge_run_identity_window(
+                folder, manifest, "requested_end_utc", "2026-10-20 00:05:00Z"
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "requested end.*canonical UTC"):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_missing_requested_window_endpoint(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(_requested_window_run(), folder)
+            _forge_run_identity_window(
+                folder, manifest, "requested_start_utc", None, drop=True
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "both UTC endpoints"):
+                audit_backtest_artifact_structure(folder)
+
+
 if __name__ == "__main__":
     unittest.main()

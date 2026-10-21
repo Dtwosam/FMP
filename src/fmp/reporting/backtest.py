@@ -886,6 +886,29 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
             raise ValueError("artifact report summary protocol or fields mismatch")
         if type(summary["run_identity"]) is not dict:
             raise ValueError("artifact report run identity must be an object")
+        # The real engine serializes the requested experiment interval as
+        # paired canonical UTC datetimes. Treat partially supplied or
+        # backdated source-window claims as malformed evidence, while still
+        # admitting synthetic envelopes that omit both optional fields.
+        source_identity = summary["run_identity"]
+        window_fields = ("requested_start_utc", "requested_end_utc")
+        present = [field in source_identity for field in window_fields]
+        if any(present):
+            if not all(present):
+                raise ValueError(
+                    "artifact report requested window must include both UTC endpoints"
+                )
+            requested_start = _audit_parse_utc_timestamp(
+                source_identity["requested_start_utc"], "requested start"
+            )
+            requested_end = _audit_parse_utc_timestamp(
+                source_identity["requested_end_utc"], "requested end"
+            )
+            if requested_end < requested_start:
+                raise ValueError(
+                    "artifact report requested end precedes requested start"
+                )
+
         counts: dict[str, int] = {}
         for field in ("trade_count", "rejection_count", "equity_checkpoint_count"):
             count = summary.get(field)
