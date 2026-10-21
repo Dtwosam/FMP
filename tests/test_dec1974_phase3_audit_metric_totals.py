@@ -1253,5 +1253,67 @@ class Phase3AuditCostModelFamilyIdentityTests(unittest.TestCase):
                 audit_backtest_artifact_structure(folder)
 
 
+class Phase3AuditDecisionMetadataContractTests(unittest.TestCase):
+    def test_audit_accepts_engine_compatible_decision_metadata(self):
+        run = replace(
+            _run({"trade_count": 1}),
+            run_identity={"decision_config": {
+                "signal": ["trend", 1, 0.25, None, True],
+                "thresholds": {"low": -2, "high": 3.5},
+            }},
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(run, folder)
+            self.assertEqual(audit_backtest_artifact_structure(folder)["trade_count"], 1)
+
+    def test_audit_refuses_rehashed_control_character_metadata_value(self):
+        run = replace(_run({"trade_count": 1}), run_identity={"decision_config": {"signal": "trend"}})
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(run, folder)
+            _forge_run_identity_window(
+                folder, manifest, "decision_config", {"signal": "bad\nvalue"}
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "decision_config strings must be printable"):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_empty_nested_metadata_key(self):
+        run = replace(_run({"trade_count": 1}), run_identity={"decision_config": {"signal": 1}})
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(run, folder)
+            _forge_run_identity_window(folder, manifest, "decision_config", {"signal": {"": 1}})
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "decision_config keys must be printable nonempty"):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_metadata_deeper_than_engine_budget(self):
+        run = replace(_run({"trade_count": 1}), run_identity={"decision_config": {"signal": 1}})
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(run, folder)
+            nested = 1
+            for _ in range(34):
+                nested = [nested]
+            _forge_run_identity_window(folder, manifest, "decision_config", {"signal": nested})
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "decision_config exceeds nesting depth"):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_oversized_serialized_metadata(self):
+        run = replace(_run({"trade_count": 1}), run_identity={"decision_config": {"signal": 1}})
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(run, folder)
+            _forge_run_identity_window(
+                folder, manifest, "decision_config", {"signal": "x" * 66000}
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "decision_config exceeds 64 KiB"):
+                audit_backtest_artifact_structure(folder)
+
+
 if __name__ == "__main__":
     unittest.main()
