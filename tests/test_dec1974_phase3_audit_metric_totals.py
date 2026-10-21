@@ -4316,5 +4316,69 @@ class Phase3AuditGenericCanonicalMetricCompatibilityTests(unittest.TestCase):
             )
 
 
+class Phase3AuditSourceEconomicMultiFaultOrderingTests(unittest.TestCase):
+    def test_audit_rejects_only_false_source_net_after_valid_cost_components(self):
+        source = _combined_source_economic_model_run()
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(source, folder)
+            _forge_versioned_trade_execution(
+                folder, manifest, "net_pnl_usd",
+                source.trades[0].net_pnl_usd + 0.00001,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "net PnL cost reconciliation mismatch",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_identifies_source_zero_financing_before_net_mismatch(self):
+        source = _combined_source_economic_model_run()
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(source, folder)
+            _forge_versioned_trade_execution(
+                folder, manifest, "financing_cost_usd", 0.00001,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "source zero financing conflicts with trade costs",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_preserves_source_equity_check_after_consistent_net(self):
+        source = _combined_source_economic_model_run()
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(source, folder)
+            _forge_versioned_trade_execution(
+                folder, manifest, "risk_equity_after_usd",
+                source.trades[0].risk_equity_after_usd + 0.00001,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "realized equity conflicts with net PnL",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_still_rejects_large_generic_net_pnl_drift(self):
+        source = _combined_source_economic_model_run()
+        generic = replace(
+            source, run_identity={"starting_equity_usd": 10000.0},
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(generic, folder)
+            _forge_versioned_trade_execution(
+                folder, manifest, "net_pnl_usd",
+                source.trades[0].net_pnl_usd + 0.00001,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "net PnL cost reconciliation mismatch",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+
 if __name__ == "__main__":
     unittest.main()
