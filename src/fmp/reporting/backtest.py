@@ -1187,6 +1187,9 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
             )
         }
         sorted_trade_pnls: list[int | float] = []
+        # Capture the engine's realized equity transitions in canonical
+        # close order. Validate cross-record continuity after row validation.
+        trade_equity_transitions: list[tuple[int | float, int | float]] = []
         seen_trade_ids: set[str] = set()
         seen_trade_decisions: set[str] = set()
         seen_rejection_decisions: set[str] = set()
@@ -1396,6 +1399,7 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                             raise ValueError(
                                 "artifact report trade realized equity conflicts with net PnL"
                             )
+                        trade_equity_transitions.append((prior, after))
                         trade_order = (exit_stamp, trade_id)
                         if (
                             previous_trade_order is not None
@@ -1444,6 +1448,17 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
             # and cross-row checks, preserving precise duplicate-ID reports.
             if noncanonical_row_seen:
                 raise ValueError("artifact report JSONL row is not canonical")
+        if "starting_equity_usd" in source_identity:
+            last_realized_equity = source_identity["starting_equity_usd"]
+            for before, after in trade_equity_transitions:
+                if not math.isclose(
+                    before, last_realized_equity,
+                    rel_tol=1e-12, abs_tol=1e-8,
+                ):
+                    raise ValueError(
+                        "artifact report trade risk equity continuity conflicts with source ledger"
+                    )
+                last_realized_equity = after
         ledger_totals["total_explicit_cost_usd"] = (
             ledger_totals["slippage_cost_usd"]
             + ledger_totals["commission_cost_usd"]
