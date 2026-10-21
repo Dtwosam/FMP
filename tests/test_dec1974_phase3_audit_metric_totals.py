@@ -11,6 +11,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from fmp.backtest import BACKTEST_ENGINE_VERSION
+from fmp.risk import pnl_usd
 from fmp.contracts import (
     BacktestRun, Direction, EquityCheckpoint, ExitReason, RejectionCode,
     RejectionRecord, TradeRecord,
@@ -1530,7 +1531,10 @@ def _source_engine_checkpoint_run() -> BacktestRun:
     # The real engine uses position_id == decision_id for each close.
     source = replace(
         source, trades=tuple(
-            replace(item, trade_id=item.decision_id) for item in source.trades
+            replace(
+                item, trade_id=item.decision_id,
+                exit_reference_price=1.10125,
+            ) for item in source.trades
         ),
     )
     return replace(
@@ -1647,6 +1651,68 @@ class Phase3AuditSourceEngineTradeIdentifierParityTests(unittest.TestCase):
             folder = Path(home) / "evidence"
             write_backtest_artifacts(_sequential_equity_run(), folder)
             self.assertEqual(audit_backtest_artifact_structure(folder)["trade_count"], 2)
+
+
+class Phase3AuditSourceEngineReferencePnLTests(unittest.TestCase):
+    def test_audit_accepts_source_reference_pnl_calculation(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(_source_engine_checkpoint_run(), folder)
+            self.assertEqual(audit_backtest_artifact_structure(folder)["trade_count"], 2)
+
+    def test_audit_refuses_rehashed_false_reference_price_gross_pnl(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(_source_engine_checkpoint_run(), folder)
+            path = folder / "trades.jsonl"
+            rows = [json.loads(value) for value in path.read_text("utf-8").splitlines()]
+            rows[0]["exit_reference_price"] = 1.1013
+            payload = (
+                "\n".join(
+                    json.dumps(value, sort_keys=True, separators=(",", ":"))
+                    for value in rows
+                ) + "\n"
+            ).encode("utf-8")
+            path.write_bytes(payload)
+            for entry in manifest["artifacts"]:
+                if entry["path"] == "trades.jsonl":
+                    entry["size_bytes"] = len(payload)
+                    entry["sha256"] = hashlib.sha256(payload).hexdigest()
+            (folder / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "gross PnL conflicts with reference-price"):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_accepts_source_jpy_quote_conversion(self):
+        gross = pnl_usd(
+            symbol="USDJPY", direction=Direction.LONG, units=10000,
+            entry_price=150.0, exit_price=150.1,
+        )
+        item = replace(
+            _sample_trade(), trade_id="JPY-CLOSE", decision_id="JPY-CLOSE",
+            symbol="USDJPY", entry_reference_price=150.0,
+            exit_reference_price=150.1, entry_price=150.0,
+            exit_price=150.1, stop_price=149.9, target_price=150.1,
+            gross_pnl_usd=gross, slippage_cost_usd=0.0,
+            commission_cost_usd=0.0, financing_cost_usd=0.0,
+            net_pnl_usd=gross, risk_equity_after_usd=10000.0 + gross,
+        )
+        run = BacktestRun(
+            run_identity={
+                "backtest_engine_version": BACKTEST_ENGINE_VERSION,
+                "starting_equity_usd": 10000.0,
+            },
+            trades=(item,), rejections=(),
+            equity_checkpoints=(
+                EquityCheckpoint(STAMP, 10000.0),
+                EquityCheckpoint(STAMP + timedelta(minutes=1), 10000.0 + gross),
+            ),
+            metrics={"trade_count": 1},
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(run, folder)
+            self.assertEqual(audit_backtest_artifact_structure(folder)["trade_count"], 1)
 
 
 if __name__ == "__main__":
