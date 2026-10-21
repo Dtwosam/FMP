@@ -7468,5 +7468,111 @@ class Phase3AuditSourceFinancedFlatNullRecoveryTests(unittest.TestCase):
                         audit_backtest_artifact_structure(folder)
 
 
+
+def _source_with_computed_complete_financing_metrics(
+    source: BacktestRun,
+) -> BacktestRun:
+    computed = compute_backtest_metrics(
+        starting_equity_usd=10000.0,
+        trades=source.trades,
+        equity_checkpoints=source.equity_checkpoints,
+    )
+    return replace(source, metrics=computed)
+
+
+class Phase3AuditSourceFullSignedFinancingComputedParityTests(unittest.TestCase):
+    def test_computed_debit_net_loser_full_metrics_round_trip(self):
+        source = _source_with_computed_complete_financing_metrics(
+            _source_financing_debit_gross_winner_net_loser_run(),
+        )
+        self.assertLess(source.metrics["net_return"], 0.0)
+        self.assertEqual(source.metrics["profit_factor"], 0.0)
+        self.assertGreater(source.metrics["max_drawdown_usd"], 0.0)
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(source, folder)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 1,
+            )
+
+    def test_computed_credit_net_winner_full_metrics_round_trip(self):
+        source = _source_with_computed_complete_financing_metrics(
+            _source_financing_credit_turns_gross_loss_into_net_win_run(),
+        )
+        self.assertGreater(source.metrics["net_return"], 0.0)
+        self.assertIsNone(source.metrics["profit_factor"])
+        self.assertEqual(source.metrics["max_drawdown_usd"], 0.0)
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(source, folder)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 1,
+            )
+
+    def test_computed_debit_net_flat_full_metrics_round_trip(self):
+        source = _source_with_computed_complete_financing_metrics(
+            _source_cost_offset_net_flat_distribution_run(),
+        )
+        self.assertEqual(source.metrics["net_pnl_usd"], 0.0)
+        self.assertEqual(source.metrics["net_return"], 0.0)
+        self.assertIsNone(source.metrics["recovery_factor"])
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(source, folder)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 1,
+            )
+
+    def test_computed_credit_net_flat_full_metrics_round_trip(self):
+        source = _source_with_computed_complete_financing_metrics(
+            _source_financing_credit_gross_loser_net_flat_run(),
+        )
+        self.assertEqual(source.metrics["net_pnl_usd"], 0.0)
+        self.assertEqual(source.metrics["gross_loss_usd"], 0.0)
+        self.assertIsNone(source.metrics["recovery_factor"])
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(source, folder)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 1,
+            )
+
+    def test_audit_refuses_rehashed_all_costs_aggregate_on_full_computed_run(self):
+        source = _source_with_computed_complete_financing_metrics(
+            _source_financing_debit_gross_winner_net_loser_run(),
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(source, folder)
+            _forge_canonical_metric(
+                folder, manifest, "total_explicit_cost_usd",
+                source.metrics["total_explicit_cost_usd"] + 1e-9,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError,
+                "metric total_explicit_cost_usd conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_signed_financing_claim_on_full_computed_run(self):
+        source = _source_with_computed_complete_financing_metrics(
+            _source_financing_credit_turns_gross_loss_into_net_win_run(),
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(source, folder)
+            _forge_canonical_metric(
+                folder, manifest, "financing_cost_usd",
+                -source.metrics["financing_cost_usd"],
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError,
+                "metric financing_cost_usd conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+
 if __name__ == "__main__":
     unittest.main()
