@@ -7266,5 +7266,110 @@ class Phase3AuditSourceFinancingCreditGrossLossNetFlatTests(unittest.TestCase):
                 audit_backtest_artifact_structure(folder)
 
 
+
+def _source_financed_net_loss_drawdown_metrics_run() -> BacktestRun:
+    source = _source_financing_debit_gross_winner_net_loser_run()
+    computed = compute_backtest_metrics(
+        starting_equity_usd=10000.0,
+        trades=source.trades,
+        equity_checkpoints=source.equity_checkpoints,
+    )
+    assert computed["max_drawdown_usd"] > 0.0
+    assert computed["net_return"] < 0.0
+    assert computed["recovery_factor"] == -1.0
+    return replace(source, metrics={
+        **source.metrics,
+        "net_return": computed["net_return"],
+        "max_drawdown_usd": computed["max_drawdown_usd"],
+        "max_drawdown_fraction": computed["max_drawdown_fraction"],
+        "recovery_factor": computed["recovery_factor"],
+    })
+
+
+class Phase3AuditSourceFinancedNetLossDrawdownRecoveryTests(unittest.TestCase):
+    def test_audit_accepts_gross_positive_financed_net_loss_drawdown_metrics(self):
+        source = _source_financed_net_loss_drawdown_metrics_run()
+        self.assertGreater(source.trades[0].gross_pnl_usd, 0.0)
+        self.assertLess(source.metrics["net_return"], 0.0)
+        self.assertGreater(source.metrics["max_drawdown_usd"], 0.0)
+        self.assertEqual(source.metrics["recovery_factor"], -1.0)
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(source, folder)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 1,
+            )
+
+    def test_audit_refuses_rehashed_tiny_net_return_change(self):
+        source = _source_financed_net_loss_drawdown_metrics_run()
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(source, folder)
+            _forge_canonical_metric(
+                folder, manifest, "net_return", source.metrics["net_return"] + 1e-9,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric net_return conflicts with starting equity and trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_tiny_drawdown_amount_change(self):
+        source = _source_financed_net_loss_drawdown_metrics_run()
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(source, folder)
+            _forge_canonical_metric(
+                folder, manifest, "max_drawdown_usd",
+                source.metrics["max_drawdown_usd"] + 1e-9,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric max_drawdown_usd conflicts with checkpoint curve",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_tiny_drawdown_fraction_change(self):
+        source = _source_financed_net_loss_drawdown_metrics_run()
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(source, folder)
+            _forge_canonical_metric(
+                folder, manifest, "max_drawdown_fraction",
+                source.metrics["max_drawdown_fraction"] + 1e-13,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric max_drawdown_fraction conflicts with checkpoint curve",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_null_recovery_when_real_drawdown_exists(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _source_financed_net_loss_drawdown_metrics_run(), folder,
+            )
+            _forge_canonical_metric(folder, manifest, "recovery_factor", None)
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric recovery_factor must be finite numeric",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_positive_recovery_for_financed_net_loss(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _source_financed_net_loss_drawdown_metrics_run(), folder,
+            )
+            _forge_canonical_metric(folder, manifest, "recovery_factor", 1.0)
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric recovery_factor conflicts with checkpoint curve",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+
 if __name__ == "__main__":
     unittest.main()
