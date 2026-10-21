@@ -1213,6 +1213,7 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
         # close order. Validate cross-record continuity after row validation.
         trade_equity_transitions: list[tuple[int | float, int | float]] = []
         trade_exit_instants: list[datetime] = []
+        earliest_trade_entry: datetime | None = None
         seen_trade_ids: set[str] = set()
         seen_trade_decisions: set[str] = set()
         seen_rejection_decisions: set[str] = set()
@@ -1244,6 +1245,11 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                         )
                         if exit_stamp < entry_stamp:
                             raise ValueError("artifact report trade exit precedes entry")
+                        if (
+                            earliest_trade_entry is None
+                            or entry_stamp < earliest_trade_entry
+                        ):
+                            earliest_trade_entry = entry_stamp
                     else:
                         decision_stamp = _audit_parse_utc_timestamp(
                             record["decision_timestamp_utc"], "rejection decision timestamp"
@@ -1694,6 +1700,19 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
             if len(checkpoints) != len(trade_equity_transitions) + 1:
                 raise ValueError(
                     "artifact report source engine checkpoint count conflicts with trade closes"
+                )
+            # The source engine creates its first checkpoint from the first
+            # supplied quote bar, before any entry can execute. A rehashed
+            # source report cannot put that initial witness after a fill.
+            initial_stamp = _audit_parse_utc_timestamp(
+                checkpoints[0]["timestamp_utc"], "equity checkpoint"
+            )
+            if (
+                earliest_trade_entry is not None
+                and initial_stamp > earliest_trade_entry
+            ):
+                raise ValueError(
+                    "artifact report source engine initial checkpoint follows trade entry"
                 )
             initial_equity = checkpoints[0]["realized_risk_equity_usd"]
             if not math.isclose(
