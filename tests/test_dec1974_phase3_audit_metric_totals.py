@@ -6002,5 +6002,98 @@ class Phase3AuditSourceCanonicalWinFlatReorderingTests(unittest.TestCase):
                 audit_backtest_artifact_structure(folder)
 
 
+
+def _source_same_time_canonical_loss_loss_flat_run() -> BacktestRun:
+    source = _source_same_time_loss_flat_loss_distribution_run()
+    first, flat, last = source.trades
+    # Checkpoint realization L/FLAT/L; same-time trade IDs publish L/L/FLAT.
+    return replace(
+        source,
+        trades=(
+            first,
+            replace(flat, trade_id="Z-FLAT", decision_id="Z-FLAT"),
+            replace(last, trade_id="B-LOSS", decision_id="B-LOSS"),
+        ),
+        metrics={
+            **source.metrics,
+            "longest_losing_streak": 2,
+        },
+    )
+
+
+class Phase3AuditSourceCanonicalLossFlatReorderingTests(unittest.TestCase):
+    def test_audit_accepts_canonical_two_loss_streak_with_realized_flat_gap(self):
+        run = _source_same_time_canonical_loss_loss_flat_run()
+        self.assertEqual(
+            [trade.net_pnl_usd < 0 for trade in run.trades],
+            [True, False, True],
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(run, folder)
+            rows = [
+                json.loads(line) for line in
+                (folder / "trades.jsonl").read_text("utf-8").splitlines()
+            ]
+            self.assertEqual(
+                [row["trade_id"] for row in rows],
+                ["A-LOSS", "B-LOSS", "Z-FLAT"],
+            )
+            self.assertEqual(
+                [row["net_pnl_usd"] < 0 for row in rows],
+                [True, True, False],
+            )
+            self.assertEqual(run.metrics["profit_factor"], 0.0)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 3,
+            )
+
+    def test_audit_refuses_rehashed_realization_order_losing_streak(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _source_same_time_canonical_loss_loss_flat_run(), folder,
+            )
+            _forge_canonical_metric(
+                folder, manifest, "longest_losing_streak", 1,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError,
+                "metric longest_losing_streak conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_near_equal_source_average_loss_in_flat_tie_report(self):
+        source = _source_same_time_canonical_loss_loss_flat_run()
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(source, folder)
+            _forge_canonical_metric(
+                folder, manifest, "average_loss_usd",
+                source.metrics["average_loss_usd"] + 1e-9,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric average_loss_usd conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_checkpoint_jump_that_skips_flat_loss_transition(self):
+        source = _source_same_time_canonical_loss_loss_flat_run()
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(source, folder)
+            _forge_checkpoint_summary(
+                folder, manifest, 1, "realized_risk_equity_usd",
+                source.equity_checkpoints[-1].realized_risk_equity_usd,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "checkpoint conflicts with trade close",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+
 if __name__ == "__main__":
     unittest.main()
