@@ -730,5 +730,55 @@ class Phase3AuditCanonicalJSONLBytesTests(unittest.TestCase):
                 audit_backtest_artifact_structure(folder)
 
 
+class Phase3AuditCanonicalSummaryMetricsBytesTests(unittest.TestCase):
+    def test_audit_accepts_writer_summary_metrics_canonical_bytes(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(_run({"trade_count": 1}), folder)
+            self.assertEqual(audit_backtest_artifact_structure(folder)["trade_count"], 1)
+
+    def test_audit_refuses_rehashed_compact_summary_json(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(_run({"trade_count": 1}), folder)
+            path = folder / "summary.json"
+            source = json.loads(path.read_text("utf-8"))
+            data = (json.dumps(source, sort_keys=True, separators=(",", ":")) + "\n").encode("utf-8")
+            self.assertNotEqual(path.read_bytes(), data)
+            path.write_bytes(data)
+            for entry in manifest["artifacts"]:
+                if entry["path"] == "summary.json":
+                    entry["size_bytes"] = len(data)
+                    entry["sha256"] = hashlib.sha256(data).hexdigest()
+            (folder / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "summary.json is not canonical JSON"):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_metrics_with_different_key_order(self):
+        metrics = {
+            "trade_count": 1,
+            "net_pnl_usd": 11.0,
+            "commission_cost_usd": 0.5,
+        }
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(_run(metrics), folder)
+            path = folder / "metrics.json"
+            source = json.loads(path.read_text("utf-8"))
+            reverse = dict(reversed(list(source.items())))
+            data = (json.dumps(reverse, indent=2, sort_keys=False) + "\n").encode("utf-8")
+            self.assertNotEqual(path.read_bytes(), data)
+            path.write_bytes(data)
+            for entry in manifest["artifacts"]:
+                if entry["path"] == "metrics.json":
+                    entry["size_bytes"] = len(data)
+                    entry["sha256"] = hashlib.sha256(data).hexdigest()
+            (folder / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "metrics.json is not canonical JSON"):
+                audit_backtest_artifact_structure(folder)
+
+
 if __name__ == "__main__":
     unittest.main()
