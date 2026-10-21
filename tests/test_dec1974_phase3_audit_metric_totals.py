@@ -5052,5 +5052,129 @@ class Phase3AuditSourceSameTimeMixedOutcomePrecisionTests(unittest.TestCase):
                 audit_backtest_artifact_structure(folder)
 
 
+
+def _source_same_time_mixed_streak_publication_run() -> BacktestRun:
+    source = _source_with_exact_trade_distribution_metrics()
+    winner, loser = source.trades
+    gain, loss = winner.net_pnl_usd, loser.net_pnl_usd
+    assert gain > 0 and loss < 0
+    same_close = winner.exit_timestamp_utc
+    after_first_loss = 10000.0 + loss
+    after_win = after_first_loss + gain
+    after_second_loss = after_win + loss
+    # Engine realizes loss, win, loss, but the canonical rows publish
+    # A-LOSS, B-LOSS, Z-WIN at the same UTC exit instant.
+    return replace(
+        source,
+        trades=(
+            replace(
+                loser, trade_id="A-LOSS", decision_id="A-LOSS",
+                entry_timestamp_utc=STAMP, exit_timestamp_utc=same_close,
+                risk_equity_before_usd=10000.0,
+                risk_equity_after_usd=after_first_loss,
+            ),
+            replace(
+                winner, trade_id="Z-WIN", decision_id="Z-WIN",
+                risk_equity_before_usd=after_first_loss,
+                risk_equity_after_usd=after_win,
+            ),
+            replace(
+                loser, trade_id="B-LOSS", decision_id="B-LOSS",
+                entry_timestamp_utc=STAMP, exit_timestamp_utc=same_close,
+                risk_equity_before_usd=after_win,
+                risk_equity_after_usd=after_second_loss,
+            ),
+        ),
+        equity_checkpoints=(
+            EquityCheckpoint(STAMP, 10000.0),
+            EquityCheckpoint(same_close, after_first_loss),
+            EquityCheckpoint(same_close, after_win),
+            EquityCheckpoint(same_close, after_second_loss),
+        ),
+        metrics={
+            "trade_count": 3,
+            "gross_profit_usd": gain,
+            "gross_loss_usd": -2 * loss,
+            "profit_factor": gain / (-2 * loss),
+            "win_rate": 1 / 3,
+            "average_win_usd": gain,
+            "average_loss_usd": loss,
+            "longest_winning_streak": 1,
+            "longest_losing_streak": 2,
+        },
+    )
+
+
+class Phase3AuditSourceSameTimeMixedPublicationStreakTests(unittest.TestCase):
+    def test_audit_uses_canonical_trade_order_for_mixed_sign_streaks(self):
+        run = _source_same_time_mixed_streak_publication_run()
+        self.assertEqual(
+            [trade.net_pnl_usd < 0 for trade in run.trades],
+            [True, False, True],
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(run, folder)
+            rows = [
+                json.loads(line) for line in
+                (folder / "trades.jsonl").read_text("utf-8").splitlines()
+            ]
+            self.assertEqual(
+                [row["trade_id"] for row in rows],
+                ["A-LOSS", "B-LOSS", "Z-WIN"],
+            )
+            self.assertEqual(run.metrics["longest_losing_streak"], 2)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 3,
+            )
+
+    def test_audit_refuses_rehashed_realization_order_loss_streak(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _source_same_time_mixed_streak_publication_run(), folder,
+            )
+            _forge_canonical_metric(
+                folder, manifest, "longest_losing_streak", 1,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError,
+                "metric longest_losing_streak conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_fictitious_two_win_streak(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _source_same_time_mixed_streak_publication_run(), folder,
+            )
+            _forge_canonical_metric(
+                folder, manifest, "longest_winning_streak", 2,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError,
+                "metric longest_winning_streak conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_two_thirds_win_rate(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _source_same_time_mixed_streak_publication_run(), folder,
+            )
+            _forge_canonical_metric(
+                folder, manifest, "win_rate", 2 / 3,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric win_rate conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+
 if __name__ == "__main__":
     unittest.main()
