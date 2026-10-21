@@ -1891,5 +1891,59 @@ class Phase3AuditSourceBuiltinCostEconomicsTests(unittest.TestCase):
                 audit_backtest_artifact_structure(folder)
 
 
+def _zero_trade_source_engine_run() -> BacktestRun:
+    return BacktestRun(
+        run_identity={
+            "backtest_engine_version": BACKTEST_ENGINE_VERSION,
+            "starting_equity_usd": 10000.0,
+        },
+        trades=(), rejections=(),
+        equity_checkpoints=(EquityCheckpoint(STAMP, 10000.0),),
+        metrics={"trade_count": 0},
+    )
+
+
+class Phase3AuditSourceCheckpointCountBoundaryTests(unittest.TestCase):
+    def test_audit_accepts_zero_trade_source_with_initial_checkpoint(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(_zero_trade_source_engine_run(), folder)
+            self.assertEqual(audit_backtest_artifact_structure(folder)["trade_count"], 0)
+
+    def test_audit_refuses_rehashed_absent_zero_trade_initial_checkpoint(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(_zero_trade_source_engine_run(), folder)
+            _forge_checkpoint_summary(folder, manifest, 0, "remove", None)
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "checkpoint count conflicts"):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_accepts_repeated_zero_pnl_equal_timestamp_closes(self):
+        source = _same_exit_source_engine_run()
+        zero_trades = tuple(
+            replace(
+                item, entry_reference_price=1.1, exit_reference_price=1.1,
+                entry_price=1.1, exit_price=1.1, gross_pnl_usd=0.0,
+                slippage_cost_usd=0.0, commission_cost_usd=0.0,
+                financing_cost_usd=0.0, net_pnl_usd=0.0,
+                risk_equity_before_usd=10000.0,
+                risk_equity_after_usd=10000.0,
+            ) for item in source.trades
+        )
+        run = replace(
+            source, trades=zero_trades,
+            equity_checkpoints=(
+                EquityCheckpoint(STAMP, 10000.0),
+                EquityCheckpoint(STAMP + timedelta(minutes=1), 10000.0),
+                EquityCheckpoint(STAMP + timedelta(minutes=1), 10000.0),
+            ),
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(run, folder)
+            self.assertEqual(audit_backtest_artifact_structure(folder)["trade_count"], 2)
+
+
 if __name__ == "__main__":
     unittest.main()
