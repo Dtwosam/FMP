@@ -15,9 +15,10 @@ from types import MappingProxyType
 from typing import Mapping, Sequence
 
 from fmp.backtest import BACKTEST_ENGINE_VERSION
+from fmp.backtest.costs import apply_adverse_slippage
 from fmp.risk import pnl_usd
 from fmp.contracts import (
-    BacktestRun, Direction, EquityCheckpoint, ExitReason, RejectionCode,
+    BacktestRun, Direction, EquityCheckpoint, ExitReason, OrderSide, RejectionCode,
     RejectionRecord, SUPPORTED_SYMBOLS, TradeRecord,
 )
 
@@ -1449,6 +1450,46 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                                 raise ValueError(
                                     "artifact report source engine gross PnL conflicts with reference-price economics"
                                 )
+                            # The source engine applies the same declared
+                            # pip displacement to entry and exit reference
+                            # prices. Economic slippage reconciliation alone
+                            # cannot detect a mutually rehashed fill/config.
+                            # Optional fields remain optional for synthetic
+                            # source-version envelopes.
+                            if "slippage_pips" in source_identity:
+                                declared_pips = source_identity["slippage_pips"]
+                                entry_side = (
+                                    OrderSide.BUY
+                                    if record["direction"] == Direction.LONG.value
+                                    else OrderSide.SELL
+                                )
+                                exit_side = (
+                                    OrderSide.SELL
+                                    if entry_side is OrderSide.BUY
+                                    else OrderSide.BUY
+                                )
+                                try:
+                                    expected_entry_fill = apply_adverse_slippage(
+                                        record["entry_reference_price"],
+                                        side=entry_side, pips=declared_pips,
+                                        symbol=record["symbol"],
+                                    )
+                                    expected_exit_fill = apply_adverse_slippage(
+                                        record["exit_reference_price"],
+                                        side=exit_side, pips=declared_pips,
+                                        symbol=record["symbol"],
+                                    )
+                                except (ValueError, OverflowError) as exc:
+                                    raise ValueError(
+                                        "artifact report source engine declared slippage cannot be applied"
+                                    ) from exc
+                                if (
+                                    record["entry_price"] != expected_entry_fill
+                                    or record["exit_price"] != expected_exit_fill
+                                ):
+                                    raise ValueError(
+                                        "artifact report source engine execution prices conflict with declared slippage_pips"
+                                    )
                             # Engine stores the adverse execution penalty
                             # as reference gross minus slipped fill PnL.
                             try:
