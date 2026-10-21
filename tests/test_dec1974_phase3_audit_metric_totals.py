@@ -6095,5 +6095,130 @@ class Phase3AuditSourceCanonicalLossFlatReorderingTests(unittest.TestCase):
                 audit_backtest_artifact_structure(folder)
 
 
+
+def _source_all_flat_same_time_distribution_run() -> BacktestRun:
+    source = _same_exit_source_engine_run()
+    zero_trades = tuple(
+        replace(
+            item, entry_reference_price=1.1, exit_reference_price=1.1,
+            entry_price=1.1, exit_price=1.1, gross_pnl_usd=0.0,
+            exit_reason=ExitReason.END_OF_DATA,
+            slippage_cost_usd=0.0, commission_cost_usd=0.0,
+            financing_cost_usd=0.0, net_pnl_usd=0.0,
+            risk_equity_before_usd=10000.0,
+            risk_equity_after_usd=10000.0,
+        ) for item in source.trades
+    )
+    return replace(
+        source, trades=zero_trades,
+        equity_checkpoints=(
+            EquityCheckpoint(STAMP, 10000.0),
+            EquityCheckpoint(STAMP + timedelta(minutes=1), 10000.0),
+            EquityCheckpoint(STAMP + timedelta(minutes=1), 10000.0),
+        ),
+        metrics={
+            "trade_count": 2,
+            "net_pnl_usd": 0.0,
+            "gross_profit_usd": 0.0,
+            "gross_loss_usd": 0.0,
+            "profit_factor": None,
+            "win_rate": 0.0,
+            "average_win_usd": None,
+            "average_loss_usd": None,
+            "expectancy_usd": 0.0,
+            "longest_winning_streak": 0,
+            "longest_losing_streak": 0,
+        },
+    )
+
+
+class Phase3AuditSourceAllFlatSameTimePerformanceTests(unittest.TestCase):
+    def test_audit_accepts_two_flat_closes_with_zero_win_rate(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            run = _source_all_flat_same_time_distribution_run()
+            self.assertEqual(len(run.trades), 2)
+            self.assertTrue(all(trade.net_pnl_usd == 0.0 for trade in run.trades))
+            write_backtest_artifacts(run, folder)
+            rows = [
+                json.loads(line) for line in
+                (folder / "trades.jsonl").read_text("utf-8").splitlines()
+            ]
+            self.assertEqual(
+                [row["trade_id"] for row in rows], ["A-CLOSE", "Z-CLOSE"],
+            )
+            observed = audit_backtest_artifact_structure(folder)
+            self.assertEqual(observed["trade_count"], 2)
+            self.assertEqual(observed["equity_checkpoint_count"], 3)
+
+    def test_audit_refuses_rehashed_null_win_rate_with_two_flat_closes(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _source_all_flat_same_time_distribution_run(), folder,
+            )
+            _forge_canonical_metric(folder, manifest, "win_rate", None)
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric win_rate must be finite numeric",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_numeric_average_win_without_winners(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _source_all_flat_same_time_distribution_run(), folder,
+            )
+            _forge_canonical_metric(folder, manifest, "average_win_usd", 0.0)
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric average_win_usd conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_numeric_average_loss_without_losers(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _source_all_flat_same_time_distribution_run(), folder,
+            )
+            _forge_canonical_metric(folder, manifest, "average_loss_usd", 0.0)
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric average_loss_usd conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_numeric_profit_factor_without_losses(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _source_all_flat_same_time_distribution_run(), folder,
+            )
+            _forge_canonical_metric(folder, manifest, "profit_factor", 0.0)
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric profit_factor conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_nonzero_winning_streak_without_winners(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _source_all_flat_same_time_distribution_run(), folder,
+            )
+            _forge_canonical_metric(
+                folder, manifest, "longest_winning_streak", 1,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError,
+                "metric longest_winning_streak conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+
 if __name__ == "__main__":
     unittest.main()
