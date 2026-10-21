@@ -1668,7 +1668,10 @@ class Phase3AuditSourceEngineReferencePnLTests(unittest.TestCase):
             manifest = write_backtest_artifacts(_source_engine_checkpoint_run(), folder)
             path = folder / "trades.jsonl"
             rows = [json.loads(value) for value in path.read_text("utf-8").splitlines()]
+            # TARGET parity must remain true so this isolates source gross
+            # PnL reconstruction instead of tripping the newer exit guard.
             rows[0]["exit_reference_price"] = 1.1013
+            rows[0]["target_price"] = 1.1013
             payload = (
                 "\n".join(
                     json.dumps(value, sort_keys=True, separators=(",", ":"))
@@ -2787,6 +2790,56 @@ class Phase3AuditSourceNoTradeRejectionContractTests(unittest.TestCase):
             write_backtest_artifacts(generic, folder)
             self.assertEqual(
                 audit_backtest_artifact_structure(folder)["rejection_count"], 1,
+            )
+
+
+class Phase3AuditSourceGrossPnLMutationPrecedenceTests(unittest.TestCase):
+    def test_audit_refuses_wrong_units_when_target_and_cost_unchanged(self):
+        for direction, symbol in (
+            (Direction.LONG, "EURUSD"),
+            (Direction.SHORT, "GBPUSD"),
+        ):
+            with self.subTest(direction=direction, symbol=symbol):
+                with tempfile.TemporaryDirectory() as home:
+                    folder = Path(home) / "evidence"
+                    manifest = write_backtest_artifacts(
+                        _declared_source_slippage_run(direction, symbol), folder,
+                    )
+                    _forge_versioned_trade_execution(
+                        folder, manifest, "units", 11000,
+                    )
+                    self.assertEqual(verify_backtest_artifacts(folder), manifest)
+                    with self.assertRaisesRegex(
+                        ValueError, "gross PnL conflicts with reference-price",
+                    ):
+                        audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_wrong_usdjpy_units_before_slippage_reconciliation(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _declared_source_slippage_run(Direction.LONG, "USDJPY"), folder,
+            )
+            _forge_versioned_trade_execution(
+                folder, manifest, "units", 11000,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "gross PnL conflicts with reference-price",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_preserves_generic_synthetic_gross_pnl_formula_flexibility(self):
+        source = _declared_source_slippage_run(Direction.LONG, "EURUSD")
+        generic = replace(
+            source, run_identity={"starting_equity_usd": 10000.0},
+            trades=(replace(source.trades[0], units=11000),),
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(generic, folder)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 1,
             )
 
 
