@@ -518,5 +518,64 @@ class Phase3AuditRejectionContractTests(unittest.TestCase):
                     audit_backtest_artifact_structure(folder)
 
 
+def _forge_raw_metric_payload(
+    folder: Path, manifest: dict[str, object], payload: bytes,
+) -> None:
+    path = folder / "metrics.json"
+    path.write_bytes(payload)
+    for entry in manifest["artifacts"]:
+        if entry["path"] == "metrics.json":
+            entry["size_bytes"] = len(payload)
+            entry["sha256"] = hashlib.sha256(payload).hexdigest()
+    (folder / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+
+class Phase3AuditBoundedNumericJsonTests(unittest.TestCase):
+    def test_audit_refuses_rehashed_exponent_float_overflow_in_optional_metric(self):
+        run = BacktestRun(
+            run_identity={}, trades=(), rejections=(),
+            equity_checkpoints=(), metrics={"trade_count": 0},
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(run, folder)
+            _forge_raw_metric_payload(
+                folder, manifest, b'{"trade_count":0,"unknown_metric":1e309}\n'
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "non-finite numeric"):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_oversized_integer_in_optional_metric(self):
+        run = BacktestRun(
+            run_identity={}, trades=(), rejections=(),
+            equity_checkpoints=(), metrics={"trade_count": 0},
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(run, folder)
+            payload = b'{"trade_count":0,"unknown_metric":' + b"9" * 200 + b"}\n"
+            _forge_raw_metric_payload(folder, manifest, payload)
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "integer exceeds safe width"):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_deeply_nested_rehashed_metric_json_without_recursion_escape(self):
+        run = BacktestRun(
+            run_identity={}, trades=(), rejections=(),
+            equity_checkpoints=(), metrics={"trade_count": 0},
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(run, folder)
+            payload = b'{"trade_count":0,"unknown_metric":' + (
+                b"[" * 2000 + b"0" + b"]" * 2000
+            ) + b"}\n"
+            _forge_raw_metric_payload(folder, manifest, payload)
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "nesting limit"):
+                audit_backtest_artifact_structure(folder)
+
+
 if __name__ == "__main__":
     unittest.main()
