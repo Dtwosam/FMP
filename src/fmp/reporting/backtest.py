@@ -1728,9 +1728,14 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                             expected_equity = prior + amounts["net_pnl_usd"]
                             equity_matches = (
                                 math.isfinite(expected_equity)
-                                and math.isclose(
-                                    after, expected_equity,
-                                    rel_tol=1e-12, abs_tol=1e-8,
+                                and (
+                                    after == expected_equity
+                                    if source_identity.get("backtest_engine_version")
+                                    == BACKTEST_ENGINE_VERSION
+                                    else math.isclose(
+                                        after, expected_equity,
+                                        rel_tol=1e-12, abs_tol=1e-8,
+                                    )
                                 )
                             )
                         except OverflowError:
