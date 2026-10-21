@@ -3685,5 +3685,82 @@ class Phase3AuditSignedCustomSourceFinancingTests(unittest.TestCase):
             )
 
 
+def _source_with_complete_economic_metrics() -> BacktestRun:
+    source = _combined_source_economic_model_run()
+    trade = source.trades[0]
+    explicit_cost = (
+        trade.slippage_cost_usd + trade.commission_cost_usd
+        + trade.financing_cost_usd
+    )
+    return replace(
+        source, metrics={
+            "trade_count": 1,
+            "net_pnl_usd": trade.net_pnl_usd,
+            "slippage_cost_usd": trade.slippage_cost_usd,
+            "commission_cost_usd": trade.commission_cost_usd,
+            "financing_cost_usd": trade.financing_cost_usd,
+            "total_explicit_cost_usd": explicit_cost,
+        },
+    )
+
+
+class Phase3AuditExactSourceAggregateMetricTests(unittest.TestCase):
+    def test_audit_accepts_source_aggregate_economic_metrics(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(
+                _source_with_complete_economic_metrics(), folder,
+            )
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 1,
+            )
+
+    def test_audit_refuses_near_equal_rehashed_source_metric_net(self):
+        source = _source_with_complete_economic_metrics()
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(source, folder)
+            _forge_metrics(
+                folder, manifest, "net_pnl_usd",
+                source.metrics["net_pnl_usd"] + 1e-9,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric net_pnl_usd conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_near_equal_source_total_explicit_cost_metric(self):
+        source = _source_with_complete_economic_metrics()
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(source, folder)
+            _forge_metrics(
+                folder, manifest, "total_explicit_cost_usd",
+                source.metrics["total_explicit_cost_usd"] + 1e-9,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric total_explicit_cost_usd conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_keeps_generic_metric_aggregate_summation_tolerance(self):
+        source = _source_with_complete_economic_metrics()
+        generic = replace(
+            source, run_identity={"starting_equity_usd": 10000.0},
+            metrics={
+                **source.metrics,
+                "net_pnl_usd": source.metrics["net_pnl_usd"] + 1e-9,
+            },
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(generic, folder)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 1,
+            )
+
+
 if __name__ == "__main__":
     unittest.main()
