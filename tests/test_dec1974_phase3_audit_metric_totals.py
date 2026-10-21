@@ -679,7 +679,7 @@ class Phase3AuditJSONTreeWriterParityTests(unittest.TestCase):
             ) + b"}\n"
             _forge_raw_metric_payload(folder, manifest, payload)
             self.assertEqual(verify_backtest_artifacts(folder), manifest)
-            with self.assertRaisesRegex(ValueError, "JSON nesting depth"):
+            with self.assertRaisesRegex(ValueError, "JSON nesting limit"):
                 audit_backtest_artifact_structure(folder)
 
 
@@ -726,7 +726,7 @@ class Phase3AuditCanonicalJSONLBytesTests(unittest.TestCase):
             manifest = write_backtest_artifacts(_one_rejection_run(), folder)
             path = folder / "rejections.jsonl"
             parsed = json.loads(path.read_text("utf-8"))
-            altered = (json.dumps(parsed, sort_keys=True, indent=2) + "\n").encode("utf-8")
+            altered = (json.dumps(parsed, sort_keys=True, separators=(", ", ": ")) + "\n").encode("utf-8")
             path.write_bytes(altered)
             for entry in manifest["artifacts"]:
                 if entry["path"] == "rejections.jsonl":
