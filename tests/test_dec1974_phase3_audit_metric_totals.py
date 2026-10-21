@@ -1082,5 +1082,72 @@ class Phase3AuditScheduledExitIdentityTests(unittest.TestCase):
                 audit_backtest_artifact_structure(folder)
 
 
+def _source_risk_config() -> dict[str, float]:
+    return {
+        "default_risk_fraction": 0.0025,
+        "max_risk_fraction": 0.005,
+        "max_simultaneous_risk_fraction": 0.01,
+        "daily_loss_halt_fraction": 0.015,
+    }
+
+
+class Phase3AuditRiskConfigSourceContractTests(unittest.TestCase):
+    def test_audit_accepts_source_defined_positive_bounded_risk_config(self):
+        run = replace(
+            _run({"trade_count": 1}),
+            run_identity={"risk_config": _source_risk_config()},
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(run, folder)
+            self.assertEqual(audit_backtest_artifact_structure(folder)["trade_count"], 1)
+
+    def test_audit_refuses_rehashed_zero_or_boolean_risk_fraction(self):
+        run = replace(
+            _run({"trade_count": 1}),
+            run_identity={"risk_config": _source_risk_config()},
+        )
+        for bad in (0, True):
+            with self.subTest(bad=bad), tempfile.TemporaryDirectory() as home:
+                folder = Path(home) / "evidence"
+                manifest = write_backtest_artifacts(run, folder)
+                risk = _source_risk_config()
+                risk["default_risk_fraction"] = bad
+                _forge_run_identity_window(folder, manifest, "risk_config", risk)
+                self.assertEqual(verify_backtest_artifacts(folder), manifest)
+                with self.assertRaisesRegex(ValueError, "default_risk_fraction must be positive bounded"):
+                    audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_risk_hierarchy_inversion(self):
+        run = replace(
+            _run({"trade_count": 1}),
+            run_identity={"risk_config": _source_risk_config()},
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(run, folder)
+            risk = _source_risk_config()
+            risk["max_risk_fraction"] = 0.001
+            _forge_run_identity_window(folder, manifest, "risk_config", risk)
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "fractions violate risk hierarchy"):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_missing_risk_config_field(self):
+        run = replace(
+            _run({"trade_count": 1}),
+            run_identity={"risk_config": _source_risk_config()},
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(run, folder)
+            risk = _source_risk_config()
+            risk.pop("daily_loss_halt_fraction")
+            _forge_run_identity_window(folder, manifest, "risk_config", risk)
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "risk_config fields mismatch"):
+                audit_backtest_artifact_structure(folder)
+
+
 if __name__ == "__main__":
     unittest.main()
