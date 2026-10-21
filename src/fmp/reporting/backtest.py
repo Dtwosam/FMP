@@ -771,11 +771,33 @@ def _audit_load_json(payload: bytes) -> object:
     def refuse_nonfinite(value: str) -> object:
         raise ValueError("artifact report contains non-finite JSON constant")
 
+    def require_finite_number(value: str) -> float:
+        # Python's JSON parser accepts an enormous exponent as float('inf')
+        # even when allow_nan would reject a writer-created non-finite value.
+        number = float(value)
+        if not math.isfinite(number):
+            raise ValueError("artifact report contains non-finite numeric value")
+        return number
+
+    def require_bounded_integer(value: str) -> int:
+        # Avoid constructing unbounded integers before checking the
+        # serializer's 512-bit integer-width contract.
+        if len(value.lstrip("-")) > 156:
+            raise ValueError("artifact report integer exceeds safe width")
+        number = int(value)
+        if number.bit_length() > 512:
+            raise ValueError("artifact report integer exceeds safe width")
+        return number
+
     try:
         return json.loads(
             payload, object_pairs_hook=_audit_json_unique_pairs,
             parse_constant=refuse_nonfinite,
+            parse_float=require_finite_number,
+            parse_int=require_bounded_integer,
         )
+    except RecursionError as exc:
+        raise ValueError("artifact report exceeds JSON parser nesting limit") from exc
     except (json.JSONDecodeError, UnicodeDecodeError) as exc:
         raise ValueError("artifact report must contain valid JSON") from exc
 
