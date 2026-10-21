@@ -1429,7 +1429,11 @@ class Phase3AuditAdverseExecutionPriceTests(unittest.TestCase):
     def test_audit_accepts_source_compatible_equal_execution_references(self):
         for direction in (Direction.LONG, Direction.SHORT):
             with self.subTest(direction=direction), tempfile.TemporaryDirectory() as home:
-                record = replace(_sample_trade(), direction=direction)
+                record = replace(
+                    _sample_trade(), direction=direction,
+                    stop_price=(1.099 if direction is Direction.LONG else 1.102),
+                    target_price=(1.101 if direction is Direction.LONG else 1.099),
+                )
                 run = replace(_run({"trade_count": 1}), trades=(record,))
                 folder = Path(home) / "evidence"
                 write_backtest_artifacts(run, folder)
@@ -1454,7 +1458,10 @@ class Phase3AuditAdverseExecutionPriceTests(unittest.TestCase):
             ("exit_price", 1.099),
         ):
             with self.subTest(field=field), tempfile.TemporaryDirectory() as home:
-                record = replace(_sample_trade(), direction=Direction.SHORT)
+                record = replace(
+                    _sample_trade(), direction=Direction.SHORT,
+                    stop_price=1.102, target_price=1.099,
+                )
                 run = replace(_run({"trade_count": 1}), trades=(record,))
                 folder = Path(home) / "evidence"
                 manifest = write_backtest_artifacts(run, folder)
@@ -1462,6 +1469,59 @@ class Phase3AuditAdverseExecutionPriceTests(unittest.TestCase):
                 self.assertEqual(verify_backtest_artifacts(folder), manifest)
                 with self.assertRaisesRegex(ValueError, "favorable slippage"):
                     audit_backtest_artifact_structure(folder)
+
+
+class Phase3AuditStopTargetGeometryTests(unittest.TestCase):
+    def test_audit_accepts_source_long_and_short_trade_geometry(self):
+        for direction in (Direction.LONG, Direction.SHORT):
+            with self.subTest(direction=direction), tempfile.TemporaryDirectory() as home:
+                record = replace(
+                    _sample_trade(), direction=direction,
+                    stop_price=(1.099 if direction is Direction.LONG else 1.102),
+                    target_price=(1.101 if direction is Direction.LONG else 1.099),
+                )
+                run = replace(_run({"trade_count": 1}), trades=(record,))
+                folder = Path(home) / "evidence"
+                write_backtest_artifacts(run, folder)
+                self.assertEqual(audit_backtest_artifact_structure(folder)["trade_count"], 1)
+
+    def test_audit_refuses_rehashed_long_invalid_stop_or_target(self):
+        for field, price in (("stop_price", 1.101), ("target_price", 1.099)):
+            with self.subTest(field=field), tempfile.TemporaryDirectory() as home:
+                folder = Path(home) / "evidence"
+                manifest = write_backtest_artifacts(_run({"trade_count": 1}), folder)
+                _forge_trade_field(folder, manifest, field, price)
+                self.assertEqual(verify_backtest_artifacts(folder), manifest)
+                with self.assertRaisesRegex(ValueError, "stop/target geometry"):
+                    audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_short_invalid_stop_or_target(self):
+        for field, price in (("stop_price", 1.099), ("target_price", 1.101)):
+            with self.subTest(field=field), tempfile.TemporaryDirectory() as home:
+                record = replace(
+                    _sample_trade(), direction=Direction.SHORT,
+                    stop_price=1.102, target_price=1.099,
+                )
+                run = replace(_run({"trade_count": 1}), trades=(record,))
+                folder = Path(home) / "evidence"
+                manifest = write_backtest_artifacts(run, folder)
+                _forge_trade_field(folder, manifest, field, price)
+                self.assertEqual(verify_backtest_artifacts(folder), manifest)
+                with self.assertRaisesRegex(ValueError, "stop/target geometry"):
+                    audit_backtest_artifact_structure(folder)
+
+    def test_audit_preserves_optional_null_target_when_stop_valid(self):
+        for direction in (Direction.LONG, Direction.SHORT):
+            with self.subTest(direction=direction), tempfile.TemporaryDirectory() as home:
+                record = replace(
+                    _sample_trade(), direction=direction,
+                    stop_price=(1.099 if direction is Direction.LONG else 1.102),
+                    target_price=None,
+                )
+                run = replace(_run({"trade_count": 1}), trades=(record,))
+                folder = Path(home) / "evidence"
+                write_backtest_artifacts(run, folder)
+                self.assertEqual(audit_backtest_artifact_structure(folder)["trade_count"], 1)
 
 
 if __name__ == "__main__":

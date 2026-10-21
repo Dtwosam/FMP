@@ -1341,6 +1341,22 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                             raise ValueError(
                                 "artifact report trade execution prices imply favorable slippage"
                             )
+                        stop = record["stop_price"]
+                        target = record["target_price"]
+                        if direction == Direction.LONG.value:
+                            geometry_valid = (
+                                stop < entry_ref and
+                                (target is None or target > entry_ref)
+                            )
+                        else:
+                            geometry_valid = (
+                                stop > entry_ref and
+                                (target is None or target < entry_ref)
+                            )
+                        if not geometry_valid:
+                            raise ValueError(
+                                "artifact report trade stop/target geometry conflicts with direction"
+                            )
                         amounts: dict[str, int | float] = {}
                         for economic in (
                             "gross_pnl_usd", "slippage_cost_usd",
