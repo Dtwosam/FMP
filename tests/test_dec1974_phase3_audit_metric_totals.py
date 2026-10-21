@@ -6353,5 +6353,121 @@ class Phase3AuditSourceSameTimeWinFlatLossMetricsTests(unittest.TestCase):
                 audit_backtest_artifact_structure(folder)
 
 
+
+def _source_reverse_realization_win_flat_loss_run() -> BacktestRun:
+    source = _source_same_time_win_flat_loss_distribution_run()
+    winner, flat, loser = source.trades
+    assert winner.net_pnl_usd > 0 and flat.net_pnl_usd == 0.0
+    assert loser.net_pnl_usd < 0
+    # At one UTC instant, checkpoints realize LOSS/FLAT/WIN but trade ID
+    # publication remains A-WIN/M-FLAT/Z-LOSS.
+    after_loss = 10000.0 + loser.net_pnl_usd
+    after_win = after_loss + winner.net_pnl_usd
+    stamp = STAMP + timedelta(minutes=1)
+    return replace(
+        source,
+        trades=(
+            replace(
+                loser, risk_equity_before_usd=10000.0,
+                risk_equity_after_usd=after_loss,
+            ),
+            replace(
+                flat, risk_equity_before_usd=after_loss,
+                risk_equity_after_usd=after_loss,
+            ),
+            replace(
+                winner, risk_equity_before_usd=after_loss,
+                risk_equity_after_usd=after_win,
+            ),
+        ),
+        equity_checkpoints=(
+            EquityCheckpoint(STAMP, 10000.0),
+            EquityCheckpoint(stamp, after_loss),
+            EquityCheckpoint(stamp, after_loss),
+            EquityCheckpoint(stamp, after_win),
+        ),
+    )
+
+
+class Phase3AuditSourceReverseRealizationMixedFlatDistributionTests(unittest.TestCase):
+    def test_audit_accepts_reverse_realization_with_canonical_mixed_publication(self):
+        source = _source_reverse_realization_win_flat_loss_run()
+        self.assertEqual(
+            [item.net_pnl_usd < 0 for item in source.trades],
+            [True, False, False],
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(source, folder)
+            rows = [
+                json.loads(line) for line in
+                (folder / "trades.jsonl").read_text("utf-8").splitlines()
+            ]
+            self.assertEqual(
+                [row["trade_id"] for row in rows],
+                ["A-WIN", "M-FLAT", "Z-LOSS"],
+            )
+            self.assertEqual(source.metrics["win_rate"], 1 / 3)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 3,
+            )
+
+    def test_audit_refuses_rehashed_checkpoint_skipping_initial_loss(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _source_reverse_realization_win_flat_loss_run(), folder,
+            )
+            _forge_checkpoint_summary(
+                folder, manifest, 1, "realized_risk_equity_usd", 10000.0,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "checkpoint conflicts with trade close",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_half_win_rate_for_reverse_realization(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _source_reverse_realization_win_flat_loss_run(), folder,
+            )
+            _forge_canonical_metric(folder, manifest, "win_rate", 0.5)
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric win_rate conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_near_equal_reverse_average_win(self):
+        source = _source_reverse_realization_win_flat_loss_run()
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(source, folder)
+            _forge_canonical_metric(
+                folder, manifest, "average_win_usd",
+                source.metrics["average_win_usd"] + 1e-9,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric average_win_usd conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_zero_profit_factor_for_mixed_outcomes(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _source_reverse_realization_win_flat_loss_run(), folder,
+            )
+            _forge_canonical_metric(folder, manifest, "profit_factor", 0.0)
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric profit_factor conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+
 if __name__ == "__main__":
     unittest.main()
