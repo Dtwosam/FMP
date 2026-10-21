@@ -1554,9 +1554,13 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                                     entry_price=record["entry_reference_price"],
                                     exit_price=record["exit_reference_price"],
                                 )
-                                gross_matches = math.isclose(
-                                    amounts["gross_pnl_usd"], source_gross,
-                                    rel_tol=1e-12, abs_tol=1e-8,
+                                # The source engine records the exact
+                                # result of this same price/units/direction
+                                # PnL function. No output rounding occurs,
+                                # so near-equal rehashed gross values cannot
+                                # be attributed to legitimate source drift.
+                                gross_matches = (
+                                    amounts["gross_pnl_usd"] == source_gross
                                 )
                             except (ValueError, OverflowError) as exc:
                                 raise ValueError(
