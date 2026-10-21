@@ -683,5 +683,52 @@ class Phase3AuditJSONTreeWriterParityTests(unittest.TestCase):
                 audit_backtest_artifact_structure(folder)
 
 
+class Phase3AuditCanonicalJSONLBytesTests(unittest.TestCase):
+    def test_audit_accepts_canonical_writer_jsonl_bytes(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(_run({"trade_count": 1}), folder)
+            self.assertEqual(audit_backtest_artifact_structure(folder)["trade_count"], 1)
+
+    def test_audit_refuses_rehashed_unterminated_trade_row(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(_run({"trade_count": 1}), folder)
+            path = folder / "trades.jsonl"
+            payload = path.read_bytes()
+            self.assertTrue(payload.endswith(b"\n"))
+            altered = payload[:-1]
+            path.write_bytes(altered)
+            for entry in manifest["artifacts"]:
+                if entry["path"] == "trades.jsonl":
+                    entry["size_bytes"] = len(altered)
+                    entry["sha256"] = hashlib.sha256(altered).hexdigest()
+            (folder / "manifest.json").write_text(
+                json.dumps(manifest), encoding="utf-8"
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "JSONL row is not canonical"):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_pretty_rejection_row(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(_one_rejection_run(), folder)
+            path = folder / "rejections.jsonl"
+            parsed = json.loads(path.read_text("utf-8"))
+            altered = (json.dumps(parsed, sort_keys=True, indent=2) + "\n").encode("utf-8")
+            path.write_bytes(altered)
+            for entry in manifest["artifacts"]:
+                if entry["path"] == "rejections.jsonl":
+                    entry["size_bytes"] = len(altered)
+                    entry["sha256"] = hashlib.sha256(altered).hexdigest()
+            (folder / "manifest.json").write_text(
+                json.dumps(manifest), encoding="utf-8"
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "JSONL row is not canonical"):
+                audit_backtest_artifact_structure(folder)
+
+
 if __name__ == "__main__":
     unittest.main()

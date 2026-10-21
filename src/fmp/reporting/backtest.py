@@ -949,6 +949,17 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                         raise ValueError("artifact report JSONL record must be an object")
                     if set(record) != record_fields[name]:
                         raise ValueError("artifact report JSONL canonical fields mismatch")
+                    # The writer emits one compact sorted-key JSON object
+                    # followed by exactly one LF. A rehashed but reserialized
+                    # or unterminated row is not canonical evidence.
+                    expected_line = (
+                        json.dumps(
+                            record, sort_keys=True, separators=(",", ":"),
+                            ensure_ascii=False, allow_nan=False,
+                        ) + "\n"
+                    ).encode("utf-8")
+                    if line != expected_line:
+                        raise ValueError("artifact report JSONL row is not canonical")
                     if name == "trades.jsonl":
                         entry_stamp = _audit_parse_utc_timestamp(
                             record["entry_timestamp_utc"], "trade entry timestamp"
