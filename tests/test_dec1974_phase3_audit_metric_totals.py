@@ -4988,5 +4988,69 @@ class Phase3AuditSourceSameTimeMixedOutcomeDistributionTests(unittest.TestCase):
                 audit_backtest_artifact_structure(folder)
 
 
+
+class Phase3AuditSourceSameTimeMixedOutcomePrecisionTests(unittest.TestCase):
+    def test_audit_refuses_near_equal_source_average_win_with_mixed_exits(self):
+        source = _source_same_time_mixed_outcome_distribution_run()
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(source, folder)
+            _forge_canonical_metric(
+                folder, manifest, "average_win_usd",
+                source.metrics["average_win_usd"] + 1e-9,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric average_win_usd conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_near_equal_source_average_loss_with_mixed_exits(self):
+        source = _source_same_time_mixed_outcome_distribution_run()
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(source, folder)
+            _forge_canonical_metric(
+                folder, manifest, "average_loss_usd",
+                source.metrics["average_loss_usd"] + 1e-9,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric average_loss_usd conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_near_equal_source_expectancy_with_mixed_exits(self):
+        source = _source_same_time_mixed_outcome_distribution_run()
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(source, folder)
+            _forge_canonical_metric(
+                folder, manifest, "expectancy_usd",
+                source.metrics["expectancy_usd"] + 1e-9,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric expectancy_usd conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_false_two_loss_streak_in_mixed_source_report(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _source_same_time_mixed_outcome_distribution_run(), folder,
+            )
+            _forge_canonical_metric(
+                folder, manifest, "longest_losing_streak", 2,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError,
+                "metric longest_losing_streak conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+
 if __name__ == "__main__":
     unittest.main()
