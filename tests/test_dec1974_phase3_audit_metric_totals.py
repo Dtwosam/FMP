@@ -3818,5 +3818,55 @@ class Phase3AuditZeroAndSameTimeSourceMetricTests(unittest.TestCase):
                 audit_backtest_artifact_structure(folder)
 
 
+def _source_with_exact_net_return_metric() -> BacktestRun:
+    source = _source_with_complete_economic_metrics()
+    return replace(source, metrics={
+        **source.metrics,
+        "net_return": source.metrics["net_pnl_usd"] / 10000.0,
+    })
+
+
+class Phase3AuditExactSourceNetReturnTests(unittest.TestCase):
+    def test_audit_accepts_source_net_return_from_ledger_and_start(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(_source_with_exact_net_return_metric(), folder)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 1,
+            )
+
+    def test_audit_refuses_rehashed_sub_tolerance_net_return_drift(self):
+        source = _source_with_exact_net_return_metric()
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(source, folder)
+            _forge_metrics(
+                folder, manifest, "net_return",
+                source.metrics["net_return"] + 1e-13,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "net_return conflicts with starting equity and trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_preserves_generic_net_return_rounding_tolerance(self):
+        source = _source_with_exact_net_return_metric()
+        generic = replace(
+            source,
+            run_identity={"starting_equity_usd": 10000.0},
+            metrics={
+                **source.metrics,
+                "net_return": source.metrics["net_return"] + 1e-13,
+            },
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(generic, folder)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 1,
+            )
+
+
 if __name__ == "__main__":
     unittest.main()
