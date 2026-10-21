@@ -1315,5 +1315,76 @@ class Phase3AuditDecisionMetadataContractTests(unittest.TestCase):
                 audit_backtest_artifact_structure(folder)
 
 
+def _sequential_equity_run() -> BacktestRun:
+    first = _sample_trade()
+    second = replace(
+        first, trade_id="AUDIT-T2", decision_id="AUDIT-D2",
+        exit_timestamp_utc=STAMP + timedelta(minutes=2),
+        risk_equity_before_usd=10011.0, risk_equity_after_usd=10022.0,
+    )
+    return BacktestRun(
+        run_identity={"starting_equity_usd": 10000.0},
+        trades=(first, second), rejections=(), equity_checkpoints=(),
+        metrics={"trade_count": 2},
+    )
+
+
+def _forge_second_trade_equity(
+    folder: Path, manifest: dict[str, object], before: float, after: float,
+) -> None:
+    path = folder / "trades.jsonl"
+    records = [json.loads(line) for line in path.read_text("utf-8").splitlines()]
+    records[1]["risk_equity_before_usd"] = before
+    records[1]["risk_equity_after_usd"] = after
+    payload = (
+        "\n".join(json.dumps(item, sort_keys=True, separators=(",", ":"))
+                  for item in records) + "\n"
+    ).encode("utf-8")
+    path.write_bytes(payload)
+    for entry in manifest["artifacts"]:
+        if entry["path"] == "trades.jsonl":
+            entry["size_bytes"] = len(payload)
+            entry["sha256"] = hashlib.sha256(payload).hexdigest()
+    (folder / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+
+class Phase3AuditRealizedEquityContinuityTests(unittest.TestCase):
+    def test_audit_accepts_source_realized_equity_trade_sequence(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(_sequential_equity_run(), folder)
+            self.assertEqual(audit_backtest_artifact_structure(folder)["trade_count"], 2)
+
+    def test_audit_refuses_rehashed_disconnected_second_trade_equity(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(_sequential_equity_run(), folder)
+            _forge_second_trade_equity(folder, manifest, 12011.0, 12022.0)
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "risk equity continuity"):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_first_trade_equity_not_starting_equity(self):
+        with tempfile.TemporaryDirectory() as home:
+            run = _sequential_equity_run()
+            wrong_first = replace(
+                run.trades[0],
+                risk_equity_before_usd=11000.0,
+                risk_equity_after_usd=11011.0,
+            )
+            run = replace(run, trades=(wrong_first, run.trades[1]))
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(run, folder)
+            with self.assertRaisesRegex(ValueError, "risk equity continuity"):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_preserves_older_synthetic_trade_without_source_starting_equity(self):
+        run = replace(_sequential_equity_run(), run_identity={})
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(run, folder)
+            self.assertEqual(audit_backtest_artifact_structure(folder)["trade_count"], 2)
+
+
 if __name__ == "__main__":
     unittest.main()
