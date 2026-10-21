@@ -1319,6 +1319,28 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                                 raise ValueError(
                                     f"artifact report trade {price_field} must be finite positive numeric"
                                 )
+                        # Phase3 execution uses adverse-only slippage:
+                        # buys may fill no lower than their ask reference;
+                        # sells may fill no higher than their bid reference.
+                        # This applies independently to entry and close,
+                        # reversing sides for SHORT trades.
+                        direction = record["direction"]
+                        entry_ref = record["entry_reference_price"]
+                        entry_fill = record["entry_price"]
+                        exit_ref = record["exit_reference_price"]
+                        exit_fill = record["exit_price"]
+                        if direction == Direction.LONG.value:
+                            unfavorable = (
+                                entry_fill >= entry_ref and exit_fill <= exit_ref
+                            )
+                        else:
+                            unfavorable = (
+                                entry_fill <= entry_ref and exit_fill >= exit_ref
+                            )
+                        if not unfavorable:
+                            raise ValueError(
+                                "artifact report trade execution prices imply favorable slippage"
+                            )
                         amounts: dict[str, int | float] = {}
                         for economic in (
                             "gross_pnl_usd", "slippage_cost_usd",
