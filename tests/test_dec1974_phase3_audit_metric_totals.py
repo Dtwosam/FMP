@@ -5550,5 +5550,117 @@ class Phase3AuditSourceCrossTimestampLosingStreakTests(unittest.TestCase):
                 audit_backtest_artifact_structure(folder)
 
 
+
+def _source_cross_timestamp_complete_profit_distribution(
+    *, winning_majority: bool,
+) -> BacktestRun:
+    source = (
+        _source_cross_timestamp_canonical_winning_streak_run()
+        if winning_majority
+        else _source_cross_timestamp_canonical_losing_streak_run()
+    )
+    wins = [trade.net_pnl_usd for trade in source.trades if trade.net_pnl_usd > 0]
+    losses = [trade.net_pnl_usd for trade in source.trades if trade.net_pnl_usd < 0]
+    assert len(wins) == (3 if winning_majority else 1)
+    assert len(losses) == (1 if winning_majority else 3)
+    profit = sum(wins)
+    loss = -sum(losses)
+    return replace(source, metrics={
+        **source.metrics,
+        "gross_profit_usd": profit,
+        "gross_loss_usd": loss,
+        "profit_factor": profit / loss,
+        "average_win_usd": profit / len(wins),
+        "average_loss_usd": -loss / len(losses),
+    })
+
+
+class Phase3AuditSourceCrossTimestampProfitDistributionTests(unittest.TestCase):
+    def test_audit_accepts_complete_cross_time_profit_metrics_for_both_signs(self):
+        for majority in (True, False):
+            with self.subTest(winning_majority=majority):
+                source = _source_cross_timestamp_complete_profit_distribution(
+                    winning_majority=majority,
+                )
+                self.assertGreater(source.metrics["gross_profit_usd"], 0)
+                self.assertGreater(source.metrics["gross_loss_usd"], 0)
+                self.assertGreater(source.metrics["profit_factor"], 0)
+                with tempfile.TemporaryDirectory() as home:
+                    folder = Path(home) / "evidence"
+                    write_backtest_artifacts(source, folder)
+                    self.assertEqual(
+                        audit_backtest_artifact_structure(folder)["trade_count"],
+                        4,
+                    )
+
+    def test_audit_refuses_near_equal_cross_time_gross_profit(self):
+        source = _source_cross_timestamp_complete_profit_distribution(
+            winning_majority=True,
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(source, folder)
+            _forge_canonical_metric(
+                folder, manifest, "gross_profit_usd",
+                source.metrics["gross_profit_usd"] + 1e-9,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric gross_profit_usd conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_near_equal_cross_time_gross_loss(self):
+        source = _source_cross_timestamp_complete_profit_distribution(
+            winning_majority=False,
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(source, folder)
+            _forge_canonical_metric(
+                folder, manifest, "gross_loss_usd",
+                source.metrics["gross_loss_usd"] + 1e-9,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric gross_loss_usd conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_near_equal_cross_time_profit_factor(self):
+        source = _source_cross_timestamp_complete_profit_distribution(
+            winning_majority=True,
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(source, folder)
+            _forge_canonical_metric(
+                folder, manifest, "profit_factor",
+                source.metrics["profit_factor"] + 1e-9,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric profit_factor conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_near_equal_cross_time_average_loss(self):
+        source = _source_cross_timestamp_complete_profit_distribution(
+            winning_majority=False,
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(source, folder)
+            _forge_canonical_metric(
+                folder, manifest, "average_loss_usd",
+                source.metrics["average_loss_usd"] + 1e-9,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric average_loss_usd conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+
 if __name__ == "__main__":
     unittest.main()
