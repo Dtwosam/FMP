@@ -14,6 +14,7 @@ from types import MappingProxyType
 from typing import Mapping, Sequence
 
 from fmp.backtest import BACKTEST_ENGINE_VERSION
+from fmp.risk import pnl_usd
 from fmp.contracts import (
     BacktestRun, Direction, EquityCheckpoint, ExitReason, RejectionCode,
     RejectionRecord, SUPPORTED_SYMBOLS, TradeRecord,
@@ -1421,6 +1422,32 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                             reconciled = False
                         if not reconciled:
                             raise ValueError("artifact report trade net PnL cost reconciliation mismatch")
+                        # Only the installed source engine commits to this
+                        # exact reference-price PnL formula. Generic reporting
+                        # envelopes may use synthetic trade economics.
+                        if source_identity.get(
+                            "backtest_engine_version"
+                        ) == BACKTEST_ENGINE_VERSION:
+                            try:
+                                source_gross = pnl_usd(
+                                    symbol=record["symbol"],
+                                    direction=Direction(record["direction"]),
+                                    units=record["units"],
+                                    entry_price=record["entry_reference_price"],
+                                    exit_price=record["exit_reference_price"],
+                                )
+                                gross_matches = math.isclose(
+                                    amounts["gross_pnl_usd"], source_gross,
+                                    rel_tol=1e-12, abs_tol=1e-8,
+                                )
+                            except (ValueError, OverflowError) as exc:
+                                raise ValueError(
+                                    "artifact report source engine gross PnL cannot be calculated"
+                                ) from exc
+                            if not gross_matches:
+                                raise ValueError(
+                                    "artifact report source engine gross PnL conflicts with reference-price economics"
+                                )
                         for economic in ledger_totals:
                             ledger_totals[economic] += amounts[economic]
                         sorted_trade_pnls.append(amounts["net_pnl_usd"])
