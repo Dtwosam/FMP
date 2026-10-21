@@ -1425,5 +1425,44 @@ class Phase3AuditDecisionMetadataBudgetEdgesTests(unittest.TestCase):
                 audit_backtest_artifact_structure(folder)
 
 
+class Phase3AuditAdverseExecutionPriceTests(unittest.TestCase):
+    def test_audit_accepts_source_compatible_equal_execution_references(self):
+        for direction in (Direction.LONG, Direction.SHORT):
+            with self.subTest(direction=direction), tempfile.TemporaryDirectory() as home:
+                record = replace(_sample_trade(), direction=direction)
+                run = replace(_run({"trade_count": 1}), trades=(record,))
+                folder = Path(home) / "evidence"
+                write_backtest_artifacts(run, folder)
+                self.assertEqual(audit_backtest_artifact_structure(folder)["trade_count"], 1)
+
+    def test_audit_refuses_rehashed_long_favorable_entry_or_exit(self):
+        for field, value in (
+            ("entry_price", 1.099),
+            ("exit_price", 1.102),
+        ):
+            with self.subTest(field=field), tempfile.TemporaryDirectory() as home:
+                folder = Path(home) / "evidence"
+                manifest = write_backtest_artifacts(_run({"trade_count": 1}), folder)
+                _forge_trade_field(folder, manifest, field, value)
+                self.assertEqual(verify_backtest_artifacts(folder), manifest)
+                with self.assertRaisesRegex(ValueError, "favorable slippage"):
+                    audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_short_favorable_entry_or_exit(self):
+        for field, value in (
+            ("entry_price", 1.102),
+            ("exit_price", 1.099),
+        ):
+            with self.subTest(field=field), tempfile.TemporaryDirectory() as home:
+                record = replace(_sample_trade(), direction=Direction.SHORT)
+                run = replace(_run({"trade_count": 1}), trades=(record,))
+                folder = Path(home) / "evidence"
+                manifest = write_backtest_artifacts(run, folder)
+                _forge_trade_field(folder, manifest, field, value)
+                self.assertEqual(verify_backtest_artifacts(folder), manifest)
+                with self.assertRaisesRegex(ValueError, "favorable slippage"):
+                    audit_backtest_artifact_structure(folder)
+
+
 if __name__ == "__main__":
     unittest.main()
