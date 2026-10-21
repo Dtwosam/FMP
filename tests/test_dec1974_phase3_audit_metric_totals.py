@@ -3423,5 +3423,89 @@ class Phase3AuditCrossPairCombinedSourceEconomicTests(unittest.TestCase):
                 audit_backtest_artifact_structure(folder)
 
 
+class Phase3AuditSourceCompensatedEconomicTamperTests(unittest.TestCase):
+    def test_audit_refuses_compensated_gross_and_slippage_drift(self):
+        source = _combined_source_economic_model_run()
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(source, folder)
+            delta = 0.00001
+            _forge_versioned_trade_execution(
+                folder, manifest, "gross_pnl_usd",
+                source.trades[0].gross_pnl_usd + delta,
+            )
+            _forge_versioned_trade_execution(
+                folder, manifest, "slippage_cost_usd",
+                source.trades[0].slippage_cost_usd + delta,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "gross PnL conflicts with reference-price",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_compensated_slippage_and_commission_drift(self):
+        source = _combined_source_economic_model_run()
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(source, folder)
+            delta = 0.00001
+            _forge_versioned_trade_execution(
+                folder, manifest, "slippage_cost_usd",
+                source.trades[0].slippage_cost_usd + delta,
+            )
+            _forge_versioned_trade_execution(
+                folder, manifest, "commission_cost_usd",
+                source.trades[0].commission_cost_usd - delta,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "slippage cost conflicts with execution prices",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_compensated_commission_and_financing_drift(self):
+        source = _combined_source_economic_model_run()
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(source, folder)
+            delta = 0.00001
+            _forge_versioned_trade_execution(
+                folder, manifest, "commission_cost_usd",
+                source.trades[0].commission_cost_usd + delta,
+            )
+            _forge_versioned_trade_execution(
+                folder, manifest, "financing_cost_usd",
+                -delta,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "source fixed commission conflicts with trade costs",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_preserves_generic_compensated_gross_slip_flexibility(self):
+        source = _combined_source_economic_model_run()
+        item = source.trades[0]
+        delta = 0.00001
+        generic = replace(
+            source,
+            run_identity={
+                key: value for key, value in source.run_identity.items()
+                if key != "backtest_engine_version"
+            },
+            trades=(replace(
+                item, gross_pnl_usd=item.gross_pnl_usd + delta,
+                slippage_cost_usd=item.slippage_cost_usd + delta,
+            ),),
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(generic, folder)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 1,
+            )
+
+
 if __name__ == "__main__":
     unittest.main()
