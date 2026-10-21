@@ -3558,5 +3558,55 @@ class Phase3AuditExactSourceNetPnLTests(unittest.TestCase):
             )
 
 
+class Phase3AuditExactSourceEquityAdditionTests(unittest.TestCase):
+    def test_audit_accepts_exact_source_trade_equity_for_both_sides(self):
+        for direction, symbol in (
+            (Direction.LONG, "EURUSD"),
+            (Direction.SHORT, "USDJPY"),
+        ):
+            with self.subTest(direction=direction, symbol=symbol):
+                with tempfile.TemporaryDirectory() as home:
+                    folder = Path(home) / "evidence"
+                    write_backtest_artifacts(
+                        _combined_source_economic_model_run(direction, symbol),
+                        folder,
+                    )
+                    self.assertEqual(
+                        audit_backtest_artifact_structure(folder)["trade_count"], 1,
+                    )
+
+    def test_audit_refuses_rehashed_near_equal_source_equity_after(self):
+        source = _combined_source_economic_model_run()
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(source, folder)
+            _forge_versioned_trade_execution(
+                folder, manifest, "risk_equity_after_usd",
+                source.trades[0].risk_equity_after_usd + 1e-9,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "realized equity conflicts with net PnL",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_preserves_generic_near_equal_equity_transition_tolerance(self):
+        source = _combined_source_economic_model_run()
+        generic = replace(
+            source,
+            run_identity={"starting_equity_usd": 10000.0},
+            trades=(replace(
+                source.trades[0],
+                risk_equity_after_usd=source.trades[0].risk_equity_after_usd + 1e-9,
+            ),),
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(generic, folder)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 1,
+            )
+
+
 if __name__ == "__main__":
     unittest.main()
