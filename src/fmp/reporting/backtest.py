@@ -969,6 +969,42 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                             ledger_profit_usd += net_value
                         elif net_value < 0:
                             ledger_loss_usd -= net_value
+                        # A realized close must carry its own equity change.
+                        # Compare after adding net PnL (the engine's update
+                        # order) instead of subtracting large equity amounts.
+                        prior = record["risk_equity_before_usd"]
+                        after = record["risk_equity_after_usd"]
+                        for label, value in (
+                            ("risk_equity_before_usd", prior),
+                            ("risk_equity_after_usd", after),
+                        ):
+                            if type(value) not in (int, float):
+                                raise ValueError(
+                                    f"artifact report trade {label} must be finite numeric"
+                                )
+                            try:
+                                finite = math.isfinite(value)
+                            except OverflowError:
+                                finite = False
+                            if not finite:
+                                raise ValueError(
+                                    f"artifact report trade {label} must be finite numeric"
+                                )
+                        try:
+                            expected_equity = prior + amounts["net_pnl_usd"]
+                            equity_matches = (
+                                math.isfinite(expected_equity)
+                                and math.isclose(
+                                    after, expected_equity,
+                                    rel_tol=1e-12, abs_tol=1e-8,
+                                )
+                            )
+                        except OverflowError:
+                            equity_matches = False
+                        if not equity_matches:
+                            raise ValueError(
+                                "artifact report trade realized equity conflicts with net PnL"
+                            )
                         seen_trade_ids.add(trade_id)
                         seen_trade_decisions.add(decision)
                     else:
