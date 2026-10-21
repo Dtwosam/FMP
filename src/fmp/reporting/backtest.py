@@ -1348,6 +1348,65 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                     raise ValueError(
                         "artifact report metric net_return conflicts with starting equity and trade ledger"
                     )
+        if "starting_equity_usd" in summary["run_identity"]:
+            # The metrics writer starts from the source-defined equity base
+            # and walks the checkpoint curve in published chronological order.
+            peak_equity = starting_equity
+            maximum_drawdown = 0.0
+            maximum_drawdown_fraction = 0.0
+            for checkpoint in checkpoints:
+                realized_equity = checkpoint["realized_risk_equity_usd"]
+                if realized_equity > peak_equity:
+                    peak_equity = realized_equity
+                drawdown = peak_equity - realized_equity
+                try:
+                    finite_drawdown = math.isfinite(drawdown)
+                except OverflowError:
+                    finite_drawdown = False
+                if not finite_drawdown:
+                    raise ValueError("artifact report checkpoint drawdown must be finite")
+                if drawdown > maximum_drawdown:
+                    maximum_drawdown = drawdown
+                    maximum_drawdown_fraction = (
+                        drawdown / peak_equity if peak_equity > 0 else 0.0
+                    )
+            expected_recovery = (
+                ledger_totals["net_pnl_usd"] / maximum_drawdown
+                if maximum_drawdown > 0 else None
+            )
+            for metric_name, expected_value in (
+                ("max_drawdown_usd", maximum_drawdown),
+                ("max_drawdown_fraction", maximum_drawdown_fraction),
+                ("recovery_factor", expected_recovery),
+            ):
+                if metric_name not in metrics:
+                    continue
+                claimed = metrics[metric_name]
+                if expected_value is None:
+                    if claimed is not None:
+                        raise ValueError(
+                            f"artifact report metric {metric_name} conflicts with checkpoint curve"
+                        )
+                    continue
+                if type(claimed) not in (int, float):
+                    raise ValueError(
+                        f"artifact report metric {metric_name} must be finite numeric"
+                    )
+                try:
+                    matches_drawdown = (
+                        math.isfinite(expected_value)
+                        and math.isfinite(claimed)
+                        and math.isclose(
+                            claimed, expected_value,
+                            rel_tol=1e-12, abs_tol=1e-8,
+                        )
+                    )
+                except OverflowError:
+                    matches_drawdown = False
+                if not matches_drawdown:
+                    raise ValueError(
+                        f"artifact report metric {metric_name} conflicts with checkpoint curve"
+                    )
         if "trade_count" in metrics and (
             type(metrics["trade_count"]) is not int
             or metrics["trade_count"] != counts["trade_count"]
