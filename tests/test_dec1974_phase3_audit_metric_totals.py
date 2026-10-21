@@ -10,7 +10,9 @@ from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from fmp.contracts import BacktestRun, Direction, ExitReason, TradeRecord
+from fmp.contracts import (
+    BacktestRun, Direction, ExitReason, RejectionCode, RejectionRecord, TradeRecord,
+)
 from fmp.reporting.backtest import (
     audit_backtest_artifact_structure,
     verify_backtest_artifacts,
@@ -252,6 +254,81 @@ class Phase3AuditRealizedEquityArithmeticTests(unittest.TestCase):
             _forge_trade_field(folder, manifest, "risk_equity_before_usd", True)
             self.assertEqual(verify_backtest_artifacts(folder), manifest)
             with self.assertRaisesRegex(ValueError, "risk_equity_before_usd.*numeric"):
+                audit_backtest_artifact_structure(folder)
+
+
+def _forge_jsonl_order(
+    folder: Path, manifest: dict[str, object], name: str,
+) -> None:
+    target = folder / name
+    rows = target.read_text("utf-8").splitlines()
+    assert len(rows) >= 2
+    payload = ("\n".join(reversed(rows)) + "\n").encode("utf-8")
+    target.write_bytes(payload)
+    for entry in manifest["artifacts"]:
+        if entry["path"] == name:
+            entry["size_bytes"] = len(payload)
+            entry["sha256"] = hashlib.sha256(payload).hexdigest()
+    (folder / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+
+class Phase3AuditCanonicalJSONLOrderTests(unittest.TestCase):
+    def test_audit_refuses_rehashed_reverse_exit_trade_order(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _run_winning_and_losing({"trade_count": 2}), folder
+            )
+            _forge_jsonl_order(folder, manifest, "trades.jsonl")
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "canonical exit order"):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_reverse_rejection_evaluation_order(self):
+        first = RejectionRecord(
+            decision_id="R1",
+            symbol="EURUSD",
+            decision_timestamp_utc=STAMP,
+            evaluated_timestamp_utc=STAMP,
+            code=RejectionCode.NO_TRADE,
+            explanation="synthetic",
+        )
+        second = RejectionRecord(
+            decision_id="R2",
+            symbol="EURUSD",
+            decision_timestamp_utc=STAMP + timedelta(minutes=1),
+            evaluated_timestamp_utc=STAMP + timedelta(minutes=1),
+            code=RejectionCode.NO_TRADE,
+            explanation="synthetic",
+        )
+        run = BacktestRun(
+            run_identity={}, trades=(), rejections=(first, second),
+            equity_checkpoints=(), metrics={},
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(run, folder)
+            _forge_jsonl_order(folder, manifest, "rejections.jsonl")
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "canonical evaluation order"):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_same_exit_time_noncanonical_trade_id_tiebreak(self):
+        first = _sample_trade()
+        other = replace(
+            first, trade_id="AUDIT-Z", decision_id="AUDIT-DZ"
+        )
+        run = BacktestRun(
+            run_identity={}, trades=(other, first), rejections=(),
+            equity_checkpoints=(), metrics={"trade_count": 2},
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(run, folder)
+            self.assertEqual(audit_backtest_artifact_structure(folder)["trade_count"], 2)
+            _forge_jsonl_order(folder, manifest, "trades.jsonl")
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "canonical exit order"):
                 audit_backtest_artifact_structure(folder)
 
 

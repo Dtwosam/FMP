@@ -881,6 +881,8 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
         seen_trade_ids: set[str] = set()
         seen_trade_decisions: set[str] = set()
         seen_rejection_decisions: set[str] = set()
+        previous_trade_order: tuple[datetime, str] | None = None
+        previous_rejection_order: tuple[datetime, str] | None = None
         for name, field in (("trades.jsonl", "trade_count"),
                             ("rejections.jsonl", "rejection_count")):
             observed = 0
@@ -1005,6 +1007,13 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                             raise ValueError(
                                 "artifact report trade realized equity conflicts with net PnL"
                             )
+                        trade_order = (exit_stamp, trade_id)
+                        if (
+                            previous_trade_order is not None
+                            and trade_order < previous_trade_order
+                        ):
+                            raise ValueError("artifact report trades are not in canonical exit order")
+                        previous_trade_order = trade_order
                         seen_trade_ids.add(trade_id)
                         seen_trade_decisions.add(decision)
                     else:
@@ -1012,6 +1021,13 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                             raise ValueError("artifact report duplicate rejection decision_id")
                         if decision in seen_trade_decisions:
                             raise ValueError("artifact report decision has both trade and rejection")
+                        rejection_order = (evaluated_stamp, decision)
+                        if (
+                            previous_rejection_order is not None
+                            and rejection_order < previous_rejection_order
+                        ):
+                            raise ValueError("artifact report rejections are not in canonical evaluation order")
+                        previous_rejection_order = rejection_order
                         seen_rejection_decisions.add(decision)
                     observed += 1
             if (
