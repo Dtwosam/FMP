@@ -6469,5 +6469,107 @@ class Phase3AuditSourceReverseRealizationMixedFlatDistributionTests(unittest.Tes
                 audit_backtest_artifact_structure(folder)
 
 
+
+def _source_cross_time_canonical_flat_wins_run() -> BacktestRun:
+    source = _source_same_time_win_flat_win_distribution_run()
+    first, flat, last = source.trades
+    # First win and flat realize at T+1, final win at T+2. Canonical
+    # same-time ID sort puts M-FLAT before Z-EARLY-WIN, then time ordering
+    # puts the later A-LATE-WIN last despite its smaller trade ID.
+    later = STAMP + timedelta(minutes=2)
+    return replace(
+        source,
+        trades=(
+            replace(first, trade_id="Z-EARLY-WIN", decision_id="Z-EARLY-WIN"),
+            flat,
+            replace(
+                last, trade_id="A-LATE-WIN", decision_id="A-LATE-WIN",
+                exit_timestamp_utc=later,
+            ),
+        ),
+        equity_checkpoints=(
+            source.equity_checkpoints[0],
+            source.equity_checkpoints[1],
+            source.equity_checkpoints[2],
+            EquityCheckpoint(later, source.equity_checkpoints[3].realized_risk_equity_usd),
+        ),
+        metrics={
+            **source.metrics,
+            "longest_winning_streak": 2,
+        },
+    )
+
+
+class Phase3AuditSourceChronologicalNeutralWinStreakTests(unittest.TestCase):
+    def test_audit_accepts_flat_first_then_two_wins_across_timestamps(self):
+        run = _source_cross_time_canonical_flat_wins_run()
+        self.assertEqual(
+            [item.net_pnl_usd for item in run.trades],
+            [11.0, 0.0, 11.0],
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(run, folder)
+            rows = [
+                json.loads(line) for line in
+                (folder / "trades.jsonl").read_text("utf-8").splitlines()
+            ]
+            self.assertEqual(
+                [row["trade_id"] for row in rows],
+                ["M-FLAT", "Z-EARLY-WIN", "A-LATE-WIN"],
+            )
+            self.assertEqual(
+                [row["net_pnl_usd"] for row in rows], [0.0, 11.0, 11.0],
+            )
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 3,
+            )
+
+    def test_audit_refuses_rehashed_realization_order_one_win_streak(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _source_cross_time_canonical_flat_wins_run(), folder,
+            )
+            _forge_canonical_metric(
+                folder, manifest, "longest_winning_streak", 1,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError,
+                "metric longest_winning_streak conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_full_win_rate_ignoring_flat_close(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _source_cross_time_canonical_flat_wins_run(), folder,
+            )
+            _forge_canonical_metric(folder, manifest, "win_rate", 1.0)
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric win_rate conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_last_checkpoint_before_late_win(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _source_cross_time_canonical_flat_wins_run(), folder,
+            )
+            _forge_checkpoint_summary(
+                folder, manifest, 3, "timestamp_utc",
+                (STAMP + timedelta(minutes=1)).isoformat().replace("+00:00", "Z"),
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "checkpoint conflicts with trade close",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+
 if __name__ == "__main__":
     unittest.main()
