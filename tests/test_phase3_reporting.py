@@ -2156,10 +2156,14 @@ class Phase3ReportingTests(unittest.TestCase):
                 manifest = actual(root_path)
                 target = folder / "summary.json"
                 before = target.read_bytes()
-                self.assertIn(b'"trade_count":0', before)
-                target.write_bytes(before.replace(
-                    b'"trade_count":0', b'"trade_count":1', 1,
-                ))
+                # Do not depend on the pretty-printer's whitespace.
+                original = json.loads(before)
+                self.assertEqual(original["trade_count"], 0)
+                changed = dict(original)
+                changed["trade_count"] = 1
+                forged = (json.dumps(changed, sort_keys=True) + "\n").encode("utf-8")
+                self.assertNotEqual(forged, before)
+                target.write_bytes(forged)
                 return manifest
 
             with mock.patch(
