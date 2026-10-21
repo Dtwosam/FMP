@@ -4582,5 +4582,82 @@ class Phase3AuditSourceZeroTradeNullPerformanceWitnessTests(unittest.TestCase):
                 audit_backtest_artifact_structure(folder)
 
 
+def _source_one_sided_performance_metrics_run(*, winning: bool) -> BacktestRun:
+    source = (
+        _combined_source_economic_model_run()
+        if winning else _source_adverse_gap_stop_run(Direction.LONG)
+    )
+    amount = source.trades[0].net_pnl_usd
+    assert (amount > 0) is winning
+    return replace(source, metrics={
+        "trade_count": 1,
+        "net_pnl_usd": amount,
+        "gross_profit_usd": amount if winning else 0.0,
+        "gross_loss_usd": 0.0 if winning else -amount,
+        "profit_factor": None if winning else 0.0,
+        "win_rate": 1.0 if winning else 0.0,
+        "average_win_usd": amount if winning else None,
+        "average_loss_usd": None if winning else amount,
+        "expectancy_usd": amount,
+        "longest_winning_streak": 1 if winning else 0,
+        "longest_losing_streak": 0 if winning else 1,
+    })
+
+
+class Phase3AuditSourceOneSidedPerformanceNullTests(unittest.TestCase):
+    def test_audit_accepts_source_only_winner_and_only_loser_metrics(self):
+        for winning in (True, False):
+            with self.subTest(winning=winning):
+                with tempfile.TemporaryDirectory() as home:
+                    folder = Path(home) / "evidence"
+                    write_backtest_artifacts(
+                        _source_one_sided_performance_metrics_run(
+                            winning=winning,
+                        ), folder,
+                    )
+                    self.assertEqual(
+                        audit_backtest_artifact_structure(folder)["trade_count"], 1,
+                    )
+
+    def test_audit_refuses_rehashed_win_only_finite_profit_factor(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _source_one_sided_performance_metrics_run(winning=True), folder,
+            )
+            _forge_canonical_metric(folder, manifest, "profit_factor", 0.0)
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric profit_factor conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_win_only_zero_average_loss(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _source_one_sided_performance_metrics_run(winning=True), folder,
+            )
+            _forge_canonical_metric(folder, manifest, "average_loss_usd", 0.0)
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric average_loss_usd conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_loss_only_zero_average_win(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _source_one_sided_performance_metrics_run(winning=False), folder,
+            )
+            _forge_canonical_metric(folder, manifest, "average_win_usd", 0.0)
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric average_win_usd conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+
 if __name__ == "__main__":
     unittest.main()
