@@ -1413,6 +1413,23 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                             raise ValueError(
                                 "artifact report trade stop/target geometry conflicts with direction"
                             )
+                        # The source evaluator emits TARGET only when a
+                        # declared target is touched and always records the
+                        # declared target itself as its reference close.
+                        # Bid/ask quote bars are not published in this
+                        # artifact, so this proves internal parity only.
+                        if (
+                            source_identity.get("backtest_engine_version")
+                            == BACKTEST_ENGINE_VERSION
+                            and record["exit_reason"] == ExitReason.TARGET.value
+                            and (
+                                target is None
+                                or exit_ref != target
+                            )
+                        ):
+                            raise ValueError(
+                                "artifact report source target exit reference conflicts with target_price"
+                            )
                         # A real STOP fill is at its stop threshold or
                         # at an adverse bar-open gap through that threshold.
                         # It cannot claim a favorable reference exit past
