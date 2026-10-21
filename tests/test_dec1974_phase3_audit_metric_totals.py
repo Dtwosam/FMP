@@ -3166,5 +3166,72 @@ class Phase3AuditSourceExactFixedCommissionTests(unittest.TestCase):
             )
 
 
+class Phase3AuditSourceExactModeledSlippageTests(unittest.TestCase):
+    def test_audit_accepts_exact_source_slippage_for_pairs_and_zero_pips(self):
+        runs = (
+            _declared_source_slippage_run(Direction.LONG, "EURUSD"),
+            _declared_source_slippage_run(Direction.SHORT, "GBPUSD"),
+            _declared_source_slippage_run(Direction.LONG, "USDJPY"),
+            _zero_declared_source_slippage_run(Direction.LONG),
+        )
+        for run in runs:
+            with self.subTest(
+                symbol=run.trades[0].symbol,
+                pips=run.run_identity["slippage_pips"],
+            ):
+                with tempfile.TemporaryDirectory() as home:
+                    folder = Path(home) / "evidence"
+                    write_backtest_artifacts(run, folder)
+                    self.assertEqual(
+                        audit_backtest_artifact_structure(folder)["trade_count"], 1,
+                    )
+
+    def test_audit_refuses_rehashed_near_equal_positive_slippage_cost(self):
+        source = _declared_source_slippage_run(Direction.LONG, "EURUSD")
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(source, folder)
+            _forge_versioned_trade_execution(
+                folder, manifest, "slippage_cost_usd",
+                source.trades[0].slippage_cost_usd + 1e-9,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "slippage cost conflicts with execution prices",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_near_zero_modeled_slippage(self):
+        source = _zero_declared_source_slippage_run(Direction.SHORT)
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(source, folder)
+            _forge_versioned_trade_execution(
+                folder, manifest, "slippage_cost_usd", 1e-9,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "slippage cost conflicts with execution prices",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_keeps_generic_near_equal_slippage_cost_flexibility(self):
+        source = _declared_source_slippage_run(Direction.LONG, "EURUSD")
+        generic = replace(
+            source,
+            run_identity={"starting_equity_usd": 10000.0},
+            trades=(replace(
+                source.trades[0],
+                slippage_cost_usd=source.trades[0].slippage_cost_usd + 1e-9,
+            ),),
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(generic, folder)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 1,
+            )
+
+
 if __name__ == "__main__":
     unittest.main()
