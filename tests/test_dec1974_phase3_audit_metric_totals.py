@@ -10,6 +10,7 @@ from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+from fmp.backtest import BACKTEST_ENGINE_VERSION
 from fmp.contracts import (
     BacktestRun, Direction, EquityCheckpoint, ExitReason, RejectionCode,
     RejectionRecord, TradeRecord,
@@ -1522,6 +1523,85 @@ class Phase3AuditStopTargetGeometryTests(unittest.TestCase):
                 folder = Path(home) / "evidence"
                 write_backtest_artifacts(run, folder)
                 self.assertEqual(audit_backtest_artifact_structure(folder)["trade_count"], 1)
+
+
+def _source_engine_checkpoint_run() -> BacktestRun:
+    source = _sequential_equity_run()
+    return replace(
+        source,
+        run_identity={
+            "backtest_engine_version": BACKTEST_ENGINE_VERSION,
+            "starting_equity_usd": 10000.0,
+        },
+        equity_checkpoints=(
+            EquityCheckpoint(STAMP, 10000.0),
+            EquityCheckpoint(STAMP + timedelta(minutes=1), 10011.0),
+            EquityCheckpoint(STAMP + timedelta(minutes=2), 10022.0),
+        ),
+    )
+
+
+def _forge_checkpoint_summary(
+    folder: Path, manifest: dict[str, object], index: int,
+    field: str, value: object,
+) -> None:
+    path = folder / "summary.json"
+    summary = json.loads(path.read_text("utf-8"))
+    if field == "remove":
+        summary["equity_checkpoints"].pop(index)
+        summary["equity_checkpoint_count"] -= 1
+    else:
+        summary["equity_checkpoints"][index][field] = value
+    payload = (json.dumps(summary, sort_keys=True) + "\n").encode("utf-8")
+    path.write_bytes(payload)
+    for entry in manifest["artifacts"]:
+        if entry["path"] == "summary.json":
+            entry["size_bytes"] = len(payload)
+            entry["sha256"] = hashlib.sha256(payload).hexdigest()
+    (folder / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+
+class Phase3AuditSourceEngineCheckpointParityTests(unittest.TestCase):
+    def test_audit_accepts_engine_checkpoint_close_parity(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(_source_engine_checkpoint_run(), folder)
+            self.assertEqual(audit_backtest_artifact_structure(folder)["trade_count"], 2)
+
+    def test_audit_refuses_rehashed_missing_close_checkpoint(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(_source_engine_checkpoint_run(), folder)
+            _forge_checkpoint_summary(folder, manifest, 2, "remove", None)
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "checkpoint count conflicts"):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_wrong_initial_source_checkpoint(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(_source_engine_checkpoint_run(), folder)
+            _forge_checkpoint_summary(
+                folder, manifest, 0, "realized_risk_equity_usd", 10001.0
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "initial checkpoint equity conflicts"):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_wrong_close_equity_or_time(self):
+        for field, value in (
+            ("realized_risk_equity_usd", 10015.0),
+            ("timestamp_utc", "2026-10-20T00:01:30Z"),
+        ):
+            with self.subTest(field=field), tempfile.TemporaryDirectory() as home:
+                folder = Path(home) / "evidence"
+                manifest = write_backtest_artifacts(
+                    _source_engine_checkpoint_run(), folder
+                )
+                _forge_checkpoint_summary(folder, manifest, 1, field, value)
+                self.assertEqual(verify_backtest_artifacts(folder), manifest)
+                with self.assertRaisesRegex(ValueError, "checkpoint conflicts with trade close"):
+                    audit_backtest_artifact_structure(folder)
 
 
 if __name__ == "__main__":
