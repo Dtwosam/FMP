@@ -6883,5 +6883,143 @@ class Phase3AuditSourceFinancingOffsetNetFlatMetricsTests(unittest.TestCase):
                 audit_backtest_artifact_structure(folder)
 
 
+
+def _source_financing_credit_turns_gross_loss_into_net_win_run() -> BacktestRun:
+    source = _source_adverse_gap_stop_run(Direction.LONG)
+    original = source.trades[0]
+    assert original.exit_reason is ExitReason.STOP
+    assert original.gross_pnl_usd < 0.0
+    assert original.financing_cost_usd == 0.0
+    before_financing = (
+        original.gross_pnl_usd - original.slippage_cost_usd
+        - original.commission_cost_usd
+    )
+    assert before_financing < 0.0
+    financing_credit = 2 * before_financing
+    net = (
+        original.gross_pnl_usd - original.slippage_cost_usd
+        - original.commission_cost_usd - financing_credit
+    )
+    assert financing_credit < 0.0 and net > 0.0
+    adjusted_trade = replace(
+        original, financing_cost_usd=financing_credit,
+        net_pnl_usd=net, risk_equity_after_usd=10000.0 + net,
+    )
+    return replace(
+        source,
+        run_identity={
+            **source.run_identity,
+            "financing_model": {"model": "source_custom_signed_financing"},
+        },
+        trades=(adjusted_trade,),
+        equity_checkpoints=(
+            source.equity_checkpoints[0],
+            EquityCheckpoint(
+                STAMP + timedelta(minutes=1), 10000.0 + net,
+            ),
+        ),
+        metrics={
+            "trade_count": 1,
+            "net_pnl_usd": net,
+            "gross_profit_usd": net,
+            "gross_loss_usd": 0.0,
+            "profit_factor": None,
+            "win_rate": 1.0,
+            "average_win_usd": net,
+            "average_loss_usd": None,
+            "expectancy_usd": net,
+            "longest_winning_streak": 1,
+            "longest_losing_streak": 0,
+            "financing_cost_usd": financing_credit,
+        },
+    )
+
+
+class Phase3AuditSourceCreditGrossLossNetWinMetricsTests(unittest.TestCase):
+    def test_audit_accepts_negative_execution_gross_but_positive_net_credit(self):
+        source = _source_financing_credit_turns_gross_loss_into_net_win_run()
+        self.assertLess(source.trades[0].gross_pnl_usd, 0.0)
+        self.assertLess(source.trades[0].financing_cost_usd, 0.0)
+        self.assertGreater(source.trades[0].net_pnl_usd, 0.0)
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(source, folder)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 1,
+            )
+
+    def test_computed_metrics_classify_financing_credit_by_net_not_gross(self):
+        source = _source_financing_credit_turns_gross_loss_into_net_win_run()
+        metrics = compute_backtest_metrics(
+            starting_equity_usd=10000.0,
+            trades=source.trades,
+            equity_checkpoints=source.equity_checkpoints,
+        )
+        self.assertEqual(metrics["trade_count"], 1)
+        self.assertEqual(metrics["win_rate"], 1.0)
+        self.assertEqual(metrics["gross_profit_usd"], source.trades[0].net_pnl_usd)
+        self.assertEqual(metrics["gross_loss_usd"], 0.0)
+        self.assertEqual(metrics["longest_winning_streak"], 1)
+        self.assertEqual(metrics["longest_losing_streak"], 0)
+        self.assertIsNone(metrics["average_loss_usd"])
+        self.assertIsNone(metrics["profit_factor"])
+
+    def test_audit_refuses_rehashed_zero_win_rate_from_negative_trade_gross(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _source_financing_credit_turns_gross_loss_into_net_win_run(), folder,
+            )
+            _forge_canonical_metric(folder, manifest, "win_rate", 0.0)
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric win_rate conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_gross_loss_from_negative_execution_gross(self):
+        source = _source_financing_credit_turns_gross_loss_into_net_win_run()
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(source, folder)
+            _forge_canonical_metric(
+                folder, manifest, "gross_loss_usd",
+                -source.trades[0].gross_pnl_usd,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric gross_loss_usd conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_loss_average_for_realized_net_winner(self):
+        source = _source_financing_credit_turns_gross_loss_into_net_win_run()
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(source, folder)
+            _forge_canonical_metric(
+                folder, manifest, "average_loss_usd",
+                source.trades[0].gross_pnl_usd,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric average_loss_usd conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_zero_profit_factor_for_net_win(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _source_financing_credit_turns_gross_loss_into_net_win_run(), folder,
+            )
+            _forge_canonical_metric(folder, manifest, "profit_factor", 0.0)
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric profit_factor conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+
 if __name__ == "__main__":
     unittest.main()

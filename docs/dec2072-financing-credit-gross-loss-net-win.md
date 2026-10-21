@@ -1,0 +1,9 @@
+# DEC-2072 — Source financing credit turns negative gross into net winner
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact parent PR #2320 `d17232dec3596edf4c86c4fd3b1d8d6ead7ba6bf`.
+
+DEC-2071 proves that positive pre-cost gross PnL can be neutral after financing. The reciprocal source-defined edge is an execution-price **gross loss** on a valid adverse-gap STOP followed by a sufficiently large permitted custom-financing **credit** (negative `financing_cost_usd`) that produces positive realized net PnL. Performance distribution metrics classify the outcome as a **net winner**, not an execution-price gross loser: win rate one, gross performance profit equals positive net PnL, gross performance loss zero, longest winning streak one, average loss null and profit factor undefined.
+
+Six source-defined tests cover a valid deterministic STOP-with-signed-credit report, direct installed metric calculation, and four independent manifest-rehashed false interpretations: zero win rate from negative execution gross, gross performance loss from negative execution gross, non-null average loss, and numeric zero profit factor. Every altered digest verifies before the opt-in semantic audit refuses the forged claim. This is synthetic cost arithmetic under a custom source model, not evidence of realistic financing credits or actual profitability. No production code changes.
+
+**7,364 cumulative proposed methods** (+6), own exact-head Phase3 and full historical/general regressions required. Pending runs are not passes; earlier full failures remain failed and #2313 is the last fully green parent until later validation. Phase8A issues #779/#820/#821 and eight independent external security proof packages remain BLOCKED. No protected research, installed workflow/ref/runner changes, merging, strategy promotion, brokerage orders or real capital.
