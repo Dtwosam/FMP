@@ -3868,5 +3868,55 @@ class Phase3AuditExactSourceNetReturnTests(unittest.TestCase):
             )
 
 
+class Phase3AuditZeroAndSameTimeSourceNetReturnTests(unittest.TestCase):
+    def test_audit_accepts_source_same_time_close_net_return(self):
+        source = _source_same_time_with_aggregate_economics()
+        run = replace(
+            source, metrics={
+                **source.metrics,
+                "net_return": source.metrics["net_pnl_usd"] / 10000.0,
+            },
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(run, folder)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 2,
+            )
+
+    def test_audit_accepts_source_zero_trade_zero_net_return(self):
+        source = _zero_trade_source_engine_run()
+        run = replace(
+            source, metrics={
+                "trade_count": 0, "net_pnl_usd": 0.0,
+                "net_return": 0.0,
+            },
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(run, folder)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 0,
+            )
+
+    def test_audit_refuses_rehashed_near_zero_empty_source_net_return(self):
+        source = _zero_trade_source_engine_run()
+        run = replace(
+            source, metrics={
+                "trade_count": 0, "net_pnl_usd": 0.0,
+                "net_return": 0.0,
+            },
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(run, folder)
+            _forge_metrics(folder, manifest, "net_return", 1e-13)
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "net_return conflicts with starting equity and trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+
 if __name__ == "__main__":
     unittest.main()
