@@ -1413,6 +1413,28 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                             raise ValueError(
                                 "artifact report trade stop/target geometry conflicts with direction"
                             )
+                        # A real STOP fill is at its stop threshold or
+                        # at an adverse bar-open gap through that threshold.
+                        # It cannot claim a favorable reference exit past
+                        # the stop, even when ambiguity is false.
+                        if (
+                            source_identity.get("backtest_engine_version")
+                            == BACKTEST_ENGINE_VERSION
+                            and record["exit_reason"] == ExitReason.STOP.value
+                            and (
+                                (
+                                    direction == Direction.LONG.value
+                                    and exit_ref > stop
+                                )
+                                or (
+                                    direction == Direction.SHORT.value
+                                    and exit_ref < stop
+                                )
+                            )
+                        ):
+                            raise ValueError(
+                                "artifact report source stop exit reference improves beyond stop"
+                            )
                         # The installed evaluator marks ambiguity only
                         # when stop and target are both touched in one bar.
                         # Its conservative policy exits at the stop, never
