@@ -1376,6 +1376,21 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                             raise ValueError(
                                 "artifact report source time exit conflicts with scheduled exit identity"
                             )
+                        # The engine processes a matching scheduled
+                        # close before evaluating stop/target on that bar for
+                        # an already open position. A trade that actually
+                        # closes at its own scheduled instant must therefore
+                        # report TIME_EXIT, not STOP, TARGET or END_OF_DATA.
+                        if (
+                            source_identity.get("backtest_engine_version")
+                            == BACKTEST_ENGINE_VERSION
+                            and scheduled_exit_by_decision.get(decision)
+                            == (record["symbol"], exit_stamp)
+                            and record["exit_reason"] != ExitReason.TIME_EXIT.value
+                        ):
+                            raise ValueError(
+                                "artifact report source scheduled close conflicts with exit reason"
+                            )
                         for price_field in (
                             "entry_reference_price", "exit_reference_price",
                             "entry_price", "exit_price", "stop_price", "target_price",
