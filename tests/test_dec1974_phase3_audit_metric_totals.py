@@ -3078,5 +3078,93 @@ class Phase3AuditSourceInitialEquityExactCopyTests(unittest.TestCase):
             )
 
 
+def _source_fixed_commission_run(rate: float) -> BacktestRun:
+    source = (
+        _versioned_builtin_zero_cost_run()
+        if rate == 0.0 else _source_engine_checkpoint_run()
+    )
+    return replace(
+        source, run_identity={
+            **source.run_identity,
+            "commission_model": {
+                "model": "fixed_per_million_per_side",
+                "usd_per_million_per_side": rate,
+            },
+        },
+    )
+
+
+class Phase3AuditSourceExactFixedCommissionTests(unittest.TestCase):
+    def test_audit_accepts_exact_fixed_rate_or_zero_rate_source_fees(self):
+        for rate in (0.0, 25.0):
+            with self.subTest(rate=rate):
+                with tempfile.TemporaryDirectory() as home:
+                    folder = Path(home) / "evidence"
+                    write_backtest_artifacts(
+                        _source_fixed_commission_run(rate), folder,
+                    )
+                    self.assertEqual(
+                        audit_backtest_artifact_structure(folder)["trade_count"], 2,
+                    )
+
+    def test_audit_refuses_rehashed_near_equal_fixed_commission_credit_swap(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _source_fixed_commission_run(25.0), folder,
+            )
+            # Preserve net PnL exactly through an opposite financing change.
+            # The old 1e-8 absolute tolerance admitted the false built-in fee.
+            _forge_versioned_trade_costs(
+                folder, manifest, 0.500000001, -0.500000001,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "source fixed commission conflicts with trade costs",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_near_equal_zero_rate_built_in_fee(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _source_fixed_commission_run(0.0), folder,
+            )
+            _forge_versioned_trade_costs(
+                folder, manifest, 0.000000001, -0.000000001,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "source fixed commission conflicts with trade costs",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_preserves_generic_fee_model_economic_flexibility(self):
+        source = _source_fixed_commission_run(25.0)
+        trades = tuple(source.trades)
+        first = replace(
+            trades[0],
+            commission_cost_usd=0.500000001,
+            financing_cost_usd=-0.500000001,
+        )
+        generic = replace(
+            source,
+            run_identity={
+                "starting_equity_usd": 10000.0,
+                "commission_model": {
+                    "model": "fixed_per_million_per_side",
+                    "usd_per_million_per_side": 25.0,
+                },
+            },
+            trades=(first, *trades[1:]),
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(generic, folder)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 2,
+            )
+
+
 if __name__ == "__main__":
     unittest.main()
