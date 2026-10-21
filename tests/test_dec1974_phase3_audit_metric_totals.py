@@ -399,5 +399,50 @@ class Phase3AuditDistributionMetricTests(unittest.TestCase):
             self.assertEqual(audit_backtest_artifact_structure(folder)["trade_count"], 0)
 
 
+class Phase3AuditStoredTradeContractTests(unittest.TestCase):
+    def test_audit_refuses_rehashed_unsupported_fx_symbol_or_direction(self):
+        for field, value in (("symbol", "BTCUSD"), ("direction", "NO_TRADE")):
+            with self.subTest(field=field), tempfile.TemporaryDirectory() as home:
+                folder = Path(home) / "evidence"
+                manifest = write_backtest_artifacts(_run({"trade_count": 1}), folder)
+                _forge_trade_field(folder, manifest, field, value)
+                self.assertEqual(verify_backtest_artifacts(folder), manifest)
+                with self.assertRaisesRegex(ValueError, "trade (symbol|direction) is unsupported"):
+                    audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_boolean_or_zero_trade_units(self):
+        for units in (True, 0):
+            with self.subTest(units=units), tempfile.TemporaryDirectory() as home:
+                folder = Path(home) / "evidence"
+                manifest = write_backtest_artifacts(_run({"trade_count": 1}), folder)
+                _forge_trade_field(folder, manifest, "units", units)
+                self.assertEqual(verify_backtest_artifacts(folder), manifest)
+                with self.assertRaisesRegex(ValueError, "trade units must be positive"):
+                    audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_negative_or_boolean_price(self):
+        for price in (-1.0, False):
+            with self.subTest(price=price), tempfile.TemporaryDirectory() as home:
+                folder = Path(home) / "evidence"
+                manifest = write_backtest_artifacts(_run({"trade_count": 1}), folder)
+                _forge_trade_field(folder, manifest, "entry_price", price)
+                self.assertEqual(verify_backtest_artifacts(folder), manifest)
+                with self.assertRaisesRegex(ValueError, "entry_price must be finite positive"):
+                    audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_exit_reason_or_intrabar_ambiguity(self):
+        for field, value in (
+            ("exit_reason", "UNKNOWN"),
+            ("intrabar_ambiguous", "false"),
+        ):
+            with self.subTest(field=field), tempfile.TemporaryDirectory() as home:
+                folder = Path(home) / "evidence"
+                manifest = write_backtest_artifacts(_run({"trade_count": 1}), folder)
+                _forge_trade_field(folder, manifest, field, value)
+                self.assertEqual(verify_backtest_artifacts(folder), manifest)
+                with self.assertRaisesRegex(ValueError, "trade (exit reason|ambiguity)"):
+                    audit_backtest_artifact_structure(folder)
+
+
 if __name__ == "__main__":
     unittest.main()

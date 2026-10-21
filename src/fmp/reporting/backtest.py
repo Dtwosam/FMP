@@ -929,6 +929,51 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                             raise ValueError("artifact report duplicate trade_id")
                         if decision in seen_trade_decisions:
                             raise ValueError("artifact report duplicate trade decision_id")
+                        # Enforce source-defined trade domains as well as
+                        # canonical member names before accepting economics.
+                        if (
+                            type(record["symbol"]) is not str
+                            or record["symbol"] not in SUPPORTED_SYMBOLS
+                        ):
+                            raise ValueError("artifact report trade symbol is unsupported")
+                        if (
+                            type(record["direction"]) is not str
+                            or record["direction"] not in (
+                                Direction.LONG.value, Direction.SHORT.value,
+                            )
+                        ):
+                            raise ValueError("artifact report trade direction is unsupported")
+                        units = record["units"]
+                        if type(units) is not int or not (0 < units <= 2 ** 63 - 1):
+                            raise ValueError("artifact report trade units must be positive")
+                        if (
+                            type(record["exit_reason"]) is not str
+                            or record["exit_reason"] not in {
+                                item.value for item in ExitReason
+                            }
+                        ):
+                            raise ValueError("artifact report trade exit reason is unsupported")
+                        if type(record["intrabar_ambiguous"]) is not bool:
+                            raise ValueError("artifact report trade ambiguity must be Boolean")
+                        for price_field in (
+                            "entry_reference_price", "exit_reference_price",
+                            "entry_price", "exit_price", "stop_price", "target_price",
+                        ):
+                            price = record[price_field]
+                            if price_field == "target_price" and price is None:
+                                continue
+                            if type(price) not in (int, float):
+                                raise ValueError(
+                                    f"artifact report trade {price_field} must be finite positive numeric"
+                                )
+                            try:
+                                valid_price = math.isfinite(price) and price > 0
+                            except OverflowError:
+                                valid_price = False
+                            if not valid_price:
+                                raise ValueError(
+                                    f"artifact report trade {price_field} must be finite positive numeric"
+                                )
                         amounts: dict[str, int | float] = {}
                         for economic in (
                             "gross_pnl_usd", "slippage_cost_usd",
