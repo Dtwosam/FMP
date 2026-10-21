@@ -1527,6 +1527,12 @@ class Phase3AuditStopTargetGeometryTests(unittest.TestCase):
 
 def _source_engine_checkpoint_run() -> BacktestRun:
     source = _sequential_equity_run()
+    # The real engine uses position_id == decision_id for each close.
+    source = replace(
+        source, trades=tuple(
+            replace(item, trade_id=item.decision_id) for item in source.trades
+        ),
+    )
     return replace(
         source,
         run_identity={
@@ -1602,6 +1608,45 @@ class Phase3AuditSourceEngineCheckpointParityTests(unittest.TestCase):
                 self.assertEqual(verify_backtest_artifacts(folder), manifest)
                 with self.assertRaisesRegex(ValueError, "checkpoint conflicts with trade close"):
                     audit_backtest_artifact_structure(folder)
+
+
+class Phase3AuditSourceEngineTradeIdentifierParityTests(unittest.TestCase):
+    def test_audit_accepts_source_engine_matching_trade_and_decision_ids(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(_source_engine_checkpoint_run(), folder)
+            self.assertEqual(audit_backtest_artifact_structure(folder)["trade_count"], 2)
+
+    def test_audit_refuses_rehashed_false_source_trade_position_id(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(_source_engine_checkpoint_run(), folder)
+            path = folder / "trades.jsonl"
+            records = [json.loads(row) for row in path.read_text("utf-8").splitlines()]
+            records[0]["trade_id"] = "UNRELATED-POSITION"
+            payload = (
+                "\n".join(
+                    json.dumps(row, sort_keys=True, separators=(",", ":"))
+                    for row in records
+                ) + "\n"
+            ).encode("utf-8")
+            path.write_bytes(payload)
+            for entry in manifest["artifacts"]:
+                if entry["path"] == "trades.jsonl":
+                    entry["size_bytes"] = len(payload)
+                    entry["sha256"] = hashlib.sha256(payload).hexdigest()
+            (folder / "manifest.json").write_text(
+                json.dumps(manifest), encoding="utf-8"
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "trade_id conflicts with decision_id"):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_preserves_generic_synthetic_trade_identifier_distinction(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(_sequential_equity_run(), folder)
+            self.assertEqual(audit_backtest_artifact_structure(folder)["trade_count"], 2)
 
 
 if __name__ == "__main__":
