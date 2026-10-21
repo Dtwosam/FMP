@@ -1040,7 +1040,15 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                     f"artifact report {config_key} must be an object"
                 )
             model = model_config.get("model")
-            if model == "zero_commission" or model == "zero_financing":
+            if model in ("zero_commission", "zero_financing"):
+                expected_config_key = (
+                    "commission_model" if model == "zero_commission"
+                    else "financing_model"
+                )
+                if config_key != expected_config_key:
+                    raise ValueError(
+                        f"artifact report {config_key} model type is incompatible"
+                    )
                 if set(model_config) != {"model"}:
                     raise ValueError(
                         f"artifact report {config_key} zero model fields mismatch"
