@@ -1478,6 +1478,55 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                                 raise ValueError(
                                     "artifact report source engine slippage cost conflicts with execution prices"
                                 )
+                        # For installed source-engine reports only, known
+                        # built-in cost models constrain actual trade economics
+                        # as well as the shape of their identity configs.
+                        if source_identity.get(
+                            "backtest_engine_version"
+                        ) == BACKTEST_ENGINE_VERSION:
+                            commission_config = source_identity.get(
+                                "commission_model"
+                            )
+                            if type(commission_config) is dict:
+                                declared_model = commission_config.get("model")
+                                if declared_model == "zero_commission":
+                                    if amounts["commission_cost_usd"] != 0:
+                                        raise ValueError(
+                                            "artifact report source zero commission conflicts with trade costs"
+                                        )
+                                elif declared_model == "fixed_per_million_per_side":
+                                    try:
+                                        rate = commission_config["usd_per_million_per_side"]
+                                        per_side = (
+                                            record["units"] / 1_000_000 * rate
+                                        )
+                                        expected_commission = per_side + per_side
+                                        commission_matches = (
+                                            math.isfinite(expected_commission)
+                                            and math.isclose(
+                                                amounts["commission_cost_usd"],
+                                                expected_commission,
+                                                rel_tol=1e-12, abs_tol=1e-8,
+                                            )
+                                        )
+                                    except (OverflowError, TypeError, KeyError):
+                                        commission_matches = False
+                                    if not commission_matches:
+                                        raise ValueError(
+                                            "artifact report source fixed commission conflicts with trade costs"
+                                        )
+                            financing_config = source_identity.get(
+                                "financing_model"
+                            )
+                            if (
+                                type(financing_config) is dict
+                                and financing_config.get("model")
+                                == "zero_financing"
+                                and amounts["financing_cost_usd"] != 0
+                            ):
+                                raise ValueError(
+                                    "artifact report source zero financing conflicts with trade costs"
+                                )
                         for economic in ledger_totals:
                             ledger_totals[economic] += amounts[economic]
                         sorted_trade_pnls.append(amounts["net_pnl_usd"])
