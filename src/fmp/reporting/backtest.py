@@ -1658,13 +1658,16 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                                             record["units"] / 1_000_000 * rate
                                         )
                                         expected_commission = per_side + per_side
+                                        # Source per-side entry/exit
+                                        # commission uses this same exact
+                                        # arithmetic, with the same units and
+                                        # built-in rate; both sides are copied
+                                        # into the published aggregate. Do
+                                        # not admit a rehashed near-equal fee.
                                         commission_matches = (
                                             math.isfinite(expected_commission)
-                                            and math.isclose(
-                                                amounts["commission_cost_usd"],
-                                                expected_commission,
-                                                rel_tol=1e-12, abs_tol=1e-8,
-                                            )
+                                            and amounts["commission_cost_usd"]
+                                            == expected_commission
                                         )
                                     except (OverflowError, TypeError, KeyError):
                                         commission_matches = False
