@@ -4163,5 +4163,53 @@ class Phase3AuditExactSourceDrawdownMetricsTests(unittest.TestCase):
             )
 
 
+def _source_zero_drawdown_run() -> BacktestRun:
+    source = _zero_trade_source_engine_run()
+    return replace(source, metrics={
+        "trade_count": 0,
+        "net_pnl_usd": 0.0,
+        "net_return": 0.0,
+        "max_drawdown_usd": 0.0,
+        "max_drawdown_fraction": 0.0,
+        "recovery_factor": None,
+    })
+
+
+class Phase3AuditSourceNoDrawdownNullRecoveryTests(unittest.TestCase):
+    def test_audit_accepts_zero_trade_null_recovery_and_zero_drawdown(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(_source_zero_drawdown_run(), folder)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 0,
+            )
+
+    def test_audit_refuses_rehashed_near_zero_source_drawdown_fraction(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _source_zero_drawdown_run(), folder,
+            )
+            _forge_metrics(folder, manifest, "max_drawdown_fraction", 1e-13)
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric max_drawdown_fraction conflicts with checkpoint curve",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_nonnull_recovery_without_drawdown(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _source_zero_drawdown_run(), folder,
+            )
+            _forge_metrics(folder, manifest, "recovery_factor", 0.0)
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric recovery_factor conflicts with checkpoint curve",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+
 if __name__ == "__main__":
     unittest.main()
