@@ -771,7 +771,7 @@ def _audit_validate_json_tree(value: object, *, depth: int = 0) -> None:
     # Match deterministic writer depth and Unicode/key constraints, including
     # ignored optional metric fields and nested provenance metadata.
     if depth > 64:
-        raise ValueError("artifact report exceeds JSON nesting depth")
+        raise ValueError("artifact report exceeds JSON nesting limit")
     if type(value) is dict:
         for key, member in value.items():
             if (
