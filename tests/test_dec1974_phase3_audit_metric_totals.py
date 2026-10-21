@@ -3608,5 +3608,82 @@ class Phase3AuditExactSourceEquityAdditionTests(unittest.TestCase):
             )
 
 
+def _source_custom_financing_run(financing: float) -> BacktestRun:
+    source = _combined_source_economic_model_run()
+    prior = source.trades[0]
+    # The built-in zero-financing model cannot emit a debit or credit.
+    # A valid user-defined source FinancingModel may return signed values.
+    adjusted_net = (
+        prior.gross_pnl_usd - prior.slippage_cost_usd
+        - prior.commission_cost_usd - financing
+    )
+    adjusted = replace(
+        prior, financing_cost_usd=financing,
+        net_pnl_usd=adjusted_net,
+        risk_equity_after_usd=10000.0 + adjusted_net,
+    )
+    return replace(
+        source,
+        run_identity={
+            **source.run_identity,
+            "financing_model": {"model": "source_custom_signed_financing"},
+        },
+        trades=(adjusted,),
+        equity_checkpoints=(
+            source.equity_checkpoints[0],
+            EquityCheckpoint(
+                STAMP + timedelta(minutes=1), 10000.0 + adjusted_net,
+            ),
+        ),
+    )
+
+
+class Phase3AuditSignedCustomSourceFinancingTests(unittest.TestCase):
+    def test_audit_accepts_source_custom_financing_debit_and_credit(self):
+        for financing in (-1.25, 1.25):
+            with self.subTest(financing=financing):
+                with tempfile.TemporaryDirectory() as home:
+                    folder = Path(home) / "evidence"
+                    write_backtest_artifacts(
+                        _source_custom_financing_run(financing), folder,
+                    )
+                    self.assertEqual(
+                        audit_backtest_artifact_structure(folder)["trade_count"], 1,
+                    )
+
+    def test_audit_refuses_rehashed_near_equal_signed_financing_drift(self):
+        for financing in (-1.25, 1.25):
+            with self.subTest(financing=financing):
+                with tempfile.TemporaryDirectory() as home:
+                    source = _source_custom_financing_run(financing)
+                    folder = Path(home) / "evidence"
+                    manifest = write_backtest_artifacts(source, folder)
+                    _forge_versioned_trade_execution(
+                        folder, manifest, "financing_cost_usd",
+                        financing + 1e-9,
+                    )
+                    self.assertEqual(verify_backtest_artifacts(folder), manifest)
+                    with self.assertRaisesRegex(
+                        ValueError, "net PnL cost reconciliation mismatch",
+                    ):
+                        audit_backtest_artifact_structure(folder)
+
+    def test_audit_preserves_generic_financing_near_equal_tolerance(self):
+        source = _source_custom_financing_run(-1.25)
+        generic = replace(
+            source,
+            run_identity={"starting_equity_usd": 10000.0},
+            trades=(replace(
+                source.trades[0], financing_cost_usd=-1.249999999,
+            ),),
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(generic, folder)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 1,
+            )
+
+
 if __name__ == "__main__":
     unittest.main()
