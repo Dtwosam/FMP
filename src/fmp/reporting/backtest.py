@@ -811,6 +811,10 @@ def _audit_parse_utc_timestamp(value: object, label: str) -> datetime:
         raise ValueError(f"artifact report {label} invalid UTC timestamp") from exc
     if stamp.tzinfo is None or stamp.utcoffset() != timedelta(0):
         raise ValueError(f"artifact report {label} must use UTC")
+    # The writer publishes only ISO UTC strings with T separator,
+    # explicit seconds and canonical microsecond precision.
+    if stamp.isoformat().replace("+00:00", "Z") != value:
+        raise ValueError(f"artifact report {label} must be canonical UTC")
     return stamp
 
 
