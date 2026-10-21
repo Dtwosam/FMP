@@ -1535,6 +1535,7 @@ def _source_engine_checkpoint_run() -> BacktestRun:
             replace(
                 item, trade_id=item.decision_id,
                 exit_reference_price=1.10125, exit_price=1.1011,
+                target_price=1.10125,
             ) for item in source.trades
         ),
     )
@@ -1926,6 +1927,7 @@ class Phase3AuditSourceCheckpointCountBoundaryTests(unittest.TestCase):
             replace(
                 item, entry_reference_price=1.1, exit_reference_price=1.1,
                 entry_price=1.1, exit_price=1.1, gross_pnl_usd=0.0,
+                exit_reason=ExitReason.END_OF_DATA,
                 slippage_cost_usd=0.0, commission_cost_usd=0.0,
                 financing_cost_usd=0.0, net_pnl_usd=0.0,
                 risk_equity_before_usd=10000.0,
@@ -1978,11 +1980,7 @@ def _declared_source_slippage_run(
         if symbol == "USDJPY"
         else (1.099 if direction is Direction.LONG else 1.101)
     )
-    target = (
-        (150.3 if direction is Direction.LONG else 149.7)
-        if symbol == "USDJPY"
-        else (1.102 if direction is Direction.LONG else 1.098)
-    )
+    target = reference_exit
     item = replace(
         _sample_trade(), trade_id="SOURCE-SLIP-1",
         decision_id="SOURCE-SLIP-1", symbol=symbol, direction=direction,
@@ -2438,6 +2436,68 @@ class Phase3AuditSourceStopGapPriceBoundTests(unittest.TestCase):
             trades=(replace(
                 source.trades[0], exit_reason=ExitReason.STOP,
             ),),
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(generic, folder)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 1,
+            )
+
+
+class Phase3AuditSourceTargetReferenceWitnessTests(unittest.TestCase):
+    def test_audit_accepts_source_long_short_and_jpy_exact_targets(self):
+        for direction, symbol in (
+            (Direction.LONG, "EURUSD"),
+            (Direction.SHORT, "GBPUSD"),
+            (Direction.LONG, "USDJPY"),
+        ):
+            with self.subTest(direction=direction, symbol=symbol):
+                with tempfile.TemporaryDirectory() as home:
+                    folder = Path(home) / "evidence"
+                    run = _declared_source_slippage_run(direction, symbol)
+                    self.assertEqual(
+                        run.trades[0].exit_reference_price,
+                        run.trades[0].target_price,
+                    )
+                    write_backtest_artifacts(run, folder)
+                    self.assertEqual(
+                        audit_backtest_artifact_structure(folder)["trade_count"], 1,
+                    )
+
+    def test_audit_refuses_rehashed_false_target_level(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _declared_source_slippage_run(Direction.LONG, "EURUSD"), folder,
+            )
+            _forge_versioned_trade_execution(
+                folder, manifest, "target_price", 1.102,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "target exit reference conflicts with target_price",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_source_target_exit_without_declared_target(self):
+        source = _declared_source_slippage_run(Direction.SHORT, "GBPUSD")
+        forged = replace(
+            source, trades=(replace(source.trades[0], target_price=None),),
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(forged, folder)
+            with self.assertRaisesRegex(
+                ValueError, "target exit reference conflicts with target_price",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_preserves_generic_target_reference_flexibility(self):
+        source = _declared_source_slippage_run(Direction.LONG, "EURUSD")
+        generic = replace(
+            source, run_identity={"starting_equity_usd": 10000.0},
+            trades=(replace(source.trades[0], target_price=1.102),),
         )
         with tempfile.TemporaryDirectory() as home:
             folder = Path(home) / "evidence"
