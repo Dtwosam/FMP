@@ -2843,5 +2843,86 @@ class Phase3AuditSourceGrossPnLMutationPrecedenceTests(unittest.TestCase):
             )
 
 
+class Phase3AuditSourceScheduledExitClosePrecedenceTests(unittest.TestCase):
+    def test_audit_accepts_scheduled_close_or_earlier_target(self):
+        for run in (
+            _source_scheduled_time_exit_run(),
+            _source_target_before_scheduled_exit_run(),
+        ):
+            with self.subTest(reason=run.trades[0].exit_reason):
+                with tempfile.TemporaryDirectory() as home:
+                    folder = Path(home) / "evidence"
+                    write_backtest_artifacts(run, folder)
+                    self.assertEqual(
+                        audit_backtest_artifact_structure(folder)["trade_count"], 1,
+                    )
+
+    def test_audit_refuses_rehashed_target_at_exact_scheduled_close(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _source_target_before_scheduled_exit_run(), folder,
+            )
+            _forge_run_identity_window(
+                folder, manifest, "scheduled_exits", [{
+                    "decision_id": "SOURCE-SLIP-1",
+                    "symbol": "EURUSD",
+                    "timestamp_utc": (
+                        (STAMP + timedelta(minutes=1)).isoformat()
+                        .replace("+00:00", "Z")
+                    ),
+                }],
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "scheduled close conflicts with exit reason",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_stop_at_exact_scheduled_close(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(
+                _ambiguous_stop_source_run(), folder,
+            )
+            _forge_run_identity_window(
+                folder, manifest, "scheduled_exits", [{
+                    "decision_id": "SOURCE-SLIP-1",
+                    "symbol": "EURUSD",
+                    "timestamp_utc": (
+                        (STAMP + timedelta(minutes=1)).isoformat()
+                        .replace("+00:00", "Z")
+                    ),
+                }],
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "scheduled close conflicts with exit reason",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_preserves_generic_same_time_target_and_schedule(self):
+        source = _source_target_before_scheduled_exit_run()
+        generic = replace(
+            source, run_identity={
+                "starting_equity_usd": 10000.0,
+                "scheduled_exits": [{
+                    "decision_id": "SOURCE-SLIP-1",
+                    "symbol": "EURUSD",
+                    "timestamp_utc": (
+                        (STAMP + timedelta(minutes=1)).isoformat()
+                        .replace("+00:00", "Z")
+                    ),
+                }],
+            },
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(generic, folder)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 1,
+            )
+
+
 if __name__ == "__main__":
     unittest.main()
