@@ -1386,5 +1386,44 @@ class Phase3AuditRealizedEquityContinuityTests(unittest.TestCase):
             self.assertEqual(audit_backtest_artifact_structure(folder)["trade_count"], 2)
 
 
+class Phase3AuditDecisionMetadataBudgetEdgesTests(unittest.TestCase):
+    def test_audit_accepts_exact_8192_node_decision_budget(self):
+        # Root dict + list + 8190 leaves matches BacktestConfig's limit.
+        run = replace(
+            _run({"trade_count": 1}),
+            run_identity={"decision_config": {"values": [0] * 8190}},
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(run, folder)
+            self.assertEqual(audit_backtest_artifact_structure(folder)["trade_count"], 1)
+
+    def test_audit_refuses_8193_node_decision_metadata(self):
+        run = replace(
+            _run({"trade_count": 1}),
+            run_identity={"decision_config": {"values": [0] * 8191}},
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(run, folder)
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "decision_config exceeds node budget"):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_ascii_escaped_unicode_size_bypass(self):
+        # Writer/BacktestConfig size is computed with ensure_ascii=True.
+        # This escaped Unicode content is >64KiB, despite short UTF-8 text.
+        run = replace(
+            _run({"trade_count": 1}),
+            run_identity={"decision_config": {"signal": "é" * 11000}},
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(run, folder)
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "decision_config exceeds 64 KiB"):
+                audit_backtest_artifact_structure(folder)
+
+
 if __name__ == "__main__":
     unittest.main()
