@@ -1533,7 +1533,7 @@ def _source_engine_checkpoint_run() -> BacktestRun:
         source, trades=tuple(
             replace(
                 item, trade_id=item.decision_id,
-                exit_reference_price=1.10125,
+                exit_reference_price=1.10125, exit_price=1.1011,
             ) for item in source.trades
         ),
     )
@@ -1713,6 +1713,53 @@ class Phase3AuditSourceEngineReferencePnLTests(unittest.TestCase):
             folder = Path(home) / "evidence"
             write_backtest_artifacts(run, folder)
             self.assertEqual(audit_backtest_artifact_structure(folder)["trade_count"], 1)
+
+
+def _forge_versioned_trade_execution(
+    folder: Path, manifest: dict[str, object], key: str, value: float,
+) -> None:
+    path = folder / "trades.jsonl"
+    rows = [json.loads(line) for line in path.read_text("utf-8").splitlines()]
+    rows[0][key] = value
+    payload = ("\n".join(
+        json.dumps(line, sort_keys=True, separators=(",", ":")) for line in rows
+    ) + "\n").encode("utf-8")
+    path.write_bytes(payload)
+    for entry in manifest["artifacts"]:
+        if entry["path"] == "trades.jsonl":
+            entry["size_bytes"] = len(payload)
+            entry["sha256"] = hashlib.sha256(payload).hexdigest()
+    (folder / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+
+class Phase3AuditSourceSlippageCostReconciliationTests(unittest.TestCase):
+    def test_audit_accepts_source_engine_adverse_slippage_economics(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(_source_engine_checkpoint_run(), folder)
+            self.assertEqual(audit_backtest_artifact_structure(folder)["trade_count"], 2)
+
+    def test_audit_refuses_rehashed_forged_exit_execution_slippage(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(_source_engine_checkpoint_run(), folder)
+            _forge_versioned_trade_execution(
+                folder, manifest, "exit_price", 1.10112,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "slippage cost conflicts with execution"):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_forged_entry_execution_slippage(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(_source_engine_checkpoint_run(), folder)
+            _forge_versioned_trade_execution(
+                folder, manifest, "entry_price", 1.10003,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "slippage cost conflicts with execution"):
+                audit_backtest_artifact_structure(folder)
 
 
 if __name__ == "__main__":
