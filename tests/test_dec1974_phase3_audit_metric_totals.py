@@ -4016,5 +4016,80 @@ class Phase3AuditExactSourceProfitabilityMetricsTests(unittest.TestCase):
             )
 
 
+def _source_with_exact_trade_distribution_metrics() -> BacktestRun:
+    source = _source_winning_losing_profit_metrics_run()
+    winner, loser = source.trades
+    return replace(source, metrics={
+        **source.metrics,
+        "win_rate": 0.5,
+        "average_win_usd": winner.net_pnl_usd,
+        "average_loss_usd": loser.net_pnl_usd,
+        "expectancy_usd": (
+            (winner.net_pnl_usd + loser.net_pnl_usd) / 2
+        ),
+        "longest_winning_streak": 1,
+        "longest_losing_streak": 1,
+    })
+
+
+class Phase3AuditExactSourceTradeDistributionMetricsTests(unittest.TestCase):
+    def test_audit_accepts_source_winner_loser_average_and_streak_metrics(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(
+                _source_with_exact_trade_distribution_metrics(), folder,
+            )
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 2,
+            )
+
+    def test_audit_refuses_rehashed_near_equal_source_win_rate(self):
+        source = _source_with_exact_trade_distribution_metrics()
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(source, folder)
+            _forge_metrics(
+                folder, manifest, "win_rate",
+                source.metrics["win_rate"] + 1e-9,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric win_rate conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_near_equal_source_expectancy(self):
+        source = _source_with_exact_trade_distribution_metrics()
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(source, folder)
+            _forge_metrics(
+                folder, manifest, "expectancy_usd",
+                source.metrics["expectancy_usd"] + 1e-9,
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(
+                ValueError, "metric expectancy_usd conflicts with trade ledger",
+            ):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_preserves_generic_near_equal_trade_win_rate_tolerance(self):
+        source = _source_with_exact_trade_distribution_metrics()
+        generic = replace(
+            source,
+            run_identity={"starting_equity_usd": 10000.0},
+            metrics={
+                **source.metrics,
+                "win_rate": source.metrics["win_rate"] + 1e-9,
+            },
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            write_backtest_artifacts(generic, folder)
+            self.assertEqual(
+                audit_backtest_artifact_structure(folder)["trade_count"], 2,
+            )
+
+
 if __name__ == "__main__":
     unittest.main()
