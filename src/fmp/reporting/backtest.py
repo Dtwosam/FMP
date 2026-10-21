@@ -878,6 +878,7 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                 "commission_cost_usd", "financing_cost_usd",
             )
         }
+        sorted_trade_pnls: list[int | float] = []
         seen_trade_ids: set[str] = set()
         seen_trade_decisions: set[str] = set()
         seen_rejection_decisions: set[str] = set()
@@ -966,6 +967,7 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                             raise ValueError("artifact report trade net PnL cost reconciliation mismatch")
                         for economic in ledger_totals:
                             ledger_totals[economic] += amounts[economic]
+                        sorted_trade_pnls.append(amounts["net_pnl_usd"])
                         net_value = amounts["net_pnl_usd"]
                         if net_value > 0:
                             ledger_profit_usd += net_value
@@ -1102,6 +1104,61 @@ def audit_backtest_artifact_structure(out_dir: Path) -> dict[str, int]:
                 matches = False
             if not matches:
                 raise ValueError(f"artifact report metric {name} conflicts with trade ledger")
+        winners = [pnl for pnl in sorted_trade_pnls if pnl > 0]
+        losers = [pnl for pnl in sorted_trade_pnls if pnl < 0]
+        trade_total = len(sorted_trade_pnls)
+        expected_distribution: dict[str, int | float | None] = {
+            "win_rate": len(winners) / trade_total if trade_total else None,
+            "average_win_usd": sum(winners) / len(winners) if winners else None,
+            "average_loss_usd": sum(losers) / len(losers) if losers else None,
+            "expectancy_usd": (
+                ledger_totals["net_pnl_usd"] / trade_total if trade_total else None
+            ),
+            "longest_winning_streak": _longest_streak(
+                sorted_trade_pnls, winning=True
+            ),
+            "longest_losing_streak": _longest_streak(
+                sorted_trade_pnls, winning=False
+            ),
+        }
+        for name, expected in expected_distribution.items():
+            if expected is not None and type(expected) is not int:
+                try:
+                    finite = math.isfinite(expected)
+                except OverflowError:
+                    finite = False
+                if not finite:
+                    raise ValueError(
+                        f"artifact report aggregate {name} must be finite"
+                    )
+            if name not in metrics:
+                continue
+            claimed = metrics[name]
+            if expected is None:
+                if claimed is not None:
+                    raise ValueError(
+                        f"artifact report metric {name} conflicts with trade ledger"
+                    )
+            elif type(expected) is int:
+                if type(claimed) is not int or claimed != expected:
+                    raise ValueError(
+                        f"artifact report metric {name} conflicts with trade ledger"
+                    )
+            else:
+                if type(claimed) not in (int, float):
+                    raise ValueError(
+                        f"artifact report metric {name} must be finite numeric"
+                    )
+                try:
+                    matches = math.isfinite(claimed) and math.isclose(
+                        claimed, expected, rel_tol=1e-12, abs_tol=1e-8,
+                    )
+                except OverflowError:
+                    matches = False
+                if not matches:
+                    raise ValueError(
+                        f"artifact report metric {name} conflicts with trade ledger"
+                    )
         if "trade_count" in metrics and (
             type(metrics["trade_count"]) is not int
             or metrics["trade_count"] != counts["trade_count"]
