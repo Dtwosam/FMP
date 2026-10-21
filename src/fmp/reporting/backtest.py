@@ -767,6 +767,27 @@ def _audit_json_unique_pairs(pairs: list[tuple[str, object]]) -> dict[str, objec
     return result
 
 
+def _audit_validate_json_tree(value: object, *, depth: int = 0) -> None:
+    # Match deterministic writer depth and Unicode/key constraints, including
+    # ignored optional metric fields and nested provenance metadata.
+    if depth > 64:
+        raise ValueError("artifact report exceeds JSON nesting depth")
+    if type(value) is dict:
+        for key, member in value.items():
+            if (
+                type(key) is not str or not key.isprintable()
+                or any(0xD800 <= ord(ch) <= 0xDFFF for ch in key)
+            ):
+                raise ValueError("artifact report JSON key must be printable Unicode")
+            _audit_validate_json_tree(member, depth=depth + 1)
+    elif type(value) is list:
+        for member in value:
+            _audit_validate_json_tree(member, depth=depth + 1)
+    elif type(value) is str:
+        if any(0xD800 <= ord(ch) <= 0xDFFF for ch in value):
+            raise ValueError("artifact report JSON string cannot contain Unicode surrogates")
+
+
 def _audit_load_json(payload: bytes) -> object:
     def refuse_nonfinite(value: str) -> object:
         raise ValueError("artifact report contains non-finite JSON constant")
@@ -790,12 +811,14 @@ def _audit_load_json(payload: bytes) -> object:
         return number
 
     try:
-        return json.loads(
+        document = json.loads(
             payload, object_pairs_hook=_audit_json_unique_pairs,
             parse_constant=refuse_nonfinite,
             parse_float=require_finite_number,
             parse_int=require_bounded_integer,
         )
+        _audit_validate_json_tree(document)
+        return document
     except RecursionError as exc:
         raise ValueError("artifact report exceeds JSON parser nesting limit") from exc
     except (json.JSONDecodeError, UnicodeDecodeError) as exc:

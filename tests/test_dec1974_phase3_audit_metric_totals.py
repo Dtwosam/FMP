@@ -635,5 +635,53 @@ class Phase3AuditCanonicalUTCStringTests(unittest.TestCase):
                 audit_backtest_artifact_structure(folder)
 
 
+class Phase3AuditJSONTreeWriterParityTests(unittest.TestCase):
+    def test_audit_refuses_rehashed_control_character_object_key(self):
+        run = BacktestRun(
+            run_identity={}, trades=(), rejections=(),
+            equity_checkpoints=(), metrics={"trade_count": 0},
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(run, folder)
+            _forge_raw_metric_payload(
+                folder, manifest, b'{"trade_count":0,"bad\\nkey":1}\n'
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "JSON key must be printable"):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_unicode_surrogate_string(self):
+        run = BacktestRun(
+            run_identity={}, trades=(), rejections=(),
+            equity_checkpoints=(), metrics={"trade_count": 0},
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(run, folder)
+            _forge_raw_metric_payload(
+                folder, manifest, b'{"trade_count":0,"description":"\\ud800"}\n'
+            )
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "Unicode surrogates"):
+                audit_backtest_artifact_structure(folder)
+
+    def test_audit_refuses_rehashed_nested_json_deeper_than_writer(self):
+        run = BacktestRun(
+            run_identity={}, trades=(), rejections=(),
+            equity_checkpoints=(), metrics={"trade_count": 0},
+        )
+        with tempfile.TemporaryDirectory() as home:
+            folder = Path(home) / "evidence"
+            manifest = write_backtest_artifacts(run, folder)
+            payload = b'{"trade_count":0,"extra":' + (
+                b"[" * 70 + b"0" + b"]" * 70
+            ) + b"}\n"
+            _forge_raw_metric_payload(folder, manifest, payload)
+            self.assertEqual(verify_backtest_artifacts(folder), manifest)
+            with self.assertRaisesRegex(ValueError, "JSON nesting depth"):
+                audit_backtest_artifact_structure(folder)
+
+
 if __name__ == "__main__":
     unittest.main()
