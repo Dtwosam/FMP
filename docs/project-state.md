@@ -1,12 +1,30 @@
 # FMP Project State
 
-**Updated:** 2026-10-09
+**Updated:** 2026-11-17
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — Phase 8A annual research frozen after 2022 run 384; run 385/attempt 1 remains unconsumed at latest independently verified inventory. DEC-624 source-only three-layer admission model merged into main `433505888275e049067c2914d6fb7e05694cdc6d`. DEC-625 PR #794 (uninstalled fixed reviewed-manifest versus untrusted runner identity split) is under exact-head CI/review, and stacked DEC-626 renders a further uninstalled exact job-level precheckout GitHub Actions expression preview. Neither is a real tag/workflow/runtime amendment or grants permission. GitHub main protection/rulesets and no-bypass administrator proof remain missing (issue #779).
-**Next milestone:** Complete exact-head CI/code review and merge gate for DEC-625 before separately reviewing and retargeting DEC-626 onto the verified landing. The live 2023 research blocker still requires continuous administrator no-bypass immutable-ref enforcement, independently authenticated external reviewed ref/SHA, actual approved three-job + 2023 runtime precheckout/preinstall/preaccess checks, fresh annual inventory and distinct one-shot action. No workflow/tag/protection mutation, historical read, annual dispatch/retry, future-year research, broker operation or trading.
+**Phase status:** ACTIVE — Phase 8A annual research remains frozen after the 2022 catalogue. Run 385/attempt 1 remains unconsumed. Local `main` is `53e203133bbc141b2f48c7b8b8241d56b35166a3`, which contains the merged source-only DEC-625 and DEC-626 contracts. Those contracts are not installed workflow, tag, or runtime amendments. Issues #779, #820, and #821 remain unresolved. No annual dispatch, protected historical read, broker operation, or trading is authorized.
+**Next milestone:** The source-only return, cost, and trial-ledger measurements are on `research/dec627-dec629-measurement`, based on `53e203133bbc141b2f48c7b8b8241d56b35166a3`. `main` was not updated. The documented Phase 7 forward aggregate still changes sign between 0.5 and 1.0 pip of adverse slippage, and its trade-level R series is not in the repository evidence, so 30-day probabilities are not estimated for it. DEC-629 and DEC-630 are proposals and are not adopted. Protected 2023 research stays blocked until the existing #779 conditions are met by a separate decision. No workflow/tag/protection mutation, historical read, annual dispatch/retry, future-year research, broker operation, or trading.
 **Compatibility invariants:** DEC-268 changes the forward research direction to discovery-first market research, with DEC-469/470 defining the annual-first operating form. EXP-044 V1 CLOSED by DEC-262; authoritative EXP-015 Stage A evidence includes run `36279397331`; Stage B/C are not automatically authorized. Narrow representations remain pattern types/tools inside the annual catalogue rather than the governing method.
+
+## 2026-11-17 — DEC-627 return-versus-ruin measurement, hypothesis only
+
+100% net within 30 calendar days is a falsifiable research question. It is not a guaranteed target and it does not replace annual pattern catalogue discovery. The candidate F2 screen in the 17 November 2026 feasibility study is not an acceptance gate.
+
+The calculator in `src/fmp/simulation/return_vs_ruin.py` maps a stated trade distribution and a fixed risk fraction into doubling and loss probabilities. It does not search leverage. European margin rules are optional assumptions. `fmpsim.py` was not supplied; the exact scenario table was reconstructed from the printed formulas and checked in `tests/test_return_vs_ruin.py`.
+
+The documented Phase 7 USDJPY session-breakout aggregate is not a doubling candidate. Stage 2 expectancy at 1.0 pip of adverse slippage is negative. Its 2024 selection window and 2025–2026 forward windows have already been scored. They are not an untouched holdout. Experiment: `EXP-20261117-001`.
+
+The local `unittest discover` run is not a green historical suite. System Python 3.14 has no `polars` or `numpy` and stopped at 1897 collected tests, 13 failures, and 573 import errors. The supported research runtime is Python 3.12 with `requirements/exp044-model-run.txt`. The local interpreter is Python 3.12.13, one patch behind the recorded 3.12.14 pin, with NumPy 2.5.3, Polars 1.44.2, and scikit-learn 1.9.1 in an isolated `.venv`. On that environment the same command ran 4930 tests in 432.932s and exited 1: 145 failures, 229 errors, and 31 skipped. The identical 145 failures and 229 errors occur on a clean worktree of `53e20313`, which ran 4901 tests. The extra 29 tests are the return-versus-ruin and retail-cost tests, and they passed. Every failure and error is an annual-catalogue or EXP-062 source-pin check. Those checks were not weakened, and the installed workflows were not edited.
+
+## 2026-11-17 — DEC-628 retail costs and DEC-629 proposal
+
+Public broker quotations for EURUSD, GBPUSD, and USDJPY are recorded in `src/fmp/research/retail_costs.py`, with the access date, account type, and URL kept on each figure. Minimum spreads are not treated as typical spreads. No hourly spread curve is invented. Phase 7's bid/ask fills are not charged a second spread. The stage-2 aggregate still cannot support a doubling or loss probability. `docs/trial-ledger.jsonl` backfills only documented trials and leaves the programme-wide trial count unknown. 2015–2022 is not untouched validation.
+
+DEC-629 proposes, and does not adopt, a boundary between mechanism-first preregistered measurements and the governing annual catalogue. DEC-630 asks the owner whether those preregistered measurements, the DEC-628 cost record, and a later multiple-testing control can coexist with the catalogue. It is not adopted. The guardrail is unchanged. Experiment: `EXP-20261117-002`.
+
+Stage 2 dollar expectancy divided by the $250 window-start risk unit is +0.0152216R, +0.0052700R, and −0.0112988R at 0.2, 0.5, and 1.0 pip. The published table rounds those to +0.01522R, +0.00527R, and −0.01130R. The cost model can price a later hypothesis when the caller supplies fill basis, stop distance, slippage, and financing provenance. It still has no observed session spread, no live OANDA or Pepperstone swap, and no USD point value for GBPUSD or USDJPY swaps. The next measurement that would change a probability statement is a trade-level R series for an already frozen candidate. That series is not in the repository evidence, and protected artefacts stay closed.
 
 ## 2026-10-02 — DEC-473 annual full-history loader source-ready
 

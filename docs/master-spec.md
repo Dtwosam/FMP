@@ -473,3 +473,19 @@ DEC-039 amends the Phase 8 path without expanding the V1 instrument universe. Th
 The former 2024-01-01 through 2026-08-20 final-test range was opened in Phase 7. New post-Phase-7 strategies may reuse it for retrospective research and rolling robustness, but cannot call it untouched. New forward evidence begins only after a challenger identity/protocol is frozen.
 
 The operator's high-return objective is a research objective to measure, not a guaranteed daily return. The system must report the return/drawdown/tail trade-off at explicit fixed risk and must not manufacture profitability through martingale, loss chasing, or hidden leverage escalation.
+
+## 30. DEC-627 100%-in-30-days hypothesis
+
+A 100% net return within 30 calendar days is a falsifiable research question for a small disposable account. It is not a performance promise, a mandatory target, or a promotion gate. The feasibility study's F1–F3 screens remain candidate thresholds until a later decision adopts them after a separate statistical review.
+
+Evaluation order is fixed. A strategy must have a positive after-cost expectancy, with the uncertainty of that expectancy recorded, before any doubling probability is treated as a candidate outcome. A validated positive edge that cannot support a 100% month remains a scientific result. Sizing stays a fixed fraction. The calculator must not search leverage, martingale, or loss-recovery rules to manufacture the month.
+
+The governing method is unchanged: discovery-first annual pattern catalogue research. The return-versus-ruin calculator is a measurement tool. Jurisdiction-specific leverage caps, margin close-out, and negative-balance protection are scenario inputs, not silent defaults. No simulation result authorizes demo orders, live orders, or real-money trading.
+
+## 31. DEC-628 retail cost quotations
+
+Research costs distinguish a published broker specification, an observed bid/ask fill, and a simulated assumption. An advertised minimum spread is not a typical cost. A missing component is rejected when a result is described as complete; it is not replaced with zero. Historical bid/ask fills already include the spread, so a second spread is not added. Pip value follows the Phase 3 rule: EURUSD and GBPUSD pips are US dollars, and a USDJPY pip is converted by the caller-supplied price.
+
+The default research evaluation uses the higher complete published package and an explicit slippage assumption. It does not select a broker and it does not authorize an order. Aggregate Phase 7 expectancy is not a trade-level distribution, so it does not by itself identify a 30-day doubling or loss probability.
+
+DEC-629 is a proposed note on mechanism-first preregistration. DEC-630 asks the owner whether preregistered measurements and a later multiple-testing control can sit beside the annual catalogue. Neither proposal is adopted. The annual pattern catalogue remains the governing method for protected historical discovery.

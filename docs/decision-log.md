@@ -11250,3 +11250,64 @@ Issue #779 remains OPEN: independently authenticated continuous no-bypass admin 
 The candidate compares exact `workflow_dispatch`, repository, tag ref/type, SHA, workflow ref and workflow SHA, year, previous freeze run, run number and attempt. Twenty-four negative variants reject missing/moved/softened job guards, removal of workflow SHA, self-attested `github.sha == github.sha`, wrong tag, run-type confusion and injected permission fields. The report SHA-256 is an integrity checksum, not external approval or cryptographic authentication; source-bound canonical regeneration rejects forged permission flags. No YAML modification or actual GitHub job gate is produced.
 
 A GitHub job-level condition runs before job *steps* but not before the workflow definition is loaded. A full release still requires independently authenticated continuously enforced administrator tag lock with no bypass, a genuinely approved expected ref/SHA tuple from outside runner observations, separately reviewed and installed three-job/preinstall/preaccess workflow and 2023 runtime gates, fresh run385 inventory, and explicit one-shot dispatch decision. Issue #779 stays OPEN. No historical protected read, retry, future year, brokerage, demo/live, real money or trading is allowed.
+
+## 2026-11-17 — DEC-627 falsifiable 100%-in-30-days hypothesis and return-versus-ruin calculator
+
+**Status:** SOURCE-ONLY MEASUREMENT TOOL. Not a promotion gate, not annual-research authorization, and not trading authority.
+
+The 17 November 2026 feasibility study is adopted only as a research question: whether a small disposable account could reach a 100% net return within 30 calendar days through a repeatable after-cost edge. That question stays falsifiable. It is not a performance promise, a development target, or an acceptance gate. The study's F1–F3 and I1–I3 screens stay candidate thresholds until a later decision reviews their statistical justification and adopts them explicitly.
+
+The governing method remains discovery-first annual pattern catalogue research under DEC-469 / DEC-268. The return-versus-ruin calculator is a measurement tool inside that method. It is not a new research method, not a pattern-type substitute, and not a leverage search. No annual segment is authorized. Run 385 stays unconsumed. Issues #779, #820, and #821 stay unresolved. Workflows, tags, runner settings, and security policy are unchanged.
+
+`src/fmp/simulation/return_vs_ruin.py` reconstructs the study's independent-trade lattice and stress scenarios from the printed formulas. `fmpsim.py` was not in the PDF. The reconstruction does not impose European leverage caps or margin close-out unless a caller sets those account assumptions. The study's own scenario probabilities are reproduced with negative-balance protection only; the printed "ESMA-compliant" labels describe the chosen risk fraction, and they are not a hidden resize.
+
+Edge comes before size. A negative or unidentified after-cost expectancy is not evaluated as a doubling candidate. The documented Phase 7 USDJPY 15m session-breakout aggregate is in that category: stage 2 at 1.0 pip of adverse slippage has negative expectancy, 2024–2026 for that candidate was already scored, and the approximate +0.005R figure at 0.5 pip is not a trade-level validated edge. Illustrative doubling probabilities for it are recorded as illustrations in EXP-20261117-001.
+
+No protected history was read. No broker connection, demo order, live order, or real-money path was added. Simulation output does not authorize trading.
+
+## 2026-11-17 — DEC-628 retail cost quotations and trial ledger
+
+**Status:** SOURCE-ONLY MEASUREMENT. Not a broker selection, not a promotion gate, not annual-research authorization, and not trading authority.
+
+`src/fmp/research/retail_costs.py` records public quotations retrieved on 2026-11-17 for EURUSD, GBPUSD, and USDJPY. The sources are OANDA Corporation's US spread-only page, OANDA's US financing-fee page, IC Markets (EU) Ltd's spreads-and-swaps and trading-costs pages, and Pepperstone's costs-and-fees page. Advertised minimums, including Pepperstone Razor "from 0.0" and IC Standard "from 0.8", are not used as typical spreads. No hourly or session spread was published, and none is estimated. IC's EURUSD table average of 0.06 pips and the same site's "0.1 pip" average are both kept; a complete IC package uses the higher published average. OANDA's single quoted spread is unlabeled. Live swap rates for OANDA and Pepperstone were not on the retrieved pages. IC publishes swap points; only the EURUSD worked example shows that one point is 1 USD per standard lot. GBPUSD and USDJPY point values in USD are therefore unavailable.
+
+A bid/ask fill already contains the historical spread. The model rejects a second spread on that fill. Positive financing is an account debit. The 17:00 America/New_York cutoff and the Wednesday triple for T+2 forex are taken from those pages. A weekend hold that does not include that Wednesday triple is rejected rather than given an invented day count. Holiday rolls are not inferred.
+
+The default from-mid comparison uses the higher complete published package and still requires an explicit slippage figure. Zero slippage is not filled in. At a hypothetical 15-pip stop, OANDA's unlabeled quote is higher than IC's average-plus-commission package before any slippage assumption. That comparison is not an observed FMP fill.
+
+Phase 7's published stage-2 aggregates stay the only re-evaluation of that strategy. They already include the historical bid/ask spread and the stated per-side slippage, with zero commission and zero financing. The aggregate does not identify a trade-level R series, a payoff ratio, or an overnight share, so doubling and loss probabilities are not estimated for it. A zero gross edge remains non-positive at every fixed risk fraction. No broker is connected.
+
+`docs/trial-ledger.jsonl` is an append-only ledger. It backfills only records whose fields are supported by existing documents. The programme-wide trial count is null. 2015–2022 is marked explored, not untouched validation. Experiment: `EXP-20261117-002`.
+
+## 2026-11-17 — DEC-629 PROPOSED, NOT ADOPTED — mechanism-first tests and the annual catalogue
+
+**Status:** PROPOSED. This entry does not amend the operating guardrail, DEC-469, phase order, risk limits, the instrument universe, or any authorization gate.
+
+The 17 November 2026 independent review recommends mechanism-first preregistered hypotheses as the primary next research method, and it treats annual-catalogue synthesis as usable for Strategy V1 only after a null calibration. DEC-469 and `docs/research-method-operating-guardrail.md` make discovery-first annual pattern catalogue research the governing method for protected historical discovery.
+
+Those instructions conflict on what may be called the method, and on whether catalogue synthesis can proceed without a null calibration this repository has not adopted.
+
+The proposed resolution, which is not in force, is:
+
+- The annual catalogue remains the governing method for any protected annual segment.
+- Source-only mechanism-first measurements, including the return-versus-ruin calculator and the retail cost model, are tools. They do not replace DEC-469 and they do not open a catalogue year.
+- A later explicit decision is required before null calibration, before any edit to the guardrail, and before Strategy V1 synthesis.
+- This proposal does not authorize run 385, a broker connection, demo or live orders, or real-money trading. Issues #779, #820, and #821 stay unresolved.
+
+The guardrail was not edited.
+
+## 2026-11-17 — DEC-630 PROPOSED, AWAITING OWNER — catalogue and preregistered tests
+
+**Status:** PROPOSED. Awaiting an owner decision. Not adopted. This entry does not amend the operating guardrail, DEC-469, phase order, risk limits, the instrument universe, or any authorization gate.
+
+The owner question is whether source-only preregistered measurements may sit beside the annual catalogue, and whether a multiple-testing control ever becomes a gate.
+
+The proposed coexistence, which is not in force, is:
+
+- Protected annual discovery stays under DEC-469. The catalogue remains the governing method for any protected year. This proposal opens no year. Run 385 stays unconsumed.
+- A preregistered measurement that does not read protected history may be written down before it is run. The trial ledger holds the hypothesis, version, parameters, data exposure, cost assumptions, source commit, outcome, and statistical evidence. An unknown trial count stays null. Data from 2015 through 2022 stays explored.
+- DEC-628 costs are attached before that measurement is counted. A missing cost is not entered as zero. A historical bid/ask spread is not charged a second time. A published minimum is not treated as an observed average. A lattice probability stays a hypothetical distribution until a trade-level record is supplied.
+- A multiple-testing control, including a null calibration of frozen annual catalogues, is not a current gate. If the owner later adopts one, it would apply to frozen catalogues before Strategy V1 synthesis. It would not replace the catalogue, and it would not reopen a scored window as untouched validation.
+- Strategy V1 synthesis, a guardrail edit, catalogue dispatch, a broker connection, demo or live orders, and real-money trading still require their existing decisions. Issues #779, #820, and #821 stay unresolved.
+
+The guardrail was not edited.

@@ -3251,3 +3251,62 @@ Copy this section for each serious experiment:
 - Concrete 2016 runtime evidence binding output: YES.
 - Repository mutation / workflow dispatch / rerun / retry: NO.
 - 2017+ / Strategy V1 / promotion / trading authority: NO.
+
+### EXP-20261117-001 — Hypothetical 30-day return-versus-ruin reconstruction
+
+- Date: 2026-11-17
+- Status: INCONCLUSIVE
+- Hypothesis: A repeatable after-cost edge under FMP's constraints can support a 100% net return within 30 calendar days on a small disposable account.
+- Code commit: uncommitted DEC-627 source on top of `53e203133bbc141b2f48c7b8b8241d56b35166a3`
+- Data manifest/version: none. No market-data files were opened.
+- Pair(s): EURUSD, GBPUSD, USDJPY named only as the study's hypothetical universe
+- Timeframe(s): not used. The calculator is in trades per window, not bars.
+- Data range: not applicable
+- Train period: not applicable
+- Validation period: not applicable
+- Final-test touched?: NO
+- Strategy/model: independent binary R-multiple lattice, plus the study's illustrative regime, within-group correlation, Pareto stop gap, and lognormal cost noise. Fixed fractional sizing only.
+- Features: none
+- Parameters/search space: the study's printed S1–S11 assumptions. Risk fraction was not searched.
+- Random seed (if relevant): 11 for the stress reconstruction. Exact lattice uses no seed.
+- Spread/cost model: study assumption of 0.08R round trip, described there as 1.2 pips on a 15-pip stop. This is not a broker-page cost table.
+- Slippage model: inside the 0.08R assumption, plus the stress model's lognormal cost noise and 0.5% Pareto gaps. Not a measured fill record.
+- Risk assumptions: caller-supplied fixed fraction. Study rows use 0.25% through 30%. FMP policy default remains 0.25%, hard maximum 0.50%.
+- Trade count: hypothetical window counts from the study, including 60 and 120. The Phase 7 comparison uses the documented 199 stage-2 trades and 122 stage-1 trades only as published aggregates.
+- Net return after costs: not a market result. Exact S6 terminal expectation is the compound of a +0.005R hypothesis, not an observed return.
+- Expectancy/trade: study hypothesis. The Phase 7 stage-2 aggregate implies about +0.00527R at 0.5 pip of adverse slippage and about -0.0113R at 1.0 pip, using $250 per 1R at the $100,000 window start. Those are aggregate conversions, not a trade-level R series.
+- Profit factor: not recomputed from fills
+- Max drawdown: Monte Carlo quantiles are available from the calculator. They were not estimated from Phase 7 fills in this experiment.
+- Result: the exact printed scenario table reproduces within rounding. The stress table is an independent reconstruction because `fmpsim.py` was absent. The documented Phase 7 forward aggregate fails the edge-first check, so its doubling probabilities are illustrations rather than a candidate outcome. The 100%-in-30-days hypothesis is not supported by current documented evidence. No trading authority.
+
+### EXP-20261117-002 — Retail cost quotations and Phase 7 aggregate re-read
+
+- Date: 2026-11-17
+- Status: INCONCLUSIVE
+- Hypothesis: A source-backed retail cost changes the after-cost expectancy of the documented Phase 7 candidate enough to identify its 30-day doubling and loss probabilities.
+- Code commit: `research/dec627-dec629-measurement`, parent `53e203133bbc141b2f48c7b8b8241d56b35166a3`
+- Data manifest/version: none. No market-data files were opened. Broker pages were read on 2026-11-17.
+- Pair(s): EURUSD, GBPUSD, USDJPY
+- Timeframe(s): not used
+- Data range: not applicable
+- Train period: not applicable
+- Validation period: not applicable
+- Final-test touched?: NO
+- Strategy/model: no new strategy. The existing return-versus-ruin lattice receives a labeled round-trip cost. Phase 7 is re-read from its published aggregates only.
+- Features: none
+- Parameters/search space: published OANDA US, IC Markets EU, and Pepperstone quotations. Risk fraction was not searched. No hourly spread grid.
+- Random seed (if relevant): not applicable. The lattice is exact.
+- Spread/cost model: see `src/fmp/research/retail_costs.py`. Minimum spreads are not used as typical spreads. Bid/ask fills are not charged a second spread.
+- Slippage model: no retrieved page publishes a typical slippage. Scenarios that include slippage label it as an assumption. Phase 7's 0.2, 0.5, and 1.0 pip columns are the existing research assumptions and are already inside those aggregates.
+- Risk assumptions: fixed fractional sizing only. A zero gross edge stays non-positive at 0.25%, 4%, and 15%.
+- Trade count: no new market trades. Phase 7 stage 2 remains the documented 199 trades.
+- Net return after costs: not a new market result. Stage 2 aggregate expectancy remains +$3.8054, +$1.3175, and -$2.8247 at 0.2, 0.5, and 1.0 pip per side.
+- Expectancy/trade: about +0.01522R, +0.00527R, and -0.01130R on the $250 window-start risk unit. These are aggregate conversions.
+- Profit factor: not recomputed
+- Max drawdown: not recomputed from fills
+- Key subperiod results: not recomputed. The stage-2 window was already scored.
+- Robustness/cost sensitivity: on a hypothetical EURUSD 15-pip-stop lattice with the study's +0.085R gross edge held fixed, the higher published intraday package is the unlabeled OANDA quote at 0.0933R before slippage. Adding an assumed 0.5 pip per side moves that hypothetical net expectancy to -0.075R. Those probabilities are not Phase 7 estimates.
+- Result summary: the aggregate blocks a reliable doubling or loss probability. Commission and financing in R for Phase 7 need stop distance and hold time, which the aggregate does not contain. GBPUSD and USDJPY swap points have no published USD point value in the retrieved pages. No trading authority.
+- Conclusion: NEED_MORE_DATA
+- Reason: the documented strategy's trade-level record is absent, and several published cost components are missing or unlabeled. The edge-first check still fails at the 1.0-pip aggregate.
+- Follow-up: keep the annual catalogue as the governing method. DEC-629 and DEC-630 are proposals awaiting an owner decision. The next measurement that would change the probability statement is a real trade-level R series for an already frozen candidate, with this cost record attached before the test is counted. That series is not available from repository documents, and protected artefacts stay closed.

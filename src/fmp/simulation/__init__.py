@@ -1,0 +1,57 @@
+"""Research simulators.
+
+The return-versus-ruin calculator is a measurement tool. It is not a strategy,
+not a sizing optimizer, and not trading authority.
+"""
+
+from fmp.simulation.return_vs_ruin import (
+    STUDY_COST_R,
+    STUDY_SCENARIOS,
+    AccountAssumptions,
+    BinaryPayoff,
+    DependenceModel,
+    EdgeVarianceSplit,
+    FixedFractionalSizing,
+    RuinProbabilities,
+    StudyScenario,
+    apply_net_r_path,
+    block_bootstrap_outcomes,
+    documented_phase7_monthly_inputs,
+    evaluate_against_zero_edge,
+    exact_binary_outcomes,
+    kelly_fraction,
+    log_growth_per_trade,
+    minimum_net_edge_for_doubling_probability,
+    monte_carlo_binary_outcomes,
+    probability_of_loss_streak,
+    risk_fraction_at_stop,
+    study_candidate_f2_gaps,
+    study_stress_dependence,
+    uncapped_gbm_doubling_probability,
+)
+
+__all__ = [
+    "STUDY_COST_R",
+    "STUDY_SCENARIOS",
+    "AccountAssumptions",
+    "BinaryPayoff",
+    "DependenceModel",
+    "EdgeVarianceSplit",
+    "FixedFractionalSizing",
+    "RuinProbabilities",
+    "StudyScenario",
+    "apply_net_r_path",
+    "block_bootstrap_outcomes",
+    "documented_phase7_monthly_inputs",
+    "evaluate_against_zero_edge",
+    "exact_binary_outcomes",
+    "kelly_fraction",
+    "log_growth_per_trade",
+    "minimum_net_edge_for_doubling_probability",
+    "monte_carlo_binary_outcomes",
+    "probability_of_loss_streak",
+    "risk_fraction_at_stop",
+    "study_candidate_f2_gaps",
+    "study_stress_dependence",
+    "uncapped_gbm_doubling_probability",
+]
