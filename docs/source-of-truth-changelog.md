@@ -2311,3 +2311,7 @@ Added a source-only checker for a caller-supplied closed-trade ledger and record
 ## 2026-11-17 — DEC-635 gross-loss reconciliation
 
 Aligned caller-supplied gross loss with the Phase 3 positive magnitude and labeled reported R as requested-risk-normalized at the recorded exit equity. Added a decision packet for a possible later Stage 2 trade recovery. The packet does not authorize a replay or a historical download. DEC-629 and DEC-630 stay proposed. The guardrail, instrument universe, risk hard limits, phase order, and real-money lock are unchanged.
+
+## 2026-11-17 — DEC-636 Phase 7 trade-record retention
+
+Added an opt-in writer that keeps the trade and rejection rows the existing Phase 7 evaluator already returns. The writer uses a separate checksummed directory and does not change the aggregate artifact format, the frozen evaluator, or artifact `10414817824`. No authentic 199-trade Stage 2 series was recovered. A later historical reproduction still requires a separate owner decision. DEC-629 and DEC-630 stay proposed. The guardrail, instrument universe, risk hard limits, phase order, and real-money lock are unchanged.

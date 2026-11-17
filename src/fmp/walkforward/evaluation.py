@@ -7,7 +7,7 @@ from typing import Mapping
 
 from fmp.backtest.costs import ZeroCommission, ZeroFinancing
 from fmp.backtest.engine import BacktestConfig, run_backtest
-from fmp.contracts import Direction
+from fmp.contracts import Direction, RejectionRecord, TradeRecord
 from fmp.data.phase2.schema import CANONICAL_SCHEMA_VERSION
 from fmp.research.adapter import candidate_to_decision
 from fmp.research.reporting import compute_research_metrics
@@ -184,6 +184,30 @@ def evaluate_window(
     code_commit: str,
     slippage_pips: float,
 ) -> WindowFinancialResult:
+    """Run the frozen window evaluator and return its aggregate result.
+
+    Trade and rejection rows stay on the backtest run. This function does not
+    retain them. Call ``retain_phase7_window`` for the opt-in copy.
+    """
+
+    financial, _trades, _rejections = _execute_window(
+        loaded,
+        candidate_id=candidate_id,
+        window_name=window_name,
+        code_commit=code_commit,
+        slippage_pips=slippage_pips,
+    )
+    return financial
+
+
+def _execute_window(
+    loaded: LoadedPhase7Bars,
+    *,
+    candidate_id: str,
+    window_name: str,
+    code_commit: str,
+    slippage_pips: float,
+) -> tuple[WindowFinancialResult, tuple[TradeRecord, ...], tuple[RejectionRecord, ...]]:
     candidate = _resolve_candidate(candidate_id)
     window = allowed_phase7_window(window_name)
     if isinstance(slippage_pips, bool) or not isinstance(slippage_pips, (int, float)):
@@ -262,7 +286,7 @@ def evaluate_window(
     if isinstance(trade_count, bool) or not isinstance(trade_count, int) or trade_count < 0:
         raise ValueError("Phase 7 trade_count must be a non-negative integer")
 
-    return WindowFinancialResult(
+    result = WindowFinancialResult(
         candidate_id=candidate.candidate_id,
         window_name=window.name,
         slippage_pips=slippage,
@@ -288,6 +312,7 @@ def evaluate_window(
         scored_end_utc=scored_end,
         refit_status=REFIT_STATUS,
     )
+    return result, run.trades, run.rejections
 
 
 def evaluate_phase7_window(

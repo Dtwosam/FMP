@@ -88,4 +88,6 @@ The 100%-within-30-days question remains a falsifiable research question. A simu
 
 ## Next path
 
-The bounded name search did not find the 199 Stage 2 trades. The requirements for a later replay, if the owner authorizes one, are in `docs/phase7-stage2-trade-recovery-decision.md`. That document does not authorize the replay, a download of the Phase 4 benchmark artifacts, or a fresh out-of-sample claim. Annual catalogue work stays behind issue #779.
+The bounded name search did not find the 199 Stage 2 trades. DEC-636 can retain the trade and rejection rows the existing evaluator already returns, in a separate checksummed directory, and load one submission per slippage scenario into this validator. Gross loss stays the positive Phase 3 magnitude. `original_phase7_trade_ledger_verified` stays false. No authentic 199-trade series has been recovered.
+
+The bounded reproduction procedure is in `docs/phase7-stage2-trade-recovery-decision.md`. That document does not authorize the reproduction, a download of the Phase 4 benchmark artifacts, a workflow dispatch, or a fresh out-of-sample claim. The next milestone is a formal owner decision on whether to authorize one controlled historical reproduction. Annual catalogue work stays behind issue #779.

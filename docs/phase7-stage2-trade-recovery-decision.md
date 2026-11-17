@@ -87,32 +87,35 @@ The window-start conversions of those aggregates remain +0.01522R, +0.00527R, an
 
 ## How trades would be kept
 
-`evaluate_phase7_window` calls `run_backtest`, which returns `TradeRecord` rows, and then drops them when it builds `WindowFinancialResult`. The installed workflow uploads only the directory from `write_stage2_evidence`.
+DEC-636 adds that side writer on the current source. It does not recover the 199 trades and it does not authorize a historical read.
 
-A later change, if authorized, would:
+`evaluate_window` still returns only `WindowFinancialResult`. `retain_phase7_window` calls the same `_execute_window` path and keeps the `TradeRecord` and `RejectionRecord` rows `run_backtest` already produced. `write_phase7_trade_retention` writes those rows to a separate directory as `trades.jsonl`, `rejections.jsonl`, `window-index.json`, and `manifest.json`, with SHA-256 checksums and byte sizes. `write_stage2_evidence` is unchanged. With retention disabled, a Stage 2 directory is still only `result.json`, `windows.json`, and `manifest.json`.
 
-1. Check out `a1f8a0466463c79fdbceb9d6ebad9e3ea809474d`.
-2. Add a side writer that serializes the existing `run.trades` and `run.rejections` for each window and slippage scenario.
-3. Leave fill, sizing, slippage, commission, financing, window bounds, and the three aggregate files unchanged.
-4. Write the new rows to a new directory. Do not replace artifact `10414817824`, its name, or `docs/phase7-walk-forward-evidence.md`.
-5. Regenerate `result.json` and `windows.json` from that same run and compare them with the SHA-256 values above before the new trade file is called a reproduction.
-6. If the hashes differ, keep the difference visible and do not relabel the new rows as the original ledger.
+The writer does not change fills, position size, slippage, commission, financing, risk, or window bounds. It stores the executing `code_commit` separately from reproduction target `a1f8a0466463c79fdbceb9d6ebad9e3ea809474d`. There is no argument that can set `authentic_stage2_series_recovered`, `original_artifact_modified`, `reproduction_authorized`, or `owner_authorization_recorded` to true. A hash comparison of caller-supplied aggregate digests is not implemented, and matching numbers would still leave those flags false.
 
-Redispatching `.github/workflows/phase7-walk-forward.yml` does not do this. That workflow still discards the trade rows and would be a new historical execution.
+The engine reuses decision ids across the three slippage scenarios, and each window restarts at $100,000. The loader therefore builds one DEC-634/635 `TradeSubmission` per slippage. Merging the three scenarios would look like duplicate ids and would double-count reset windows. Reported R remains `requested_risk_normalized_at_recorded_equity`. Gross loss remains the positive Phase 3 magnitude. `original_phase7_trade_ledger_verified` stays false. Spread stays inside the bid/ask fill, with a separate spread cost of zero.
 
-## Review and access required first
+This source is not `a1f8a0466463c79fdbceb9d6ebad9e3ea809474d`. The retention functions are absent from that commit. A later run from a commit that contains the writer puts that later commit inside `result.json` and `windows.json` through the existing identity block. Those files will not byte-match the original SHA-256 values above. The numeric rows can still be compared. The commit difference stays visible, and the new file is not run `35015277625`.
 
-This packet is not that authorization. A separate owner decision would need to allow all of the following before any command runs:
+Artifact `10414817824` is not modified by writing a new directory. No authentic 199-trade Stage 2 series has been recovered.
 
-- Read Phase 2 artifact `10327600628` after its ZIP SHA-256 matches.
-- Execute the frozen evaluator on that processed history.
-- Write a new trade directory that is not the original artifact.
-- Review the code diff so the only behavior change is retention of rows the engine already returns.
+## Bounded procedure, still unauthorized
+
+This packet is not authorization to run the procedure. A separate owner decision has to allow every step below before any command runs:
+
+1. Read Phase 2 artifact `10327600628` only after its ZIP SHA-256 matches `6ee632b38d45a26dcc58be6d6c9555606605e356aee25b135c089b4969426b72`.
+2. Execute the existing frozen evaluator on that processed history. Do not add another backtester.
+3. Call `retain_phase7_window` and `write_phase7_trade_retention` so the rows go to a new directory. Do not replace artifact `10414817824`, its name, or `docs/phase7-walk-forward-evidence.md`.
+4. Review the diff and confirm the only behavior change from the frozen evaluator is retention of rows the engine already returns.
+5. Compare the new aggregate numbers with the published Stage 2 rows. Keep the executing code commit visible. Do not relabel the file as run `35015277625` when the commit differs from `a1f8a0466463c79fdbceb9d6ebad9e3ea809474d`.
+6. If a reviewer later submits the rows, use `separately_authorized_submission`, `claims_trades_from_stage2_zip=false`, and `data_reuse=already_scored`. Acceptance by `validate_trade_submission` does not verify the original ledger.
+
+Redispatching `.github/workflows/phase7-walk-forward.yml` does not retain trades. That workflow still discards the trade rows and would be a new historical execution. The CLI does not gain a retention flag.
 
 That decision would still not allow a download of the Phase 4 ZIPs, a dispatch of the installed Stage 2 workflow, an edit to a protected workflow or ruleset, a broker connection, or a demo or live order.
 
-The recovered rows, if the hashes match, would be submitted to `validate_trade_submission` with `data_reuse=already_scored`. `original_phase7_trade_ledger_verified` stays false until a reviewer compares the new file with the hash-matched run. The reported R remains requested-risk-normalized at recorded exit equity.
-
 ## Why this is not fresh evidence
 
-Stage 1 already scored 2024. Stage 2 already scored 2025-01-01 through 2026-08-21 exclusive and published the result. A replay reads that same scored sample again. It can restore trades the writer dropped. It cannot make 2024, 2025, or the published 2026 window into untouched validation. Prospective evidence would have to be later than 2026-08-20 under a frozen rule, and this packet does not create that sample.
+Stage 1 already scored 2024. Stage 2 already scored 2025-01-01 through 2026-08-21 exclusive and published the result. A replay reads that same scored sample again. It can restore trades the aggregate writer dropped. It cannot make 2024, 2025, or the published 2026 window into untouched validation. Prospective evidence would have to be later than 2026-08-20 under a frozen rule, and this packet does not create that sample.
+
+The next milestone is a formal owner decision on whether to authorize one controlled historical reproduction. It is not another retention writer.
