@@ -228,6 +228,34 @@ class RetailCostTests(unittest.TestCase):
         self.assertLess(phase7["stage2_mean_r_estimate"][1.0], 0.0)
         self.assertGreater(phase7["stage2_mean_r_estimate"][0.5], 0.0)
 
+    def test_ledger_rejects_non_boolean_data_exposure_claims(self) -> None:
+        original = documented_backfill()[1]
+        for malformed in (None, 0, 1, "false", "true", [], {}):
+            with self.subTest(value=malformed):
+                record = dict(original)
+                record["trial_id"] = "EXP-MALFORMED"
+                exposure = dict(original["data_exposure"])
+                exposure["overlaps_2015_2022"] = malformed
+                exposure["untouched_validation"] = False
+                record["data_exposure"] = exposure
+                with tempfile.TemporaryDirectory() as tmp:
+                    path = Path(tmp) / "trial-ledger.jsonl"
+                    with self.assertRaisesRegex(ValueError, "overlaps_2015_2022"):
+                        append_trial(record, path)
+                    self.assertFalse(path.exists())
+
+    def test_load_trials_rejects_duplicate_id_in_existing_jsonl(self) -> None:
+        record = documented_backfill()[1]
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "trial-ledger.jsonl"
+            append_trial(record, path)
+            with path.open("a", encoding="utf-8") as handle:
+                handle.write(json.dumps(record, sort_keys=True) + "\\n")
+            with self.assertRaisesRegex(ValueError, "duplicate trial_id"):
+                load_trials(path)
+            with self.assertRaisesRegex(ValueError, "duplicate trial_id"):
+                append_trial(documented_backfill()[0], path)
+
     def test_ledger_is_append_only_and_does_not_launder_old_data(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "trial-ledger.jsonl"
