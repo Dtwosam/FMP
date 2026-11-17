@@ -250,7 +250,7 @@ class RetailCostTests(unittest.TestCase):
             path = Path(tmp) / "trial-ledger.jsonl"
             append_trial(record, path)
             with path.open("a", encoding="utf-8") as handle:
-                handle.write(json.dumps(record, sort_keys=True) + "\\n")
+                handle.write(json.dumps(record, sort_keys=True) + "\n")
             with self.assertRaisesRegex(ValueError, "duplicate trial_id"):
                 load_trials(path)
             with self.assertRaisesRegex(ValueError, "duplicate trial_id"):
