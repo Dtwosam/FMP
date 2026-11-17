@@ -8,6 +8,10 @@
 **Current task:** Phase 8A research-readiness audit, not annual catalogue execution, cross-year synthesis, promotion, or Phase 8B  
 **Protected boundary:** no protected historical artifact opened, no workflow dispatched, and no prior protected annual run retried
 
+## Preservation identities
+
+The original run `35015277625`, the original artifact `10414817824`, the owner-stated ChatGPT Library copy at `/FMP/Phase7/`, the published aggregates in `docs/phase7-walk-forward-evidence.md`, and the missing individual-trade ledger are different objects. This audit did not inspect the library copy. The ZIP was not downloaded. Its documented members are `manifest.json`, `result.json`, and `windows.json`, so it is not a trade-level R series. The checker and the statistical input list are in `docs/phase7-trade-level-evidence-validation.md`.
+
 ## Executive finding
 
 The existing backtester **creates individual `TradeRecord` objects** and the Phase 7 evaluator has them in memory while running, but **does not preserve them in its Phase 7 summary outputs**. The authoritative Stage 2 evidence described by `docs/phase7-walk-forward-evidence.md` is a ZIP containing only `manifest.json`, `result.json`, and `windows.json`. These are seven per-window aggregate summaries at each of the three frozen slippage scenarios, not a trade-level R series.

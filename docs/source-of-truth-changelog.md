@@ -2303,3 +2303,7 @@ Asked the owner whether preregistered source-only measurements and a later multi
 ## 2026-11-17 — DEC-633 historical trial inventory
 
 Added a source-only reader of the experiment log and the append-only trial ledger. The programme-wide trial count stays unknown. Printed configuration totals, result rows, repeated experiment IDs, and data-exposure claims are kept distinct, and incomplete families are not sent to the Benjamini–Yekutieli tool. DEC-629 and DEC-630 stay proposed. The guardrail, instrument universe, risk hard limits, phase order, and real-money lock are unchanged. No protected research or trading authority is opened.
+
+## 2026-11-17 — DEC-634 trade-level evidence validation
+
+Added a source-only checker for a caller-supplied closed-trade ledger and recorded the separate identities of the Phase 7 run, artifact, owner-stated preserved copy, published aggregates, and missing trade rows. The checker does not estimate 30-day probabilities and does not open protected history. DEC-629 and DEC-630 stay proposed. The guardrail, instrument universe, risk hard limits, phase order, and real-money lock are unchanged. No protected research or trading authority is opened.
