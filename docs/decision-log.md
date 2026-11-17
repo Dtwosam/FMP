@@ -11311,3 +11311,11 @@ The proposed coexistence, which is not in force, is:
 - Strategy V1 synthesis, a guardrail edit, catalogue dispatch, a broker connection, demo or live orders, and real-money trading still require their existing decisions. Issues #779, #820, and #821 stay unresolved.
 
 The guardrail was not edited.
+
+## 2026-11-17 — DEC-631 trial-ledger claim-type and duplicate-identity integrity
+
+**Status:** SOURCE-ONLY LEDGER CORRECTNESS. No new research method, data access, acceptance gate, risk limit, or trading authority.
+
+The DEC-628 append-only trial ledger now requires an actual Boolean for `data_exposure.overlaps_2015_2022` instead of accepting truthy or falsy JSON values. Previously, for example, a numeric zero or a string claiming `false` could be accepted as an exposure flag. Untouched validation remains rejected whenever the explicitly Boolean overlap flag is true. The flag is still a declared claim, not independently authenticated evidence that a period was truly untouched.
+
+On loading existing JSONL, repeated `trial_id` values now fail explicitly rather than silently appearing as separate records; append refuses a ledger already containing such duplicates. Focused regression tests cover malformed exposure flags and tampered duplicate rows. The historical five-record ledger remains unchanged. The source-only change leaves DEC-629 and DEC-630 unadopted, and does not touch any protected historical research, installed workflow, ref, runner, security policy, broker, or trade.

@@ -34,10 +34,11 @@ def _exposure(value: object) -> dict[str, object]:
     exposure = dict(value)
     if "untouched_validation" not in exposure or not isinstance(exposure["untouched_validation"], bool):
         raise ValueError("data_exposure.untouched_validation must be true or false")
-    if exposure.get("overlaps_2015_2022") and exposure["untouched_validation"]:
+    overlaps = exposure.get("overlaps_2015_2022")
+    if not isinstance(overlaps, bool):
+        raise ValueError("data_exposure.overlaps_2015_2022 must be true or false")
+    if overlaps and exposure["untouched_validation"]:
         raise ValueError("2015-2022 overlap cannot be marked as untouched validation")
-    if "overlaps_2015_2022" not in exposure:
-        raise ValueError("data_exposure.overlaps_2015_2022 must be stated")
     return exposure
 
 
@@ -84,10 +85,16 @@ def load_trials(path: Path | None = None) -> tuple[dict[str, object], ...]:
     if text and not text.endswith("\n"):
         raise ValueError("ledger must end with a newline")
     rows = []
+    seen_ids: set[str] = set()
     for line_number, line in enumerate(text.splitlines(), start=1):
         if not line.strip():
             raise ValueError(f"blank line in ledger at {line_number}")
-        rows.append(validate_trial(json.loads(line)))
+        trial = validate_trial(json.loads(line))
+        trial_id = str(trial["trial_id"])
+        if trial_id in seen_ids:
+            raise ValueError(f"duplicate trial_id in ledger at line {line_number}: {trial_id}")
+        seen_ids.add(trial_id)
+        rows.append(trial)
     return tuple(rows)
 
 
