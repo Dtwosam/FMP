@@ -29,6 +29,18 @@ Thus, **trade-level modeling is technically supported in the engine, but the alr
 
 This trace is a source inspection only; no functions above were executed and no protected market data was loaded.
 
+## Read-only live GitHub metadata check (2026-11-17)
+
+This follow-up was limited to GitHub **artifact metadata**, the existing workflow-run metadata, and **repository path names**. It did **not** invoke any artifact ZIP download URL, read the archive, fetch private historical data, or rerun a workflow.
+
+- GitHub Actions workflow run [35015277625](https://github.com/Dtwosam/FMP/actions/runs/35015277625) reports `name=phase7-walk-forward`, `event=workflow_dispatch`, `conclusion=success`, `run_attempt=1` and exact head SHA `a1f8a0466463c79fdbceb9d6ebad9e3ea809474d`. This is **historical run metadata**, not permission to dispatch again.
+- The run's first-page artifact metadata lists **one artifact**: ID `10414817824`, `phase7-stage2-session_breakout-a1f8a0466463c79fdbceb9d6ebad9e3ea809474d`, with `expired=false`, `created_at=2026-09-15T19:43:43Z`, `expires_at=2026-12-14T19:43:07Z`, and digest `sha256:2522bbfd22979fd753fb1f51d2bb0d1ada957090102712fffbfdf59fe345bad4`. The presence and expiry are a **point-in-time observation**. Artifact retention or ability to retrieve the ZIP later is not guaranteed. The ZIP was **not downloaded**.
+- The repository's Git tree at source `0ac0aae583f333580bcacc8dfd50818508f655b6` had 2,591 entries and `truncated=false`; its paths include the Phase 7 summaries, source and test files, and `docs/trial-ledger.jsonl`, but **no committed file named `trades.jsonl` or apparent Phase 7 individual-trade ledger**. A path inventory cannot prove that no external or differently named trade ledger exists.
+- The documented authoritative three-file ZIP and its SHA-256 agree with the run's recorded metadata, but the metadata alone does not independently inspect its interior.
+- Archive availability does **not** change the original conclusion: individual trade R-values cannot be reconstructed from the published Stage 2 aggregates. A later decision to download/inspect the archive or replay any history is **separate** from this metadata-only authorization.
+
+The December 14 expiry is an evidence-retention decision point for the owner, **not** authorization to download, extend retention, open protected records, or dispatch a workflow.
+
 ## What existing Phase 7 evidence actually says
 
 The frozen USDJPY 15m session breakout uses `buffer_pips=5` and `target_range_multiple=1.5` under `EXP-20260915-008`. Stage 1 used 2024 for selection. Stage 2 scored seven independent equity-reset windows from 2025-01-01 through 2026-08-21 exclusive, with 199 trades and 0.25% requested risk per trade. All windows start separately at $100,000.
