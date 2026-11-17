@@ -40,12 +40,29 @@ A row is checked for:
 - no second spread deduction when the basis is `included_in_bid_ask_reference`;
 - net PnL equal to gross minus slippage, commission, financing, and any separate spread;
 - window starting equity, then equity after each trade equal to equity before plus that trade's net PnL;
-- R equal to net PnL divided by pre-trade equity times the submission's requested risk fraction;
+- gross profit equal to the sum of positive net PnL, and gross loss equal to the Phase 3 positive magnitude `-sum(negative net PnL)`;
+- R equal to net PnL divided by the recorded pre-PnL equity times the submission's requested risk fraction;
 - the requested fraction inside `(0, 0.005]`, the existing hard maximum;
 - declared trade counts and cost totals, optional expected trade ids, and overlapping windows only when both sides are marked `separate_scenario`;
 - an intrabar ambiguity flag, which must use `conservative_adverse` when it is true.
 
 Acceptance means those rows agree with each other. `original_phase7_trade_ledger_verified` is always false. Closed trades do not show simultaneous open risk or whether a daily loss halt fired. Independent windows are not one compounded account.
+
+`gross_loss_usd` follows `compute_backtest_metrics` in `src/fmp/reporting/backtest.py`: losses are the negative net results, and gross loss is their sign-flipped sum. A declared negative gross loss does not match that total. Gross profit remains the sum of positive net results. Both totals are taken after slippage, commission, financing, and any separate spread, because Phase 3 builds them from `net_pnl_usd`.
+
+## R definitions
+
+`r_definition` is `requested_risk_normalized_at_recorded_equity`. That is the only R this component reports.
+
+The engine in `finalize_position` stores `risk_equity_before_usd` from `state.risk_equity_usd` at exit, before that trade's own PnL is applied. `compute_research_metrics` divides net PnL by that recorded equity times the requested fraction. The validator uses the same denominator. It does not change the historical research metric.
+
+Three quantities stay separate:
+
+1. Requested-risk-normalized R at the recorded equity. This is `net_pnl_usd / (risk_equity_before_usd × requested_risk_fraction)`.
+2. Actual initial position risk. `size_units` floors units so `units × loss_usd_per_unit(entry, stop)` can be below the requested budget. `TradeRecord` does not store that reserved amount, and this component does not invent it.
+3. Net R on actual initial risk, `net_pnl_usd / actual initial position risk`. A submission that only carries the recorded equity does not contain this ratio. It is not substituted for the reported R.
+
+Recorded equity can differ from the equity at entry when another trade realizes PnL while the position is still open. The equity chain follows exit order. An R claim that divides by the earlier entry equity fails `R_MISMATCH`.
 
 `synthetic_fixture` provenance must not carry a source run, artifact, or commit, and must not be labeled as the original Phase 7 result. `claims_trades_from_stage2_zip=True` is rejected because that ZIP has no trade ledger. A `separately_authorized_submission` may cite the public run id and still remains unverified.
 
@@ -57,7 +74,7 @@ The published Stage 2 dollars, the window-start `$250` R approximation, and a wi
 
 | Estimand | Inputs required before an estimate would be defined | What this component does |
 | --- | --- | --- |
-| After-cost expectancy | An accepted ledger. Per-trade R uses that trade's own pre-trade equity and the requested fraction, not a fixed `$250`. Spread basis, slippage, commission, and financing reconcile as above. | Reports the descriptive sample mean of those R values. Status `DESCRIPTIVE_ONLY`. The mean is not a confirmatory expectancy. |
+| After-cost expectancy | An accepted ledger. Per-trade R uses the recorded exit equity and the requested fraction, not a fixed `$250` and not the stop-distance risk. Spread basis, slippage, commission, and financing reconcile as above. | Reports the descriptive sample mean of those requested-risk R values. Status `DESCRIPTIVE_ONLY`. The mean is not a confirmatory expectancy. |
 | Confidence interval | At least two accepted trades. Dependence declared as blocked, with an explicit block such as UTC week. An `iid` declaration is rejected. A complete predeclared family size. Data reuse `prospective` or `untouched_predeclared`. A dated cost-provenance id. | Does not compute an interval. Unknown census, `iid` dependence, `already_scored` or unknown reuse, and a missing cost provenance block it. A complete declaration that this component has not authenticated is `INPUTS_PRESENT_NOT_COMPUTED`. |
 | Loss and drawdown distribution | The interval inputs, an overlap declaration (`no_overlap` or `overlaps_modeled`), and a mark-to-market equity path. Exit-only trade rows miss the path between entry and exit. | Does not build the distribution. `realized_exit_only` and an unspecified path are blocked. |
 | Probability of doubling within 30 calendar days | The drawdown inputs, horizon exactly 30 days, a no-trade calendar of at least 30 days, a terminal or touch path declared on its own, and an explicit doubling barrier. | Does not compute the probability. The same blockers apply. Phase 7's scored 2024 and 2025–2026 windows are `already_scored` and cannot be reused as untouched confirmation. |
@@ -71,4 +88,4 @@ The 100%-within-30-days question remains a falsifiable research question. A simu
 
 ## Next path
 
-The shortest path to a real evaluation is a separate owner authorization to identify whether an individual trade ledger exists outside the three-file Stage 2 ZIP, and then to supply that ledger to `validate_trade_submission` without relabeling the scored windows as untouched. A replay of run `35015277625` is a different decision and is not authorized here. Annual catalogue work stays behind issue #779.
+The bounded name search did not find the 199 Stage 2 trades. The requirements for a later replay, if the owner authorizes one, are in `docs/phase7-stage2-trade-recovery-decision.md`. That document does not authorize the replay, a download of the Phase 4 benchmark artifacts, or a fresh out-of-sample claim. Annual catalogue work stays behind issue #779.

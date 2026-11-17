@@ -36,11 +36,17 @@ _PHASE7_TOKENS = (
     _PHASE7_ZIP_SHA256,
 )
 
+REQUESTED_RISK_R_DEFINITION = "requested_risk_normalized_at_recorded_equity"
+
 _LIMITATIONS = (
     "Closed-trade equity does not show simultaneous open risk.",
     "Closed-trade equity does not show whether a daily loss halt fired.",
     "This component does not authenticate provenance against the Phase 7 artifact.",
     "Independent windows are not one compounded account.",
+    "Reported R is net PnL divided by recorded risk equity before that trade's own PnL, times the requested risk fraction.",
+    "Recorded risk equity is the engine value at exit. It is not proven to be the equity used when the position was opened.",
+    "Reported R is not actual initial stop risk. Units and stop distance are not a second denominator.",
+    "Net R on actual initial risk is not reported. This submission does not carry a checked stop-risk amount.",
 )
 
 _NON_BLOCKING = frozenset(
@@ -156,6 +162,7 @@ class TradeValidation:
     window_net_pnl_usd: tuple[tuple[str, float], ...]
     sample_size: int
     requested_risk_fraction: float
+    r_definition: str
     provenance_role: str
     probabilities_computed: bool
 
@@ -251,7 +258,9 @@ def validate_trade_submission(submission: TradeSubmission) -> TradeValidation:
     """Check internal consistency of an in-memory trade ledger.
 
     Acceptance means the supplied rows agree with each other and with the
-    declared window totals. It does not verify the rows against Phase 7.
+    declared window totals. Gross loss uses the Phase 3 positive magnitude.
+    Reported R uses the recorded equity denominator and is not stop risk.
+    Acceptance does not verify the rows against Phase 7.
     """
 
     if not isinstance(submission, TradeSubmission):
@@ -313,6 +322,7 @@ def validate_trade_submission(submission: TradeSubmission) -> TradeValidation:
         window_net_pnl_usd=window_nets,
         sample_size=len(submission.trades),
         requested_risk_fraction=stored_fraction,
+        r_definition=REQUESTED_RISK_R_DEFINITION,
         provenance_role=submission.provenance.role,
         probabilities_computed=False,
     )
@@ -795,12 +805,13 @@ def _aggregates(
             window.gross_profit_usd,
             math.fsum(value for value in nets if value > 0),
         )
+        losses = [value for value in nets if value < 0]
         _compare_total(
             findings,
             window,
             "gross_loss_usd",
             window.gross_loss_usd,
-            math.fsum(value for value in nets if value < 0),
+            -math.fsum(losses),
         )
         _compare_total(
             findings,

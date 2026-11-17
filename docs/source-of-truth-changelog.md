@@ -2307,3 +2307,7 @@ Added a source-only reader of the experiment log and the append-only trial ledge
 ## 2026-11-17 — DEC-634 trade-level evidence validation
 
 Added a source-only checker for a caller-supplied closed-trade ledger and recorded the separate identities of the Phase 7 run, artifact, owner-stated preserved copy, published aggregates, and missing trade rows. The checker does not estimate 30-day probabilities and does not open protected history. DEC-629 and DEC-630 stay proposed. The guardrail, instrument universe, risk hard limits, phase order, and real-money lock are unchanged. No protected research or trading authority is opened.
+
+## 2026-11-17 — DEC-635 gross-loss reconciliation
+
+Aligned caller-supplied gross loss with the Phase 3 positive magnitude and labeled reported R as requested-risk-normalized at the recorded exit equity. Added a decision packet for a possible later Stage 2 trade recovery. The packet does not authorize a replay or a historical download. DEC-629 and DEC-630 stay proposed. The guardrail, instrument universe, risk hard limits, phase order, and real-money lock are unchanged.

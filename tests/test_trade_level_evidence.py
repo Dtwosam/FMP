@@ -7,6 +7,7 @@ from pathlib import Path
 
 from fmp.contracts import Direction
 from fmp.research.trade_level_evidence import (
+    REQUESTED_RISK_R_DEFINITION,
     EvidenceProvenance,
     StatisticalEvidenceDeclaration,
     SubmittedTrade,
@@ -16,7 +17,7 @@ from fmp.research.trade_level_evidence import (
     phase7_public_preservation_record,
     validate_trade_submission,
 )
-from fmp.risk.sizing import pnl_usd
+from fmp.risk.sizing import loss_usd_per_unit, pnl_usd
 
 UTC = timezone.utc
 RISK = 0.0025
@@ -101,6 +102,33 @@ def _trade(
     )
 
 
+def _phase3_window(
+    window_id: str,
+    start: datetime,
+    end: datetime,
+    trades: tuple[SubmittedTrade, ...],
+    *,
+    starting_equity: float = 100_000.0,
+) -> WindowAggregate:
+    """Declare totals with the Phase 3 positive gross-loss magnitude."""
+
+    nets = [trade.net_pnl_usd for trade in trades]
+    losses = [value for value in nets if value < 0]
+    return WindowAggregate(
+        window_id=window_id,
+        start_utc=start,
+        end_exclusive_utc=end,
+        starting_equity_usd=starting_equity,
+        trade_count=len(trades),
+        net_pnl_usd=sum(nets),
+        gross_profit_usd=sum(value for value in nets if value > 0),
+        gross_loss_usd=-sum(losses),
+        slippage_cost_usd=sum(trade.slippage_cost_usd for trade in trades),
+        commission_cost_usd=sum(trade.commission_cost_usd for trade in trades),
+        financing_cost_usd=sum(trade.financing_cost_usd for trade in trades),
+    )
+
+
 def _window(
     window_id: str,
     start: datetime,
@@ -111,6 +139,7 @@ def _window(
     overlap_role: str = "none",
 ) -> WindowAggregate:
     nets = [trade.net_pnl_usd for trade in trades]
+    losses = [value for value in nets if value < 0]
     return WindowAggregate(
         window_id=window_id,
         start_utc=start,
@@ -119,7 +148,7 @@ def _window(
         trade_count=len(trades),
         net_pnl_usd=sum(nets),
         gross_profit_usd=sum(value for value in nets if value > 0),
-        gross_loss_usd=sum(value for value in nets if value < 0),
+        gross_loss_usd=-sum(losses),
         slippage_cost_usd=sum(trade.slippage_cost_usd for trade in trades),
         commission_cost_usd=sum(trade.commission_cost_usd for trade in trades),
         financing_cost_usd=sum(trade.financing_cost_usd for trade in trades),
@@ -347,6 +376,244 @@ class TradeLevelEvidenceTests(unittest.TestCase):
         self.assertIn("COST_INVALID", _codes(validate_trade_submission(
             replace(submission, trades=(negative_commission,) + submission.trades[1:])
         )))
+
+    def test_gross_loss_matches_phase3_positive_magnitude(self) -> None:
+        winner = _trade(
+            trade_id="syn-win",
+            decision_id="dec-win",
+            window_id="synthetic-mix",
+            equity_before=100_000.0,
+            entry_at=_ts(1, 6, 10),
+            exit_at=_ts(1, 6, 12),
+            entry_reference=1.1000,
+            exit_reference=1.1030,
+            entry_price=1.1000,
+            exit_price=1.1030,
+            stop_price=1.0990,
+            target_price=1.1060,
+        )
+        loser = _trade(
+            trade_id="syn-loss",
+            decision_id="dec-loss",
+            window_id="synthetic-mix",
+            equity_before=winner.risk_equity_after_usd,
+            entry_at=_ts(1, 6, 13),
+            exit_at=_ts(1, 6, 15),
+            entry_reference=1.2000,
+            exit_reference=1.1990,
+            entry_price=1.2000,
+            exit_price=1.1990,
+            stop_price=1.1980,
+            target_price=1.2030,
+        )
+        self.assertAlmostEqual(winner.net_pnl_usd, 30.0)
+        self.assertAlmostEqual(loser.net_pnl_usd, -10.0)
+        mixed_window = _phase3_window(
+            "synthetic-mix", _ts(1, 1, 0), _ts(2, 1, 0), (winner, loser)
+        )
+        self.assertEqual(mixed_window.gross_profit_usd, 30.0)
+        self.assertEqual(mixed_window.gross_loss_usd, 10.0)
+        self.assertEqual(mixed_window.net_pnl_usd, 20.0)
+        mixed = validate_trade_submission(_submit((winner, loser), (mixed_window,)))
+        self.assertTrue(mixed.accepted, mixed.findings)
+        self.assertAlmostEqual(mixed.window_net_pnl_usd[0][1], 20.0)
+
+        first_loss = _trade(
+            trade_id="syn-loss-a",
+            decision_id="dec-loss-a",
+            window_id="synthetic-losses",
+            equity_before=100_000.0,
+            entry_at=_ts(1, 7, 10),
+            exit_at=_ts(1, 7, 12),
+            entry_reference=1.2000,
+            exit_reference=1.1990,
+            entry_price=1.2000,
+            exit_price=1.1990,
+            stop_price=1.1980,
+            target_price=1.2030,
+        )
+        second_loss = _trade(
+            trade_id="syn-loss-b",
+            decision_id="dec-loss-b",
+            window_id="synthetic-losses",
+            equity_before=first_loss.risk_equity_after_usd,
+            entry_at=_ts(1, 7, 13),
+            exit_at=_ts(1, 7, 15),
+            entry_reference=1.3000,
+            exit_reference=1.2995,
+            entry_price=1.3000,
+            exit_price=1.2995,
+            stop_price=1.2980,
+            target_price=1.3030,
+        )
+        self.assertAlmostEqual(first_loss.net_pnl_usd, -10.0)
+        self.assertAlmostEqual(second_loss.net_pnl_usd, -5.0)
+        many = validate_trade_submission(_submit((first_loss, second_loss), (
+            _phase3_window(
+                "synthetic-losses", _ts(1, 1, 0), _ts(2, 1, 0), (first_loss, second_loss)
+            ),
+        )))
+        self.assertTrue(many.accepted, many.findings)
+        self.assertAlmostEqual(many.window_net_pnl_usd[0][1], -15.0)
+
+        wins = (
+            replace(
+                winner,
+                trade_id="syn-win-a",
+                decision_id="dec-win-a",
+                window_id="synthetic-wins",
+            ),
+            replace(
+                winner,
+                trade_id="syn-win-b",
+                decision_id="dec-win-b",
+                window_id="synthetic-wins",
+                entry_timestamp_utc=_ts(1, 8, 10),
+                exit_timestamp_utc=_ts(1, 8, 12),
+                risk_equity_before_usd=winner.risk_equity_after_usd,
+                risk_equity_after_usd=winner.risk_equity_after_usd + winner.net_pnl_usd,
+                claimed_net_r=winner.net_pnl_usd / (winner.risk_equity_after_usd * RISK),
+            ),
+        )
+        all_wins = validate_trade_submission(_submit(wins, (
+            _phase3_window("synthetic-wins", _ts(1, 1, 0), _ts(2, 1, 0), wins),
+        )))
+        self.assertTrue(all_wins.accepted, all_wins.findings)
+        self.assertEqual(all_wins.window_net_pnl_usd[0][1], 60.0)
+        self.assertEqual(
+            _phase3_window("synthetic-wins", _ts(1, 1, 0), _ts(2, 1, 0), wins).gross_loss_usd,
+            0.0,
+        )
+
+        signed_loss = replace(
+            _phase3_window(
+                "synthetic-losses", _ts(1, 1, 0), _ts(2, 1, 0), (first_loss, second_loss)
+            ),
+            gross_loss_usd=first_loss.net_pnl_usd + second_loss.net_pnl_usd,
+        )
+        self.assertLess(signed_loss.gross_loss_usd, 0.0)
+        rejected = validate_trade_submission(_submit((first_loss, second_loss), (signed_loss,)))
+        self.assertFalse(rejected.accepted)
+        self.assertIn("AGGREGATE_MISMATCH", _codes(rejected))
+
+        costly_win = _trade(
+            trade_id="syn-cost-win",
+            decision_id="dec-cost-win",
+            window_id="synthetic-costs",
+            equity_before=100_000.0,
+            entry_at=_ts(1, 9, 10),
+            exit_at=_ts(1, 9, 12),
+            entry_reference=1.1000,
+            exit_reference=1.1040,
+            entry_price=1.1001,
+            exit_price=1.1035,
+            stop_price=1.0990,
+            target_price=1.1080,
+            commission=4.0,
+        )
+        costly_loss = _trade(
+            trade_id="syn-cost-loss",
+            decision_id="dec-cost-loss",
+            window_id="synthetic-costs",
+            equity_before=costly_win.risk_equity_after_usd,
+            entry_at=_ts(1, 9, 13),
+            exit_at=_ts(1, 9, 15),
+            entry_reference=1.2000,
+            exit_reference=1.1992,
+            entry_price=1.2001,
+            exit_price=1.1991,
+            stop_price=1.1980,
+            target_price=1.2030,
+        )
+        self.assertAlmostEqual(costly_win.gross_pnl_usd, 40.0)
+        self.assertAlmostEqual(costly_win.net_pnl_usd, 30.0)
+        self.assertAlmostEqual(costly_loss.gross_pnl_usd, -8.0)
+        self.assertAlmostEqual(costly_loss.net_pnl_usd, -10.0)
+        cost_window = _phase3_window(
+            "synthetic-costs", _ts(1, 1, 0), _ts(2, 1, 0), (costly_win, costly_loss)
+        )
+        self.assertEqual(cost_window.gross_profit_usd, 30.0)
+        self.assertEqual(cost_window.gross_loss_usd, 10.0)
+        self.assertEqual(cost_window.net_pnl_usd, 20.0)
+        after_costs = validate_trade_submission(_submit((costly_win, costly_loss), (cost_window,)))
+        self.assertTrue(after_costs.accepted, after_costs.findings)
+        self.assertAlmostEqual(after_costs.window_net_pnl_usd[0][1], 20.0)
+
+    def test_recorded_exit_equity_is_not_entry_equity_or_stop_risk(self) -> None:
+        earlier_exit = _trade(
+            trade_id="syn-earlier-exit",
+            decision_id="dec-earlier-exit",
+            window_id="synthetic-gap",
+            equity_before=100_000.0,
+            entry_at=_ts(1, 10, 11),
+            exit_at=_ts(1, 10, 12),
+            entry_reference=1.1000,
+            exit_reference=1.1100,
+            entry_price=1.1000,
+            exit_price=1.1100,
+            stop_price=1.0900,
+            target_price=1.1200,
+            units=100_000,
+        )
+        entry_equity = 100_000.0
+        recorded_equity = earlier_exit.risk_equity_after_usd
+        held = _trade(
+            trade_id="syn-held",
+            decision_id="dec-held",
+            window_id="synthetic-gap",
+            equity_before=recorded_equity,
+            entry_at=_ts(1, 10, 10),
+            exit_at=_ts(1, 10, 14),
+            entry_reference=1.2000,
+            exit_reference=1.2100,
+            entry_price=1.2000,
+            exit_price=1.2100,
+            stop_price=1.1990,
+            target_price=1.2200,
+            units=10_000,
+        )
+        self.assertLess(held.entry_timestamp_utc, earlier_exit.exit_timestamp_utc)
+        self.assertGreater(held.exit_timestamp_utc, earlier_exit.exit_timestamp_utc)
+        self.assertAlmostEqual(earlier_exit.net_pnl_usd, 1_000.0)
+        self.assertAlmostEqual(held.net_pnl_usd, 100.0)
+        self.assertAlmostEqual(recorded_equity, 101_000.0)
+
+        stop_risk = held.units * loss_usd_per_unit(
+            held.symbol, held.entry_reference_price, held.stop_price
+        )
+        requested_at_entry = entry_equity * RISK
+        requested_at_recorded_equity = recorded_equity * RISK
+        entry_r = held.net_pnl_usd / requested_at_entry
+        recorded_r = held.net_pnl_usd / requested_at_recorded_equity
+        stop_r = held.net_pnl_usd / stop_risk
+        self.assertAlmostEqual(stop_risk, 10.0)
+        self.assertNotAlmostEqual(entry_r, recorded_r)
+        self.assertNotAlmostEqual(stop_r, recorded_r)
+
+        accepted = validate_trade_submission(_submit((earlier_exit, held), (
+            _window("synthetic-gap", _ts(1, 1, 0), _ts(2, 1, 0), (earlier_exit, held)),
+        )))
+        self.assertTrue(accepted.accepted, accepted.findings)
+        self.assertEqual(accepted.r_definition, REQUESTED_RISK_R_DEFINITION)
+        self.assertAlmostEqual(dict(accepted.per_trade_net_r)["syn-held"], recorded_r)
+        self.assertIn(
+            "Recorded risk equity is the engine value at exit.",
+            " ".join(accepted.limitations),
+        )
+
+        claimed_from_entry = replace(held, claimed_net_r=entry_r)
+        mismatch = validate_trade_submission(_submit((earlier_exit, claimed_from_entry), (
+            _window(
+                "synthetic-gap",
+                _ts(1, 1, 0),
+                _ts(2, 1, 0),
+                (earlier_exit, claimed_from_entry),
+            ),
+        )))
+        self.assertFalse(mismatch.accepted)
+        self.assertIn("R_MISMATCH", _codes(mismatch))
+        self.assertEqual(mismatch.r_definition, REQUESTED_RISK_R_DEFINITION)
+        self.assertEqual(mismatch.per_trade_net_r, ())
 
     def test_windows_reset_equity_and_must_match_declared_aggregates(self) -> None:
         submission = _baseline()
