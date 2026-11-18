@@ -2287,3 +2287,31 @@ Recorded failed installer run `37360538726` as pre-mutation evidence and correct
 ## 2026-10-05 — DEC-573 2020 dispatch preflight
 
 Bound the successful DEC-572 runtime installation and exact annual history into a read-only 2020/run382 dispatch preflight. Run 382 remains absent; no dispatch or trading-related authority is introduced.
+
+## 2026-11-17 — DEC-627 100%-in-30-days hypothesis
+
+Recorded a 100% net return within 30 calendar days as a falsifiable research question, not a target or acceptance gate. Added the source-only return-versus-ruin calculator. The annual catalogue method, instrument universe, risk hard limits, phase order, and real-money lock are unchanged. No protected research or trading authority is opened.
+
+## 2026-11-17 — DEC-628 retail costs and DEC-629 proposal
+
+Recorded public retail cost quotations, a narrow cost input to the existing return-versus-ruin lattice, and an append-only trial ledger. DEC-629 proposes a boundary with mechanism-first preregistration and is not adopted. The guardrail, instrument universe, risk hard limits, phase order, and real-money lock are unchanged. No protected research or trading authority is opened.
+
+## 2026-11-17 — DEC-630 owner question, not adopted
+
+Asked the owner whether preregistered source-only measurements and a later multiple-testing control can coexist with the annual catalogue. The proposal is not in force. The guardrail was not edited. A local Python 3.12.13 run of the pinned research dependencies reproduced the same 145 failures and 229 errors already present on `53e20313`. Those failures are annual-catalogue and EXP-062 source pins. Installed workflows were not changed.
+
+## 2026-11-17 — DEC-633 historical trial inventory
+
+Added a source-only reader of the experiment log and the append-only trial ledger. The programme-wide trial count stays unknown. Printed configuration totals, result rows, repeated experiment IDs, and data-exposure claims are kept distinct, and incomplete families are not sent to the Benjamini–Yekutieli tool. DEC-629 and DEC-630 stay proposed. The guardrail, instrument universe, risk hard limits, phase order, and real-money lock are unchanged. No protected research or trading authority is opened.
+
+## 2026-11-17 — DEC-634 trade-level evidence validation
+
+Added a source-only checker for a caller-supplied closed-trade ledger and recorded the separate identities of the Phase 7 run, artifact, owner-stated preserved copy, published aggregates, and missing trade rows. The checker does not estimate 30-day probabilities and does not open protected history. DEC-629 and DEC-630 stay proposed. The guardrail, instrument universe, risk hard limits, phase order, and real-money lock are unchanged. No protected research or trading authority is opened.
+
+## 2026-11-17 — DEC-635 gross-loss reconciliation
+
+Aligned caller-supplied gross loss with the Phase 3 positive magnitude and labeled reported R as requested-risk-normalized at the recorded exit equity. Added a decision packet for a possible later Stage 2 trade recovery. The packet does not authorize a replay or a historical download. DEC-629 and DEC-630 stay proposed. The guardrail, instrument universe, risk hard limits, phase order, and real-money lock are unchanged.
+
+## 2026-11-17 — DEC-636 Phase 7 trade-record retention
+
+Added an opt-in writer that keeps the trade and rejection rows the existing Phase 7 evaluator already returns. The writer uses a separate checksummed directory and does not change the aggregate artifact format, the frozen evaluator, or artifact `10414817824`. No authentic 199-trade Stage 2 series was recovered. A later historical reproduction still requires a separate owner decision. DEC-629 and DEC-630 stay proposed. The guardrail, instrument universe, risk hard limits, phase order, and real-money lock are unchanged.

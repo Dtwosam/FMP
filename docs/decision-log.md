@@ -11250,3 +11250,134 @@ Issue #779 remains OPEN: independently authenticated continuous no-bypass admin 
 The candidate compares exact `workflow_dispatch`, repository, tag ref/type, SHA, workflow ref and workflow SHA, year, previous freeze run, run number and attempt. Twenty-four negative variants reject missing/moved/softened job guards, removal of workflow SHA, self-attested `github.sha == github.sha`, wrong tag, run-type confusion and injected permission fields. The report SHA-256 is an integrity checksum, not external approval or cryptographic authentication; source-bound canonical regeneration rejects forged permission flags. No YAML modification or actual GitHub job gate is produced.
 
 A GitHub job-level condition runs before job *steps* but not before the workflow definition is loaded. A full release still requires independently authenticated continuously enforced administrator tag lock with no bypass, a genuinely approved expected ref/SHA tuple from outside runner observations, separately reviewed and installed three-job/preinstall/preaccess workflow and 2023 runtime gates, fresh run385 inventory, and explicit one-shot dispatch decision. Issue #779 stays OPEN. No historical protected read, retry, future year, brokerage, demo/live, real money or trading is allowed.
+
+## 2026-11-17 — DEC-627 falsifiable 100%-in-30-days hypothesis and return-versus-ruin calculator
+
+**Status:** SOURCE-ONLY MEASUREMENT TOOL. Not a promotion gate, not annual-research authorization, and not trading authority.
+
+The 17 November 2026 feasibility study is adopted only as a research question: whether a small disposable account could reach a 100% net return within 30 calendar days through a repeatable after-cost edge. That question stays falsifiable. It is not a performance promise, a development target, or an acceptance gate. The study's F1–F3 and I1–I3 screens stay candidate thresholds until a later decision reviews their statistical justification and adopts them explicitly.
+
+The governing method remains discovery-first annual pattern catalogue research under DEC-469 / DEC-268. The return-versus-ruin calculator is a measurement tool inside that method. It is not a new research method, not a pattern-type substitute, and not a leverage search. No annual segment is authorized. Run 385 stays unconsumed. Issues #779, #820, and #821 stay unresolved. Workflows, tags, runner settings, and security policy are unchanged.
+
+`src/fmp/simulation/return_vs_ruin.py` reconstructs the study's independent-trade lattice and stress scenarios from the printed formulas. `fmpsim.py` was not in the PDF. The reconstruction does not impose European leverage caps or margin close-out unless a caller sets those account assumptions. The study's own scenario probabilities are reproduced with negative-balance protection only; the printed "ESMA-compliant" labels describe the chosen risk fraction, and they are not a hidden resize.
+
+Edge comes before size. A negative or unidentified after-cost expectancy is not evaluated as a doubling candidate. The documented Phase 7 USDJPY 15m session-breakout aggregate is in that category: stage 2 at 1.0 pip of adverse slippage has negative expectancy, 2024–2026 for that candidate was already scored, and the approximate +0.005R figure at 0.5 pip is not a trade-level validated edge. Illustrative doubling probabilities for it are recorded as illustrations in EXP-20261117-001.
+
+No protected history was read. No broker connection, demo order, live order, or real-money path was added. Simulation output does not authorize trading.
+
+## 2026-11-17 — DEC-628 retail cost quotations and trial ledger
+
+**Status:** SOURCE-ONLY MEASUREMENT. Not a broker selection, not a promotion gate, not annual-research authorization, and not trading authority.
+
+`src/fmp/research/retail_costs.py` records public quotations retrieved on 2026-11-17 for EURUSD, GBPUSD, and USDJPY. The sources are OANDA Corporation's US spread-only page, OANDA's US financing-fee page, IC Markets (EU) Ltd's spreads-and-swaps and trading-costs pages, and Pepperstone's costs-and-fees page. Advertised minimums, including Pepperstone Razor "from 0.0" and IC Standard "from 0.8", are not used as typical spreads. No hourly or session spread was published, and none is estimated. IC's EURUSD table average of 0.06 pips and the same site's "0.1 pip" average are both kept; a complete IC package uses the higher published average. OANDA's single quoted spread is unlabeled. Live swap rates for OANDA and Pepperstone were not on the retrieved pages. IC publishes swap points; only the EURUSD worked example shows that one point is 1 USD per standard lot. GBPUSD and USDJPY point values in USD are therefore unavailable.
+
+A bid/ask fill already contains the historical spread. The model rejects a second spread on that fill. Positive financing is an account debit. The 17:00 America/New_York cutoff and the Wednesday triple for T+2 forex are taken from those pages. A weekend hold that does not include that Wednesday triple is rejected rather than given an invented day count. Holiday rolls are not inferred.
+
+The default from-mid comparison uses the higher complete published package and still requires an explicit slippage figure. Zero slippage is not filled in. At a hypothetical 15-pip stop, OANDA's unlabeled quote is higher than IC's average-plus-commission package before any slippage assumption. That comparison is not an observed FMP fill.
+
+Phase 7's published stage-2 aggregates stay the only re-evaluation of that strategy. They already include the historical bid/ask spread and the stated per-side slippage, with zero commission and zero financing. The aggregate does not identify a trade-level R series, a payoff ratio, or an overnight share, so doubling and loss probabilities are not estimated for it. A zero gross edge remains non-positive at every fixed risk fraction. No broker is connected.
+
+`docs/trial-ledger.jsonl` is an append-only ledger. It backfills only records whose fields are supported by existing documents. The programme-wide trial count is null. 2015–2022 is marked explored, not untouched validation. Experiment: `EXP-20261117-002`.
+
+## 2026-11-17 — DEC-629 PROPOSED, NOT ADOPTED — mechanism-first tests and the annual catalogue
+
+**Status:** PROPOSED. This entry does not amend the operating guardrail, DEC-469, phase order, risk limits, the instrument universe, or any authorization gate.
+
+The 17 November 2026 independent review recommends mechanism-first preregistered hypotheses as the primary next research method, and it treats annual-catalogue synthesis as usable for Strategy V1 only after a null calibration. DEC-469 and `docs/research-method-operating-guardrail.md` make discovery-first annual pattern catalogue research the governing method for protected historical discovery.
+
+Those instructions conflict on what may be called the method, and on whether catalogue synthesis can proceed without a null calibration this repository has not adopted.
+
+The proposed resolution, which is not in force, is:
+
+- The annual catalogue remains the governing method for any protected annual segment.
+- Source-only mechanism-first measurements, including the return-versus-ruin calculator and the retail cost model, are tools. They do not replace DEC-469 and they do not open a catalogue year.
+- A later explicit decision is required before null calibration, before any edit to the guardrail, and before Strategy V1 synthesis.
+- This proposal does not authorize run 385, a broker connection, demo or live orders, or real-money trading. Issues #779, #820, and #821 stay unresolved.
+
+The guardrail was not edited.
+
+## 2026-11-17 — DEC-630 PROPOSED, AWAITING OWNER — catalogue and preregistered tests
+
+**Status:** PROPOSED. Awaiting an owner decision. Not adopted. This entry does not amend the operating guardrail, DEC-469, phase order, risk limits, the instrument universe, or any authorization gate.
+
+The owner question is whether source-only preregistered measurements may sit beside the annual catalogue, and whether a multiple-testing control ever becomes a gate.
+
+The proposed coexistence, which is not in force, is:
+
+- Protected annual discovery stays under DEC-469. The catalogue remains the governing method for any protected year. This proposal opens no year. Run 385 stays unconsumed.
+- A preregistered measurement that does not read protected history may be written down before it is run. The trial ledger holds the hypothesis, version, parameters, data exposure, cost assumptions, source commit, outcome, and statistical evidence. An unknown trial count stays null. Data from 2015 through 2022 stays explored.
+- DEC-628 costs are attached before that measurement is counted. A missing cost is not entered as zero. A historical bid/ask spread is not charged a second time. A published minimum is not treated as an observed average. A lattice probability stays a hypothetical distribution until a trade-level record is supplied.
+- A multiple-testing control, including a null calibration of frozen annual catalogues, is not a current gate. If the owner later adopts one, it would apply to frozen catalogues before Strategy V1 synthesis. It would not replace the catalogue, and it would not reopen a scored window as untouched validation.
+- Strategy V1 synthesis, a guardrail edit, catalogue dispatch, a broker connection, demo or live orders, and real-money trading still require their existing decisions. Issues #779, #820, and #821 stay unresolved.
+
+The guardrail was not edited.
+
+## 2026-11-17 — DEC-631 trial-ledger claim-type and duplicate-identity integrity
+
+**Status:** SOURCE-ONLY LEDGER CORRECTNESS. No new research method, data access, acceptance gate, risk limit, or trading authority.
+
+The DEC-628 append-only trial ledger now requires an actual Boolean for `data_exposure.overlaps_2015_2022` instead of accepting truthy or falsy JSON values. Previously, for example, a numeric zero or a string claiming `false` could be accepted as an exposure flag. Untouched validation remains rejected whenever the explicitly Boolean overlap flag is true. The flag is still a declared claim, not independently authenticated evidence that a period was truly untouched.
+
+On loading existing JSONL, repeated `trial_id` values now fail explicitly rather than silently appearing as separate records; append refuses a ledger already containing such duplicates. Focused regression tests cover malformed exposure flags and tampered duplicate rows. The historical five-record ledger remains unchanged. The source-only change leaves DEC-629 and DEC-630 unadopted, and does not touch any protected historical research, installed workflow, ref, runner, security policy, broker, or trade.
+
+## 2026-11-17 — DEC-632 source-only complete-family BY-FDR research tool
+
+**Status:** SOURCE-ONLY / NOT AN ADOPTED ACCEPTANCE GATE. The governing DEC-469/DEC-268 annual pattern catalogue method is unchanged. This does not approve a method amendment or protected historical research.
+
+`src/fmp/research/multiple_testing.py` provides the Benjamini–Yekutieli (2001) false-discovery-rate adjustment for a complete, predeclared hypothesis family when supplied with valid p-values, unique normalized hypothesis IDs, a declared family ID and the total family size. It accepts no missing, non-finite, boolean, negative or above-one p-values. It refuses unknown, invalid or mismatched `total_hypotheses`, does not silently drop failures, and reports deterministic hypothesis-ID-sorted adjusted p-values and rejections. The calculation assumes the supplied p-values are valid and cannot establish that a self-declared family census was complete.
+
+FMP's backfilled programme-wide trial count is **unknown**, so no historical catalogue significance result can be computed from that ledger as though its five entries represent the full search. This component has no caller in the protected annual workflow, does not calculate candidate p-values, does not convert hypothetical outcomes into evidence and does not infer that already-used years are untouched. The focused tests include hand-computed examples, input guards and a reproducible *independent synthetic p-value smoke check*. That is **not** the catalogue's as-yet-unauthorized null calibration and does not authorize any promotion gate. DEC-629 and DEC-630 stay proposed, not adopted.
+
+No data read, annual run 385 dispatch, workflow/ref/runner/security control change, broker operation, demo/live order or real-money trading is authorized. Issues #779, #820 and #821 remain unresolved.
+
+## 2026-11-17 — DEC-633 auditable historical trial inventory
+
+**Status:** SOURCE-ONLY ACCOUNTING. No new research method, acceptance gate, data access, risk limit, or trading authority. DEC-629 and DEC-630 stay proposed and are not adopted. The guardrail was not edited.
+
+`src/fmp/research/trial_inventory.py` reads `docs/experiment-log.md` and the append-only `docs/trial-ledger.jsonl`. It does not rewrite either file and it does not invent a programme-wide trial count. The ledger census remains null. The log has 230 experiment headings and 84 distinct experiment IDs. `EXP-20260927-062`, `EXP-20261002-067`, and `EXP-20261003-100` are repeated IDs. Those sections stay separate and are not summed. Headings, commits, and pull requests are not trading hypotheses.
+
+A configuration count is verified only when the source prints one total. A per-cell factor is recorded and is not multiplied into a total. A result row is a measurement dimension. The same experiment ID in the log and the ledger is one record. Where both a configuration total and a result-row total are printed, the inventory stores an executed trial count: `EXP-20260914-001` is 81 configurations and 486 result rows; `EXP-20260914-003` is 54 and 324; `EXP-20260914-005` is 27 and 162; `EXP-20260914-006` is 27 and 162. `EXP-20260914-002` prints 324 result rows and a per-cell factor of 6, with no configuration total. `EXP-20260914-004` prints 162 result rows and no configuration total. `EXP-20260922-013` prints 36 declared identities and does not show an executed trial count. The Phase 7 ledger count of 1 is the frozen candidate, and its note says that count is not the earlier 81-configuration search, so it is not stored as a grid total. `EXP-20260915-007` and `EXP-20260917-010` have no printed trial total. Source `*_GRID` tuples are declared parameter lists, not execution counts.
+
+None of those records supplies a closed hypothesis family with valid p-values. The historical family status is `INSUFFICIENT_TRIAL_CENSUS`. The four executed grids that print both totals and contain no p-value are `INSUFFICIENT_STATISTICAL_EVIDENCE`. A declared or incomplete count stays `INSUFFICIENT_TRIAL_CENSUS`. No historical family is passed to `benjamini_yekutieli`, and no corrected significance or profitable strategy is claimed. Phase 4 records that name 2015 through 2022 are not untouched validation. `EXP-20260915-008` names scored 2024 and scored 2025–2026, so that window is not untouched validation. A missing period stays unavailable. Protected artifacts were not opened.
+
+The machine-readable inventory is `docs/trial-inventory.json`. The reading rules and the local counts are in `docs/trial-inventory-summary.md`. Regenerating those files does not change the ledger. A local Python 3.12.13 full discover exited 1: 4948 tests, 145 failures, 229 errors, 31 skipped, 435.328s. That is 18 more tests than the earlier 4930-test run, with the same failure and error counts. The new inventory tests passed. Installed workflows were not edited. The next measurement that would change a probability statement remains a trade-level R series for an already frozen candidate, with the DEC-628 cost record attached before the test is counted. That series is not in the unprotected documents. Run 385 stays unconsumed. Issues #779, #820, and #821 remain unresolved. No workflow, tag, runner, ruleset, broker, demo, live, or real-money path is authorized.
+
+## 2026-11-17 — DEC-634 source-only trade-level evidence validation
+
+**Status:** SOURCE-ONLY VALIDATION. No new research method, acceptance gate, data access, risk limit, or trading authority. DEC-629 and DEC-630 stay proposed and are not adopted. The guardrail was not edited.
+
+`src/fmp/research/trade_level_evidence.py` checks a closed-trade ledger the caller already holds in memory. It does not open a path, download an artifact, or dispatch a workflow. Checks cover unique trade and decision identities, UTC order, window membership, reference and fill prices, gross and net PnL, adverse slippage, commission, financing, spread basis, pre-trade equity, independent window resets, and R equal to net PnL divided by pre-trade equity times the requested risk fraction. The requested fraction must stay inside the existing hard maximum of 0.50% per trade. A synthetic fixture that cites the Stage 2 run, artifact, commit, or ZIP, or that is labeled as the original Phase 7 result, is rejected. Claiming that the Stage 2 ZIP supplied the rows is rejected because that ZIP's documented members are `manifest.json`, `result.json`, and `windows.json`. `original_phase7_trade_ledger_verified` stays false even when a submission cites the public run id.
+
+`assess_statistical_readiness` names the inputs required for a descriptive after-cost mean, a confidence interval, a loss and drawdown distribution, the probability of doubling within 30 calendar days, the probability of a 50% loss, the probability of a 90% loss, and cost or frequency sensitivity. Dependence, selection census, data reuse, and cost provenance are required before a confirmatory claim would even be defined. An `iid` declaration, an unknown trial census, and `already_scored` reuse block those claims. The scored Phase 7 windows stay `already_scored`. The function does not compute the interval or any of those probabilities, does not select a cost scenario, and does not search leverage. A descriptive mean R is reported only after the rows reconcile. That mean is not a demonstrated edge.
+
+Public artifact metadata was read again on 2026-11-17. Run `35015277625` is still success at `a1f8a0466463c79fdbceb9d6ebad9e3ea809474d`. Artifact `10414817824` was `expired=false`, digest `sha256:2522bbfd22979fd753fb1f51d2bb0d1ada957090102712fffbfdf59fe345bad4`, size 5711 bytes, expiry `2026-12-14T19:43:07Z`. The ZIP was not downloaded. The owner-stated ChatGPT Library copy at `/FMP/Phase7/` was not opened in this session. The published aggregates remain in `docs/phase7-walk-forward-evidence.md`. No authorized individual-trade series is available. The contract is `docs/phase7-trade-level-evidence-validation.md`.
+
+Focused `tests.test_trade_level_evidence` on Python 3.12.13 was 13 tests and exited 0. A local full discover printed `Ran 4961 tests in 438.997s` and `FAILED (failures=145, errors=229, skipped=31)`. That is 13 more tests than the DEC-633 count of 4948, with the same 145 failures and 229 errors. Those failures remain annual-catalogue and EXP-062 source-pin checks. Installed workflows were not edited. Run 385 stays unconsumed. Issues #779, #820, and #821 remain unresolved. No workflow, tag, runner, ruleset, broker, demo, live, or real-money path is authorized.
+
+## 2026-11-17 — DEC-635 gross-loss reconciliation and Stage 2 recovery packet
+
+**Status:** SOURCE-ONLY REPAIR. No new research method, acceptance gate, data access, risk limit, or trading authority. DEC-629 and DEC-630 stay proposed and are not adopted. The guardrail was not edited.
+
+`validate_trade_submission` was comparing `gross_loss_usd` with the signed sum of negative net PnL. `compute_backtest_metrics` defines gross loss as `-sum(losses)`, a positive magnitude, and Phase 7 stores that magnitude. The validator now uses the Phase 3 magnitude. A declared negative gross loss does not match. Gross profit remains the sum of positive net PnL. Phase 3 itself was not changed.
+
+The reported R is labeled `requested_risk_normalized_at_recorded_equity`. The denominator stays `risk_equity_before_usd × requested_risk_fraction`, which is the equity `finalize_position` records at exit before that trade's own PnL. That value is not the equity at entry when another trade realizes in between, and it is not `units × loss_usd_per_unit(entry, stop)`. The component does not report net R on actual initial stop risk.
+
+No Phase 7 trade file was found by the prior name search, and that search was not repeated. `docs/phase7-stage2-trade-recovery-decision.md` states the frozen code, data identities, seven windows, three slippage scenarios, published 199-trade targets, and the condition that a later replay must match the original `result.json` and `windows.json` hashes before its new trade file can be called a reproduction. The packet does not authorize the replay. Phase 4 artifacts `10349341980` and `10348339399` were not downloaded. They are not the Stage 2 ledger. The scored 2024 and 2025–2026 windows remain `already_scored`.
+
+On Python 3.12.13, before the formula change, `PYTHONPATH=src .venv/bin/python -m unittest tests.test_trade_level_evidence.TradeLevelEvidenceTests.test_gross_loss_matches_phase3_positive_magnitude` exited 1. The synthetic window declared gross loss `$10` for net outcomes `+$30` and `-$10`. The validator returned `AGGREGATE_MISMATCH` on window `synthetic-mix` because it compared that declaration with the signed sum `-$10`. After the repair the same test accepts the window: gross profit `$30`, gross loss `$10`, net PnL `$20`. A declared negative gross loss is still rejected.
+
+Focused `tests.test_trade_level_evidence`, `tests.test_phase3_reporting`, `tests.test_trial_inventory`, and `tests.test_retail_costs` ran 39 tests in 0.062s and exited 0. `tests.test_trade_level_evidence` is 15 tests. `PYTHONPATH=src .venv/bin/python -m unittest discover -s tests` printed `Ran 4963 tests in 434.956s` and `FAILED (failures=145, errors=229, skipped=31)`, exit 1. That is 2 more tests than the DEC-634 count of 4961, with the same 145 failures and 229 errors. Those failures remain annual-catalogue and EXP-062 source-pin checks. Installed workflows were not edited. Run 385 stays unconsumed. Issues #779, #820, and #821 remain unresolved. No workflow, tag, runner, ruleset, broker, demo, live, or real-money path is authorized.
+
+## 2026-11-17 — DEC-636 Phase 7 trade-record retention
+
+**Status:** SOURCE-ONLY PREPARATION. No new research method, acceptance gate, data access, risk limit, or trading authority. DEC-629 and DEC-630 stay proposed and are not adopted. The guardrail was not edited.
+
+`evaluate_window` still returns only the aggregate `WindowFinancialResult`. The new opt-in path is `retain_phase7_window`, which calls the same `_execute_window` helper and returns the `TradeRecord` and `RejectionRecord` rows `run_backtest` already produced. `write_phase7_trade_retention` writes `trades.jsonl`, `rejections.jsonl`, `window-index.json`, and `manifest.json` to a directory that must be separate from the Phase 7 aggregate directory. Serialization is deterministic and each content file has a SHA-256 checksum and size. `load_phase7_trade_retention` checks those checksums and builds one `TradeSubmission` per slippage scenario for `validate_trade_submission`.
+
+The same decision id is expected across 0.2, 0.5, and 1.0 pip because the engine uses the candidate id as the trade id. Those scenarios are separate ledgers. Each window still restarts at $100,000. Reported R stays `requested_risk_normalized_at_recorded_equity`. Gross loss stays the positive Phase 3 magnitude. Spread stays inside the bid/ask reference, with `spread_cost_usd` of zero. `claims_trades_from_stage2_zip` stays false. `authentic_stage2_series_recovered`, `original_artifact_modified`, `reproduction_authorized`, `owner_authorization_recorded`, and `original_phase7_trade_ledger_verified` stay false. A synthetic file cannot carry the historical source ids. A `separately_authorized_submission` may cite them and is still not verification.
+
+`write_stage2_evidence`, the Phase 7 CLI, and `.github/workflows/phase7-walk-forward.yml` were not changed. Artifact `10414817824` was not modified. No historical market data was read, no workflow was dispatched, and Phase 4 artifacts `10349341980` and `10348339399` were not opened. No authentic 199-trade Stage 2 series has been recovered.
+
+The executing commit of a future reproduction will not be `a1f8a0466463c79fdbceb9d6ebad9e3ea809474d`, because that commit does not contain this writer. `result.json` and `windows.json` include `code_commit`, so a later run will not byte-match the original aggregate hashes. The numeric comparison can still be reviewed, and the commit difference has to stay visible. The bounded procedure is in `docs/phase7-stage2-trade-recovery-decision.md`. It is not an authorization. The next milestone is a formal owner decision on whether to authorize one controlled historical reproduction.
+
+On Python 3.12.13, `tests.test_phase7_trade_retention` was 7 tests and exited 0. Focused `tests.test_phase7_trade_retention`, `tests.test_phase7_evaluation`, `tests.test_phase7_artifacts`, `tests.test_phase7_cli`, `tests.test_trade_level_evidence`, and `tests.test_phase3_reporting` were 40 tests in 0.055s and exited 0. That run includes `test_gross_loss_matches_phase3_positive_magnitude`. `PYTHONPATH=src .venv/bin/python -m unittest discover -s tests` printed `Ran 4970 tests in 436.496s` and `FAILED (failures=145, errors=229, skipped=31)`, exit 1. That is 7 more tests than the DEC-635 count of 4963, with the same 145 failures and 229 errors. Those failures remain annual-catalogue and EXP-062 source-pin checks. Installed workflows were not edited. Run 385 stays unconsumed. Issues #779, #820, and #821 remain unresolved. No workflow, tag, runner, ruleset, broker, demo, live, or real-money path is authorized.
