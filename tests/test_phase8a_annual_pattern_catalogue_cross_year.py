@@ -6,7 +6,12 @@ import unittest
 from pathlib import Path
 
 from fmp.discovery.annual_pattern_catalogue_cross_year import (
+    CALLER_SUPPLIED_EVIDENCE_BASIS,
+    CATALOGUE_SCALE_NOISE_PIPS,
+    CATALOGUE_SCALE_PLANTED_GROSS_PIPS,
     GATE_INOPERABLE_LT_9_SEGMENTS,
+    NINE_SEGMENT_CATALOGUE_RECORDS,
+    REQUESTED_ACCEPTANCE_WORKLOAD_RECORDS,
     AnnualSegmentProvenance,
     ValidatedAnnualPatternSubmission,
     build_synthetic_cross_year_report,
@@ -14,16 +19,20 @@ from fmp.discovery.annual_pattern_catalogue_cross_year import (
     synthetic_cross_year_records,
     compare_cross_year_patterns,
     cross_year_report_sha256,
+    measure_cross_year_synthetic_workload,
     render_cross_year_summary,
+    run_catalogue_scale_gate_calibration,
     run_synthetic_null_calibration,
     submissions_for_records,
     synthetic_annual_record,
     synthetic_segment_provenance,
+    verify_catalogue_scale_gate_matches_engine,
 )
 from fmp.discovery.annual_pattern_catalogue_method import collection_segments
 from fmp.discovery.annual_pattern_catalogue_miner import AnnualPatternRecord
 from fmp.discovery.annual_pattern_catalogue_protocol import (
     ANNUAL_CATALOGUE_PROTOCOL_VERSION,
+    CANONICAL_CROSS_YEAR_HYPOTHESIS_COUNT,
     DISCOVERY_SLIPPAGE_PIPS,
     MAX_CROSS_YEAR_SHORTLIST_GLOBAL,
     MAX_CROSS_YEAR_SHORTLIST_PER_CELL_FAMILY,
@@ -541,6 +550,128 @@ class AnnualPatternCatalogueCrossYearTests(unittest.TestCase):
         self.assertNotIn("DEC-629", source)
         self.assertNotIn("DEC-630", source)
         self.assertNotIn("workflow_dispatch", source)
+
+    def test_caller_supplied_records_are_not_frozen_evidence(self) -> None:
+        report = build_synthetic_cross_year_report()
+        boundary = report["evidence_boundary"]
+        self.assertEqual(report["evidence_basis"], CALLER_SUPPLIED_EVIDENCE_BASIS)
+        self.assertEqual(boundary["evidence_basis"], CALLER_SUPPLIED_EVIDENCE_BASIS)
+        self.assertTrue(boundary["caller_supplied_records"])
+        self.assertFalse(boundary["structural_checks_are_evidence_validation"])
+        self.assertFalse(boundary["independently_validated_frozen_annual_evidence"])
+        self.assertFalse(boundary["engine_runs_dec472_or_segment_evidence_validator"])
+        self.assertFalse(boundary["protected_artifacts_opened"])
+        self.assertFalse(boundary["authentic_research_use_authorized"])
+        self.assertTrue(
+            boundary["authentic_research_use_requires_prior_evidence_validation"]
+        )
+        self.assertFalse(report["historical_market_artifacts_read"])
+        text = render_cross_year_summary(report)
+        self.assertIn("Independently validated frozen annual evidence: False", text)
+        self.assertIn("Authentic research use authorized: False", text)
+        self.assertIn(
+            "Authentic research use requires prior evidence validation: True",
+            text,
+        )
+
+    def test_catalogue_scale_harness_matches_gate_without_tuning(self) -> None:
+        agreement = verify_catalogue_scale_gate_matches_engine()
+        self.assertEqual(agreement["mismatch_count"], 0)
+        self.assertGreater(agreement["comparison_count"], 0)
+        self.assertFalse(agreement["threshold_comparisons_reimplemented"])
+        self.assertEqual(agreement["compared_with"], "cross_year_gate_passes")
+        report = run_catalogue_scale_gate_calibration(
+            hypothesis_count=12,
+            seeds=(20261118, 20261119),
+        )
+        repeat = run_catalogue_scale_gate_calibration(
+            hypothesis_count=12,
+            seeds=(20261118, 20261119),
+        )
+        self.assertEqual(report["scenarios"], repeat["scenarios"])
+        self.assertEqual(
+            report["declared_catalogue_hypothesis_count"],
+            CANONICAL_CROSS_YEAR_HYPOTHESIS_COUNT,
+        )
+        self.assertEqual(CANONICAL_CROSS_YEAR_HYPOTHESIS_COUNT, 89460)
+        self.assertFalse(report["matches_declared_catalogue_scale"])
+        self.assertIn(4.0, report["noise_pips"])
+        self.assertIn(8.0, report["noise_pips"])
+        self.assertEqual(list(report["noise_pips"]), list(CATALOGUE_SCALE_NOISE_PIPS))
+        self.assertEqual(
+            list(report["planted_gross_pips"]),
+            list(CATALOGUE_SCALE_PLANTED_GROSS_PIPS),
+        )
+        self.assertFalse(report["gate_thresholds_modified_after_simulation"])
+        self.assertFalse(report["statistical_significance_claimed"])
+        self.assertFalse(report["p_values_computed"])
+        self.assertFalse(report["market_artifacts_read"])
+        self.assertEqual(report["gate_constants"]["minimum_evaluable_segments"], 9)
+        self.assertEqual(report["engine_agreement"]["mismatch_count"], 0)
+        names = {row["name"] for row in report["scenarios"]}
+        self.assertIn("independent_zero_gross_sigma_4.0", names)
+        self.assertIn("correlated_zero_gross_sigma_8.0", names)
+        self.assertIn("deterministic_negative_after_cost_sigma_0.0", names)
+        self.assertIn("independent_planted_4.0_sigma_8.0", names)
+        self.assertIn("eight_segment_strong_gross", names)
+        self.assertIn("low_support_strong_gross", names)
+        for row in report["scenarios"]:
+            self.assertGreaterEqual(row["gate_pass_count_min"], 0)
+            self.assertLessEqual(row["gate_pass_count_max"], 12)
+            self.assertGreaterEqual(row["gate_pass_count_range"], 0)
+            if row["kind"] == "planted":
+                self.assertEqual(row["seed_results"][0]["false_pass_count"], 0)
+                self.assertIsNotNone(row["seed_results"][0]["planted_recovered"])
+            if row["kind"] in {"null", "negative_after_cost"}:
+                for seed_row in row["seed_results"]:
+                    self.assertEqual(
+                        seed_row["false_pass_count"],
+                        seed_row["gate_pass_count"],
+                    )
+        eight = next(
+            row for row in report["scenarios"] if row["name"] == "eight_segment_strong_gross"
+        )
+        low = next(
+            row for row in report["scenarios"] if row["name"] == "low_support_strong_gross"
+        )
+        self.assertEqual(eight["gate_pass_count_max"], 0)
+        self.assertEqual(eight["seed_results"][0]["gate_inoperable_count"], 12)
+        self.assertEqual(low["gate_pass_count_max"], 0)
+        self.assertEqual(low["seed_results"][0]["gate_inoperable_count"], 12)
+
+    def test_workload_measurement_keeps_complete_hypotheses(self) -> None:
+        self.assertEqual(NINE_SEGMENT_CATALOGUE_RECORDS, 89460 * 9)
+        self.assertEqual(REQUESTED_ACCEPTANCE_WORKLOAD_RECORDS, 804_780)
+        self.assertEqual(
+            NINE_SEGMENT_CATALOGUE_RECORDS - REQUESTED_ACCEPTANCE_WORKLOAD_RECORDS,
+            360,
+        )
+        measured = measure_cross_year_synthetic_workload(
+            segment_count=9,
+            hypothesis_count=24,
+        )
+        repeat = measure_cross_year_synthetic_workload(
+            segment_count=9,
+            hypothesis_count=24,
+        )
+        self.assertEqual(measured["report_sha256"], repeat["report_sha256"])
+        self.assertEqual(measured["record_count"], 24 * 9)
+        self.assertEqual(measured["pattern_count"], 24)
+        self.assertEqual(measured["patterns_dropped"], 0)
+        self.assertEqual(measured["incomplete_panels"], 0)
+        self.assertFalse(measured["truncated"])
+        self.assertTrue(measured["fingerprints_sorted"])
+        self.assertFalse(measured["catalogue_complete"])
+        self.assertTrue(measured["hypothesis_prefix_only"])
+        self.assertFalse(measured["requested_acceptance_record_count_used"])
+        self.assertEqual(measured["requested_count_gap_records"], 360)
+        self.assertEqual(measured["gate_pass_count"], 0)
+        self.assertEqual(measured["preserved_non_passing_count"], 24)
+        self.assertFalse(measured["historical_market_artifacts_read"])
+        self.assertFalse(measured["independently_validated_frozen_annual_evidence"])
+        self.assertGreater(measured["canonical_json_bytes"], 0)
+        self.assertGreater(measured["process_max_rss_bytes"], 0)
+        self.assertEqual(measured["p_values"], "UNAVAILABLE_NOT_COMPUTED")
 
     def test_invalid_commit_is_rejected(self) -> None:
         with self.assertRaisesRegex(ValueError, "code_commit"):

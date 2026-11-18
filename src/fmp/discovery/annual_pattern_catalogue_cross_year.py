@@ -1,12 +1,14 @@
-"""Cross-year comparison of validated annual pattern-catalogue records.
+"""Cross-year comparison of caller-supplied annual pattern-catalogue records.
 
 Governing method: annual pattern catalogue discovery under DEC-469 / DEC-268.
 This module is the cross-year comparison stage. It is not a new pattern type,
 not Strategy V1, and not a significance test.
 
 It joins caller-supplied annual records that already carry DEC-470 canonical
-identities. It does not mine patterns, read market artifacts, or change the
-frozen gate.
+identities. Structural checks of those records are not independent evidence
+validation. Authentic research use requires that validation beforehand.
+This module does not mine patterns, read market artifacts, open protected
+catalogues, or change the frozen gate.
 """
 
 from __future__ import annotations
@@ -15,8 +17,11 @@ import hashlib
 import json
 import math
 import random
-from collections.abc import Mapping, Sequence
+import sys
+import time
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
+from resource import RUSAGE_SELF, getrusage
 from statistics import median as _median
 
 from .annual_pattern_catalogue_method import (
@@ -32,6 +37,7 @@ from .annual_pattern_catalogue_protocol import (
     ANNUAL_CATALOGUE_PROTOCOL_DECISION,
     ANNUAL_CATALOGUE_PROTOCOL_VERSION,
     ANNUAL_SEGMENT_COUNT,
+    CANONICAL_CROSS_YEAR_HYPOTHESIS_COUNT,
     DISCOVERY_SLIPPAGE_PIPS,
     EVIDENCE_LABEL,
     EXPERIMENT_ID,
@@ -55,11 +61,30 @@ from .annual_pattern_catalogue_protocol import (
     protocol_fingerprint,
     protocol_payload,
 )
+from .pattern_protocol import (
+    DIRECTIONS,
+    HORIZONS_MINUTES,
+    SYMBOLS,
+    TIMEFRAMES,
+)
 
 
 CROSS_YEAR_ENGINE_VERSION = "fmp-annual-pattern-catalogue-cross-year-v1"
 GATE_INOPERABLE_LT_9_SEGMENTS = "GATE_INOPERABLE_LT_9_SEGMENTS"
 NULL_CALIBRATION_SEED = 20261118
+CALLER_SUPPLIED_EVIDENCE_BASIS = (
+    "CALLER_SUPPLIED_ANNUAL_RECORDS_NOT_INDEPENDENTLY_VALIDATED"
+)
+CATALOGUE_SCALE_CALIBRATION_SEEDS = (20261118, 20261119, 20261120)
+CATALOGUE_SCALE_NOISE_PIPS = (0.0, 0.25, 1.0, 4.0, 8.0)
+CATALOGUE_SCALE_PLANTED_GROSS_PIPS = (2.0, 2.8, 3.0, 4.0, 6.0)
+CATALOGUE_SCALE_CORRELATION = 0.8
+NEGATIVE_AFTER_COST_GROSS_PIPS = 0.4
+REQUESTED_ACCEPTANCE_WORKLOAD_RECORDS = 804_780
+NINE_SEGMENT_CATALOGUE_RECORDS = CANONICAL_CROSS_YEAR_HYPOTHESIS_COUNT * 9
+TWELVE_SEGMENT_CATALOGUE_RECORDS = (
+    CANONICAL_CROSS_YEAR_HYPOTHESIS_COUNT * ANNUAL_SEGMENT_COUNT
+)
 
 # Harness-only round-trip spread. It is not a measured Dukascopy spread.
 # Charged once, inside the synthetic annual nets, and never again by the join.
@@ -69,7 +94,7 @@ _HARNESS_PLANTED_PATTERN_COUNT = 24
 _HARNESS_SIGN_REVERSAL_COUNT = 16
 _HARNESS_LOW_SUPPORT_COUNT = 16
 _HARNESS_EIGHT_SEGMENT_COUNT = 12
-_HARNESS_CORRELATION = 0.8
+_HARNESS_CORRELATION = CATALOGUE_SCALE_CORRELATION
 
 _REUSED = (
     "canonical_pattern_fingerprint",
@@ -208,6 +233,13 @@ class AnnualSegmentProvenance:
 
 @dataclass(frozen=True, slots=True)
 class ValidatedAnnualPatternSubmission:
+    """One segment of caller-supplied annual records.
+
+    The structural checks on this object confirm provenance shape and
+    canonical identity. They do not establish independently validated
+    frozen annual evidence.
+    """
+
     provenance: AnnualSegmentProvenance
     records: tuple[AnnualPatternRecord, ...]
 
@@ -820,6 +852,31 @@ def _apply_shortlist(patterns: list[dict[str, object]]) -> tuple[list[str], list
     return shortlist, capped
 
 
+def _evidence_boundary() -> dict[str, object]:
+    return {
+        "evidence_basis": CALLER_SUPPLIED_EVIDENCE_BASIS,
+        "caller_supplied_records": True,
+        "structural_checks": (
+            "protocol identity, canonical fingerprint, annual record identity, "
+            "and provenance shape"
+        ),
+        "structural_checks_are_evidence_validation": False,
+        "independently_validated_frozen_annual_evidence": False,
+        "engine_runs_dec472_or_segment_evidence_validator": False,
+        "protected_artifacts_opened": False,
+        "authentic_research_use_authorized": False,
+        "authentic_research_use_requires_prior_evidence_validation": True,
+        "requirement": (
+            "Authentic research use requires evidence validation of each source "
+            "annual catalogue before these records are submitted. DEC-472 "
+            "validates a full cell. The segment-freeze validator validates an "
+            "annual bundle. This join performs neither validation and does not "
+            "read protected artifacts. A caller-supplied record is not frozen "
+            "annual evidence by itself."
+        ),
+    }
+
+
 def _cost_model() -> dict[str, object]:
     return {
         "base_slippage_pips_per_fill": DISCOVERY_SLIPPAGE_PIPS,
@@ -884,10 +941,12 @@ def _authorizations() -> dict[str, bool]:
 def compare_cross_year_patterns(
     submissions: Sequence[ValidatedAnnualPatternSubmission],
 ) -> dict[str, object]:
-    """Join validated annual records and score the frozen cross-year gate.
+    """Join caller-supplied annual records and score the frozen cross-year gate.
 
     Every supplied pattern is retained, including negative, failed, and
     inoperable ones. A passing gate is not a significance claim.
+    Caller-supplied records remain subject to prior evidence validation
+    before authentic research use.
     """
 
     if not isinstance(submissions, Sequence) or isinstance(submissions, (str, bytes)):
@@ -993,7 +1052,8 @@ def compare_cross_year_patterns(
         "experiment_id": EXPERIMENT_ID,
         "protocol_version": ANNUAL_CATALOGUE_PROTOCOL_VERSION,
         "protocol_fingerprint": expected_fingerprint,
-        "evidence_basis": "CALLER_SUPPLIED_VALIDATED_ANNUAL_RECORDS",
+        "evidence_basis": CALLER_SUPPLIED_EVIDENCE_BASIS,
+        "evidence_boundary": _evidence_boundary(),
         "historical_market_artifacts_read": False,
         "identical_source_commit_required": False,
         "distinct_source_commit_count": len(set(commits)),
@@ -1091,6 +1151,21 @@ def render_cross_year_summary(report: Mapping[str, object]) -> str:
         f"Historical market artifacts read: {report['historical_market_artifacts_read']}.",
         f"Strategy V1 synthesized: {report['strategy_v1_synthesized']}.",
     ]
+    boundary = report["evidence_boundary"]
+    assert isinstance(boundary, Mapping)
+    lines.append(f"Evidence basis: {boundary['evidence_basis']}.")
+    lines.append(
+        "Independently validated frozen annual evidence: "
+        f"{boundary['independently_validated_frozen_annual_evidence']}."
+    )
+    lines.append(
+        "Authentic research use authorized: "
+        f"{boundary['authentic_research_use_authorized']}."
+    )
+    lines.append(
+        "Authentic research use requires prior evidence validation: "
+        f"{boundary['authentic_research_use_requires_prior_evidence_validation']}."
+    )
     patterns = report["patterns"]
     assert isinstance(patterns, list)
     if len(patterns) <= 12:
@@ -1541,6 +1616,900 @@ def run_synthetic_null_calibration(
     }
 
 
+def frozen_gate_view_from_annual_nets(
+    base_means: Sequence[float | None],
+    stress_means: Sequence[float | None],
+    supports: Sequence[int],
+) -> dict[str, object]:
+    """Score annual nets with the same inputs the join sends to the frozen gate.
+
+    The boolean result is the return value of ``cross_year_gate_passes``.
+    Threshold comparisons are not reimplemented here.
+    """
+
+    if len(base_means) != len(stress_means) or len(base_means) != len(supports):
+        raise ValueError("annual net length drift")
+    evaluable_base: list[float] = []
+    evaluable_stress: list[float] = []
+    evaluable_support: list[int] = []
+    sign_classes: list[str] = []
+    for base, stress, support in zip(base_means, stress_means, supports):
+        if support < MIN_ANNUAL_EVALUABLE_SUPPORT:
+            continue
+        if base is None or stress is None:
+            raise ValueError("evaluable annual net is missing")
+        base_value = float(base)
+        stress_value = float(stress)
+        evaluable_base.append(base_value)
+        evaluable_stress.append(stress_value)
+        evaluable_support.append(support)
+        sign_classes.append(_sign_class(base_value))
+    evaluable_segments = len(evaluable_base)
+    base_positive = sum(value > 0.0 for value in evaluable_base)
+    stress_positive = sum(value > 0.0 for value in evaluable_stress)
+    median_base = float(_median(evaluable_base)) if evaluable_base else None
+    pooled_base = _support_weighted_mean(
+        list(zip(evaluable_support, evaluable_base))
+    )
+    pooled_stress = _support_weighted_mean(
+        list(zip(evaluable_support, evaluable_stress))
+    )
+    undefined = median_base is None or pooled_base is None or pooled_stress is None
+    gate_inputs = {
+        "evaluable_segments": evaluable_segments,
+        "base_positive_segments": base_positive,
+        "stress_positive_segments": stress_positive,
+        "median_annual_mean_net_pips_0p5": (
+            0.0 if median_base is None else median_base
+        ),
+        "pooled_mean_net_pips_0p5": 0.0 if pooled_base is None else pooled_base,
+        "pooled_mean_net_pips_1p0": (
+            0.0 if pooled_stress is None else pooled_stress
+        ),
+        "sign_flips": _sign_flips(sign_classes),
+    }
+    gate_passes = cross_year_gate_passes(**gate_inputs)
+    if evaluable_segments < MIN_CROSS_YEAR_EVALUABLE_SEGMENTS:
+        if gate_passes:
+            raise RuntimeError(
+                "frozen cross-year gate accepted fewer than 9 evaluable segments"
+            )
+        gate_status = GATE_INOPERABLE_LT_9_SEGMENTS
+    elif gate_passes:
+        gate_status = "PASS"
+    else:
+        gate_status = "FAIL"
+    return {
+        "gate_passes": gate_passes,
+        "gate_status": gate_status,
+        "gate_inputs": gate_inputs,
+        "undefined_descriptive_means_encoded_as_zero": undefined,
+    }
+
+
+def _nets_from_gross_path(
+    gross_values: Sequence[float],
+) -> tuple[list[float], list[float]]:
+    bases: list[float] = []
+    stresses: list[float] = []
+    for gross in gross_values:
+        base, stress = _net_from_gross(float(gross))
+        bases.append(base)
+        stresses.append(stress)
+    return bases, stresses
+
+
+def _classify_gross_row(
+    gross: Sequence[float],
+    supports: Sequence[int],
+) -> dict[str, object]:
+    bases, stresses = _nets_from_gross_path(gross)
+    return frozen_gate_view_from_annual_nets(bases, stresses, supports)
+
+
+def _empty_status_counts() -> dict[str, int]:
+    return {"PASS": 0, "FAIL": 0, GATE_INOPERABLE_LT_9_SEGMENTS: 0}
+
+
+def _tally_gross_rows(
+    rows: Sequence[Sequence[float]],
+    *,
+    support: int,
+) -> dict[str, int]:
+    counts = _empty_status_counts()
+    if not rows:
+        return counts
+    supports = (support,) * len(rows[0])
+    for row in rows:
+        if len(row) != len(supports):
+            raise ValueError("synthetic gross path length drift")
+        status = str(_classify_gross_row(row, supports)["gate_status"])
+        counts[status] += 1
+    return counts
+
+
+def _tally_catalogue_rows(
+    hypothesis_count: int,
+    *,
+    years: int,
+    mean: float,
+    sigma: float,
+    support: int,
+    dependence: str,
+    generator_seed: int | None,
+) -> dict[str, int]:
+    supports = (support,) * years
+    counts = _empty_status_counts()
+    if sigma == 0.0:
+        row = [mean] * years
+        for _ in range(hypothesis_count):
+            status = str(_classify_gross_row(row, supports)["gate_status"])
+            counts[status] += 1
+        return counts
+    if generator_seed is None:
+        raise ValueError("stochastic catalogue calibration requires a seed")
+    if dependence == "independent":
+        rng = random.Random(generator_seed)
+        row = [0.0] * years
+        for _ in range(hypothesis_count):
+            for year in range(years):
+                row[year] = mean + sigma * _standard_normal(rng)
+            status = str(_classify_gross_row(row, supports)["gate_status"])
+            counts[status] += 1
+        return counts
+    rows = _correlated_paths(
+        hypothesis_count,
+        years=years,
+        mean=mean,
+        sigma=sigma,
+        correlation=CATALOGUE_SCALE_CORRELATION,
+        seed=generator_seed,
+    )
+    return _tally_gross_rows(rows, support=support)
+
+
+def _catalogue_generator_seed(
+    base_seed: int,
+    *,
+    mean: float,
+    sigma: float,
+    correlated: bool,
+) -> int:
+    return (
+        int(base_seed)
+        + (1_000_000 if correlated else 0)
+        + int(round(sigma * 1000.0))
+        + int(round(mean * 1000.0)) * 100
+    )
+
+
+def _rate(count: int, total: int) -> float:
+    if total <= 0:
+        raise ValueError("catalogue-scale rate requires a positive hypothesis count")
+    return count / total
+
+
+def _seed_block(
+    *,
+    name: str,
+    kind: str,
+    dependence: str,
+    mean: float,
+    sigma: float,
+    years: int,
+    support: int,
+    hypothesis_count: int,
+    base_seeds: Sequence[int],
+) -> dict[str, object]:
+    stochastic = sigma > 0.0 and dependence in {"independent", "correlated"}
+    seeds = list(base_seeds) if stochastic else [None]
+    seed_results: list[dict[str, object]] = []
+    for base_seed in seeds:
+        if not stochastic:
+            generator_seed = None
+        else:
+            assert base_seed is not None
+            generator_seed = _catalogue_generator_seed(
+                base_seed,
+                mean=mean,
+                sigma=sigma,
+                correlated=dependence == "correlated",
+            )
+        counts = _tally_catalogue_rows(
+            hypothesis_count,
+            years=years,
+            mean=mean,
+            sigma=sigma,
+            support=support,
+            dependence=dependence,
+            generator_seed=generator_seed,
+        )
+        passes = counts["PASS"]
+        unexpected = kind in {"null", "negative_after_cost", "low_support", "eight_segment"}
+        seed_results.append(
+            {
+                "base_seed": base_seed,
+                "generator_seed": generator_seed,
+                "gate_pass_count": passes,
+                "gate_fail_count": counts["FAIL"],
+                "gate_inoperable_count": counts[GATE_INOPERABLE_LT_9_SEGMENTS],
+                "false_pass_count": passes if unexpected else 0,
+                "planted_recovered": passes if kind == "planted" else None,
+                "rate": _rate(passes, hypothesis_count),
+            }
+        )
+    pass_counts = [int(row["gate_pass_count"]) for row in seed_results]
+    return {
+        "name": name,
+        "kind": kind,
+        "dependence": dependence,
+        "gross_mean_pips": mean,
+        "noise_pips": sigma,
+        "segment_count": years,
+        "support_per_year": support,
+        "hypothesis_count": hypothesis_count,
+        "seed_results": seed_results,
+        "gate_pass_count_min": min(pass_counts),
+        "gate_pass_count_max": max(pass_counts),
+        "gate_pass_count_range": max(pass_counts) - min(pass_counts),
+        "rate_min": _rate(min(pass_counts), hypothesis_count),
+        "rate_max": _rate(max(pass_counts), hypothesis_count),
+        "uncertainty": (
+            "Range of gate-pass counts across the listed reproducible seeds. "
+            "The range is not a standard error, a confidence interval, or a p-value."
+        ),
+    }
+
+
+def _emit(progress: Callable[[str], None] | None, message: str) -> None:
+    if progress is not None:
+        progress(message)
+
+
+def verify_catalogue_scale_gate_matches_engine() -> dict[str, object]:
+    """Compare harness decisions with the installed gate and the full join.
+
+    The sample covers zero gross, negative-after-cost, noise of 4 and 8 pips,
+    independent and correlated draws, planted effects, low support, and eight
+    segments. Every compared boolean is ``cross_year_gate_passes``.
+    """
+
+    labels = _segment_labels()
+    comparisons: list[dict[str, object]] = []
+
+    def check_paths(
+        case: str,
+        paths: Sequence[Sequence[float]],
+        *,
+        support: int,
+        segment_labels: Sequence[str],
+    ) -> None:
+        supports = (support,) * len(segment_labels)
+        expected: dict[str, dict[str, object]] = {}
+        definitions = enumerate_pattern_definitions()
+        records: list[AnnualPatternRecord] = []
+        for index, gross in enumerate(paths):
+            view = _classify_gross_row(gross, supports)
+            direct = cross_year_gate_passes(**view["gate_inputs"])
+            if direct != view["gate_passes"]:
+                raise RuntimeError("harness boolean diverged from cross_year_gate_passes")
+            pattern = definitions[index]
+            fingerprint = canonical_pattern_fingerprint(
+                pattern=pattern,
+                symbol="EURUSD",
+                timeframe="5m",
+                horizon_minutes=60,
+                direction="LONG",
+            )
+            expected[fingerprint] = view
+            for label, value in zip(segment_labels, gross):
+                base, stress = _net_from_gross(float(value))
+                records.append(
+                    synthetic_annual_record(
+                        pattern=pattern,
+                        symbol="EURUSD",
+                        timeframe="5m",
+                        horizon_minutes=60,
+                        direction="LONG",
+                        annual_segment_label=label,
+                        support=support,
+                        mean_net_pips_0p5=base,
+                        mean_net_pips_1p0=stress,
+                    )
+                )
+        report = compare_cross_year_patterns(submissions_for_records(records))
+        if int(report["pattern_count"]) != len(paths):
+            raise RuntimeError("engine dropped a sampled catalogue pattern")
+        for pattern_row in report["patterns"]:
+            assert isinstance(pattern_row, Mapping)
+            fingerprint = str(pattern_row["canonical_pattern_fingerprint"])
+            summary = pattern_row["summary"]
+            assert isinstance(summary, Mapping)
+            view = expected[fingerprint]
+            if (
+                summary["gate_passes"] != view["gate_passes"]
+                or summary["gate_status"] != view["gate_status"]
+                or summary["gate_inputs"] != view["gate_inputs"]
+            ):
+                comparisons.append(
+                    {
+                        "case": case,
+                        "fingerprint": fingerprint,
+                        "match": False,
+                    }
+                )
+            else:
+                comparisons.append(
+                    {
+                        "case": case,
+                        "fingerprint": fingerprint,
+                        "match": True,
+                        "gate_passes": view["gate_passes"],
+                        "gate_status": view["gate_status"],
+                    }
+                )
+
+    check_paths(
+        "zero_gross",
+        _constant_paths(4, years=len(labels), gross=0.0),
+        support=100,
+        segment_labels=labels,
+    )
+    check_paths(
+        "negative_after_cost",
+        _constant_paths(4, years=len(labels), gross=NEGATIVE_AFTER_COST_GROSS_PIPS),
+        support=100,
+        segment_labels=labels,
+    )
+    check_paths(
+        "independent_sigma_4",
+        _independent_paths(
+            12,
+            years=len(labels),
+            mean=0.0,
+            sigma=4.0,
+            seed=20261118,
+        ),
+        support=100,
+        segment_labels=labels,
+    )
+    check_paths(
+        "independent_sigma_8",
+        _independent_paths(
+            12,
+            years=len(labels),
+            mean=0.0,
+            sigma=8.0,
+            seed=20261119,
+        ),
+        support=100,
+        segment_labels=labels,
+    )
+    check_paths(
+        "correlated_sigma_4",
+        _correlated_paths(
+            8,
+            years=len(labels),
+            mean=0.0,
+            sigma=4.0,
+            correlation=CATALOGUE_SCALE_CORRELATION,
+            seed=20261118,
+        ),
+        support=100,
+        segment_labels=labels,
+    )
+    check_paths(
+        "correlated_sigma_8",
+        _correlated_paths(
+            8,
+            years=len(labels),
+            mean=0.0,
+            sigma=8.0,
+            correlation=CATALOGUE_SCALE_CORRELATION,
+            seed=20261120,
+        ),
+        support=100,
+        segment_labels=labels,
+    )
+    for gross in CATALOGUE_SCALE_PLANTED_GROSS_PIPS:
+        check_paths(
+            f"planted_{gross}",
+            _constant_paths(2, years=len(labels), gross=gross),
+            support=100,
+            segment_labels=labels,
+        )
+    check_paths(
+        "planted_sigma_4",
+        _independent_paths(
+            6,
+            years=len(labels),
+            mean=4.0,
+            sigma=4.0,
+            seed=20261118,
+        ),
+        support=100,
+        segment_labels=labels,
+    )
+    eight = _segment_labels(8)
+    check_paths(
+        "eight_segment",
+        _constant_paths(3, years=len(eight), gross=4.0),
+        support=100,
+        segment_labels=eight,
+    )
+    check_paths(
+        "low_support",
+        _constant_paths(3, years=len(labels), gross=4.0),
+        support=40,
+        segment_labels=labels,
+    )
+
+    mixed_supports = [100] * 12
+    mixed_supports[4] = 74
+    mixed_base = [0.5] * 12
+    mixed_stress = [0.25] * 12
+    mixed_base[4] = 50.0
+    mixed_stress[4] = 40.0
+    mixed_view = frozen_gate_view_from_annual_nets(
+        mixed_base,
+        mixed_stress,
+        mixed_supports,
+    )
+    if cross_year_gate_passes(**mixed_view["gate_inputs"]) != mixed_view["gate_passes"]:
+        raise RuntimeError("harness boolean diverged from cross_year_gate_passes")
+    mixed_pattern = enumerate_pattern_definitions()[20]
+    mixed_records = [
+        synthetic_annual_record(
+            pattern=mixed_pattern,
+            symbol="EURUSD",
+            timeframe="5m",
+            horizon_minutes=60,
+            direction="LONG",
+            annual_segment_label=label,
+            support=support,
+            mean_net_pips_0p5=base,
+            mean_net_pips_1p0=stress,
+        )
+        for label, support, base, stress in zip(
+            labels,
+            mixed_supports,
+            mixed_base,
+            mixed_stress,
+        )
+    ]
+    mixed_report = compare_cross_year_patterns(submissions_for_records(mixed_records))
+    mixed_summary = mixed_report["patterns"][0]["summary"]
+    comparisons.append(
+        {
+            "case": "unequal_support_excludes_low_year",
+            "fingerprint": mixed_report["patterns"][0]["canonical_pattern_fingerprint"],
+            "match": (
+                mixed_summary["gate_passes"] == mixed_view["gate_passes"]
+                and mixed_summary["gate_status"] == mixed_view["gate_status"]
+                and mixed_summary["gate_inputs"] == mixed_view["gate_inputs"]
+            ),
+            "gate_passes": mixed_view["gate_passes"],
+            "gate_status": mixed_view["gate_status"],
+        }
+    )
+    independent_sample = _independent_paths(
+        25,
+        years=len(labels),
+        mean=0.0,
+        sigma=8.0,
+        seed=12345,
+    )
+    if _tally_gross_rows(independent_sample, support=100) != _tally_catalogue_rows(
+        25,
+        years=len(labels),
+        mean=0.0,
+        sigma=8.0,
+        support=100,
+        dependence="independent",
+        generator_seed=12345,
+    ):
+        raise RuntimeError("streamed independent tally diverged from stored paths")
+    correlated_sample = _correlated_paths(
+        25,
+        years=len(labels),
+        mean=NEGATIVE_AFTER_COST_GROSS_PIPS,
+        sigma=4.0,
+        correlation=CATALOGUE_SCALE_CORRELATION,
+        seed=12345,
+    )
+    if _tally_gross_rows(correlated_sample, support=100) != _tally_catalogue_rows(
+        25,
+        years=len(labels),
+        mean=NEGATIVE_AFTER_COST_GROSS_PIPS,
+        sigma=4.0,
+        support=100,
+        dependence="correlated",
+        generator_seed=12345,
+    ):
+        raise RuntimeError("correlated tally diverged from stored paths")
+    mismatches = [row for row in comparisons if row["match"] is not True]
+    return {
+        "compared_with": "cross_year_gate_passes",
+        "full_engine_compared": True,
+        "comparison_count": len(comparisons),
+        "mismatch_count": len(mismatches),
+        "mismatches": mismatches,
+        "threshold_comparisons_reimplemented": False,
+    }
+
+
+def run_catalogue_scale_gate_calibration(
+    *,
+    hypothesis_count: int | None = None,
+    seeds: Sequence[int] = CATALOGUE_SCALE_CALIBRATION_SEEDS,
+    progress: Callable[[str], None] | None = None,
+) -> dict[str, object]:
+    """Evaluate the frozen gate on a synthetic universe at catalogue scale.
+
+    The default universe is the declared 89,460 hypotheses. Counts are
+    observations. They are not used to change DEC-470, and they are not
+    p-values.
+    """
+
+    started = time.perf_counter()
+    if hypothesis_count is None:
+        hypothesis_count = CANONICAL_CROSS_YEAR_HYPOTHESIS_COUNT
+    if hypothesis_count < 1 or hypothesis_count > CANONICAL_CROSS_YEAR_HYPOTHESIS_COUNT:
+        raise ValueError("catalogue-scale hypothesis count is outside the frozen grammar")
+    if len(seeds) < 1:
+        raise ValueError("catalogue-scale calibration requires at least one seed")
+    contract = _frozen_cross_year_contract()
+    agreement = verify_catalogue_scale_gate_matches_engine()
+    if int(agreement["mismatch_count"]) != 0:
+        raise RuntimeError("catalogue-scale harness disagrees with the installed gate")
+    labels = _segment_labels()
+    years = len(labels)
+    scenarios: list[dict[str, object]] = []
+
+    def add(
+        name: str,
+        *,
+        kind: str,
+        dependence: str,
+        mean: float,
+        sigma: float,
+        support: int = 100,
+        segment_count: int = years,
+    ) -> None:
+        _emit(progress, f"START {name}")
+        scenarios.append(
+            _seed_block(
+                name=name,
+                kind=kind,
+                dependence=dependence,
+                mean=mean,
+                sigma=sigma,
+                years=segment_count,
+                support=support,
+                hypothesis_count=hypothesis_count,
+                base_seeds=seeds,
+            )
+        )
+        _emit(
+            progress,
+            (
+                f"DONE {name} "
+                f"passes {scenarios[-1]['gate_pass_count_min']}"
+                f"..{scenarios[-1]['gate_pass_count_max']}"
+            ),
+        )
+
+    for sigma in CATALOGUE_SCALE_NOISE_PIPS:
+        dependence_names = ("deterministic",) if sigma == 0.0 else ("independent", "correlated")
+        for dependence in dependence_names:
+            add(
+                f"{dependence}_zero_gross_sigma_{sigma}",
+                kind="null",
+                dependence=dependence,
+                mean=0.0,
+                sigma=sigma,
+            )
+            add(
+                f"{dependence}_negative_after_cost_sigma_{sigma}",
+                kind="negative_after_cost",
+                dependence=dependence,
+                mean=NEGATIVE_AFTER_COST_GROSS_PIPS,
+                sigma=sigma,
+            )
+    for gross in CATALOGUE_SCALE_PLANTED_GROSS_PIPS:
+        for sigma in CATALOGUE_SCALE_NOISE_PIPS:
+            dependence_names = (
+                ("deterministic",)
+                if sigma == 0.0
+                else ("independent", "correlated")
+            )
+            for dependence in dependence_names:
+                add(
+                    f"{dependence}_planted_{gross}_sigma_{sigma}",
+                    kind="planted",
+                    dependence=dependence,
+                    mean=gross,
+                    sigma=sigma,
+                )
+    add(
+        "low_support_strong_gross",
+        kind="low_support",
+        dependence="deterministic",
+        mean=4.0,
+        sigma=0.0,
+        support=40,
+    )
+    add(
+        "eight_segment_strong_gross",
+        kind="eight_segment",
+        dependence="deterministic",
+        mean=4.0,
+        sigma=0.0,
+        segment_count=8,
+    )
+    false_pass_scenarios = [
+        row
+        for row in scenarios
+        if row["kind"] in {"null", "negative_after_cost", "low_support", "eight_segment"}
+    ]
+    highest = max(
+        false_pass_scenarios,
+        key=lambda row: (int(row["gate_pass_count_max"]), str(row["name"])),
+    )
+    return {
+        "harness": "catalogue-scale-gate-calibration-v1",
+        "hypothesis_count": hypothesis_count,
+        "declared_catalogue_hypothesis_count": CANONICAL_CROSS_YEAR_HYPOTHESIS_COUNT,
+        "matches_declared_catalogue_scale": (
+            hypothesis_count == CANONICAL_CROSS_YEAR_HYPOTHESIS_COUNT
+        ),
+        "segment_count": years,
+        "seeds": list(seeds),
+        "noise_pips": list(CATALOGUE_SCALE_NOISE_PIPS),
+        "planted_gross_pips": list(CATALOGUE_SCALE_PLANTED_GROSS_PIPS),
+        "correlation": CATALOGUE_SCALE_CORRELATION,
+        "generator": "random.Random plus Box-Muller",
+        "generator_seed_formula": (
+            "base_seed + 1000000 if correlated else 0 + round(sigma*1000) "
+            "+ round(mean*1000)*100"
+        ),
+        "gate_function": "cross_year_gate_passes",
+        "threshold_comparisons_reimplemented": False,
+        "gate_thresholds_modified_after_simulation": False,
+        "statistical_significance_claimed": False,
+        "p_values_computed": False,
+        "market_artifacts_read": False,
+        "gate_constants": {
+            "minimum_evaluable_segments": contract["minimum_evaluable_segments"],
+            "minimum_base_positive_fraction": contract[
+                "minimum_base_positive_fraction"
+            ],
+            "minimum_stress_positive_fraction": contract[
+                "minimum_stress_positive_fraction"
+            ],
+            "minimum_median_annual_mean_net_pips_0p5": contract[
+                "minimum_median_annual_mean_net_pips_0p5"
+            ],
+            "minimum_pooled_mean_net_pips_0p5": contract[
+                "minimum_pooled_mean_net_pips_0p5"
+            ],
+            "maximum_sign_flips": contract["maximum_sign_flips"],
+        },
+        "cost_assumptions": {
+            "spread_round_trip_pips": _HARNESS_SPREAD_ROUND_TRIP_PIPS,
+            "spread_charged_once": True,
+            "spread_is_measured_from_history": False,
+            "base_slippage_round_trip_pips": DISCOVERY_SLIPPAGE_PIPS * 2.0,
+            "stress_slippage_round_trip_pips": STRESS_SLIPPAGE_PIPS * 2.0,
+            "negative_after_cost_gross_pips": NEGATIVE_AFTER_COST_GROSS_PIPS,
+            "formula": (
+                "mean_net_pips_0p5 = gross - spread_round_trip - "
+                "base_slippage_round_trip; mean_net_pips_1p0 = gross - "
+                "spread_round_trip - stress_slippage_round_trip"
+            ),
+        },
+        "dependence_assumptions": {
+            "independent": "pattern-year shocks are independent",
+            "correlated": (
+                f"within each year, patterns share correlation "
+                f"{CATALOGUE_SCALE_CORRELATION}; years are separate"
+            ),
+            "within_year_event_overlap": "not simulated; each year is one annual mean",
+            "pooled_mean_interpretation": (
+                "descriptive support-weighted mean of annual means"
+            ),
+        },
+        "engine_agreement": agreement,
+        "scenarios": scenarios,
+        "highest_false_pass_scenario": {
+            "name": highest["name"],
+            "gate_pass_count_min": highest["gate_pass_count_min"],
+            "gate_pass_count_max": highest["gate_pass_count_max"],
+            "rate_min": highest["rate_min"],
+            "rate_max": highest["rate_max"],
+        },
+        "elapsed_seconds": time.perf_counter() - started,
+        "note": (
+            "False-pass counts are gate passes under zero-gross, "
+            "negative-after-cost, low-support, or eight-segment designs. "
+            "Planted recovery is the gate-pass count under a positive gross "
+            "mean. A high false-pass count is reported as observed. It is not "
+            "a reason to edit the frozen gate, and it is not a p-value."
+        ),
+    }
+
+
+def _process_max_rss_bytes() -> int:
+    raw = int(getrusage(RUSAGE_SELF).ru_maxrss)
+    if sys.platform == "darwin":
+        return raw
+    return raw * 1024
+
+
+def _canonical_hypothesis_slots(hypothesis_count: int) -> list[tuple[object, ...]]:
+    definitions = enumerate_pattern_definitions()
+    slots: list[tuple[object, ...]] = []
+    for symbol in SYMBOLS:
+        for timeframe in TIMEFRAMES:
+            for horizon in HORIZONS_MINUTES:
+                for pattern in definitions:
+                    for direction in DIRECTIONS:
+                        slots.append(
+                            (pattern, symbol, timeframe, horizon, direction)
+                        )
+                        if len(slots) == hypothesis_count:
+                            return slots
+    if len(slots) != hypothesis_count:
+        raise ValueError("canonical hypothesis count drift")
+    return slots
+
+
+def measure_cross_year_synthetic_workload(
+    *,
+    segment_count: int = 9,
+    hypothesis_count: int | None = None,
+    progress: Callable[[str], None] | None = None,
+) -> dict[str, object]:
+    """Time the real join on a complete synthetic hypothesis prefix.
+
+    The default prefix is the full canonical universe. A requested record
+    count that is not a whole number of hypotheses is not used, because that
+    would drop part of a hypothesis. ``REQUESTED_ACCEPTANCE_WORKLOAD_RECORDS``
+    is recorded and is not the executed count.
+    """
+
+    if hypothesis_count is None:
+        hypothesis_count = CANONICAL_CROSS_YEAR_HYPOTHESIS_COUNT
+    if hypothesis_count < 1 or hypothesis_count > CANONICAL_CROSS_YEAR_HYPOTHESIS_COUNT:
+        raise ValueError("workload hypothesis count is outside the frozen grammar")
+    if segment_count < 1 or segment_count > ANNUAL_SEGMENT_COUNT:
+        raise ValueError("workload segment count drift")
+    labels = _segment_labels(segment_count)
+    slots = _canonical_hypothesis_slots(hypothesis_count)
+    _emit(progress, f"BUILD hypotheses={len(slots)} segments={segment_count}")
+    build_started = time.perf_counter()
+    grouped: dict[str, list[AnnualPatternRecord]] = {label: [] for label in labels}
+    for pattern, symbol, timeframe, horizon, direction in slots:
+        assert isinstance(pattern, PatternDefinition)
+        for label in labels:
+            grouped[label].append(
+                synthetic_annual_record(
+                    pattern=pattern,
+                    symbol=str(symbol),
+                    timeframe=str(timeframe),
+                    horizon_minutes=int(horizon),
+                    direction=str(direction),
+                    annual_segment_label=label,
+                    support=100,
+                    mean_net_pips_0p5=-0.2,
+                    mean_net_pips_1p0=-1.2,
+                )
+            )
+    submissions = tuple(
+        ValidatedAnnualPatternSubmission(
+            provenance=synthetic_segment_provenance(
+                label,
+                code_commit=format(index + 1, "040x"),
+            ),
+            records=tuple(grouped[label]),
+        )
+        for index, label in enumerate(labels)
+    )
+    del grouped
+    record_count = sum(len(submission.records) for submission in submissions)
+    build_seconds = time.perf_counter() - build_started
+    _emit(progress, f"COMPARE records={record_count}")
+    compare_started = time.perf_counter()
+    report = compare_cross_year_patterns(submissions)
+    compare_seconds = time.perf_counter() - compare_started
+    patterns = report["patterns"]
+    assert isinstance(patterns, list)
+    fingerprints = [
+        str(pattern["canonical_pattern_fingerprint"])
+        for pattern in patterns
+        if isinstance(pattern, Mapping)
+    ]
+    incomplete_panels = 0
+    for pattern in patterns:
+        assert isinstance(pattern, Mapping)
+        panel = pattern["panel"]
+        assert isinstance(panel, list)
+        present = sum(
+            1
+            for row in panel
+            if isinstance(row, Mapping) and row["present"] is True
+        )
+        if present != segment_count or len(panel) != ANNUAL_SEGMENT_COUNT:
+            incomplete_panels += 1
+    _emit(progress, f"JSON patterns={report['pattern_count']}")
+    json_started = time.perf_counter()
+    encoded = canonical_cross_year_json(report)
+    json_seconds = time.perf_counter() - json_started
+    boundary = report["evidence_boundary"]
+    assert isinstance(boundary, Mapping)
+    omitted_versus_request = record_count - REQUESTED_ACCEPTANCE_WORKLOAD_RECORDS
+    return {
+        "measurement": "cross-year-synthetic-catalogue-workload-v1",
+        "python": sys.version.split()[0],
+        "platform": sys.platform,
+        "hypothesis_count": hypothesis_count,
+        "declared_catalogue_hypothesis_count": CANONICAL_CROSS_YEAR_HYPOTHESIS_COUNT,
+        "catalogue_complete": (
+            hypothesis_count == CANONICAL_CROSS_YEAR_HYPOTHESIS_COUNT
+        ),
+        "hypothesis_prefix_only": (
+            hypothesis_count != CANONICAL_CROSS_YEAR_HYPOTHESIS_COUNT
+        ),
+        "segment_count": segment_count,
+        "record_count": record_count,
+        "expected_record_count": hypothesis_count * segment_count,
+        "pattern_count": report["pattern_count"],
+        "patterns_dropped": hypothesis_count - int(report["pattern_count"]),
+        "truncated": hypothesis_count != int(report["pattern_count"])
+        or record_count != hypothesis_count * segment_count
+        or incomplete_panels != 0,
+        "incomplete_panels": incomplete_panels,
+        "fingerprints_sorted": fingerprints == sorted(fingerprints),
+        "gate_pass_count": report["gate_pass_count"],
+        "gate_fail_count": report["gate_fail_count"],
+        "gate_inoperable_count": report["gate_inoperable_count"],
+        "preserved_non_passing_count": report["preserved_non_passing_count"],
+        "synthetic_support": 100,
+        "synthetic_mean_net_pips_0p5": -0.2,
+        "synthetic_mean_net_pips_1p0": -1.2,
+        "requested_acceptance_record_count": REQUESTED_ACCEPTANCE_WORKLOAD_RECORDS,
+        "requested_acceptance_record_count_used": False,
+        "requested_count_gap_records": (
+            NINE_SEGMENT_CATALOGUE_RECORDS - REQUESTED_ACCEPTANCE_WORKLOAD_RECORDS
+        ),
+        "complete_nine_segment_records": NINE_SEGMENT_CATALOGUE_RECORDS,
+        "complete_twelve_segment_records": TWELVE_SEGMENT_CATALOGUE_RECORDS,
+        "executed_minus_requested_records": omitted_versus_request,
+        "requested_count_reason": (
+            "804780 is 360 records below 9 times the declared 89460 hypotheses. "
+            "Executing 804780 would omit 40 hypotheses. This measurement keeps "
+            "every hypothesis in the requested prefix and does not drop rows "
+            "to hit 804780."
+        ),
+        "build_seconds": build_seconds,
+        "compare_seconds": compare_seconds,
+        "canonical_json_seconds": json_seconds,
+        "canonical_json_bytes": len(encoded),
+        "report_sha256": _sha256_bytes(encoded),
+        "process_max_rss_bytes": _process_max_rss_bytes(),
+        "peak_memory_note": (
+            "process_max_rss_bytes is the process high-water mark from "
+            "getrusage, including interpreter startup and fixture construction."
+        ),
+        "historical_market_artifacts_read": report["historical_market_artifacts_read"],
+        "evidence_basis": report["evidence_basis"],
+        "independently_validated_frozen_annual_evidence": boundary[
+            "independently_validated_frozen_annual_evidence"
+        ],
+        "p_values": report["statistical_evidence"]["p_values"],
+    }
+
+
 def synthetic_cross_year_records() -> tuple[AnnualPatternRecord, ...]:
     """Fixed records behind ``build_synthetic_cross_year_report``."""
 
@@ -1625,7 +2594,18 @@ __all__ = [
     "cross_year_report_sha256",
     "render_cross_year_summary",
     "run_synthetic_null_calibration",
+    "run_catalogue_scale_gate_calibration",
+    "measure_cross_year_synthetic_workload",
+    "verify_catalogue_scale_gate_matches_engine",
+    "frozen_gate_view_from_annual_nets",
     "submissions_for_records",
     "synthetic_annual_record",
     "synthetic_segment_provenance",
+    "CALLER_SUPPLIED_EVIDENCE_BASIS",
+    "CATALOGUE_SCALE_CALIBRATION_SEEDS",
+    "CATALOGUE_SCALE_NOISE_PIPS",
+    "CATALOGUE_SCALE_PLANTED_GROSS_PIPS",
+    "NINE_SEGMENT_CATALOGUE_RECORDS",
+    "REQUESTED_ACCEPTANCE_WORKLOAD_RECORDS",
+    "TWELVE_SEGMENT_CATALOGUE_RECORDS",
 ]
