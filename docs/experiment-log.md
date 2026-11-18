@@ -3310,3 +3310,35 @@ Copy this section for each serious experiment:
 - Conclusion: NEED_MORE_DATA
 - Reason: the documented strategy's trade-level record is absent, and several published cost components are missing or unlabeled. The edge-first check still fails at the 1.0-pip aggregate.
 - Follow-up: keep the annual catalogue as the governing method. DEC-629 and DEC-630 are proposals awaiting an owner decision. The next measurement that would change the probability statement is a real trade-level R series for an already frozen candidate, with this cost record attached before the test is counted. That series is not available from repository documents, and protected artefacts stay closed.
+
+### EXP-20261118-068 — Synthetic cross-year comparison engine V1
+
+- Date: 2026-11-18
+- Status: INCONCLUSIVE
+- Hypothesis: A source-only join of validated annual pattern records can report recurrence, descriptive after-cost effects, and the frozen DEC-470 gate without treating a pass as significance or manufacturing a strategy.
+- Code commit: `draft/cross-year-engine-v1`, parent `84644dd06e0d330d8a0fdb40c9d220b4b52956ef`
+- Data manifest/version: none. No market-data files and no protected annual artifacts were opened.
+- Pair(s): EURUSD, GBPUSD, USDJPY appear only as synthetic catalogue cells in the bounded performance check. The hand report and the null harness use EURUSD.
+- Timeframe(s): 5m in the hand report and harness. The performance check uses 5m, 15m, and 1h.
+- Data range: not applicable. Segment labels are the DEC-469 collection labels. No prices were read.
+- Train period: not applicable
+- Validation period: not applicable
+- Final-test touched?: NO
+- Strategy/model: no strategy. The engine joins existing annual records. Pattern grammar stays the DEC-470 catalogue grammar.
+- Features: none added
+- Parameters/search space: none. DEC-470 gate thresholds were read and not changed.
+- Random seed (if relevant): 20261118. Noise uses `random.Random` and Box-Muller.
+- Spread/cost model: harness assumption only, not a measured spread. One 0.8-pip round-trip spread. The engine does not charge that spread again. Annual nets already contain bid/ask spread plus slippage.
+- Slippage model: source base 0.5 pip per fill and stress 1.0 pip per fill. Harness round trips are 1.0 and 2.0 pips. Stored `mean_net_pips_0p5` and `mean_net_pips_1p0` are used as-is.
+- Risk assumptions: not applied. This experiment does not size trades.
+- Trade count: no market trades. Harness support is 100 when a year is meant to be evaluable and 40 when it is meant to stay below the 75-observation label.
+- Net return after costs: not a market result. Zero gross edge becomes -1.8 pips at the base cost and -2.8 pips at the stress cost under the stated harness formula. A constant 4.0-pip gross edge becomes +2.2 and +1.2 pips.
+- Expectancy/trade: descriptive annual means only. Support-weighted pools are not independent-trial estimates.
+- Profit factor: not computed
+- Max drawdown: not computed
+- Key subperiod results: not market years. With seed 20261118, zero-gross and negative-after-cost scenarios produced 0 gate passes across 336 synthetic patterns, including independent and correlated noise at 0.25, 1.0, and 3.0 pips. Strong planted patterns recovered 48 of 48. Alternating-sign, low-support, and eight-segment controls produced 0 passes. Eight evaluable segments stay `GATE_INOPERABLE_LT_9_SEGMENTS`.
+- Robustness/cost sensitivity: both stored cost columns are reported. Jaccard near-duplicate evidence is unavailable because annual records store event-set hashes, not event ids. No substitute dedup is applied. No p-value is emitted.
+- Result summary: the join, ranking cap, and frozen gate agree on synthetic records. A gate pass is not statistical significance. Historical cross-year result production, Strategy V1 synthesis, workflow changes, and trading remain unauthorized.
+- Conclusion: NEED_MORE_DATA
+- Reason: the engine can compare validated annual records, but this run did not compare frozen historical catalogues. Annual run 385 was not consumed.
+- Follow-up: use the engine only on catalogues that have already passed their own evidence validators. Do not relax the nine-segment gate from these synthetic counts.
