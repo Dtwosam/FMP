@@ -12,6 +12,8 @@
 
 Origin `main` for this milestone is `85536adadedeee59abdc4a13f02de23ee0b3979a`, the merge of PR #2336. `src/fmp/discovery/annual_pattern_catalogue_event_evidence.py` records caller-supplied synthetic outcome events, outcome-window overlap, and connected episode groups. It does not recover event ids from annual `event_fingerprint` hashes. DEC-470 thresholds are unchanged. The 89,460-hypothesis universe and the EXP-20261118-069 correlated-noise false-pass counts stay constraints. No p-value is computed. Annual run 385 stays unconsumed. Historical artifact reads, catalogue execution, cross-year result production, Strategy V1 synthesis, statistical promotion, workflow activation, and trading stay unauthorized. DEC-629 and DEC-630 stay unadopted. The contract is `docs/event-level-evidence-v1.md`. Experiment: `EXP-20261119-070`.
 
+Pre-merge hardening on the same draft branch enforces the existing observation-id rule: one observation id inside one annual segment, symbol, and timeframe has one availability timestamp across horizons. Mutually exclusive state assertions on that observation are rejected. Pattern membership stays a caller assertion and is not a feature-state proof. Serialized evidence must be canonical JSON bytes. Overlapping-pair counts use an end-rank tree, stay exact for half-open windows, and still do not store pairs. Experiment: `EXP-20261119-071`. No merge is authorized.
+
 ## 2026-11-17 — DEC-627 return-versus-ruin measurement, hypothesis only
 
 100% net within 30 calendar days is a falsifiable research question. It is not a guaranteed target and it does not replace annual pattern catalogue discovery. The candidate F2 screen in the 17 November 2026 feasibility study is not an acceptance gate.

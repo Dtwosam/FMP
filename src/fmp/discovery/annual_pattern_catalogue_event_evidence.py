@@ -12,6 +12,18 @@ synthetic rows are not independent validation of frozen annual evidence.
 Annual catalogue records store an event_fingerprint hash of a membership
 set. That hash does not contain observation ids, timestamps, or per-event
 nets. This module refuses to recover event ids from it.
+
+The same observation id inside one annual segment, symbol, and timeframe
+keeps one availability timestamp across horizons. The adapter hashes that
+timestamp into the id and leaves the horizon out, and DEC-471 binds a
+feature row to an outcome only when the timestamps match. A caller-supplied
+id that uses two timestamps in that scope is rejected. The same id on
+another symbol, timeframe, or segment stays unresolved.
+
+Pattern membership is a caller assertion. Two current states of one
+dimension, or two prior states of one dimension at one lag, are rejected.
+Feature values are not read, and a structurally valid pattern is not
+evidence that an observation satisfied it.
 """
 
 from __future__ import annotations
@@ -73,6 +85,15 @@ HISTORICAL_EVENT_RECOVERY_DEPENDENCY = (
     "ids, timestamps, or per-event nets. Authentic event-level evidence needs "
     "the original observation rows. Those rows are historical artifacts. This "
     "module does not open them and does not reconstruct ids from the hash."
+)
+MEMBERSHIP_VALIDATION_BOUNDARY = (
+    "Caller-supplied pattern membership is an assertion. One observation id "
+    "inside one annual segment, symbol, and timeframe cannot be assigned two "
+    "current states of one dimension, or two prior states of one dimension at "
+    "one lag. That check uses the asserted pattern definitions. Feature values "
+    "are unread. DEC-471 calibration cutpoints are not built. A structurally "
+    "valid PatternDefinition is not evidence that an observation satisfied "
+    "the pattern."
 )
 
 HISTORICAL_ARTIFACT_READ_AUTHORIZED = False
@@ -412,7 +433,11 @@ def submission_from_outcome(
     memberships: Sequence[PatternDefinition],
     feature: FeatureObservation | None = None,
 ) -> EventObservationSubmission:
-    """Build one directional submission from an existing outcome observation."""
+    """Build one directional submission from an existing outcome observation.
+
+    A supplied feature row is an identity check. Its values are not read and
+    do not prove the supplied pattern membership.
+    """
 
     if not isinstance(outcome, OutcomeObservation):
         _fail(
@@ -567,7 +592,114 @@ def _collect_events(
             )
         )
     events.sort(key=lambda event: event.sort_key())
+    _assert_observation_identity(events)
     return tuple(events)
+
+
+def _assert_current_state(
+    current: dict[str, str],
+    *,
+    dimension: str,
+    state: str,
+    observation_id: str,
+) -> None:
+    previous = current.get(dimension)
+    if previous is not None and previous != state:
+        _fail(
+            "EVENT_EVIDENCE_CONTRADICTORY_STATE",
+            f"observation {observation_id} dimension {dimension} is asserted as "
+            f"{previous} and {state}",
+        )
+    current[dimension] = state
+
+
+def _record_state_claim(
+    pattern: PatternDefinition,
+    *,
+    observation_id: str,
+    current: dict[str, str],
+    transitions: dict[tuple[str, int], tuple[str, str]],
+) -> None:
+    if pattern.family == "SNAPSHOT_SINGLE":
+        _assert_current_state(
+            current,
+            dimension=pattern.dimensions[0],
+            state=pattern.states[0],
+            observation_id=observation_id,
+        )
+        return
+    if pattern.family == "SNAPSHOT_PAIR":
+        _assert_current_state(
+            current,
+            dimension=pattern.dimensions[0],
+            state=pattern.states[0],
+            observation_id=observation_id,
+        )
+        _assert_current_state(
+            current,
+            dimension=pattern.dimensions[1],
+            state=pattern.states[1],
+            observation_id=observation_id,
+        )
+        return
+    if pattern.family != "SAME_DIMENSION_TRANSITION" or pattern.lag_minutes is None:
+        _fail("EVENT_EVIDENCE_INCOMPLETE_MEMBERSHIP", "unsupported pattern family")
+    dimension = pattern.dimensions[0]
+    prior, now = pattern.states
+    _assert_current_state(
+        current,
+        dimension=dimension,
+        state=now,
+        observation_id=observation_id,
+    )
+    claim = (prior, now)
+    key = (dimension, pattern.lag_minutes)
+    previous = transitions.get(key)
+    if previous is not None and previous != claim:
+        _fail(
+            "EVENT_EVIDENCE_CONTRADICTORY_STATE",
+            f"observation {observation_id} dimension {dimension} lag "
+            f"{pattern.lag_minutes} has conflicting transition states",
+        )
+    transitions[key] = claim
+
+
+def _assert_observation_identity(events: Sequence[_PhysicalEvent]) -> None:
+    """One observation key has one availability timestamp and one state claim.
+
+    The key is observation id, annual segment, symbol, and timeframe. Horizons
+    and directions share that timestamp and those state claims. This is the
+    DEC-471 bind: a feature row and every outcome horizon of that id share
+    available_at_utc. It does not prove the feature row produced the state.
+    """
+
+    grouped: dict[tuple[str, str, str, str], list[_PhysicalEvent]] = {}
+    for event in events:
+        key = (
+            event.observation_id,
+            event.annual_segment_label,
+            event.symbol,
+            event.timeframe,
+        )
+        grouped.setdefault(key, []).append(event)
+    for (observation_id, segment, symbol, timeframe), rows in grouped.items():
+        if len({row.available_at_utc for row in rows}) != 1:
+            _fail(
+                "EVENT_EVIDENCE_CONTRADICTORY_OBSERVATION_TIMESTAMP",
+                f"observation {observation_id} in {segment} {symbol} {timeframe} "
+                "must keep one availability timestamp across horizons",
+            )
+        current: dict[str, str] = {}
+        transitions: dict[tuple[str, int], tuple[str, str]] = {}
+        for event in rows:
+            for measurement in event.measurements:
+                for pattern in measurement.memberships:
+                    _record_state_claim(
+                        pattern,
+                        observation_id=observation_id,
+                        current=current,
+                        transitions=transitions,
+                    )
 
 
 def _time_key(event: _PhysicalEvent) -> tuple[object, ...]:
@@ -600,18 +732,60 @@ def _connected_groups(events: Sequence[_PhysicalEvent]) -> tuple[tuple[_Physical
     return tuple(tuple(group) for group in groups)
 
 
+class _EndRankTree:
+    """Fenwick tree of end-time ranks.
+
+    ``greater_than(rank)`` is the number of stored ends whose rank is strictly
+    above ``rank``. Half-open overlap is that query: an end equal to the next
+    start does not count. The tree stores frequencies, not event pairs.
+    """
+
+    def __init__(self, size: int) -> None:
+        self._tree = [0] * (size + 1)
+
+    def add(self, index: int, delta: int) -> None:
+        cursor = index + 1
+        while cursor < len(self._tree):
+            self._tree[cursor] += delta
+            cursor += cursor & -cursor
+
+    def prefix(self, index: int) -> int:
+        if index < 0:
+            return 0
+        cursor = index + 1
+        total = 0
+        while cursor > 0:
+            total += self._tree[cursor]
+            cursor -= cursor & -cursor
+        return total
+
+    def greater_than(self, index: int) -> int:
+        return self.prefix(len(self._tree) - 2) - self.prefix(index)
+
+
 def _overlapping_pair_count(events: Sequence[_PhysicalEvent]) -> int:
+    """Count half-open overlaps in O(n log n) without storing pairs.
+
+    Sort by availability, exit, and event identity. For each event, count
+    earlier ends that are strictly after its start, then record its own end.
+    Equal-length windows, nested windows, chains, and touching endpoints use
+    the same count. A clique is quadratic in the count and linearithmic in
+    the work.
+    """
+
     ordered = tuple(sorted(events, key=_time_key))
-    active: list[_PhysicalEvent] = []
+    if len(ordered) < 2:
+        return 0
+    stamps = sorted(
+        {event.available_at_utc for event in ordered}
+        | {event.exit_timestamp_utc for event in ordered}
+    )
+    rank = {stamp: index for index, stamp in enumerate(stamps)}
+    tree = _EndRankTree(len(stamps))
     pairs = 0
     for event in ordered:
-        still_active: list[_PhysicalEvent] = []
-        for previous in active:
-            if previous.exit_timestamp_utc > event.available_at_utc:
-                still_active.append(previous)
-        pairs += len(still_active)
-        still_active.append(event)
-        active = still_active
+        pairs += tree.greater_than(rank[event.available_at_utc])
+        tree.add(rank[event.exit_timestamp_utc], 1)
     return pairs
 
 
@@ -854,19 +1028,29 @@ def _observation_id_reuse(events: Sequence[_PhysicalEvent]) -> dict[str, object]
         horizons = sorted({row.horizon_minutes for row in rows})
         if len(scopes) == 1:
             segment, symbol, timeframe = next(iter(scopes))
+            available = {row.available_at_utc for row in rows}
+            if len(available) != 1:
+                _fail(
+                    "EVENT_EVIDENCE_CONTRADICTORY_OBSERVATION_TIMESTAMP",
+                    f"observation {observation_id} in {segment} {symbol} {timeframe} "
+                    "must keep one availability timestamp across horizons",
+                )
             expected.append(
                 {
                     "observation_id": observation_id,
                     "annual_segment_label": segment,
                     "symbol": symbol,
                     "timeframe": timeframe,
+                    "available_at_utc": _timestamp_text(next(iter(available))),
+                    "availability_timestamp_shared": True,
                     "horizons_minutes": horizons,
                     "event_identities": identities,
                     "merged_into_one_event": False,
                     "reason": (
-                        "The same observation id on more than one horizon is a "
-                        "different outcome definition. The windows may overlap. "
-                        "They stay separate events."
+                        "The same observation id on more than one horizon shares "
+                        "one availability timestamp and remains two events. The "
+                        "horizon changes the outcome window. The windows may "
+                        "overlap."
                     ),
                 }
             )
@@ -896,6 +1080,16 @@ def _observation_id_reuse(events: Sequence[_PhysicalEvent]) -> dict[str, object]
     return {
         "expected_multi_horizon": expected,
         "unresolved_reuse": unresolved,
+    }
+
+
+def _membership_validation() -> dict[str, object]:
+    return {
+        "caller_supplied_membership_is_feature_state_proof": False,
+        "feature_values_consulted": False,
+        "quantile_cutpoints_available": False,
+        "mutually_exclusive_current_states_rejected": True,
+        "boundary": MEMBERSHIP_VALIDATION_BOUNDARY,
     }
 
 
@@ -1142,6 +1336,7 @@ def _build_body(
         },
         "events": [_event_payload(event) for event in events],
         "pattern_memberships": pattern_rows,
+        "membership_validation": _membership_validation(),
         "overlap_scopes": within_scopes,
         "cross_horizon_scopes": cross_horizon,
         "hypothesis_dependence": _hypothesis_dependence(pattern_rows),
@@ -1240,6 +1435,28 @@ def _submissions_from_document(
             _fail("EVENT_EVIDENCE_MALFORMED_OBSERVATION", "symbol or timeframe is malformed")
         if not isinstance(observation_id, str) or not isinstance(segment_label, str):
             _fail("EVENT_EVIDENCE_MALFORMED_OBSERVATION", "observation identity is malformed")
+        if event.get("identity_scheme") != IDENTITY_SCHEME:
+            _fail(
+                "EVENT_EVIDENCE_CONTRADICTORY_EVENT_IDENTITY",
+                "event identity scheme does not match observation-key-sha256-v1",
+            )
+        if event.get("recovered_from_event_fingerprint") is not False:
+            _fail(
+                "EVENT_EVIDENCE_EVENT_FINGERPRINT_RECOVERY_REFUSED",
+                "event identity was not recovered from an event fingerprint",
+            )
+        expected_identity = event_identity_for(
+            observation_id=observation_id,
+            annual_segment_label=segment_label,
+            symbol=symbol,
+            timeframe=timeframe,
+            horizon_minutes=horizon,
+        )
+        if event.get("event_identity") != expected_identity:
+            _fail(
+                "EVENT_EVIDENCE_CONTRADICTORY_EVENT_IDENTITY",
+                "stored event identity does not match the observation key",
+            )
         for outcome in outcomes:
             if not isinstance(outcome, Mapping):
                 _fail("EVENT_EVIDENCE_INCOMPLETE", "directional outcome is malformed")
@@ -1365,19 +1582,103 @@ def _reject_independence_claims(document: Mapping[str, object]) -> None:
                     )
 
 
-def validate_event_evidence(document: Mapping[str, object] | bytes) -> dict[str, object]:
+def _object_without_duplicate_keys(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    parsed: dict[str, object] = {}
+    for key, value in pairs:
+        if key in parsed:
+            _fail(
+                "EVENT_EVIDENCE_NONCANONICAL_JSON",
+                f"duplicate JSON object key {key!r}",
+            )
+        parsed[key] = value
+    return parsed
+
+
+def _parse_json_object(text: str) -> dict[str, object]:
+    try:
+        parsed = json.loads(text, object_pairs_hook=_object_without_duplicate_keys)
+    except json.JSONDecodeError:
+        _fail("EVENT_EVIDENCE_INTEGRITY", "document is not JSON")
+        raise AssertionError
+    if not isinstance(parsed, dict):
+        _fail("EVENT_EVIDENCE_INTEGRITY", "document must be a JSON object")
+    return parsed
+
+
+def _require_canonical_bytes(raw: bytes) -> dict[str, object]:
+    """Accept serialized evidence only when the bytes are canonical JSON."""
+
+    if raw.startswith(b"\xef\xbb\xbf"):
+        _fail("EVENT_EVIDENCE_NONCANONICAL_JSON", "UTF-8 BOM is not canonical JSON")
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError:
+        _fail(
+            "EVENT_EVIDENCE_NONCANONICAL_JSON",
+            "serialized evidence must be canonical UTF-8 JSON",
+        )
+        raise AssertionError
+    parsed = _parse_json_object(text)
+    try:
+        canonical = _canonical_json(parsed)
+    except (TypeError, ValueError):
+        _fail(
+            "EVENT_EVIDENCE_NONCANONICAL_JSON",
+            "serialized evidence is not canonical JSON",
+        )
+        raise AssertionError
+    if raw != canonical:
+        _fail(
+            "EVENT_EVIDENCE_NONCANONICAL_JSON",
+            "serialized evidence must match canonical JSON bytes",
+        )
+    return parsed
+
+
+def _reject_membership_proof_claim(document: Mapping[str, object]) -> None:
+    block = document.get("membership_validation")
+    if not isinstance(block, Mapping):
+        _fail("EVENT_EVIDENCE_INCOMPLETE", "membership validation boundary is missing")
+    if block.get("caller_supplied_membership_is_feature_state_proof") is not False:
+        _fail(
+            "EVENT_EVIDENCE_MEMBERSHIP_BOUNDARY",
+            "pattern membership is not a feature-state proof",
+        )
+    if block.get("feature_values_consulted") is not False:
+        _fail(
+            "EVENT_EVIDENCE_MEMBERSHIP_BOUNDARY",
+            "feature values are not consulted",
+        )
+    if block.get("quantile_cutpoints_available") is not False:
+        _fail(
+            "EVENT_EVIDENCE_MEMBERSHIP_BOUNDARY",
+            "quantile cutpoints are not available",
+        )
+    if block.get("mutually_exclusive_current_states_rejected") is not True:
+        _fail(
+            "EVENT_EVIDENCE_MEMBERSHIP_BOUNDARY",
+            "mutually exclusive current states must be rejected",
+        )
+
+
+def validate_event_evidence(
+    document: Mapping[str, object] | bytes | str,
+) -> dict[str, object]:
     """Recompute the canonical document and reject tampered or incomplete evidence.
 
-    A passing validation means the synthetic document is internally consistent.
-    It does not validate authentic frozen annual evidence.
+    Bytes and text are serialized evidence. They must be canonical UTF-8 JSON:
+    sorted keys, compact separators, a trailing newline, no byte-order mark,
+    and no duplicate object keys. A mapping is an in-memory document and is
+    checked by recomputation. A passing validation means the synthetic
+    document is internally consistent. It does not validate authentic frozen
+    annual evidence, and it does not prove that a feature row satisfied a
+    pattern.
     """
 
+    if isinstance(document, str):
+        document = document.encode("utf-8")
     if isinstance(document, bytes):
-        try:
-            parsed = json.loads(document)
-        except json.JSONDecodeError as exc:
-            _fail("EVENT_EVIDENCE_INTEGRITY", "document is not JSON")
-            raise AssertionError from exc
+        parsed = _require_canonical_bytes(document)
     elif isinstance(document, Mapping):
         parsed = dict(document)
     else:
@@ -1405,6 +1706,7 @@ def validate_event_evidence(document: Mapping[str, object] | bytes) -> dict[str,
             "event ids were not recovered from an event fingerprint",
         )
     _reject_independence_claims(parsed)
+    _reject_membership_proof_claim(parsed)
     submissions, provenance = _submissions_from_document(parsed)
     events = _collect_events(submissions)
     rebuilt = _build_body(events, provenance)
@@ -1443,6 +1745,7 @@ def event_level_evidence_contract() -> dict[str, object]:
             "possible_from_event_fingerprint": False,
             "dependency": HISTORICAL_EVENT_RECOVERY_DEPENDENCY,
         },
+        "membership_validation": _membership_validation(),
         "statistical_limits": _statistical_limits(),
         "authorizations": _authorizations(),
         "annual_catalogue_schema_modified": False,

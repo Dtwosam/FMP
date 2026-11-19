@@ -20,7 +20,11 @@ Until a later decision authorizes those rows, the only admissible input is a cal
 
 A physical event is one observation inside one annual segment, symbol, timeframe, and horizon. Its identity is SHA-256 of the canonical JSON for that key, under scheme `observation-key-sha256-v1`.
 
-The identity keeps the original `observation_id`. It is not an inversion of `event_fingerprint`. LONG and SHORT measurements of the same window share one identity. The same observation id on two horizons is two events, because the outcome definition differs. The same observation id on two symbols, timeframes, or segments stays unresolved: the events are not merged, and independence is not established.
+The identity keeps the original `observation_id`. It is not an inversion of `event_fingerprint`. LONG and SHORT measurements of the same window share one identity.
+
+The market-learning adapter hashes symbol, timeframe, bar start, and `available_at_utc` into the observation id. The horizon is not part of that hash. DEC-471 then binds a feature row to an outcome only when the observation id, symbol, timeframe, and availability timestamp match, and it mines each horizon as its own cell. The same observation id, annual segment, symbol, and timeframe therefore already means one availability timestamp. Event evidence enforces that rule. Two horizons of that observation stay two events, because the outcome window differs, and both windows use the same start. A caller-supplied id that reuses `bar-1` at a later start is `EVENT_EVIDENCE_CONTRADICTORY_OBSERVATION_TIMESTAMP`.
+
+The same observation id on two symbols, timeframes, or segments stays unresolved. This module does not recompute the adapter hash, because a submission does not carry bar start, feature-set version, or the processed manifest. Those events are not merged, and independence is not established.
 
 ## Outcome window
 
@@ -35,7 +39,7 @@ Overlap is evaluated on those timestamps. A connected episode group is a connect
 3. Add a later event while its availability is strictly before the group's maximum exit.
 4. Otherwise start a new group.
 
-The sweep counts overlapping pairs with an active-end list. It does not store the pair list.
+Overlapping pairs are counted with a Fenwick tree of end-time ranks after one sort. For each event the tree reports how many earlier ends are strictly after that event's start, which is the half-open overlap test. The count is O(n log n). A clique no longer recopies an active event list at every step. The pair list is not stored.
 
 ## Five counts
 
@@ -61,6 +65,14 @@ A sum of within-horizon candidate sizes is also reported. That sum is a descript
 - Hypotheses that share an event, including LONG and SHORT of one window, are dependent. The DEC-470 Jaccard threshold is recorded and is not applied. No pattern is dropped.
 - Overlapping observations remain separate observations in raw support. They are not counted as independent trials.
 
+## Pattern membership
+
+A `PatternDefinition` on a submission is a caller assertion. The document records `membership_validation.caller_supplied_membership_is_feature_state_proof` as false.
+
+The check that does run is state agreement inside one observation id, annual segment, symbol, and timeframe. Horizons and directions share it. One dimension has one current state. One dimension and lag have one prior state. LOW and HIGH of `return_1h` on the same observation are rejected. A LOW-to-HIGH transition is a prior state and a current state, so it can sit with a HIGH snapshot and cannot sit with a LOW snapshot. Two lags may name different prior states.
+
+That agreement is not evidence the observation satisfied the pattern. `submission_from_outcome` uses a `FeatureObservation` only to compare observation id, symbol, timeframe, and availability timestamp. Feature values are unread. Quantile states in DEC-471 come from prior-row calibration cutpoints, and this module does not build those cutpoints. Session flags are computable from a feature row, and they are still unread, because the event document does not store feature values and a round-trip cannot prove a state the bytes do not carry. The frozen miner is not modified and is not called to certify membership.
+
 ## Statistical limits
 
 The document reports descriptive evidence. It performs no statistical inference.
@@ -81,7 +93,11 @@ Structural validation recomputes the canonical document and its SHA-256. A passi
 
 ## Integrity
 
-Canonical JSON uses sorted keys, compact separators, and a trailing newline. `content_sha256` is the SHA-256 of that encoding of every field except `content_sha256`. Provenance carries a source label, a 40-character code commit, and a caller-supplied synthetic manifest SHA-256. Duplicate measurements, contradictory windows, contradictory nets, contradictory memberships, and malformed timestamps fail closed.
+Canonical JSON uses sorted keys, compact separators, UTF-8, and a trailing newline. `content_sha256` is the SHA-256 of that encoding of every field except `content_sha256`. The hash recipe is unchanged.
+
+`validate_event_evidence` accepts an in-memory mapping, or bytes or text presented as serialized evidence. Serialized evidence must equal those canonical bytes. A UTF-8 byte-order mark, UTF-16, extra whitespace, a different key order, and a duplicate object key fail as `EVENT_EVIDENCE_NONCANONICAL_JSON` before the parsed object is treated as the document. Duplicate keys are rejected even when both copies carry the same value. Malformed timestamps fail as `EVENT_EVIDENCE_TIMESTAMP_NOT_UTC`. A stored event identity that is not the observation-key hash fails as `EVENT_EVIDENCE_CONTRADICTORY_EVENT_IDENTITY`.
+
+Provenance carries a source label, a 40-character code commit, and a caller-supplied synthetic manifest SHA-256. Duplicate measurements, contradictory windows, contradictory nets, contradictory memberships, contradictory states, and contradictory observation timestamps fail closed.
 
 ## Authorizations that stay closed
 

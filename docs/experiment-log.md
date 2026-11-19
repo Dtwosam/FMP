@@ -3405,4 +3405,36 @@ Copy this section for each serious experiment:
 - Result summary: the contract distinguishes raw directional support, unique physical events, overlapping pairs, connected episode groups, and a candidate component count. Episode groups are recorded as statistically unresolved. Cross-symbol and cross-timeframe independence is not established. Structural validation is not validation of frozen annual evidence. Historical event recovery remains blocked because annual records store membership hashes rather than event rows.
 - Conclusion: NEED_MORE_DATA
 - Reason: the rows are synthetic. Frozen historical catalogues were not opened, and event ids cannot be recovered from their `event_fingerprint` hashes without the original observations.
-- Follow-up: keep DEC-470 unchanged. Use this contract only on caller-supplied events until a separate decision authorizes the historical observation rows. Annual run 385 stays unopened.
+- Follow-up: keep DEC-470 unchanged. Use this contract only on caller-supplied events until a separate decision authorizes the historical observation rows. Annual run 385 stays unopened. The pre-merge review of identity, membership, canonical bytes, and overlap complexity is `EXP-20261119-071`.
+
+### EXP-20261119-071 — Event-level evidence V1 pre-merge hardening
+
+- Date: 2026-11-19
+- Status: INCONCLUSIVE
+- Hypothesis: The source-only event contract can enforce the existing one-timestamp observation identity, reject contradictory state assertions, require canonical serialized bytes, and count half-open overlaps in O(n log n), while leaving DEC-470 and the frozen miner unchanged.
+- Code commit: branch `draft/event-level-evidence-v1`, parent `ce62d5adc560dd2863711d5edbe887f0bcd08ae6`
+- Data manifest/version: none. No market-data files and no protected annual artifacts were opened. The synthetic manifest in the unit tests is SHA-256 of the literal `synthetic-event-evidence-v1\n`.
+- Pair(s): EURUSD, GBPUSD, and USDJPY appear only as synthetic observation labels.
+- Timeframe(s): 5m and 1h in the synthetic rows. Horizons are the frozen 60 and 240 minutes.
+- Data range: not applicable. No prices were read.
+- Train period: not applicable
+- Validation period: not applicable
+- Final-test touched?: NO
+- Strategy/model: no strategy. No new trading threshold. Pattern membership is a caller assertion. Contradictory current states of one dimension, and contradictory prior states at one lag, are rejected. Feature values and DEC-471 cutpoints are not used.
+- Features: none added. A supplied feature row is still an identity check only.
+- Parameters/search space: none. The 89,460-hypothesis universe and DEC-470 constants were not retuned. EXP-20261118-069, including 4,922 correlated zero-gross passes at 8 pips on seed 20261120, stays a recorded constraint.
+- Random seed (if relevant): 20261119, used only to shuffle 4,000 synthetic rows before the compile measurement.
+- Spread/cost model: none applied.
+- Slippage model: DEC-470 base 0.5 pip per fill and stress 1.0 pip per fill are recorded and are not reapplied.
+- Risk assumptions: not applied.
+- Trade count: no market trades. Measurements use synthetic intervals only.
+- Net return after costs: not a market result.
+- Expectancy/trade: not computed. Overlap counts remain descriptive. They are not independent-trial estimates and they are not p-values.
+- Profit factor: not computed
+- Max drawdown: not computed
+- Key subperiod results: not market years. The same observation id on horizons 60 and 240 is accepted when both start at the same timestamp and rejected when the starts differ. LOW and HIGH of one dimension on that observation are rejected. A LOW-to-HIGH transition remains a prior state plus a current state.
+- Robustness/cost sensitivity: not a cost study. One compile of 2,000 fully overlapping synthetic events plus 2,000 non-overlapping synthetic events, including validation, took 2.370933 seconds. Python tracemalloc peak was 41,655,298 bytes. Canonical JSON was 4,900,035 bytes. SHA-256 of the body was `38d6b8c30ef4f0e4b6d44a23bf340b0ae9c92458df159ecbba17dd2bb4079c81`. The 2,000-event clique counted 1,999,000 pairs and stored none. Isolated pair-counter timings on a same-window clique, Python 3.12.13 on darwin: 2,000 events, 0.001836 seconds mean over five repeats, tracemalloc peak 159,988 bytes; 8,000 events, 0.008142 seconds mean over five repeats, peak 639,688 bytes, 31,996,000 pairs; 20,000 events, 0.022327 seconds, peak 1,600,032 bytes, 199,990,000 pairs. The replaced active-list scan on the same cliques took 0.026569 seconds at 2,000, 0.433818 seconds at 8,000, and 2.481579 seconds at 20,000, with the same pair counts. No catalogue-scale historical run was executed. The local run of the event-evidence tests with the miner, cell-evidence, protocol, segment-freeze, and cross-year modules was 70 tests and exited 0 in 7.693 seconds.
+- Result summary: serialized evidence that is not canonical UTF-8 JSON is rejected, including duplicate object keys, reordered keys, extra whitespace, a byte-order mark, and UTF-16. Malformed timestamps and event identities that do not match the observation key fail closed. Cross-symbol and cross-timeframe reuse of a caller-supplied id stays unresolved. Structural validation is not validation of frozen annual evidence.
+- Conclusion: NEED_MORE_DATA
+- Reason: the rows are synthetic. Frozen historical catalogues were not opened, and event ids cannot be recovered from their `event_fingerprint` hashes without the original observations. A consistent membership assertion is not evidence that a feature row satisfied the pattern.
+- Follow-up: keep DEC-470 unchanged. Annual run 385 stays unopened. No merge is authorized by this experiment.
