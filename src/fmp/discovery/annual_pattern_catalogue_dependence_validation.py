@@ -93,6 +93,9 @@ AUTOCORRELATION_MATERIAL_FLOOR = 0.05
 INNOVATION_SIGMA = 1.0
 
 Z_95 = 1.959963984540054
+# Phi^{-1}(0.95). A one-sided familywise bound uses this quantile.
+# Z_95 is Phi^{-1}(0.975) and answers a different, two-sided question.
+Z_ONE_SIDED_95 = 1.6448536269514722
 NOMINAL_COVERAGE = 0.95
 ALPHA = 0.05
 CLEAR_UNDERCOVERAGE_CEILING = 0.90
@@ -152,6 +155,27 @@ PRIMARY_STATUSES = (
     "P_VALUES_UNAVAILABLE",
     "CATALOGUE_INFERENCE_NOT_AUTHORIZED",
 )
+DEPENDENCE_ASSUMPTION_CLASSES = (
+    "EXACT_FINITE_DEPENDENCE_HORIZON",
+    "PRACTICAL_AUTOCORRELATION_TRUNCATION",
+    "ASYMPTOTIC_WEAK_DEPENDENCE",
+    "UNVERIFIED_APPROXIMATION",
+)
+METHOD_ROLES = (
+    "KNOWN_MODEL_ORACLE",
+    "SAMPLE_ESTIMATED",
+    "EXPERIMENTAL_BOOTSTRAP",
+)
+EMPIRICAL_FWER_CLAIMS = (
+    "ONE_SIDED_UPPER_BOUND_AT_OR_BELOW_ALPHA",
+    "EXCESSIVE_FAMILYWISE_ERROR",
+    "INCONCLUSIVE_SIMULATION",
+    "MODEL_ASSUMPTIONS_UNVERIFIED",
+)
+# A source-only generator checksum. Not a holdout seed and not an acceptance threshold.
+BOUNDED_REPRODUCTION_SEED = 20261230
+BOUNDED_REPRODUCTION_REPLICATIONS = 4
+BOUNDED_REPRODUCTION_FAMILY_SIZE = 3
 
 HOLDOUT_PARTITION = "holdout"
 CALIBRATION_PARTITION = "calibration"
@@ -439,7 +463,11 @@ def _require_series(values: Sequence[float]) -> list[float]:
 
 
 def _last_material_ar_lag(phi: float, floor: float = AUTOCORRELATION_MATERIAL_FLOOR) -> int:
-    """Largest lag whose absolute AR(1) autocorrelation is still at least `floor`."""
+    """Largest lag whose absolute AR(1) autocorrelation is still at least `floor`.
+
+    This is a practical truncation. Autocorrelation after the returned lag is
+    smaller than the floor and is not zero.
+    """
 
     if phi == 0.0:
         return 0
@@ -572,9 +600,7 @@ def horizon_contrast_variance(n: int, horizon: int, sigma: float = 1.0) -> float
     return (sigma * sigma) * sum(value * value for value in coefficients) / (n * n)
 
 
-def binomial_monte_carlo_report(numerator: int, denominator: int) -> dict[str, object]:
-    """Wilson score interval for a Monte Carlo rate. The rate is not a population constant."""
-
+def _require_binomial_count(numerator: int, denominator: int) -> None:
     if isinstance(numerator, bool) or not isinstance(numerator, int):
         _fail("DEPENDENCE_VALIDATION_MALFORMED_COUNTS", "numerator must be an integer")
     if isinstance(denominator, bool) or not isinstance(denominator, int):
@@ -584,6 +610,52 @@ def binomial_monte_carlo_report(numerator: int, denominator: int) -> dict[str, o
             "DEPENDENCE_VALIDATION_MALFORMED_COUNTS",
             "numerator and denominator are not a binomial count",
         )
+
+
+def _wilson_centre_half(rate: float, denominator: int, z_value: float) -> tuple[float, float]:
+    z_squared = z_value * z_value
+    wilson_denominator = 1.0 + z_squared / denominator
+    centre = (rate + z_squared / (2.0 * denominator)) / wilson_denominator
+    half = (
+        z_value
+        * math.sqrt(
+            rate * (1.0 - rate) / denominator
+            + z_squared / (4.0 * denominator * denominator)
+        )
+        / wilson_denominator
+    )
+    return centre, half
+
+
+def one_sided_wilson_95(numerator: int, denominator: int) -> dict[str, object]:
+    """One-sided 95 percent Wilson bounds. The quantile is Phi^{-1}(0.95)."""
+
+    _require_binomial_count(numerator, denominator)
+    if denominator == 0:
+        return {
+            "low": None,
+            "high": None,
+            "z": Z_ONE_SIDED_95,
+            "confidence_level": 0.95,
+            "sided": "one",
+            "method": "wilson_score_one_sided",
+        }
+    rate = numerator / denominator
+    centre, half = _wilson_centre_half(rate, denominator, Z_ONE_SIDED_95)
+    return {
+        "low": max(0.0, centre - half),
+        "high": min(1.0, centre + half),
+        "z": Z_ONE_SIDED_95,
+        "confidence_level": 0.95,
+        "sided": "one",
+        "method": "wilson_score_one_sided",
+    }
+
+
+def binomial_monte_carlo_report(numerator: int, denominator: int) -> dict[str, object]:
+    """Wilson score interval for a Monte Carlo rate. The rate is not a population constant."""
+
+    _require_binomial_count(numerator, denominator)
     if denominator == 0:
         return {
             "numerator": 0,
@@ -598,16 +670,7 @@ def binomial_monte_carlo_report(numerator: int, denominator: int) -> dict[str, o
         }
     rate = numerator / denominator
     standard_error = math.sqrt(rate * (1.0 - rate) / denominator)
-    z_squared = Z_95 * Z_95
-    wilson_denominator = 1.0 + z_squared / denominator
-    centre = (rate + z_squared / (2.0 * denominator)) / wilson_denominator
-    half = (
-        Z_95
-        * math.sqrt(
-            rate * (1.0 - rate) / denominator + z_squared / (4.0 * denominator * denominator)
-        )
-        / wilson_denominator
-    )
+    centre, half = _wilson_centre_half(rate, denominator, Z_95)
     low = max(0.0, centre - half)
     high = min(1.0, centre + half)
     return {
@@ -696,6 +759,7 @@ def null_test_primary_status(
     available: int,
     unavailable_count: int,
     replications: int,
+    p_values_computed: bool = False,
 ) -> str:
     """Size calibration for a justified null test. Nominal rejection is 5 percent."""
 
@@ -703,9 +767,13 @@ def null_test_primary_status(
         if available == 0:
             return "P_VALUES_UNAVAILABLE"
         report = binomial_monte_carlo_report(rejections, available)
-        low, _high, _half = _wilson_bounds(report)
+        low, _high, half = _wilson_bounds(report)
         if available >= MIN_DENOMINATOR_TO_FAIL and low > CLEAR_REJECTION_FLOOR:
             return "FAILED_SYNTHETIC_CALIBRATION"
+        if p_values_computed:
+            if _precise(available, half):
+                return "MODEL_ASSUMPTIONS_UNVERIFIED"
+            return "INSUFFICIENT_MONTE_CARLO_PRECISION"
         return "P_VALUES_UNAVAILABLE"
     if available == 0:
         return "P_VALUES_UNAVAILABLE"
@@ -725,35 +793,104 @@ def null_test_primary_status(
     return "INSUFFICIENT_MONTE_CARLO_PRECISION"
 
 
+def empirical_fwer_assessment(
+    *,
+    assumptions_match: bool,
+    familywise_rejections: int,
+    replications: int,
+) -> dict[str, object]:
+    """Monte Carlo claim about familywise error. Holm's theorem is separate.
+
+    Empirical control requires the one-sided 95 percent Wilson upper bound to
+    lie at or below alpha, the predeclared precision floor, and valid marginal
+    p-values. The quantile is Phi^{-1}(0.95). A point estimate at or below
+    alpha is not control when that upper bound exceeds alpha.
+
+    Excessive error keeps the predeclared two-sided rule: the Wilson lower
+    bound is above alpha and the denominator is at least 40. That failure
+    rule was not loosened and was not fit to the inspected 17/400 or 19/400
+    counts. Every other matched result is inconclusive.
+
+    A count that satisfies the upper bound is a property of this function.
+    It is not a fresh confirmation of the already inspected holdout.
+    """
+
+    if replications <= 0:
+        return {
+            "empirical_fwer_claim": "INCONCLUSIVE_SIMULATION",
+            "primary_status": "INSUFFICIENT_MONTE_CARLO_PRECISION",
+            "one_sided_wilson_95": one_sided_wilson_95(0, 0),
+            "rate": None,
+            "point_estimate_at_or_below_alpha": None,
+            "one_sided_upper_bound_at_or_below_alpha": False,
+            "two_sided_wilson_lower_bound": None,
+            "precision_floor_met": False,
+            "inspected_holdout_used": False,
+        }
+    report = binomial_monte_carlo_report(familywise_rejections, replications)
+    low, _high, half = _wilson_bounds(report)
+    one_sided = one_sided_wilson_95(familywise_rejections, replications)
+    upper = one_sided["high"]
+    if not isinstance(upper, float):
+        _fail("DEPENDENCE_VALIDATION_NUMERICAL", "one-sided Wilson bound is missing")
+    rate = float(report["rate"])
+    excessive = replications >= MIN_DENOMINATOR_TO_FAIL and low > ALPHA
+    upper_ok = upper <= ALPHA
+    precise = _precise(replications, half)
+    if excessive:
+        claim = "EXCESSIVE_FAMILYWISE_ERROR"
+        primary = "FAILED_SYNTHETIC_CALIBRATION"
+    elif not assumptions_match:
+        claim = "MODEL_ASSUMPTIONS_UNVERIFIED"
+        primary = "MODEL_ASSUMPTIONS_UNVERIFIED"
+    elif precise and upper_ok:
+        claim = "ONE_SIDED_UPPER_BOUND_AT_OR_BELOW_ALPHA"
+        primary = "VALIDATED_UNDER_DECLARED_SYNTHETIC_MODEL"
+    else:
+        claim = "INCONCLUSIVE_SIMULATION"
+        primary = "INSUFFICIENT_MONTE_CARLO_PRECISION"
+    return {
+        "empirical_fwer_claim": claim,
+        "primary_status": primary,
+        "one_sided_wilson_95": one_sided,
+        "rate": rate,
+        "point_estimate_at_or_below_alpha": rate <= ALPHA,
+        "one_sided_upper_bound_at_or_below_alpha": upper_ok,
+        "two_sided_wilson_lower_bound": low,
+        "precision_floor_met": precise,
+        "inspected_holdout_used": False,
+    }
+
+
 def fwer_control_status(
     *,
     assumptions_match: bool,
     familywise_rejections: int,
     replications: int,
 ) -> str:
-    """Familywise error control, not exact 5 percent calibration.
+    """Map the empirical familywise claim onto the frozen status vocabulary."""
 
-    Holm may be conservative. A rate at or below alpha, with the Wilson lower
-    bound at or below alpha, supports control. A Wilson lower bound above
-    alpha is a failure. A shortlist correction is not assumption-matched.
-    """
+    return str(
+        empirical_fwer_assessment(
+            assumptions_match=assumptions_match,
+            familywise_rejections=familywise_rejections,
+            replications=replications,
+        )["primary_status"]
+    )
 
-    if replications <= 0:
-        return "INSUFFICIENT_MONTE_CARLO_PRECISION"
-    report = binomial_monte_carlo_report(familywise_rejections, replications)
-    low, _high, half = _wilson_bounds(report)
-    rate = float(report["rate"])
-    clear_failure = replications >= MIN_DENOMINATOR_TO_FAIL and low > ALPHA
-    if not assumptions_match:
-        if clear_failure:
-            return "FAILED_SYNTHETIC_CALIBRATION"
-        return "MODEL_ASSUMPTIONS_UNVERIFIED"
-    precise = _precise(replications, half)
-    if precise and rate <= ALPHA and low <= ALPHA:
-        return "VALIDATED_UNDER_DECLARED_SYNTHETIC_MODEL"
-    if clear_failure:
-        return "FAILED_SYNTHETIC_CALIBRATION"
-    return "INSUFFICIENT_MONTE_CARLO_PRECISION"
+
+def _theoretical_holm_guarantee(*, applies: bool) -> dict[str, object]:
+    """Holm's finite-sample guarantee. It is not a Monte Carlo result."""
+
+    return {
+        "statement": "FWER_AT_MOST_ALPHA_IF_MARGINAL_P_VALUES_ARE_VALID",
+        "procedure": "holm_step_down",
+        "alpha": ALPHA,
+        "requires_valid_marginal_p_values": True,
+        "dependence_restriction_beyond_valid_marginal_p_values": False,
+        "guarantee_applies": applies,
+        "established_by_simulation": False,
+    }
 
 
 def _normal_two_sided_p(z_value: float) -> float:
@@ -1421,14 +1558,8 @@ def _scenario_targets() -> dict[str, tuple[str, ...]]:
     }
 
 
-def _required_lag(scenario_id: str, target: str) -> int | None:
-    """Smallest Bartlett lag that includes every material autocovariance.
-
-    None means no predeclared stationary lag is claimed for this target.
-    """
-
-    key = (scenario_id, target)
-    if key in {
+_ZERO_HORIZON_TARGETS = frozenset(
+    {
         ("independent_zero_edge", "primary"),
         ("shared_identical_observations", "unique_events"),
         ("common_shock_cross_symbol", "primary"),
@@ -1436,69 +1567,291 @@ def _required_lag(scenario_id: str, target: str) -> int | None:
         ("multiple_horizons", "primary"),
         ("planted_positive", "primary"),
         ("planted_negative", "primary"),
-    }:
-        return 0
-    if key == ("weak_ar1", "primary"):
-        return _last_material_ar_lag(WEAK_AR_PHI)
-    if key == ("strong_ar1", "primary"):
-        return _last_material_ar_lag(STRONG_AR_PHI)
-    if key == ("long_memory", "primary"):
-        return LONG_MEMORY_TERMS - 1
-    if key in {
+        ("changing_volatility", "primary"),
+    }
+)
+_OVERLAP_HORIZON_TARGETS = frozenset(
+    {
         ("overlapping_windows", "primary"),
         ("multiple_horizons", "secondary"),
         ("multiple_horizons", "contrast"),
-    }:
-        return OVERLAP_HORIZON - 1
-    return None
+    }
+)
 
 
-def assumptions_match(scenario_id: str, target: str, method_id: str) -> bool:
-    """Whether the method's stated assumptions hold for this declared process.
+def _exact_finite_horizon(scenario_id: str, target: str) -> int | None:
+    """Lag after which the declared autocovariance is exactly zero.
 
-    The decision uses the known data-generating process. It does not use
-    coverage from either partition.
+    None means there is no exact finite horizon. An AR(1) returns None.
     """
 
     key = (scenario_id, target)
-    if key[0] not in _scenario_targets() or target not in _scenario_targets()[key[0]]:
-        return False
-    required = _required_lag(scenario_id, target)
-    stationary = required is not None
-    variance_break = key == ("changing_volatility", "primary")
-    if method_id == "iid_normal_interval":
-        return required == 0 or variance_break
-    if method_id.startswith("newey_west_lag_"):
-        if not stationary:
-            return False
-        lag = int(method_id.rsplit("_", 1)[1])
-        return lag >= int(required)
+    if key in _ZERO_HORIZON_TARGETS:
+        return 0
+    if key in _OVERLAP_HORIZON_TARGETS:
+        return OVERLAP_HORIZON - 1
+    if key == ("long_memory", "primary"):
+        return LONG_MEMORY_TERMS - 1
+    return None
+
+
+def _practical_truncation_lag(scenario_id: str, target: str) -> int | None:
+    """AR(1) lag at the autocorrelation floor. Later lags are small, not absent."""
+
+    if target != "primary":
+        return None
+    if scenario_id == "weak_ar1":
+        return _last_material_ar_lag(WEAK_AR_PHI)
+    if scenario_id == "strong_ar1":
+        return _last_material_ar_lag(STRONG_AR_PHI)
+    return None
+
+
+def _process_dependence_class(scenario_id: str, target: str) -> str:
+    if _exact_finite_horizon(scenario_id, target) is not None:
+        return "EXACT_FINITE_DEPENDENCE_HORIZON"
+    if _practical_truncation_lag(scenario_id, target) is not None:
+        return "ASYMPTOTIC_WEAK_DEPENDENCE"
+    return "UNVERIFIED_APPROXIMATION"
+
+
+def _method_role(method_id: str) -> str:
     if method_id in {"declared_model_z_interval", "iid_variance_z_interval"}:
-        return _z_assumptions(scenario_id, target, method_id)
-    if method_id.startswith("moving_block_"):
-        block = int(method_id.rsplit("_", 1)[1])
-        if variance_break:
-            return block == 1
-        if not stationary:
-            return False
-        return block >= max(int(required), 1)
-    if method_id in {"circular_block_16", "stationary_block_16"}:
-        if not stationary or variance_break:
-            return False
-        return LONG_BLOCK_LENGTH >= max(int(required), 1)
-    if method_id == "shared_clock_block_8":
-        return stationary and int(required) <= SHARED_CLOCK_BLOCK_LENGTH
-    if method_id == "independent_column_block_8":
-        return False
-    if method_id == "cluster_event_bootstrap":
-        return key == ("shared_identical_observations", "unique_events")
-    if method_id == "shock_rebuild_bootstrap":
-        return key == ("overlapping_windows", "primary")
-    if method_id == "studentized_null_centered_mbb_16":
-        return assumptions_match(scenario_id, target, "moving_block_16") and assumptions_match(
+        return "KNOWN_MODEL_ORACLE"
+    if method_id == "iid_normal_interval" or method_id.startswith("newey_west_lag_"):
+        return "SAMPLE_ESTIMATED"
+    return "EXPERIMENTAL_BOOTSTRAP"
+
+
+def _known_target(scenario_id: str, target: str) -> bool:
+    targets = _scenario_targets()
+    return scenario_id in targets and target in targets[scenario_id]
+
+
+def dependence_assumption_assessment(
+    scenario_id: str,
+    target: str,
+    method_id: str,
+) -> dict[str, object]:
+    """Classify dependence assumptions without reading coverage.
+
+    `finite_sample_assumptions_exact` is true only when the sampling model
+    matches the declared process exactly. A floor truncation, a Bartlett lag,
+    and a fixed block are not that match. `captures_all_dependence` stays
+    false for every lag and block procedure.
+    """
+
+    known = _known_target(scenario_id, target)
+    horizon = _exact_finite_horizon(scenario_id, target) if known else None
+    truncation = _practical_truncation_lag(scenario_id, target) if known else None
+    variance_break = known and scenario_id == "changing_volatility" and target == "primary"
+    role = _method_role(method_id)
+    process_class = (
+        _process_dependence_class(scenario_id, target)
+        if known
+        else "UNVERIFIED_APPROXIMATION"
+    )
+    finite_exact = False
+    design_applies = False
+    method_class = "UNVERIFIED_APPROXIMATION"
+    window_includes: bool | None = None
+    captures_all = False
+    statement = "The finite-sample dependence assumption is not exact."
+    if not known:
+        statement = "The scenario and target are not in the declared catalogue."
+    elif method_id == "iid_normal_interval":
+        finite_exact = horizon == 0 or variance_break
+        design_applies = finite_exact
+        if finite_exact:
+            method_class = "EXACT_FINITE_DEPENDENCE_HORIZON"
+            captures_all = True
+            statement = (
+                "Serial dependence ends at lag 0. The interval uses the sample "
+                "variance and is not a known-model oracle."
+            )
+        else:
+            statement = "The IID interval does not match this dependence."
+    elif method_id.startswith("newey_west_lag_"):
+        lag = int(method_id.rsplit("_", 1)[1])
+        if truncation is not None and lag >= truncation:
+            design_applies = True
+            method_class = "PRACTICAL_AUTOCORRELATION_TRUNCATION"
+            window_includes = False
+            statement = (
+                "The lag reaches the autocorrelation floor. Autocorrelation "
+                "continues beyond that floor. The Bartlett lag does not capture "
+                "all dependence."
+            )
+        elif truncation is not None:
+            method_class = "UNVERIFIED_APPROXIMATION"
+            window_includes = False
+            statement = (
+                "The lag ends before the autocorrelation floor, and "
+                "autocorrelation continues past the floor."
+            )
+        elif horizon is not None and not variance_break and lag >= horizon:
+            design_applies = True
+            method_class = "ASYMPTOTIC_WEAK_DEPENDENCE"
+            window_includes = True
+            statement = (
+                "The lag window includes every nonzero population autocovariance. "
+                "Bartlett weights are not the exact long-run variance. The lag "
+                "has not captured all dependence."
+            )
+        elif horizon is not None and not variance_break:
+            window_includes = False
+            statement = "The lag window omits nonzero population autocovariance."
+        else:
+            window_includes = False
+            statement = "No exact stationary horizon makes this fixed lag an identity."
+    elif method_id in {"declared_model_z_interval", "iid_variance_z_interval"}:
+        finite_exact = _z_assumptions(scenario_id, target, method_id)
+        design_applies = finite_exact
+        method_class = process_class if finite_exact else "UNVERIFIED_APPROXIMATION"
+        if finite_exact:
+            statement = (
+                "Known-model oracle. The interval uses a declared variance of "
+                "the mean. It does not estimate dependence from the sample, and "
+                "an oracle pass does not validate a practical dependence estimator."
+            )
+        else:
+            statement = "The plugged-in variance is not the declared variance of the mean."
+    elif method_id.startswith("moving_block_") or method_id in {
+        "circular_block_16",
+        "stationary_block_16",
+        "shared_clock_block_8",
+    }:
+        if method_id.startswith("moving_block_"):
+            block = int(method_id.rsplit("_", 1)[1])
+        elif method_id == "shared_clock_block_8":
+            block = SHARED_CLOCK_BLOCK_LENGTH
+        else:
+            block = LONG_BLOCK_LENGTH
+        if method_id.startswith("moving_block_") and block == 1 and (horizon == 0 or variance_break):
+            finite_exact = True
+            design_applies = True
+            method_class = "EXACT_FINITE_DEPENDENCE_HORIZON"
+            statement = "Block length 1 resamples serially independent observations."
+        elif truncation is not None and block >= truncation:
+            design_applies = True
+            method_class = "PRACTICAL_AUTOCORRELATION_TRUNCATION"
+            statement = (
+                "The block reaches the autocorrelation floor. Autocorrelation "
+                "remains beyond that floor. The block does not contain all dependence."
+            )
+        elif horizon is not None and not variance_break and block >= max(horizon, 1):
+            design_applies = True
+            method_class = "ASYMPTOTIC_WEAK_DEPENDENCE"
+            window_includes = True
+            statement = (
+                "The block length meets an exact finite horizon. A fixed-block "
+                "bootstrap is an asymptotic approximation and does not reproduce "
+                "the process exactly."
+            )
+        elif variance_break:
+            statement = (
+                "A block longer than 1 is not the independent resampling model "
+                "for this variance break."
+            )
+        else:
+            if horizon is not None:
+                window_includes = False
+            statement = "The fixed block is not an exact sampling model for this process."
+    elif method_id == "independent_column_block_8":
+        statement = (
+            "Separate column indexes break a shared shock. This diagnostic is "
+            "not a dependence model."
+        )
+    elif method_id == "cluster_event_bootstrap":
+        finite_exact = (scenario_id, target) == (
+            "shared_identical_observations",
+            "unique_events",
+        )
+        design_applies = finite_exact
+        method_class = (
+            "EXACT_FINITE_DEPENDENCE_HORIZON" if finite_exact else "UNVERIFIED_APPROXIMATION"
+        )
+        statement = (
+            "Unique events are the resampling units."
+            if finite_exact
+            else "Copied rows are not extra independent trials."
+        )
+    elif method_id == "shock_rebuild_bootstrap":
+        finite_exact = (scenario_id, target) == ("overlapping_windows", "primary")
+        design_applies = finite_exact
+        method_class = (
+            "EXACT_FINITE_DEPENDENCE_HORIZON" if finite_exact else "UNVERIFIED_APPROXIMATION"
+        )
+        statement = (
+            "Resamples the known iid shocks and rebuilds every overlap. It does "
+            "not estimate a truncation lag. The percentile interval remains an "
+            "experimental bootstrap."
+            if finite_exact
+            else "Shock rebuilding applies only to the declared overlapping-window process."
+        )
+    elif method_id == "studentized_null_centered_mbb_16":
+        block_assessment = dependence_assumption_assessment(
+            scenario_id, target, "moving_block_16"
+        )
+        hac_assessment = dependence_assumption_assessment(
             scenario_id, target, "newey_west_lag_16"
         )
-    return False
+        design_applies = bool(block_assessment["predeclared_design_applies"]) and bool(
+            hac_assessment["predeclared_design_applies"]
+        )
+        classes = {
+            str(block_assessment["method_dependence_class"]),
+            str(hac_assessment["method_dependence_class"]),
+        }
+        if "UNVERIFIED_APPROXIMATION" in classes:
+            method_class = "UNVERIFIED_APPROXIMATION"
+        elif "PRACTICAL_AUTOCORRELATION_TRUNCATION" in classes:
+            method_class = "PRACTICAL_AUTOCORRELATION_TRUNCATION"
+        else:
+            method_class = "ASYMPTOTIC_WEAK_DEPENDENCE"
+        window_includes = False
+        statement = (
+            "Studentized moving-block p-values use fixed-lag Newey-West and a "
+            "fixed block. Neither is an exact finite-sample dependence model."
+        )
+    if scenario_id == "long_memory" and known:
+        statement = (
+            "The simulator is an MA(23), not an infinite long-memory process. " + statement
+        )
+    if method_class not in DEPENDENCE_ASSUMPTION_CLASSES:
+        _fail("DEPENDENCE_VALIDATION_NUMERICAL", "dependence class is not recognized")
+    if role not in METHOD_ROLES:
+        _fail("DEPENDENCE_VALIDATION_NUMERICAL", "method role is not recognized")
+    return {
+        "autocorrelation_remains_beyond_every_finite_lag": truncation is not None,
+        "captures_all_dependence": captures_all,
+        "exact_finite_horizon": horizon,
+        "finite_sample_assumptions_exact": finite_exact,
+        "known_model_oracle": role == "KNOWN_MODEL_ORACLE",
+        "method_dependence_class": method_class,
+        "method_role": role,
+        "practical_autocorrelation_truncation_lag": truncation,
+        "predeclared_design_applies": design_applies,
+        "process_dependence_class": process_class,
+        "simulated_process_is_infinite_long_memory": False,
+        "statement": statement,
+        "window_includes_every_nonzero_population_autocovariance": window_includes,
+    }
+
+
+def assumptions_match(scenario_id: str, target: str, method_id: str) -> bool:
+    """Whether the finite-sample dependence assumption is exact.
+
+    The decision uses the known data-generating process. It does not use
+    coverage from either partition. A truncated lag or a fixed block returns
+    false.
+    """
+
+    return bool(
+        dependence_assumption_assessment(scenario_id, target, method_id)[
+            "finite_sample_assumptions_exact"
+        ]
+    )
 
 
 def _population_moments(scenario_id: str, target: str) -> dict[str, float | None]:
@@ -1795,7 +2148,8 @@ def _interval_row(
 ) -> dict[str, object]:
     moments = _population_moments(scenario_id, target)
     true_mean = float(moments["true_mean"])
-    matched = assumptions_match(scenario_id, target, method_id)
+    assessment = dependence_assumption_assessment(scenario_id, target, method_id)
+    matched = bool(assessment["finite_sample_assumptions_exact"])
     numeric_status = interval_primary_status(
         assumptions_match=matched,
         covered=bucket.covered,
@@ -1833,6 +2187,8 @@ def _interval_row(
         "target": target,
         "method_id": method_id,
         "assumptions_match": matched,
+        "method_role": assessment["method_role"],
+        "dependence_assessment": assessment,
         "primary_status": primary,
         "numeric_status": numeric_status,
         "catalogue_inference": "CATALOGUE_INFERENCE_NOT_AUTHORIZED",
@@ -2067,9 +2423,10 @@ def _evaluate_studentized(
         rejections = 0
         available = 0
         unavailable = 0
-        matched = assumptions_match(
+        assessment = dependence_assumption_assessment(
             scenario_id, "primary", "studentized_null_centered_mbb_16"
         )
+        matched = bool(assessment["finite_sample_assumptions_exact"])
         for seed in seeds:
             draw = _draw_scenario(scenario_id, random.Random(seed))
             series = draw["primary"]
@@ -2094,6 +2451,7 @@ def _evaluate_studentized(
             available=available,
             unavailable_count=unavailable,
             replications=replications,
+            p_values_computed=True,
         )
         rows.append(
             {
@@ -2103,6 +2461,9 @@ def _evaluate_studentized(
                 "target": "primary",
                 "method_id": "studentized_null_centered_mbb_16",
                 "assumptions_match": matched,
+                "method_role": assessment["method_role"],
+                "dependence_assessment": assessment,
+                "p_values_computed": True,
                 "primary_status": numeric if partition == HOLDOUT_PARTITION else "EXPLORATORY_ONLY",
                 "numeric_status": numeric,
                 "catalogue_inference": "CATALOGUE_INFERENCE_NOT_AUTHORIZED",
@@ -2118,7 +2479,8 @@ def _evaluate_studentized(
                 "replications": replications,
                 "finite_sample_limitation": (
                     "Sixty Monte Carlo replications and 49 bootstrap draws "
-                    "are below the predeclared validation precision."
+                    "are below the predeclared validation precision. The fixed "
+                    "lag and block are not an exact finite-sample dependence model."
                 ),
             }
         )
@@ -2200,22 +2562,34 @@ def _evaluate_family(
                 1 for index in alternative_indexes if adjusted[index] <= ALPHA
             )
     control_count = true_null_holm if alternative_count else holm_family_rejections
-    numeric = fwer_control_status(
+    holm_assessment = empirical_fwer_assessment(
         assumptions_match=assumptions_for_control,
         familywise_rejections=control_count,
         replications=replications,
     )
-    shortlist_numeric = fwer_control_status(
+    shortlist_assessment = empirical_fwer_assessment(
         assumptions_match=False,
         familywise_rejections=shortlist_rejections,
         replications=replications,
     )
-    raw_numeric = fwer_control_status(
+    raw_assessment = empirical_fwer_assessment(
         assumptions_match=False,
         familywise_rejections=raw_family_rejections,
         replications=replications,
     )
+    numeric = str(holm_assessment["primary_status"])
+    shortlist_numeric = str(shortlist_assessment["primary_status"])
+    raw_numeric = str(raw_assessment["primary_status"])
     primary = numeric if partition == HOLDOUT_PARTITION else "EXPLORATORY_ONLY"
+    inspected = {
+        "newly_established_independent_pass": False,
+        "inspected_outcomes_reused_as_fresh_confirmation": False,
+        "acceptance_interpretation": (
+            "METHODOLOGICAL_CORRECTION_OF_AN_INSPECTED_HOLDOUT"
+            if partition == HOLDOUT_PARTITION
+            else "NOT_AN_ACCEPTANCE_PARTITION"
+        ),
+    }
     return {
         "study_id": study_id,
         "partition": partition,
@@ -2232,6 +2606,15 @@ def _evaluate_family(
             "assumptions_match": assumptions_for_control,
             "primary_status": primary,
             "numeric_status": numeric,
+            "empirical_fwer_claim": holm_assessment["empirical_fwer_claim"],
+            "one_sided_wilson_95": holm_assessment["one_sided_wilson_95"],
+            "point_estimate_at_or_below_alpha": holm_assessment[
+                "point_estimate_at_or_below_alpha"
+            ],
+            "theoretical_holm_guarantee": _theoretical_holm_guarantee(
+                applies=assumptions_for_control
+            ),
+            **inspected,
             "familywise_false_positives": binomial_monte_carlo_report(
                 control_count, replications
             ),
@@ -2243,6 +2626,13 @@ def _evaluate_family(
             "assumptions_match": False,
             "primary_status": raw_numeric if partition == HOLDOUT_PARTITION else "EXPLORATORY_ONLY",
             "numeric_status": raw_numeric,
+            "empirical_fwer_claim": raw_assessment["empirical_fwer_claim"],
+            "one_sided_wilson_95": raw_assessment["one_sided_wilson_95"],
+            "point_estimate_at_or_below_alpha": raw_assessment[
+                "point_estimate_at_or_below_alpha"
+            ],
+            "theoretical_holm_guarantee": _theoretical_holm_guarantee(applies=False),
+            **inspected,
             "familywise_false_positives": binomial_monte_carlo_report(
                 raw_family_rejections, replications
             ),
@@ -2254,6 +2644,13 @@ def _evaluate_family(
                 shortlist_numeric if partition == HOLDOUT_PARTITION else "EXPLORATORY_ONLY"
             ),
             "numeric_status": shortlist_numeric,
+            "empirical_fwer_claim": shortlist_assessment["empirical_fwer_claim"],
+            "one_sided_wilson_95": shortlist_assessment["one_sided_wilson_95"],
+            "point_estimate_at_or_below_alpha": shortlist_assessment[
+                "point_estimate_at_or_below_alpha"
+            ],
+            "theoretical_holm_guarantee": _theoretical_holm_guarantee(applies=False),
+            **inspected,
             "winner_rejections": binomial_monte_carlo_report(
                 shortlist_rejections, replications
             ),
@@ -2429,9 +2826,18 @@ def _stability_spans(rows: Sequence[Mapping[str, object]]) -> list[dict[str, obj
 def _scenario_catalogue() -> list[dict[str, object]]:
     descriptions = {
         "independent_zero_edge": "120 independent N(0, 1) observations.",
-        "weak_ar1": "Stationary AR(1), phi 0.3, innovation sigma 1, mean 0.",
-        "strong_ar1": "Stationary AR(1), phi 0.8, innovation sigma 1, mean 0.",
-        "long_memory": "Finite MA(23) with weights (k+1)^(-0.6), normalized to variance 1.",
+        "weak_ar1": (
+            "Stationary AR(1), phi 0.3, innovation sigma 1, mean 0. "
+            "Autocorrelation continues past every finite lag."
+        ),
+        "strong_ar1": (
+            "Stationary AR(1), phi 0.8, innovation sigma 1, mean 0. "
+            "Autocorrelation continues past every finite lag."
+        ),
+        "long_memory": (
+            "Finite MA(23) with weights (k+1)^(-0.6), normalized to variance 1. "
+            "This is not an infinite long-memory process."
+        ),
         "overlapping_windows": "Means of 4 consecutive iid shocks. The windows overlap.",
         "shared_identical_observations": "60 iid events, each copied into two adjacent rows.",
         "common_shock_cross_symbol": "Two series share a factor with weight squared 0.49.",
@@ -2465,30 +2871,60 @@ def _method_catalogue() -> list[dict[str, object]]:
         },
         {
             "method_id": "newey_west_bartlett",
+            "method_role": "SAMPLE_ESTIMATED",
             "lags": list(PREDECLARED_HAC_LAGS),
-            "assumptions": "Covariance stationarity and a lag that covers the material autocovariances.",
+            "assumptions": (
+                "Asymptotic weak dependence. A lag at an autocorrelation floor is a "
+                "practical truncation, not an exact horizon. Bartlett weights are "
+                "not the exact long-run variance."
+            ),
+            "captures_all_dependence": False,
             "lag_selected_from_results": False,
         },
         {
             "method_id": "declared_model_z_interval",
-            "assumptions": "The Gaussian data-generating variance of the mean is known.",
+            "method_role": "KNOWN_MODEL_ORACLE",
+            "assumptions": (
+                "The Gaussian data-generating variance of the mean is known. "
+                "This is not an estimator of unknown dependence."
+            ),
         },
         {
             "method_id": "iid_variance_z_interval",
-            "assumptions": "Marginal variance divided by the row count equals the variance of the mean.",
+            "method_role": "KNOWN_MODEL_ORACLE",
+            "assumptions": (
+                "Marginal variance divided by the row count equals the variance "
+                "of the mean. The variance is declared, not estimated from sample autocovariance."
+            ),
         },
         {
             "method_id": "moving_block",
+            "method_role": "EXPERIMENTAL_BOOTSTRAP",
             "block_lengths": list(PREDECLARED_BLOCK_LENGTHS),
-            "assumptions": "Dependence is mostly inside the block. Length 1 resamples observations independently.",
+            "assumptions": (
+                "Length 1 resamples serially independent observations. A longer "
+                "fixed block is an asymptotic approximation and does not contain "
+                "all AR(1) dependence."
+            ),
+            "captures_all_dependence": False,
         },
         {
             "method_id": "circular_block_16",
-            "assumptions": "Stationarity, so wrapping the series is justified, and the block covers dependence.",
+            "method_role": "EXPERIMENTAL_BOOTSTRAP",
+            "assumptions": (
+                "Stationary wrapping is an asymptotic device. The block does not "
+                "capture all dependence."
+            ),
+            "captures_all_dependence": False,
         },
         {
             "method_id": "stationary_block_16",
-            "assumptions": "Stationarity. Geometric blocks have mean length 16 and wrap.",
+            "method_role": "EXPERIMENTAL_BOOTSTRAP",
+            "assumptions": (
+                "Stationarity. Geometric blocks have mean length 16 and wrap. "
+                "This is an asymptotic approximation."
+            ),
+            "captures_all_dependence": False,
         },
         {
             "method_id": "shared_clock_block_8",
@@ -2508,7 +2944,12 @@ def _method_catalogue() -> list[dict[str, object]]:
         },
         {
             "method_id": "studentized_null_centered_mbb_16",
-            "assumptions": "Stationarity, block 16 and Newey-West lag 16 both match the process.",
+            "method_role": "EXPERIMENTAL_BOOTSTRAP",
+            "assumptions": (
+                "Uses fixed-lag Newey-West and a fixed moving block. Neither is "
+                "an exact finite-sample dependence model."
+            ),
+            "captures_all_dependence": False,
             "produces_confidence_interval": False,
         },
     ]
@@ -2530,14 +2971,16 @@ def _acceptance_rule() -> dict[str, object]:
         "calibration_partition_can_validate": False,
         "holdout_seed_used_to_choose_methods": False,
         "prior_ar1_counts_used_as_thresholds": False,
-        "fwer_failure_rule": "Wilson lower bound above alpha",
-        "fwer_validation_rule": (
-            "matching assumptions, validation precision, point estimate at or "
-            "below alpha, and Wilson lower bound at or below alpha"
+        "fwer_failure_rule": "two-sided Wilson lower bound above alpha",
+        "fwer_positive_claim": (
+            "one-sided 95 percent Wilson upper bound at or below alpha, "
+            "the predeclared precision floor, and valid marginal p-values"
         ),
-        "fwer_point_above_alpha_while_lower_bound_includes_alpha_or_less": (
-            "INSUFFICIENT_MONTE_CARLO_PRECISION"
-        ),
+        "fwer_z_one_sided_95": Z_ONE_SIDED_95,
+        "fwer_point_estimate_at_or_below_alpha_is_sufficient": False,
+        "fwer_rule_selected_from_inspected_counts": False,
+        "inspected_holdout_is_a_fresh_independent_validation_of_the_revised_rule": False,
+        "new_large_fwer_validation_launched": False,
         "bootstrap_replications_below_validation_precision": (
             HOLDOUT_BOOTSTRAP_REPLICATIONS < MIN_DENOMINATOR_TO_VALIDATE
         ),
@@ -2562,6 +3005,10 @@ def _summary(rows: Sequence[Mapping[str, object]]) -> dict[str, object]:
     counts = {status: 0 for status in PRIMARY_STATUSES}
     validated: list[dict[str, str]] = []
     failed: list[dict[str, str]] = []
+    oracles: list[dict[str, str]] = []
+    sample_estimators: list[dict[str, str]] = []
+    experimental_bootstraps: list[dict[str, str]] = []
+    dependence_estimators: list[dict[str, str]] = []
     for row in rows:
         if row.get("partition") != HOLDOUT_PARTITION:
             continue
@@ -2572,13 +3019,30 @@ def _summary(rows: Sequence[Mapping[str, object]]) -> dict[str, object]:
             "target": str(row["target"]),
             "method_id": str(row["method_id"]),
         }
-        if status == "VALIDATED_UNDER_DECLARED_SYNTHETIC_MODEL":
-            validated.append(identity)
-        elif status == "FAILED_SYNTHETIC_CALIBRATION":
+        if status == "FAILED_SYNTHETIC_CALIBRATION":
             failed.append(identity)
+        if status != "VALIDATED_UNDER_DECLARED_SYNTHETIC_MODEL":
+            continue
+        validated.append(identity)
+        role = str(row.get("method_role"))
+        method_id = identity["method_id"]
+        if role == "KNOWN_MODEL_ORACLE":
+            oracles.append(identity)
+        elif role == "SAMPLE_ESTIMATED":
+            sample_estimators.append(identity)
+            if method_id.startswith("newey_west_lag_"):
+                dependence_estimators.append(identity)
+        elif role == "EXPERIMENTAL_BOOTSTRAP":
+            experimental_bootstraps.append(identity)
+            dependence_estimators.append(identity)
     return {
         "holdout_status_counts": counts,
         "validated_under_declared_synthetic_model": validated,
+        "validated_known_model_oracles": oracles,
+        "validated_sample_estimators": sample_estimators,
+        "validated_experimental_bootstraps": experimental_bootstraps,
+        "validated_practical_dependence_estimators": dependence_estimators,
+        "oracle_pass_validates_a_practical_dependence_estimator": False,
         "failed_synthetic_calibration": failed,
         "validated_methods_are_not_authorized_for_catalogue_inference": True,
         "software_correctness_is_not_synthetic_calibration": True,
@@ -2661,6 +3125,13 @@ def _multiple_testing(provenance_seed_note: str) -> dict[str, object]:
         "bounded_family_replaces_reference_family": False,
         "familywise_error_estimated_at_reference_family": False,
         "reference_family_status": "CATALOGUE_INFERENCE_NOT_AUTHORIZED",
+        "empirical_fwer_rule_revision": {
+            "previous_positive_rule_accepted_a_point_estimate_at_or_below_alpha": True,
+            "corrected_positive_rule": "one_sided_wilson_upper_bound_at_or_below_alpha",
+            "z_one_sided_95": Z_ONE_SIDED_95,
+            "inspected_holdout_reused_as_independent_confirmation": False,
+            "new_validation_experiment_launched": False,
+        },
         "studies": studies,
         "repeated_annual_segments": _repeated_selection(FAMILY_REPEATED_SEGMENT_SEED),
         "scaling_sizes_timed_outside_the_hashed_document": list(FAMILY_SCALING_SIZES),
@@ -2707,6 +3178,7 @@ def _expected_numeric_status(row: Mapping[str, object]) -> str:
             available=int(rejections["denominator"]),
             unavailable_count=int(row["unavailable_count"]),
             replications=int(row["replications"]),
+            p_values_computed=bool(row.get("p_values_computed")),
         )
     _fail("DEPENDENCE_VALIDATION_INTEGRITY", "row kind is not recognized")
     raise AssertionError
@@ -2736,6 +3208,41 @@ def _check_row(row: Mapping[str, object]) -> None:
         _fail(
             "DEPENDENCE_VALIDATION_INTEGRITY",
             "a method validated outside its declared assumptions",
+        )
+    scenario_id = row.get("scenario_id")
+    target = row.get("target")
+    method_id = row.get("method_id")
+    if not isinstance(scenario_id, str) or not isinstance(target, str) or not isinstance(method_id, str):
+        _fail("DEPENDENCE_VALIDATION_INTEGRITY", "a row identity is missing")
+    expected_assessment = dependence_assumption_assessment(scenario_id, target, method_id)
+    if bool(row.get("assumptions_match")) is not bool(
+        expected_assessment["finite_sample_assumptions_exact"]
+    ):
+        _fail(
+            "DEPENDENCE_VALIDATION_INTEGRITY",
+            "assumptions_match does not match the declared process",
+        )
+    if row.get("method_role") != expected_assessment["method_role"]:
+        _fail("DEPENDENCE_VALIDATION_INTEGRITY", "method role does not match the procedure")
+    stored_assessment = row.get("dependence_assessment")
+    if stored_assessment != expected_assessment:
+        _fail(
+            "DEPENDENCE_VALIDATION_INTEGRITY",
+            "dependence classification does not match the declared process",
+        )
+    if method_id.startswith("newey_west_lag_") and stored_assessment["captures_all_dependence"] is True:
+        _fail(
+            "DEPENDENCE_VALIDATION_INTEGRITY",
+            "a Newey-West lag was described as capturing all dependence",
+        )
+    if (
+        status == "VALIDATED_UNDER_DECLARED_SYNTHETIC_MODEL"
+        and expected_assessment["method_role"] == "KNOWN_MODEL_ORACLE"
+        and row.get("method_role") != "KNOWN_MODEL_ORACLE"
+    ):
+        _fail(
+            "DEPENDENCE_VALIDATION_INTEGRITY",
+            "an oracle pass was relabeled as a practical estimator",
         )
 
 
@@ -2922,8 +3429,148 @@ def _require_canonical_bytes(raw: bytes) -> dict[str, object]:
     return parsed
 
 
+def _wilson_mapping_matches(stored: object, expected: object) -> bool:
+    if not isinstance(stored, Mapping) or not isinstance(expected, Mapping):
+        return False
+    if set(stored) != set(expected):
+        return False
+    for key, value in expected.items():
+        other = stored[key]
+        if isinstance(value, float):
+            if isinstance(other, bool) or not isinstance(other, (int, float)):
+                return False
+            if not math.isclose(float(other), value, rel_tol=0.0, abs_tol=1e-12):
+                return False
+        elif other != value:
+            return False
+    return True
+
+
+def _check_fwer_block(
+    block: Mapping[str, object],
+    *,
+    assumptions_match: bool,
+    numerator_key: str,
+    holdout: bool,
+) -> None:
+    if block.get("assumptions_match") is not assumptions_match:
+        _fail(
+            "DEPENDENCE_VALIDATION_INTEGRITY",
+            "familywise assumptions do not match the procedure",
+        )
+    report = block.get(numerator_key)
+    if not isinstance(report, Mapping):
+        _fail("DEPENDENCE_VALIDATION_INTEGRITY", "familywise counts are missing")
+    assessment = empirical_fwer_assessment(
+        assumptions_match=assumptions_match,
+        familywise_rejections=int(report["numerator"]),
+        replications=int(report["denominator"]),
+    )
+    if block.get("numeric_status") != assessment["primary_status"]:
+        _fail(
+            "DEPENDENCE_VALIDATION_INTEGRITY",
+            "familywise status does not match the corrected rule",
+        )
+    if block.get("empirical_fwer_claim") != assessment["empirical_fwer_claim"]:
+        _fail(
+            "DEPENDENCE_VALIDATION_INTEGRITY",
+            "familywise claim does not match the corrected rule",
+        )
+    if not _wilson_mapping_matches(
+        block.get("one_sided_wilson_95"),
+        assessment["one_sided_wilson_95"],
+    ):
+        _fail(
+            "DEPENDENCE_VALIDATION_INTEGRITY",
+            "one-sided Wilson bound does not match the recorded counts",
+        )
+    if holdout and block.get("primary_status") != assessment["primary_status"]:
+        _fail("DEPENDENCE_VALIDATION_INTEGRITY", "holdout familywise status drifted")
+    theory = block.get("theoretical_holm_guarantee")
+    if not isinstance(theory, Mapping) or theory.get("established_by_simulation") is not False:
+        _fail(
+            "DEPENDENCE_VALIDATION_INTEGRITY",
+            "a simulation was described as Holm's theorem",
+        )
+    if theory.get("guarantee_applies") is not assumptions_match:
+        _fail(
+            "DEPENDENCE_VALIDATION_INTEGRITY",
+            "the Holm guarantee was detached from its condition",
+        )
+    if block.get("newly_established_independent_pass") is not False:
+        _fail(
+            "DEPENDENCE_VALIDATION_INTEGRITY",
+            "inspected familywise counts were labeled as a new independent pass",
+        )
+    if block.get("inspected_outcomes_reused_as_fresh_confirmation") is not False:
+        _fail(
+            "DEPENDENCE_VALIDATION_INTEGRITY",
+            "inspected familywise counts were reused as fresh confirmation",
+        )
+
+
+def reproduce_bounded_synthetic_case() -> dict[str, object]:
+    """Re-run one tiny synthetic family twice.
+
+    Agreement shows that this process repeats the generator. The count is not
+    an acceptance threshold, and the run is not the inspected holdout.
+    """
+
+    def once() -> int:
+        study = _evaluate_family(
+            seed=BOUNDED_REPRODUCTION_SEED,
+            replications=BOUNDED_REPRODUCTION_REPLICATIONS,
+            family_size=BOUNDED_REPRODUCTION_FAMILY_SIZE,
+            rho=0.0,
+            alternative_count=0,
+            alternative_mean=0.0,
+            partition=CALIBRATION_PARTITION,
+            study_id="bounded_source_reproduction",
+            assumptions_for_control=True,
+        )
+        holm = study["holm"]
+        if not isinstance(holm, Mapping):
+            _fail("DEPENDENCE_VALIDATION_NUMERICAL", "bounded Holm block is missing")
+        report = holm["familywise_false_positives"]
+        if not isinstance(report, Mapping):
+            _fail("DEPENDENCE_VALIDATION_NUMERICAL", "bounded familywise count is missing")
+        return int(report["numerator"])
+
+    if BOUNDED_REPRODUCTION_SEED in FORBIDDEN_MASTER_SEEDS:
+        _fail("DEPENDENCE_VALIDATION_FORBIDDEN_MASTER_SEED", "bounded seed is forbidden")
+    if BOUNDED_REPRODUCTION_SEED == HOLDOUT_MASTER_SEED:
+        _fail("DEPENDENCE_VALIDATION_FORBIDDEN_MASTER_SEED", "bounded seed reuses the holdout")
+    if BOUNDED_REPRODUCTION_REPLICATIONS >= MIN_DENOMINATOR_TO_VALIDATE:
+        _fail(
+            "DEPENDENCE_VALIDATION_NUMERICAL",
+            "bounded reproduction is large enough to look like validation",
+        )
+    first = once()
+    second = once()
+    if first != second:
+        _fail("DEPENDENCE_VALIDATION_NUMERICAL", "bounded reproduction was not deterministic")
+    return {
+        "kind": "BOUNDED_SYNTHETIC_REPRODUCTION",
+        "deterministic": True,
+        "seed": BOUNDED_REPRODUCTION_SEED,
+        "replications": BOUNDED_REPRODUCTION_REPLICATIONS,
+        "family_size": BOUNDED_REPRODUCTION_FAMILY_SIZE,
+        "familywise_rejections": first,
+        "full_monte_carlo_reproduced": False,
+        "holdout_reproduced": False,
+        "used_as_acceptance_threshold": False,
+        "catalogue_inference": "CATALOGUE_INFERENCE_NOT_AUTHORIZED",
+    }
+
+
 def validate_dependence_validation_document(document: Mapping[str, object] | bytes | str) -> dict[str, object]:
-    """Recompute statuses, the hash, and the closed authorization boundary."""
+    """Recompute statuses and the authorization boundary.
+
+    This does not regenerate the Monte Carlo experiment. A recomputed SHA-256
+    of altered counts is not independently reproduced evidence. A separate
+    bounded synthetic case checks that the generator repeats; it does not
+    certify the recorded holdout counts.
+    """
 
     if isinstance(document, str):
         raw = document.encode("utf-8")
@@ -2976,18 +3623,33 @@ def validate_dependence_validation_document(document: Mapping[str, object] | byt
         holm = study.get("holm")
         if not isinstance(holm, Mapping):
             _fail("DEPENDENCE_VALIDATION_INTEGRITY", "Holm block is missing")
-        report = holm.get("familywise_false_positives")
-        if not isinstance(report, Mapping):
-            _fail("DEPENDENCE_VALIDATION_INTEGRITY", "familywise counts are missing")
-        numeric = fwer_control_status(
-            assumptions_match=bool(holm.get("assumptions_match")),
-            familywise_rejections=int(report["numerator"]),
-            replications=int(report["denominator"]),
+        if study.get("marginal_p_values") != "exact_gaussian_under_declared_standard_error":
+            _fail(
+                "DEPENDENCE_VALIDATION_INTEGRITY",
+                "family marginal p-values are not the declared Gaussian reference",
+            )
+        _check_fwer_block(
+            holm,
+            assumptions_match=True,
+            numerator_key="familywise_false_positives",
+            holdout=study.get("partition") == HOLDOUT_PARTITION,
         )
-        if holm.get("numeric_status") != numeric:
-            _fail("DEPENDENCE_VALIDATION_INTEGRITY", "Holm status does not match the frozen rule")
-        if study.get("partition") == HOLDOUT_PARTITION and holm.get("primary_status") != numeric:
-            _fail("DEPENDENCE_VALIDATION_INTEGRITY", "holdout Holm status drifted")
+        uncorrected = study.get("uncorrected")
+        shortlist = study.get("shortlist_only_holm")
+        if not isinstance(uncorrected, Mapping) or not isinstance(shortlist, Mapping):
+            _fail("DEPENDENCE_VALIDATION_INTEGRITY", "familywise comparison blocks are missing")
+        _check_fwer_block(
+            uncorrected,
+            assumptions_match=False,
+            numerator_key="familywise_false_positives",
+            holdout=study.get("partition") == HOLDOUT_PARTITION,
+        )
+        _check_fwer_block(
+            shortlist,
+            assumptions_match=False,
+            numerator_key="winner_rejections",
+            holdout=study.get("partition") == HOLDOUT_PARTITION,
+        )
         if study.get("replaces_frozen_universe") is not False:
             _fail("DEPENDENCE_VALIDATION_AUTHORIZATION", "a bounded family replaced the universe")
     summary = parsed.get("summary")
@@ -2996,7 +3658,61 @@ def validate_dependence_validation_document(document: Mapping[str, object] | byt
     recomputed = _summary(_rows_from_body(parsed))
     if summary.get("holdout_status_counts") != recomputed["holdout_status_counts"]:
         _fail("DEPENDENCE_VALIDATION_INTEGRITY", "summary counts drifted")
-    return parsed
+    if (
+        summary.get("validated_practical_dependence_estimators")
+        != recomputed["validated_practical_dependence_estimators"]
+    ):
+        _fail(
+            "DEPENDENCE_VALIDATION_INTEGRITY",
+            "practical dependence-estimator summary drifted",
+        )
+    if summary.get("validated_known_model_oracles") != recomputed["validated_known_model_oracles"]:
+        _fail("DEPENDENCE_VALIDATION_INTEGRITY", "oracle summary drifted")
+    if summary.get("oracle_pass_validates_a_practical_dependence_estimator") is not False:
+        _fail(
+            "DEPENDENCE_VALIDATION_INTEGRITY",
+            "an oracle pass was treated as a practical dependence estimator",
+        )
+    acceptance = parsed.get("acceptance_rule")
+    if not isinstance(acceptance, Mapping):
+        _fail("DEPENDENCE_VALIDATION_INTEGRITY", "acceptance rule is missing")
+    if acceptance.get("fwer_point_estimate_at_or_below_alpha_is_sufficient") is not False:
+        _fail(
+            "DEPENDENCE_VALIDATION_INTEGRITY",
+            "a point estimate was treated as familywise control",
+        )
+    if acceptance.get("fwer_z_one_sided_95") != Z_ONE_SIDED_95:
+        _fail("DEPENDENCE_VALIDATION_INTEGRITY", "the one-sided Wilson quantile drifted")
+    if (
+        acceptance.get("inspected_holdout_is_a_fresh_independent_validation_of_the_revised_rule")
+        is not False
+    ):
+        _fail(
+            "DEPENDENCE_VALIDATION_INTEGRITY",
+            "the inspected holdout was reused as a fresh confirmation",
+        )
+    if acceptance.get("new_large_fwer_validation_launched") is not False:
+        _fail("DEPENDENCE_VALIDATION_AUTHORIZATION", "a new familywise validation was launched")
+    revision = multiple.get("empirical_fwer_rule_revision")
+    if not isinstance(revision, Mapping) or revision.get(
+        "inspected_holdout_reused_as_independent_confirmation"
+    ) is not False:
+        _fail(
+            "DEPENDENCE_VALIDATION_INTEGRITY",
+            "the revised familywise rule was marked as independently confirmed",
+        )
+    return {
+        "document": parsed,
+        "canonical_json_checked": True,
+        "statuses_recomputed_from_recorded_counts": True,
+        "authorization_boundary_checked": True,
+        "assumption_classes_recomputed_from_the_declared_process": True,
+        "numerical_experiment_regenerated": False,
+        "full_monte_carlo_reproduced": False,
+        "independently_reproduced_evidence": False,
+        "recomputed_digest_of_altered_counts_is_independent_reproduction": False,
+        "bounded_synthetic_reproduction": reproduce_bounded_synthetic_case(),
+    }
 
 
 def assess_supplied_events_for_catalogue_inference(
@@ -3132,6 +3848,17 @@ def _assert_frozen_boundaries() -> None:
         raise ValueError("DEPENDENCE_VALIDATION_HORIZON_DRIFT")
     if _last_material_ar_lag(STRONG_AR_PHI) != 13:
         raise ValueError("DEPENDENCE_VALIDATION_HORIZON_DRIFT")
+    truncation = dependence_assumption_assessment("strong_ar1", "primary", "newey_west_lag_16")
+    if truncation["finite_sample_assumptions_exact"] or truncation["captures_all_dependence"]:
+        raise ValueError("DEPENDENCE_VALIDATION_TRUNCATION_TREATED_AS_EXACT")
+    if truncation["method_dependence_class"] != "PRACTICAL_AUTOCORRELATION_TRUNCATION":
+        raise ValueError("DEPENDENCE_VALIDATION_TRUNCATION_TREATED_AS_EXACT")
+    if BOUNDED_REPRODUCTION_SEED in FORBIDDEN_MASTER_SEEDS:
+        raise ValueError("DEPENDENCE_VALIDATION_SEED_DRIFT")
+    if BOUNDED_REPRODUCTION_SEED == HOLDOUT_MASTER_SEED:
+        raise ValueError("DEPENDENCE_VALIDATION_SEED_DRIFT")
+    if BOUNDED_REPRODUCTION_REPLICATIONS >= MIN_DENOMINATOR_TO_VALIDATE:
+        raise ValueError("DEPENDENCE_VALIDATION_BOOTSTRAP_PRECISION_DRIFT")
     if abs(ar1_variance_of_mean(2, 0.5, 1.0) - 1.0) > 1e-12:
         raise ValueError("DEPENDENCE_VALIDATION_AR1_VARIANCE_DRIFT")
     if abs(ar1_effective_sample_size(2, 0.5) - (4.0 / 3.0)) > 1e-12:

@@ -44,16 +44,18 @@ A revision of a method after inspecting results requires a fresh holdout. The ho
 | Estimand | Mean of the named synthetic series. |
 | Null | Mean equals 0, except the planted series. |
 | Alternatives | Planted means +0.35 and −0.35. Family alternatives use mean 0.5. |
-| Nominal coverage and alpha | 0.95 and 0.05. Normal quantile 1.959963984540054. |
-| Monte Carlo interval | Wilson score, same quantile. |
+| Nominal coverage and alpha | 0.95 and 0.05. Two-sided normal quantile 1.959963984540054. One-sided 95 percent quantile 1.6448536269514722, which is the inverse of the standard normal distribution at 0.95. |
+| Monte Carlo interval | Two-sided Wilson score for coverage and for the excessive-error rule. The familywise upper-bound claim uses the one-sided Wilson score. |
 | Clear undercoverage | Wilson upper bound below 0.90, with at least 40 available replicates. |
 | Clear overcoverage | Wilson lower bound above 0.98. |
 | Clear anti-conservative test | Wilson lower bound of the rejection rate above 0.15. |
 | Validation precision | At least 200 replicates, Wilson half-width at most 0.04, unavailable fraction at most 0.01, assumptions matched, and the holdout partition. |
 | Borderline miss | Nominal value outside the Wilson interval, without a clear failure: `INSUFFICIENT_MONTE_CARLO_PRECISION`. |
 | Mismatched assumptions | `MODEL_ASSUMPTIONS_UNVERIFIED`, unless the numeric result is a clear failure, which is `FAILED_SYNTHETIC_CALIBRATION`. |
-| Familywise failure | Wilson lower bound above 0.05. |
-| Familywise validation | Assumptions matched, validation precision, point estimate at or below 0.05, and Wilson lower bound at or below 0.05. A point above 0.05 whose Wilson interval still reaches 0.05 is insufficient precision. |
+| Familywise excessive error | Two-sided Wilson lower bound above 0.05, with at least 40 replicates. A matching assumption is not required. This failure rule is unchanged. |
+| Familywise empirical control | `finite_sample_assumptions_exact`, at least 200 replicates, two-sided Wilson half-width at most 0.04, and the one-sided 95 percent Wilson upper bound at or below 0.05. A point estimate at or below 0.05 is not control when that upper bound exceeds 0.05. The quantile is the module's existing 95 percent level. It was not chosen so that 17/400 or 19/400 would pass. |
+| Familywise inconclusive | Every other simulation whose assumptions match, including a point estimate below 0.05 whose one-sided upper bound exceeds 0.05, and a rate above 0.05 whose two-sided lower bound still reaches 0.05. |
+| Inspected holdout | The revised positive rule is a methodological correction of counts that were already inspected. It is not a fresh independent validation. `newly_established_independent_pass` stays false. |
 | Closed-form replicates | 80 calibration, 400 holdout. |
 | Bootstrap replicates | 20 calibration, 60 holdout, 99 draws. Below the validation floor on purpose. |
 | Studentized replicates | 60 holdout replicates of 49 draws. Below the validation floor on purpose. |
@@ -68,19 +70,19 @@ A larger bootstrap validation, at least 200 replicates, was specified and was no
 
 These procedures are candidates. Eligibility is fixed from the known data-generating process before the holdout counts are read.
 
-| Method | Eligibility in this build | Testing status |
+| Method | Role and dependence assumption | Testing status |
 | --- | --- | --- |
-| IID normal interval | Stationary dependence horizon 0, or independent observations with a variance break. Sample variance uses `n - 1`. | Interval only. `P_VALUES_UNAVAILABLE`. |
-| IID variance z | The marginal variance divided by `n` equals the exact variance of the mean. | Exact Gaussian null p-value when eligible. |
-| Declared-model z | Caller supplies the exact variance of the mean. Duplicated rows and a constant series are ineligible even when a number can be computed. | Exact Gaussian null p-value on a zero-mean eligible series. Planted means are power diagnostics and stay `EXPLORATORY_ONLY`. |
-| Newey–West, Bartlett kernel | Covariance-stationary target whose material autocovariance horizon is within the lag. Lags 1, 4, 8, and 16. Autocovariances divide by `n`. | Interval only. `P_VALUES_UNAVAILABLE`. |
-| Moving-block bootstrap | Stationary target and block length at least the material horizon. Length 1 is eligible for independent series and for the variance break. Lengths 1, 4, 8, and 16 are predeclared. Percentile of 99 draw means. | Interval only. `P_VALUES_UNAVAILABLE`. |
-| Circular and stationary block bootstrap | Same stationary rule, length 16 only, on independent, weak AR(1), strong AR(1), and long-memory series. The stationary bootstrap uses mean block length 16. | Interval only. `P_VALUES_UNAVAILABLE`. |
-| Shared-clock block bootstrap | One block index applied to both series. Block length 8. Eligible when the dependence horizon is at most 8. | Interval only. Equal length is not timestamp alignment. |
-| Independent-column block bootstrap | Each series draws its own indexes. | Always ineligible. Diagnostic of broken shared shocks. |
-| Cluster-event bootstrap | Unique events of the shared-observation scenario. | Interval only. Copied rows are not extra trials. |
-| Shock-rebuild bootstrap | Overlapping windows, resampling the underlying shocks and rebuilding the windows. | Interval only. |
-| Studentized null-centered moving block | Eligible only where both block 16 and Newey–West lag 16 are eligible. Statistic is the mean divided by that Newey–West standard error. Blocks are drawn from the centered series. Plus-one p-value `(1 + exceedances) / (1 + draws)`. | A computed p-value whose Monte Carlo size is below the validation floor stays `INSUFFICIENT_MONTE_CARLO_PRECISION`. `valid_p_values_established` is false. The percentile interval is not inverted. |
+| IID normal interval | `SAMPLE_ESTIMATED`. Exact only when serial dependence ends at lag 0, including the independent variance break. Sample variance uses `n - 1`. This is not a dependence estimator and not an oracle. | Interval only. `P_VALUES_UNAVAILABLE`. |
+| IID variance z | `KNOWN_MODEL_ORACLE` when the declared marginal variance divided by `n` equals the variance of the mean. The variance is not estimated from a sample autocovariance. | Exact Gaussian null p-value when that identity holds. |
+| Declared-model z | `KNOWN_MODEL_ORACLE`. The caller supplies the true variance of the mean. This is a mathematical reference, not an estimator of unknown dependence. An oracle pass does not validate a practical dependence estimator. `captures_all_dependence` stays false. | Exact Gaussian null p-value on a zero-mean series whose declared variance matches. Planted means are power diagnostics and stay `EXPLORATORY_ONLY`. |
+| Newey–West, Bartlett kernel | `SAMPLE_ESTIMATED`. Lags 1, 4, 8, and 16. Autocovariances divide by `n`. A lag at an autocorrelation floor is `PRACTICAL_AUTOCORRELATION_TRUNCATION`: later autocorrelation is small, not absent. A lag that includes every nonzero autocovariance of an exact finite-horizon process is `ASYMPTOTIC_WEAK_DEPENDENCE`, because Bartlett weights are not the exact long-run variance. `finite_sample_assumptions_exact` is false. `captures_all_dependence` is false. | Interval only. `P_VALUES_UNAVAILABLE`. |
+| Moving-block bootstrap | `EXPERIMENTAL_BOOTSTRAP`. Length 1 is an exact resample for serial horizon 0 and for the variance break. A longer block that reaches an autocorrelation floor is a practical truncation. A longer block that meets an exact finite horizon is an asymptotic approximation. Neither contains all AR(1) dependence. | Interval only. `P_VALUES_UNAVAILABLE`. Holdout replicates stay at 60. |
+| Circular and stationary block bootstrap | `EXPERIMENTAL_BOOTSTRAP`. Length 16, on independent, weak AR(1), strong AR(1), and long-memory series. The stationary bootstrap uses mean block length 16. Both are asymptotic devices. `captures_all_dependence` is false. | Interval only. `P_VALUES_UNAVAILABLE`. |
+| Shared-clock block bootstrap | `EXPERIMENTAL_BOOTSTRAP`. One block index applied to both series. Block length 8. Meeting an exact horizon is an asymptotic approximation, not an exact sampling model. | Interval only. Equal length is not timestamp alignment. |
+| Independent-column block bootstrap | `EXPERIMENTAL_BOOTSTRAP`. Each series draws its own indexes. | Always `finite_sample_assumptions_exact` false. Diagnostic of broken shared shocks. |
+| Cluster-event bootstrap | `EXPERIMENTAL_BOOTSTRAP`. Exact only for the unique events of the shared-observation scenario. | Interval only. Copied rows are not extra trials. |
+| Shock-rebuild bootstrap | `EXPERIMENTAL_BOOTSTRAP`. Exact only when the overlapping-window shocks are resampled and the windows are rebuilt. The percentile interval is still an experimental bootstrap. | Interval only. |
+| Studentized null-centered moving block | `EXPERIMENTAL_BOOTSTRAP`. The statistic uses Newey–West lag 16 and moving block 16. Neither component is an exact finite-sample dependence model, so `finite_sample_assumptions_exact` is false even when both components were predeclared. Plus-one p-value `(1 + exceedances) / (1 + draws)`. | Sixty replicates of 49 draws stay below the validation floor. `valid_p_values_established` is false. The percentile interval is not inverted. |
 
 A constant shared-clock contrast is exactly that constant on every shared-clock draw. The normal standard error stays unavailable.
 
@@ -88,20 +90,20 @@ A constant shared-clock contrast is exactly that constant on every shared-clock 
 
 Series length is 120 unless a row says otherwise. Innovation scale is 1. The generator restarts at the partition master for each scenario.
 
-| Scenario | Process | Material horizon | Effective sample size |
+| Scenario | Process | Dependence classification | Effective sample size |
 | --- | --- | --- | --- |
-| `independent_zero_edge` | Independent normal, mean 0. | 0 | 120 |
-| `weak_ar1` | Stationary AR(1), phi 0.3, mean 0. | 2 | 64.97237569060773 |
-| `strong_ar1` | Stationary AR(1), phi 0.8, mean 0. | 13 | 13.84615384615259 |
-| `long_memory` | Moving-average of order 23. Weights follow `(k+1)^(-0.6)`, normalized so the lag-0 autocovariance is 1. | 23 | 7.663093882562344 |
-| `overlapping_windows` | Mean of each 4 consecutive shocks. | 3 | 30.31578947368421 |
-| `shared_identical_observations` | 60 independent events. The duplicated target repeats each event twice, in order. | 0 on the unique events | 60 for both targets |
-| `common_shock_cross_symbol` | Two series share a factor with weight squared 0.49. The contrast removes the factor. | 0 | 120 |
-| `multiple_horizons` | The short series is the last shock of each window of 4. The long series is the window average. The contrast is long minus short. | 0 on the short series, 3 on the long series and the contrast | 120 on the short series, 30.31578947368421 on the long series, unavailable on the contrast |
-| `changing_volatility` | Independent normal draws. Scale 1 on the first half and scale 3 on the second half. | Variance break. Newey–West and long blocks are ineligible. | 120 under the average-innovation-variance definition |
-| `regime_change` | 60 independent draws, then 60 independent AR(1) draws with phi 0.9. | Nonstationary. Only the declared-model z is eligible. | Unavailable |
-| `planted_positive` / `planted_negative` | Independent normal draws with mean +0.35 or −0.35. | 0 | 120 |
-| `degenerate_constant` | 120 zeros. | No variance. | Unavailable |
+| `independent_zero_edge` | Independent normal, mean 0. | Exact finite horizon 0. | 120 |
+| `weak_ar1` | Stationary AR(1), phi 0.3, mean 0. | No exact finite horizon. Autocorrelation floor at lag 2. Autocorrelation continues after that floor. Process class `ASYMPTOTIC_WEAK_DEPENDENCE`. | 64.97237569060773 |
+| `strong_ar1` | Stationary AR(1), phi 0.8, mean 0. | No exact finite horizon. Autocorrelation floor at lag 13. Autocorrelation continues after that floor. Process class `ASYMPTOTIC_WEAK_DEPENDENCE`. | 13.84615384615259 |
+| `long_memory` | Moving-average of order 23. Weights follow `(k+1)^(-0.6)`, normalized so the lag-0 autocovariance is 1. | Exact finite horizon 23. The simulator is not an infinite long-memory process. | 7.663093882562344 |
+| `overlapping_windows` | Mean of each 4 consecutive shocks. | Exact finite horizon 3. | 30.31578947368421 |
+| `shared_identical_observations` | 60 independent events. The duplicated target repeats each event twice, in order. | Exact finite horizon 0 on the unique events. Duplicated rows are not an authorized sampling model. | 60 for both targets |
+| `common_shock_cross_symbol` | Two series share a factor with weight squared 0.49. The contrast removes the factor. | Exact finite horizon 0. | 120 |
+| `multiple_horizons` | The short series is the last shock of each window of 4. The long series is the window average. The contrast is long minus short. | Exact horizon 0 on the short series and 3 on the long series and the contrast. | 120 on the short series, 30.31578947368421 on the long series, unavailable on the contrast |
+| `changing_volatility` | Independent normal draws. Scale 1 on the first half and scale 3 on the second half. | Exact horizon 0 for the independent variance break. Newey–West and blocks longer than 1 are unverified approximations. | 120 under the average-innovation-variance definition |
+| `regime_change` | 60 independent draws, then 60 independent AR(1) draws with phi 0.9. | No exact finite stationary horizon. Process class `UNVERIFIED_APPROXIMATION`. The declared-model interval can still be a known-variance oracle. | Unavailable |
+| `planted_positive` / `planted_negative` | Independent normal draws with mean +0.35 or −0.35. | Exact finite horizon 0. | 120 |
+| `degenerate_constant` | 120 zeros. | No variance. Unverified for every interval. | Unavailable |
 
 The AR(1) effective sample size is the finite-sample variance-equivalent size `n / [1 + 2 * sum((1 - k/n) * phi**k)]`. The large-sample formula `n * (1 - phi) / (1 + phi)` is a different number. At n = 2 and phi = 0.5 the finite-sample variance of the mean is 1 and the effective sample size is 4/3. Overlapping means of length 2 and horizon 2 have variance 0.375. Episode groups are not trials.
 
@@ -109,20 +111,24 @@ The AR(1) effective sample size is the finite-sample variance-equivalent size `n
 
 The counts below are the Python 3.12.13 realization on this machine for master seed 20261211. Tests recompute each status from the stored numerator and denominator. They do not lock the numerators, because a different libm can change a count. The status rule is what the tests lock.
 
-Holdout partition rows: 40 `VALIDATED_UNDER_DECLARED_SYNTHETIC_MODEL`, 47 `FAILED_SYNTHETIC_CALIBRATION`, 46 `INSUFFICIENT_MONTE_CARLO_PRECISION`, 24 `MODEL_ASSUMPTIONS_UNVERIFIED`. Every row has catalogue inference `CATALOGUE_INFERENCE_NOT_AUTHORIZED`.
+Holdout partition rows, after the corrected classification and the corrected familywise rule: 30 `VALIDATED_UNDER_DECLARED_SYNTHETIC_MODEL`, 47 `FAILED_SYNTHETIC_CALIBRATION`, 7 `INSUFFICIENT_MONTE_CARLO_PRECISION`, 73 `MODEL_ASSUMPTIONS_UNVERIFIED`. The previous labels on the same numerators were 40, 47, 46, and 24. Every numerator, denominator, and unavailable count is unchanged across the 284 rows. The status moves are interpretation, not a new measurement. Every row has catalogue inference `CATALOGUE_INFERENCE_NOT_AUTHORIZED`.
 
-The declared-model z interval, which uses the known variance of the mean, covered its true mean on the eligible zero-mean series at 374/400 to 386/400. Its null rejection counts on those series were 14/400 to 26/400. Those rows have `valid_p_values_established` true. The same interval on the planted series covered the planted mean at 375/400. Rejecting zero there is a power count, 384/400 for the positive mean and 386/400 for the negative mean, and those p-value rows stay `EXPLORATORY_ONLY`.
+The 30 validated rows are 22 known-model oracles and 8 IID normal intervals on exact horizon-0 series, including the independent variance break. The validated practical-dependence-estimator list is empty. The validated experimental-bootstrap list is empty. `oracle_pass_validates_a_practical_dependence_estimator` is false.
 
-Eligible procedures that failed their own check, and were left at the predeclared lag or block:
+Ten Newey–West rows that the previous rule called validated are now `MODEL_ASSUMPTIONS_UNVERIFIED`. Their coverage was inside the two-sided Wilson interval and was not a clear failure. A fixed Bartlett lag is not an exact finite-sample model, so that coverage is not a validated dependence estimator. The counts are independent lag 1 at 374/400, unique events lag 1 at 382/400 and lag 4 at 376/400, common-shock primary lags 1 and 4 at 378/400, common-shock contrast lag 1 at 377/400 and lag 4 at 372/400, short horizon lag 1 at 375/400, and planted positive and planted negative lag 1 at 374/400. Thirty-nine other previously insufficient Newey–West and block-bootstrap rows moved to `MODEL_ASSUMPTIONS_UNVERIFIED` for the same assumption correction. Their replicate counts were not increased.
+
+The declared-model z interval, which uses the known variance of the mean, covered its true mean on the eligible zero-mean series at 374/400 to 386/400. Its null rejection counts on those series were 14/400 to 26/400. Those oracle rows have `valid_p_values_established` true. That oracle pass is not evidence that a sample autocovariance estimator or a bootstrap has been validated. The same interval on the planted series covered the planted mean at 375/400. Rejecting zero there is a power count, 384/400 for the positive mean and 386/400 for the negative mean, and those p-value rows stay `EXPLORATORY_ONLY`.
+
+Procedures that failed their own numeric check were left at the predeclared lag or block. `FAILED_SYNTHETIC_CALIBRATION` does not require `finite_sample_assumptions_exact`. Unfavorable coverage was not treated as an implementation defect, and no lag or block was retuned from the inspected holdout.
 
 | Series | Method | Coverage | Wilson 95 percent bounds | Status |
 | --- | --- | --- | --- | --- |
-| Strong AR(1) | Newey–West lag 16 | 325/400 | 0.771344 to 0.847711 | Failed. The lag meets the horizon of 13. |
-| Overlapping windows | Newey–West lag 16 | 343/400 | 0.819837 to 0.888362 | Failed. The lag meets the horizon of 3. |
-| Unique events, n = 60 | Newey–West lag 16 | 347/400 | 0.830754 to 0.897255 | Failed. A long lag on a short independent series undercovered. |
-| Strong AR(1) | Moving block 16 | 49/60 | 0.700802 to 0.894422 | Failed. The block meets the horizon. |
-| Strong AR(1) | Circular block 16 | 49/60 | 0.700802 to 0.894422 | Failed. |
-| Overlapping windows | Moving block 4 | 48/60 | 0.682182 to 0.881715 | Failed. The block meets the horizon. |
+| Strong AR(1) | Newey–West lag 16 | 325/400 | 0.771344 to 0.847711 | Failed. The lag reaches the autocorrelation floor of 13. Autocorrelation continues. The Bartlett lag does not capture all dependence. |
+| Overlapping windows | Newey–West lag 16 | 343/400 | 0.819837 to 0.888362 | Failed. The lag window includes the exact horizon of 3. Bartlett weights are not the exact long-run variance. |
+| Unique events, n = 60 | Newey–West lag 16 | 347/400 | 0.830754 to 0.897255 | Failed. A long lag on a short independent series undercovered. The lag is an asymptotic approximation, not an exact model. |
+| Strong AR(1) | Moving block 16 | 49/60 | 0.700802 to 0.894422 | Failed. The block reaches the autocorrelation floor and does not contain all dependence. |
+| Strong AR(1) | Circular block 16 | 49/60 | 0.700802 to 0.894422 | Failed. The block is an asymptotic device. |
+| Overlapping windows | Moving block 4 | 48/60 | 0.682182 to 0.881715 | Failed. The block meets the exact horizon and is still not an exact sampling model. |
 | Horizon contrast | Newey–West lags 4, 8, and 16 | 400/400 | 0.990488 to 1 | Failed by overcoverage. The intervals were wide relative to the Monte Carlo standard deviation of the mean, 0.011606, against a lag-16 mean width of 0.121360. |
 
 Ineligible procedures that failed in the expected direction include the IID interval on weak AR(1) at 342/400, strong AR(1) at 186/400, long memory at 133/400, overlapping windows at 266/400, the long horizon at 266/400, regime change at 132/400, and duplicated rows at 340/400. The duplicated-row IID interval uses 120 rows for a process whose effective sample size is 60. The declared-model interval on those duplicated rows covered at 386/400 and remains `MODEL_ASSUMPTIONS_UNVERIFIED`, because a duplicated representation is not an authorized sampling model. Its p-values stay `P_VALUES_UNAVAILABLE`.
@@ -131,7 +137,7 @@ Long memory has material horizon 23. No predeclared lag or block is eligible. Ne
 
 Changing volatility left the IID interval and the declared-model interval validated at 378/400. The marginal-variance z interval was unavailable on all 400 replicates. Newey–West coverage from 358/400 to 380/400 stayed `MODEL_ASSUMPTIONS_UNVERIFIED`.
 
-Studentized null tests rejected 4/60, 4/60, 5/60, and 3/60 on the independent, weak AR(1), strong AR(1), and overlapping series. Each Wilson interval still reaches both sides of 0.05, and 60 replicates are below 200, so each row is `INSUFFICIENT_MONTE_CARLO_PRECISION`. The p-values were computed. They are not established, and catalogue assessment still returns `P_VALUES_UNAVAILABLE`.
+Studentized null tests rejected 4/60, 4/60, 5/60, and 3/60 on the independent, weak AR(1), strong AR(1), and overlapping series. Each Wilson interval still reaches both sides of 0.05, and 60 replicates are below 200, so each row stays `INSUFFICIENT_MONTE_CARLO_PRECISION`. `finite_sample_assumptions_exact` is false because the fixed lag and the fixed block are not an exact finite-sample model. The p-values were computed. They are not established, and catalogue assessment still returns `P_VALUES_UNAVAILABLE`.
 
 Bootstrap and studentized rows cannot reach `VALIDATED_UNDER_DECLARED_SYNTHETIC_MODEL` in this build. The import-time check requires their replicate counts to stay below 200.
 
@@ -139,18 +145,20 @@ Stability seeds 20261212 and 20261213, 40 replicates each, stayed `EXPLORATORY_O
 
 ## Multiple testing and selection
 
-The reference family remains 89,460 directional hypotheses per annual segment. A bounded synthetic family does not replace it. Familywise error at 89,460 was not estimated. Holm arithmetic on one vector of 89,460 uniform draws took 0.035872 seconds and estimated no error rate.
+The reference family remains 89,460 directional hypotheses per annual segment. A bounded synthetic family does not replace it. Familywise error at 89,460 was not estimated. Holm arithmetic on one vector of 89,460 uniform draws took 0.035565 seconds and estimated no error rate.
 
-Individual p-values in the synthetic families are exact Gaussian tail probabilities at standard error `1/sqrt(120)`. Holm uses the step-down adjusted p-values with the running maximum. The hand example `[0.01, 0.04, 0.03]` adjusts to `[0.03, 0.06, 0.06]`. Uncorrected familywise tests and Holm applied only to the selected winner are ineligible for error-control claims.
+Individual p-values in the synthetic families are exact Gaussian tail probabilities at standard error `1/sqrt(120)`. Holm uses the step-down adjusted p-values with the running maximum. The hand example `[0.01, 0.04, 0.03]` adjusts to `[0.03, 0.06, 0.06]`. Holm's theorem says the familywise error is at most alpha when those marginal p-values are valid, under arbitrary dependence. That guarantee is conditional on the p-values. It is not a Monte Carlo result, and `established_by_simulation` stays false. Uncorrected tests and Holm applied only to the selected winner do not receive the guarantee.
 
-| Study | Seed | Size | Holm familywise count | Holm status | Uncorrected count | Uncorrected status |
-| --- | --- | --- | --- | --- | --- | --- |
-| Calibration, equicorrelated complete null, rho 0.3 | 20261130 | 40 | 1/40 | Exploratory | 30/40 | Exploratory |
-| Holdout, equicorrelated complete null, rho 0.3 | 20261215 | 40 | 17/400 | Validated under the declared model | 286/400 | Failed |
-| Holdout, independent complete null | 20261216 | 40 | 19/400 | Validated under the declared model | 348/400 | Failed |
-| Holdout, mixed, 36 nulls and 4 alternatives at mean 0.5, rho 0.3 | 20261217 | 40 | 17/400 true-null familywise rejections | Validated under the declared model | 400/400 | Failed |
-| Holdout, independent complete null | 20261222 | 10 | 26/400 | Insufficient precision. Wilson bounds 0.044740 to 0.093535. | 174/400 | Failed |
-| Scaling complete null, rho 0.3 | 20261221 | 160 | 4/80 | Insufficient precision | 78/80 | Failed |
+The empirical claim is separate. Control requires the one-sided 95 percent Wilson upper bound to be at or below 0.05, together with the precision floor. The inspected holdout was already read under the previous point-estimate rule. Reclassifying those same counts is a correction of that reading. It does not establish a new independent pass. No new familywise experiment was launched.
+
+| Study | Seed | Size | Holm familywise count | One-sided 95 percent upper bound | Holm empirical status | Uncorrected count | Uncorrected status |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Calibration, equicorrelated complete null, rho 0.3 | 20261130 | 40 | 1/40 | 0.104589 | Exploratory. Not a validation partition. | 30/40 | Exploratory |
+| Holdout, equicorrelated complete null, rho 0.3 | 20261215 | 40 | 17/400 | 0.062392 | Inconclusive. The point estimate 0.0425 is below 0.05 and the upper bound is not. Previously labeled validated. | 286/400 | Failed |
+| Holdout, independent complete null | 20261216 | 40 | 19/400 | 0.068238 | Inconclusive. The point estimate 0.0475 is below 0.05 and the upper bound is not. Previously labeled validated. | 348/400 | Failed |
+| Holdout, mixed, 36 nulls and 4 alternatives at mean 0.5, rho 0.3 | 20261217 | 40 | 17/400 true-null familywise rejections | 0.062392 | Inconclusive. Same bound as the equicorrelated 17/400 count. Previously labeled validated. | 400/400 | Failed |
+| Holdout, independent complete null | 20261222 | 10 | 26/400 | 0.088339 | Inconclusive. Two-sided bounds 0.044740 to 0.093535. The lower bound does not clear 0.05, so this is not excessive error. | 174/400 | Failed |
+| Scaling complete null, rho 0.3 | 20261221 | 160 | 4/80 | 0.106799 | Inconclusive. Eighty replicates are below the precision floor. | 78/80 | Failed |
 
 The mixed-family Holm detection count on the four alternatives was 1582/1600. That power row is exploratory and is not an acceptance gate. Winner's-curse inflation is recorded and is not an acceptance gate. Shortlist-only Holm does not control the search that chose the winner.
 
@@ -160,11 +168,15 @@ Four annual segments of 20 complete-null hypotheses, 400 replicates, seed 202612
 
 Canonical documents are UTF-8 JSON with sorted keys, compact separators, a trailing newline, and no duplicate keys. `content_sha256` is the SHA-256 of that document with the hash field removed. Wall-clock timings stay outside the hashed document.
 
-One canonical compile on Python 3.12.13 took 17.177 seconds. Tracemalloc peak was 7,871,316 bytes. Canonical JSON was 974,640 bytes. SHA-256 was `296cd7113a302a893717cbc1d442efffc487c5169b5ca60568451116ac4b7c59`.
+`validate_dependence_validation_document` checks canonical bytes, recomputes row statuses from the recorded numerators, recomputes familywise claims from those numerators, and recomputes the dependence class from the scenario, target, and method identity. It checks that authorization flags stay closed. It does not regenerate the 400-replicate experiment. The return value sets `numerical_experiment_regenerated`, `full_monte_carlo_reproduced`, `independently_reproduced_evidence`, and `recomputed_digest_of_altered_counts_is_independent_reproduction` to false. A caller can change a count, recompute a SHA-256 digest, and still receive a structurally consistent document. That digest is not independently reproduced evidence. Labeling the same counts as `newly_established_independent_pass` is rejected. Changing `assumptions_match` and repairing the numeric status to match the flipped flag is rejected, because the class is recomputed from the declared process.
 
-Holm arithmetic on one random p-value vector, measured outside the document: 40 hypotheses in 0.000014 seconds, 160 in 0.000033, 640 in 0.000162, 2,560 in 0.000646, 10,240 in 0.003010, and 89,460 in 0.035872. Those timings are not familywise-error estimates.
+A separate bounded check runs one synthetic family twice: seed 20261230, 4 replications, family size 3, correlation 0. The two numerators must agree. The count is not an acceptance threshold, not the inspected holdout, and not a validation sample. The seed is outside 20261118 through 20261125 and is not 20261211.
 
-Focused `tests.test_annual_pattern_catalogue_dependence_validation` was 10 tests and exited 0 in 24.177 seconds. Neighboring statistical-uncertainty, event-evidence, protocol, miner, cross-year, and segment-evidence tests were 82 tests and exited 0 in 41.133 seconds.
+One canonical compile on Python 3.12.13 took 18.127 seconds, including that bounded check inside validation. Tracemalloc peak was 9,447,726 bytes. Canonical JSON was 1,200,625 bytes. SHA-256 was `45fc28d57302936bcd6af144081dab8850eee10ba26bb5ab803566f67df1a090`. The previous document, before this interpretation correction, was SHA-256 `296cd7113a302a893717cbc1d442efffc487c5169b5ca60568451116ac4b7c59` and 974,640 bytes. The hash changed because classifications and statuses changed. The synthetic numerators did not.
+
+Holm arithmetic on one random p-value vector, measured outside the document: 40 hypotheses in 0.000011 seconds, 160 in 0.000035, 640 in 0.000168, 2,560 in 0.000723, 10,240 in 0.003333, and 89,460 in 0.035565. Those timings are not familywise-error estimates.
+
+Focused `tests.test_annual_pattern_catalogue_dependence_validation` was 11 tests and exited 0 in 24.844 seconds. Neighboring statistical-uncertainty, event-evidence, protocol, miner, cross-year, and segment-evidence tests were 82 tests and exited 0 in 42.161 seconds.
 
 ## Authorization
 
@@ -172,4 +184,4 @@ Historical artifact reads, protected-year research, annual catalogue execution, 
 
 ## Experiment
 
-`EXP-20261119-074` records this synthetic harness. No decision-log number is assigned. The milestone does not change V1 instruments, the cost constraint, canonical granularity, testing gates, risk limits, real-money rules, or phase order. The experiment does not authorize a merge.
+`EXP-20261119-074` records the original synthetic harness. `EXP-20261120-075` records the interpretation correction: the one-sided familywise bound, the separation of exact, truncated, asymptotic, and unverified dependence, and the separation of oracles from sample estimators. No decision-log number is assigned. The milestone does not change V1 instruments, the cost constraint, canonical granularity, testing gates, risk limits, real-money rules, or phase order. Neither experiment authorizes a merge. The inspected holdout is not a new independent confirmation of the revised rule.
