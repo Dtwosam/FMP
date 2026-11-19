@@ -3310,3 +3310,67 @@ Copy this section for each serious experiment:
 - Conclusion: NEED_MORE_DATA
 - Reason: the documented strategy's trade-level record is absent, and several published cost components are missing or unlabeled. The edge-first check still fails at the 1.0-pip aggregate.
 - Follow-up: keep the annual catalogue as the governing method. DEC-629 and DEC-630 are proposals awaiting an owner decision. The next measurement that would change the probability statement is a real trade-level R series for an already frozen candidate, with this cost record attached before the test is counted. That series is not available from repository documents, and protected artefacts stay closed.
+
+### EXP-20261118-068 — Synthetic cross-year comparison engine V1
+
+- Date: 2026-11-18
+- Status: INCONCLUSIVE
+- Hypothesis: A source-only join of validated annual pattern records can report recurrence, descriptive after-cost effects, and the frozen DEC-470 gate without treating a pass as significance or manufacturing a strategy.
+- Code commit: `draft/cross-year-engine-v1`, parent `84644dd06e0d330d8a0fdb40c9d220b4b52956ef`
+- Data manifest/version: none. No market-data files and no protected annual artifacts were opened.
+- Pair(s): EURUSD, GBPUSD, USDJPY appear only as synthetic catalogue cells in the bounded performance check. The hand report and the null harness use EURUSD.
+- Timeframe(s): 5m in the hand report and harness. The performance check uses 5m, 15m, and 1h.
+- Data range: not applicable. Segment labels are the DEC-469 collection labels. No prices were read.
+- Train period: not applicable
+- Validation period: not applicable
+- Final-test touched?: NO
+- Strategy/model: no strategy. The engine joins existing annual records. Pattern grammar stays the DEC-470 catalogue grammar.
+- Features: none added
+- Parameters/search space: none. DEC-470 gate thresholds were read and not changed.
+- Random seed (if relevant): 20261118. Noise uses `random.Random` and Box-Muller.
+- Spread/cost model: harness assumption only, not a measured spread. One 0.8-pip round-trip spread. The engine does not charge that spread again. Annual nets already contain bid/ask spread plus slippage.
+- Slippage model: source base 0.5 pip per fill and stress 1.0 pip per fill. Harness round trips are 1.0 and 2.0 pips. Stored `mean_net_pips_0p5` and `mean_net_pips_1p0` are used as-is.
+- Risk assumptions: not applied. This experiment does not size trades.
+- Trade count: no market trades. Harness support is 100 when a year is meant to be evaluable and 40 when it is meant to stay below the 75-observation label.
+- Net return after costs: not a market result. Zero gross edge becomes -1.8 pips at the base cost and -2.8 pips at the stress cost under the stated harness formula. A constant 4.0-pip gross edge becomes +2.2 and +1.2 pips.
+- Expectancy/trade: descriptive annual means only. Support-weighted pools are not independent-trial estimates.
+- Profit factor: not computed
+- Max drawdown: not computed
+- Key subperiod results: not market years. With seed 20261118, zero-gross and negative-after-cost scenarios produced 0 gate passes across 336 synthetic patterns, including independent and correlated noise at 0.25, 1.0, and 3.0 pips. Strong planted patterns recovered 48 of 48. Alternating-sign, low-support, and eight-segment controls produced 0 passes. Eight evaluable segments stay `GATE_INOPERABLE_LT_9_SEGMENTS`.
+- Robustness/cost sensitivity: both stored cost columns are reported. Jaccard near-duplicate evidence is unavailable because annual records store event-set hashes, not event ids. No substitute dedup is applied. No p-value is emitted.
+- Result summary: the join, ranking cap, and frozen gate agree on synthetic records. A gate pass is not statistical significance. Historical cross-year result production, Strategy V1 synthesis, workflow changes, and trading remain unauthorized.
+- Conclusion: NEED_MORE_DATA
+- Reason: the engine can compare validated annual records, but this run did not compare frozen historical catalogues. Annual run 385 was not consumed.
+- Follow-up: use the engine only on catalogues that have already passed their own evidence validators. Do not relax the nine-segment gate from these synthetic counts.
+
+### EXP-20261118-069 — Catalogue-scale cross-year gate calibration
+
+- Date: 2026-11-18
+- Status: INCONCLUSIVE
+- Hypothesis: The frozen DEC-470 cross-year gate, applied to a synthetic universe of 89,460 hypotheses, has a measurable false-pass count once annual noise reaches 4 and 8 pips, and the join can score a complete synthetic catalogue without dropping patterns.
+- Code commit: `draft/cross-year-engine-v1`, parent `4b2426e22fdaa19fa6b1ecc80b97257088dbf4e5`. The acceptance commit that records this entry follows that parent.
+- Data manifest/version: none. No market-data files and no protected annual artifacts were opened.
+- Pair(s): the workload measurement uses EURUSD, GBPUSD, and USDJPY. The calibration scores anonymous hypotheses with the same gate.
+- Timeframe(s): 5m, 15m, and 1h in the workload measurement. The calibration does not use bar prices.
+- Data range: not applicable. Segment labels are the DEC-469 collection labels. No prices were read.
+- Train period: not applicable
+- Validation period: not applicable
+- Final-test touched?: NO
+- Strategy/model: no strategy. DEC-470 thresholds were read and were not changed after the counts below.
+- Features: none added
+- Parameters/search space: none. The gate is not a searched parameter.
+- Random seed (if relevant): base seeds 20261118, 20261119, and 20261120. Generator seed = base seed + 1,000,000 when correlated, plus round(sigma × 1000), plus round(mean × 1000) × 100. Noise is `random.Random` plus Box-Muller. Counts below are in that base-seed order.
+- Spread/cost model: harness assumption only, not a measured spread. One 0.8-pip round-trip spread. Base slippage round trip 1.0 pip. Stress slippage round trip 2.0 pips. Zero gross becomes −1.8 pips base and −2.8 pips stress. A gross mean of 0.4 pips stays negative after those costs when noise is zero. The engine does not charge spread or slippage again.
+- Slippage model: source base 0.5 pip per fill and stress 1.0 pip per fill, inside the harness formula above.
+- Risk assumptions: not applied. This experiment does not size trades.
+- Trade count: no market trades. Evaluable synthetic years use support 100. The low-support control uses support 40.
+- Net return after costs: not a market result.
+- Expectancy/trade: descriptive annual means only. Support-weighted pools are not independent-trial estimates. No p-value was computed. The seed-to-seed range is the recorded uncertainty. It is not a standard error or a confidence interval.
+- Profit factor: not computed
+- Max drawdown: not computed
+- Key subperiod results: not market years. Each stochastic scenario scores 89,460 hypotheses on 12 segments. Agreement with `cross_year_gate_passes` and with `compare_cross_year_patterns` was checked on 71 sampled pattern decisions, with 0 mismatches. The streamed tally matched the stored-path tally. Threshold comparisons were not reimplemented.
+- Robustness/cost sensitivity: false passes are gate passes under zero gross or gross +0.4 pips. At noise 0, 0.25, and 1.0 pip, independent and correlated, every false-pass count was 0 of 89,460. Independent zero-gross noise of 4 pips passed 12, 10, and 15 hypotheses. Independent gross +0.4 at 4 pips passed 21, 39, and 30. Correlated versions of both 4-pip designs passed 0. Independent zero-gross noise of 8 pips passed 163, 147, and 143. Independent gross +0.4 at 8 pips passed 230, 255, and 231. Correlated zero-gross noise of 8 pips passed 0, 0, and 4,922. Correlated gross +0.4 at 8 pips passed 0. The 4,922 count is seed 20261120. Low-support and eight-segment controls were inoperable for all 89,460 hypotheses.
+- Result summary: planted gross of 2.0 and 2.8 pips recovered 0 of 89,460 with no noise, because 2.0 pips stays below the stress and pooled-base hurdles and 2.8 pips leaves the stress net at 0. Planted gross of 3.0, 4.0, and 6.0 pips with no noise recovered 89,460 of 89,460. At 4.0 pips gross and 0.25 pip noise, independent and correlated recovery were both 89,460. At 6.0 pips gross and 1.0 pip noise, both were 89,460. Higher noise cuts recovery, and correlated seeds swing widely. Examples at 8 pip noise, seeds in the same order: planted 3.0 independent 2,360, 2,395, 2,214 and correlated 0, 1, 770; planted 4.0 independent 4,716, 4,630, 4,801 and correlated 34,644, 37, 0; planted 6.0 independent 14,341, 14,294, 14,122 and correlated 745, 53,948, 25,889. The nine-segment synthetic join scored 805,140 records (89,460 hypotheses × 9 segments) in 10.196 seconds of construction, 11.664 seconds of comparison, and 3.490 seconds of canonical JSON. Output size was 866,402,242 bytes, sha256 `d191fcc9086e3635008e4f37afa9c154e133d46564722a5fdac4feaf0075ed2d`, process max RSS 3,122,790,400 bytes. The twelve-segment join scored 1,073,520 records in 13.696, 15.164, and 3.551 seconds. Output size was 955,058,220 bytes, sha256 `1ea5d48bacfed7233da9a614ae9756e0d8b93084765bc6531a113f1ffe2c4022`, process max RSS 3,006,496,768 bytes. Both runs kept 89,460 patterns, dropped none, preserved fingerprint order, and filled every supplied panel. Python 3.12.13 on darwin. The figure 804,780 is 360 records below 9 × 89,460 and was not executed, because that would omit 40 hypotheses. Caller-supplied records are labeled `CALLER_SUPPLIED_ANNUAL_RECORDS_NOT_INDEPENDENTLY_VALIDATED`. Authentic research use remains unauthorized until prior evidence validation.
+- Conclusion: NEED_MORE_DATA
+- Reason: the calibration and the timing runs are synthetic. Frozen historical catalogues were not joined. The false-pass counts stand as observed and were not used to edit DEC-470.
+- Follow-up: keep the nine-segment rule and the other DEC-470 thresholds unchanged. Future authentic research use still requires evidence validation of the source annual catalogues before submission. Annual run 385 stays unopened.
