@@ -3374,3 +3374,35 @@ Copy this section for each serious experiment:
 - Conclusion: NEED_MORE_DATA
 - Reason: the calibration and the timing runs are synthetic. Frozen historical catalogues were not joined. The false-pass counts stand as observed and were not used to edit DEC-470.
 - Follow-up: keep the nine-segment rule and the other DEC-470 thresholds unchanged. Future authentic research use still requires evidence validation of the source annual catalogues before submission. Annual run 385 stays unopened.
+
+### EXP-20261119-070 — Event-level evidence V1 synthetic contract
+
+- Date: 2026-11-19
+- Status: INCONCLUSIVE
+- Hypothesis: A source-only event contract can preserve caller-supplied outcome windows well enough to count overlap and connected episode groups, while keeping those counts descriptive and leaving DEC-470 unchanged.
+- Code commit: branch `draft/event-level-evidence-v1`, parent `85536adadedeee59abdc4a13f02de23ee0b3979a`
+- Data manifest/version: none. No market-data files and no protected annual artifacts were opened. The synthetic manifest in the unit tests is SHA-256 of the literal `synthetic-event-evidence-v1\n`.
+- Pair(s): EURUSD, GBPUSD, and USDJPY appear only as synthetic observation labels.
+- Timeframe(s): 5m and 1h in the synthetic rows. Horizons are the frozen 60 and 240 minutes.
+- Data range: not applicable. Segment labels are the DEC-469 collection labels. No prices were read.
+- Train period: not applicable
+- Validation period: not applicable
+- Final-test touched?: NO
+- Strategy/model: no strategy. Pattern grammar stays the DEC-470 catalogue grammar. Event identity is a new observation-key hash and is not an annual `event_fingerprint`.
+- Features: none added. A supplied feature row is checked for identity alignment and is not copied into the event document.
+- Parameters/search space: none. DEC-470 gate thresholds were read and were not changed. The 89,460-hypothesis universe and the EXP-20261118-069 false-pass counts, including 4,922 correlated zero-gross passes at 8 pips on seed 20261120, stay recorded constraints.
+- Random seed (if relevant): 20261119, used only to shuffle 4,000 synthetic rows before a determinism check.
+- Spread/cost model: none applied. Stored base and stress nets are the caller-supplied `net_pips_0p5` and `net_pips_1p0`.
+- Slippage model: DEC-470 base 0.5 pip per fill and stress 1.0 pip per fill are recorded and are not reapplied.
+- Risk assumptions: not applied. This experiment does not size trades.
+- Trade count: no market trades. The bounded measurement uses 2,000 fully overlapping synthetic events and 2,000 non-overlapping synthetic events.
+- Net return after costs: not a market result.
+- Expectancy/trade: not computed. Overlap counts and candidate episode sizes are descriptive. They are not independent-trial estimates and they are not p-values.
+- Profit factor: not computed
+- Max drawdown: not computed
+- Key subperiod results: not market years. Touching windows stay separate groups. A partial overlap is one group. A chain of three windows is one group even when the first and third do not overlap directly. A 60-minute window nested inside a 240-minute window is one cross-horizon group and two within-horizon groups. Duplicate and contradictory rows fail closed.
+- Robustness/cost sensitivity: not a cost study. The large synthetic document counted 1,999,000 overlapping pairs in the 2,000-event clique and stored none of those pairs. One compile, including validation, took 2.260 seconds. Python tracemalloc peak was 39,863,757 bytes. Canonical JSON was 4,899,373 bytes. SHA-256 of the body was `193533043e2279a3c0b486389c9722a8517317e1e61be2643f228dcdd91e0ac5`. Python 3.12.13 on darwin. The final local run of `tests.test_annual_pattern_catalogue_event_evidence` together with the miner, cell-evidence, protocol, segment-freeze, and cross-year modules was 67 tests and exited 0 in 7.307 seconds.
+- Result summary: the contract distinguishes raw directional support, unique physical events, overlapping pairs, connected episode groups, and a candidate component count. Episode groups are recorded as statistically unresolved. Cross-symbol and cross-timeframe independence is not established. Structural validation is not validation of frozen annual evidence. Historical event recovery remains blocked because annual records store membership hashes rather than event rows.
+- Conclusion: NEED_MORE_DATA
+- Reason: the rows are synthetic. Frozen historical catalogues were not opened, and event ids cannot be recovered from their `event_fingerprint` hashes without the original observations.
+- Follow-up: keep DEC-470 unchanged. Use this contract only on caller-supplied events until a separate decision authorizes the historical observation rows. Annual run 385 stays unopened.
