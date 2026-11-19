@@ -31,17 +31,23 @@ from fmp.discovery.annual_pattern_catalogue_protocol import (
 )
 from fmp.discovery.annual_pattern_catalogue_statistical_uncertainty import (
     BOOTSTRAP_DRAWS,
+    BOOTSTRAP_REPLICATIONS,
     CLOSED_FORM_REPLICATIONS,
     EXPECTED_PROTOCOL_FINGERPRINT,
     FORBIDDEN_TUNING_SEEDS,
+    HOLM_CORRELATED_NULL_SEED,
     HOLM_METHOD_CHECK_FAMILY,
     PREDECLARED_BLOCK_LENGTHS,
     PREDECLARED_HAC_LAGS,
     PRIMARY_CALIBRATION_SEED,
+    VARIABILITY_SCENARIO_NAMES,
     VARIABILITY_SEEDS,
+    Z_95,
     UncertaintyProvenance,
     assess_event_evidence_uncertainty,
+    binomial_monte_carlo_report,
     compile_synthetic_calibration,
+    declared_ar1_effective_sample_size,
     effective_sample_size_from_overlap,
     holm_adjusted_p_values,
     iid_normal_interval,
@@ -52,6 +58,7 @@ from fmp.discovery.annual_pattern_catalogue_statistical_uncertainty import (
     refuse_catalogue_multiple_testing,
     shared_clock_block_bootstrap_interval,
     statistical_uncertainty_contract,
+    synthetic_clock_identity,
     validate_uncertainty_document,
 )
 
@@ -233,6 +240,9 @@ class StatisticalUncertaintyContractTests(unittest.TestCase):
         self.assertIsNone(payload["value"])
         self.assertFalse(payload["episode_group_count_used_as_value"])
         self.assertFalse(payload["episode_groups_are_independent_trials"])
+        self.assertFalse(payload["ar1_finite_sample_formula_applied"])
+        self.assertFalse(payload["ar1_asymptotic_formula_applied"])
+        self.assertTrue(payload["authentic_event_evidence_requires_justified_dependence_model"])
 
     def test_catalogue_holm_is_not_applied(self) -> None:
         payload = refuse_catalogue_multiple_testing()
@@ -243,6 +253,12 @@ class StatisticalUncertaintyContractTests(unittest.TestCase):
         self.assertEqual(payload["individual_p_values"], "UNAVAILABLE")
         self.assertEqual(payload["selection_uncertainty"], "UNAVAILABLE")
         self.assertFalse(payload["optimized_on_observed_false_passes"])
+        self.assertFalse(payload["per_segment_hypothesis_count_proves_cross_year_error_control"])
+        self.assertFalse(payload["multiple_testing_across_years_controlled"])
+        self.assertFalse(payload["selection_across_years_controlled"])
+        self.assertFalse(payload["real_catalogue_p_values_authorized"])
+        self.assertFalse(payload["strategy_v1_significance_claimed"])
+        self.assertIn("one annual segment", payload["frozen_count_meaning"])
 
     def test_holm_hand_calculation_and_refused_sources(self) -> None:
         adjusted = holm_adjusted_p_values(
@@ -301,6 +317,9 @@ class StatisticalUncertaintyContractTests(unittest.TestCase):
         self.assertEqual(column_intervals[0]["high"], column_intervals[1]["high"])
         self.assertTrue(shared["resamples_each_time_once"])
         self.assertEqual(shared["p_value"], "NOT_COMPUTED")
+        self.assertFalse(shared["authentic_event_timelines_aligned"])
+        self.assertFalse(shared["equal_length_proves_timestamp_alignment"])
+        self.assertFalse(shared["clock_identity"]["synthetic_clock_identity_validated"])
         incorrect = independent_column_block_bootstrap_interval(
             columns,
             1,
@@ -315,6 +334,9 @@ class StatisticalUncertaintyContractTests(unittest.TestCase):
         )
         self.assertTrue(incorrect["independently_resampled_columns"])
         self.assertFalse(incorrect["recommended"])
+        self.assertTrue(incorrect["declared_synthetic_clock_ignored"])
+        self.assertFalse(incorrect["uses_declared_shared_clock"])
+        self.assertFalse(incorrect["authentic_event_timelines_aligned"])
         block = moving_block_bootstrap_interval(
             [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0],
             1,
@@ -339,6 +361,164 @@ class StatisticalUncertaintyContractTests(unittest.TestCase):
         self.assertLess(float(stacked["standard_error"]), float(single["standard_error"]) * 0.8)
         self.assertFalse(stacked["assumption_correct_for_overlapping_events"])
         self.assertFalse(stacked["portfolio_profit_interval"])
+
+    def test_finite_sample_ar1_matches_the_closed_form(self) -> None:
+        cases = (
+            (80, 0.8),
+            (12, 0.8),
+            (240, 0.8),
+            (10, 0.8),
+            (2000, 0.8),
+            (80, 0.0),
+            (80, 0.5),
+            (80, -0.4),
+            (2, 0.8),
+        )
+        for n, phi in cases:
+            payload = declared_ar1_effective_sample_size(n, phi)
+            finite = _finite_ar1_closed_form(n, phi)
+            asymptotic = n * (1.0 - phi) / (1.0 + phi)
+            self.assertEqual(payload["status"], "IDENTIFIED_UNDER_DECLARED_AR1_ASSUMPTION")
+            self.assertAlmostEqual(float(payload["value"]), finite, places=9)
+            self.assertAlmostEqual(
+                float(payload["finite_sample_variance_equivalent"]["value"]),
+                finite,
+                places=9,
+            )
+            self.assertAlmostEqual(
+                float(payload["asymptotic_large_sample_approximation"]["value"]),
+                asymptotic,
+                places=12,
+            )
+            self.assertFalse(payload["asymptotic_approximation_used_as_value"])
+            self.assertFalse(payload["formulas_are_the_same_expression"])
+            self.assertFalse(payload["phi_estimated_from_sample"])
+            self.assertFalse(payload["identified_for_event_evidence"])
+            self.assertFalse(payload["promoted_to_authentic_event_evidence"])
+        self.assertEqual(declared_ar1_effective_sample_size(80, 0.0)["value"], 80.0)
+        short = declared_ar1_effective_sample_size(10, 0.8)
+        long = declared_ar1_effective_sample_size(2000, 0.8)
+        short_gap = abs(float(short["finite_minus_asymptotic"])) / float(
+            short["asymptotic_large_sample_approximation"]["value"]
+        )
+        long_gap = abs(float(long["finite_minus_asymptotic"])) / float(
+            long["asymptotic_large_sample_approximation"]["value"]
+        )
+        self.assertGreater(short_gap, long_gap)
+        self.assertGreater(abs(float(short["finite_minus_asymptotic"])), 0.5)
+        self.assertNotAlmostEqual(
+            float(long["value"]),
+            float(long["asymptotic_large_sample_approximation"]["value"]),
+            places=3,
+        )
+        self.assertEqual(declared_ar1_effective_sample_size(80, 1.0)["status"], "UNAVAILABLE")
+        self.assertEqual(declared_ar1_effective_sample_size(80, -1.0)["status"], "UNAVAILABLE")
+        self.assertIsNone(declared_ar1_effective_sample_size(80, 1.0)["value"])
+
+    def test_wilson_interval_matches_the_hand_formula(self) -> None:
+        reported = binomial_monte_carlo_report(144, 160)
+        self.assertEqual(reported["numerator"], 144)
+        self.assertEqual(reported["denominator"], 160)
+        self.assertEqual(reported["interval_status"], "REPORTED")
+        self.assertFalse(reported["empirical_rate_is_exact_population_error_rate"])
+        rate = 144 / 160
+        z2 = Z_95 * Z_95
+        denom = 1.0 + z2 / 160
+        centre = (rate + z2 / (2.0 * 160)) / denom
+        half = Z_95 * ((rate * (1.0 - rate) / 160 + z2 / (4.0 * 160 * 160)) ** 0.5) / denom
+        interval = reported["wilson_interval_95"]
+        assert isinstance(interval, dict)
+        self.assertAlmostEqual(float(interval["low"]), centre - half, places=12)
+        self.assertAlmostEqual(float(interval["high"]), centre + half, places=12)
+        self.assertAlmostEqual(
+            float(reported["binomial_standard_error"]),
+            (rate * (1.0 - rate) / 160) ** 0.5,
+            places=12,
+        )
+        unavailable = binomial_monte_carlo_report(0, 0)
+        self.assertEqual(unavailable["numerator"], 0)
+        self.assertEqual(unavailable["denominator"], 0)
+        self.assertIsNone(unavailable["rate"])
+        self.assertIsNone(unavailable["wilson_interval_95"])
+        self.assertEqual(unavailable["interval_status"], "UNAVAILABLE")
+        self.assertFalse(unavailable["empirical_rate_is_exact_population_error_rate"])
+
+    def test_shared_clock_requires_a_synthetic_identity(self) -> None:
+        columns = [[1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]] * 2
+        timestamps = tuple(f"synthetic-index-{index:04d}" for index in range(8))
+        validated = synthetic_clock_identity(
+            length=8,
+            series_count=2,
+            clock_id="synthetic-clock-method-check",
+            timestamps=timestamps,
+        )
+        self.assertEqual(validated["status"], "SYNTHETIC_CLOCK_IDENTITY_VALIDATED")
+        self.assertFalse(validated["authentic_event_timelines_aligned"])
+        self.assertFalse(validated["equal_length_proves_timestamp_alignment"])
+        shared = shared_clock_block_bootstrap_interval(
+            columns,
+            4,
+            draws=12,
+            rng=random.Random(7),
+            clock_id="synthetic-clock-method-check",
+            timestamps=timestamps,
+        )
+        self.assertTrue(shared["clock_identity"]["synthetic_clock_identity_validated"])
+        self.assertTrue(shared["uses_declared_shared_clock"])
+        self.assertFalse(shared["authentic_event_timelines_aligned"])
+        self.assertEqual(shared["column_intervals"][0]["low"], shared["column_intervals"][1]["low"])
+        incorrect = independent_column_block_bootstrap_interval(
+            columns,
+            4,
+            draws=12,
+            rng=random.Random(7),
+            clock_id="synthetic-clock-method-check",
+            timestamps=timestamps,
+        )
+        self.assertTrue(incorrect["declared_synthetic_clock_ignored"])
+        self.assertFalse(incorrect["uses_declared_shared_clock"])
+        self.assertNotEqual(
+            incorrect["column_intervals"][0]["low"],
+            incorrect["column_intervals"][1]["low"],
+        )
+        with self.assertRaises(ValueError) as authentic:
+            shared_clock_block_bootstrap_interval(
+                columns,
+                4,
+                draws=12,
+                rng=random.Random(7),
+                authentic_event_timeline=True,
+            )
+        self.assertIn("STATISTICAL_UNCERTAINTY_AUTHENTIC_TIMELINE_REFUSED", str(authentic.exception))
+        with self.assertRaises(ValueError) as market_clock:
+            synthetic_clock_identity(
+                length=8,
+                series_count=2,
+                clock_id="EURUSD-2015",
+            )
+        self.assertIn(
+            "STATISTICAL_UNCERTAINTY_CLOCK_IDENTITY_NOT_SYNTHETIC",
+            str(market_clock.exception),
+        )
+        with self.assertRaises(ValueError) as market_time:
+            synthetic_clock_identity(
+                length=2,
+                series_count=2,
+                clock_id="synthetic-clock-method-check",
+                timestamps=("2015-01-02T00:00:00Z", "2015-01-02T00:01:00Z"),
+            )
+        self.assertIn(
+            "STATISTICAL_UNCERTAINTY_CLOCK_TIMESTAMPS_NOT_SYNTHETIC",
+            str(market_time.exception),
+        )
+        with self.assertRaises(ValueError) as unequal:
+            shared_clock_block_bootstrap_interval(
+                [[1.0, 2.0, 3.0], [1.0, 2.0]],
+                1,
+                draws=4,
+                rng=random.Random(1),
+            )
+        self.assertIn("STATISTICAL_UNCERTAINTY_MALFORMED_SERIES", str(unequal.exception))
 
     def test_event_assessment_keeps_inference_unavailable(self) -> None:
         event_document = _event_document()
@@ -555,6 +735,22 @@ class StatisticalUncertaintyCalibrationTests(unittest.TestCase):
         self.assertEqual(effective["phi"], 0.8)
         self.assertFalse(effective["phi_estimated_from_sample"])
         self.assertFalse(effective["episode_group_count_used_as_value"])
+        self.assertFalse(effective["identified_for_event_evidence"])
+        self.assertFalse(effective["asymptotic_approximation_used_as_value"])
+        self.assertAlmostEqual(
+            float(effective["value"]),
+            _finite_ar1_closed_form(80, 0.8),
+            places=9,
+        )
+        self.assertAlmostEqual(
+            float(effective["asymptotic_large_sample_approximation"]["value"]),
+            80.0 * 0.2 / 1.8,
+            places=12,
+        )
+        self.assertGreater(
+            abs(float(effective["finite_minus_asymptotic"])),
+            0.5,
+        )
         bootstrap = serial["bootstrap"]
         assert isinstance(bootstrap, dict)
         methods = bootstrap["methods"]
@@ -609,7 +805,45 @@ class StatisticalUncertaintyCalibrationTests(unittest.TestCase):
         self.assertEqual(degenerate_iid["status"], "DEGENERATE_VARIANCE")
         self.assertIsNone(degenerate_iid["coverage_of_true_mean_among_available"])
         self.assertEqual(degenerate_iid["intervals_available"], 0)
+        self.assertEqual(degenerate_iid["coverage_of_true_mean"]["numerator"], 0)
+        self.assertEqual(degenerate_iid["coverage_of_true_mean"]["denominator"], 0)
+        self.assertIsNone(degenerate_iid["coverage_of_true_mean"]["wilson_interval_95"])
+        self.assertEqual(degenerate_iid["intervals_unavailable"], degenerate_iid["replications"])
+        self.assertFalse(degenerate_iid["empirical_coverage_is_exact_population_error_rate"])
         self.assertEqual(degenerate["effective_sample_size"]["status"], "DEGENERATE_VARIANCE")
+        zero_closed = zero["closed_form"]
+        assert isinstance(zero_closed, dict)
+        zero_iid = zero_closed["iid_normal_interval"]
+        assert isinstance(zero_iid, dict)
+        zero_coverage = zero_iid["coverage_of_true_mean"]
+        assert isinstance(zero_coverage, dict)
+        self.assertEqual(zero_coverage["denominator"], zero_iid["intervals_available"])
+        self.assertEqual(zero_coverage["numerator"] / zero_coverage["denominator"], zero_coverage["rate"])
+        self.assertFalse(zero_iid["empirical_coverage_is_exact_population_error_rate"])
+        self.assertEqual(zero_iid["monte_carlo_conclusion"], "REPORTED_WITH_MONTE_CARLO_UNCERTAINTY")
+        serial_bootstrap = serial["bootstrap"]
+        assert isinstance(serial_bootstrap, dict)
+        self.assertEqual(serial_bootstrap["monte_carlo_conclusion"], "UNRESOLVED")
+        self.assertFalse(serial_bootstrap["establishes_calibrated_confidence_intervals"])
+        serial_clock = serial_bootstrap["synthetic_clock"]
+        assert isinstance(serial_clock, dict)
+        self.assertTrue(serial_clock["synthetic_clock_identity_validated"])
+        self.assertFalse(serial_clock["authentic_event_timelines_aligned"])
+        self.assertFalse(serial_clock["equal_length_proves_timestamp_alignment"])
+        monte_carlo = document["monte_carlo_uncertainty"]
+        assert isinstance(monte_carlo, dict)
+        self.assertEqual(monte_carlo["coverage_interval_method"], "wilson_score")
+        self.assertFalse(
+            monte_carlo[
+                "empirical_coverage_from_closed_form_replications_is_exact_population_error_rate"
+            ]
+        )
+        self.assertFalse(
+            monte_carlo["exploratory_bootstrap_establishes_calibrated_confidence_intervals"]
+        )
+        self.assertEqual(monte_carlo["bootstrap_calibration_conclusion"], "UNRESOLVED")
+        self.assertEqual(monte_carlo["closed_form_replications"], CLOSED_FORM_REPLICATIONS)
+        self.assertEqual(monte_carlo["bootstrap_replications"], BOOTSTRAP_REPLICATIONS)
 
     def test_multiple_testing_method_check_is_not_the_catalogue(self) -> None:
         document = _document()
@@ -632,12 +866,46 @@ class StatisticalUncertaintyCalibrationTests(unittest.TestCase):
             float(check["holm_familywise_rate"]),
             float(check["uncorrected_familywise_rate"]),
         )
+        self.assertEqual(check["familywise_calibration_conclusion"], "UNRESOLVED")
+        self.assertFalse(check["empirical_rate_is_exact_population_error_rate"])
+        self.assertFalse(check["bounded_method_check_controls_catalogue_wide_error"])
+        self.assertFalse(check["bounded_method_check_controls_selection_across_years"])
+        self.assertFalse(check["per_segment_hypothesis_count_proves_cross_year_error_control"])
+        self.assertFalse(check["real_catalogue_p_values_authorized"])
+        self.assertFalse(check["strategy_v1_significance_claimed"])
+        self.assertEqual(check["frozen_per_segment_search_universe"], 89460)
+        correlated = check["correlated_complete_null"]
+        assert isinstance(correlated, dict)
+        self.assertEqual(correlated["seed"], HOLM_CORRELATED_NULL_SEED)
+        self.assertNotIn(correlated["seed"], FORBIDDEN_TUNING_SEEDS)
+        self.assertNotIn(correlated["seed"], VARIABILITY_SEEDS)
+        self.assertTrue(correlated["marginal_p_values_valid_under_synthetic_dgp"])
+        self.assertFalse(correlated["catalogue_p_values_used"])
+        self.assertEqual(correlated["familywise_calibration_conclusion"], "UNRESOLVED")
+        self.assertLessEqual(float(correlated["holm_familywise_rate"]), 0.12)
+        self.assertLess(
+            float(correlated["holm_familywise_rate"]),
+            float(correlated["uncorrected_familywise_rate"]),
+        )
+        self.assertEqual(correlated["holm_familywise"]["denominator"], 160)
+        self.assertFalse(catalogue["per_segment_hypothesis_count_proves_cross_year_error_control"])
+        self.assertFalse(catalogue["strategy_v1_significance_claimed"])
         variability = document["variability_across_seeds"]
         assert isinstance(variability, dict)
         self.assertFalse(variability["used_to_choose_a_method"])
+        self.assertFalse(variability["used_to_choose_a_lag_block_length_or_threshold"])
+        self.assertFalse(variability["seeds_pooled_into_one_denominator"])
+        self.assertFalse(variability["variability_across_seeds_is_independent_replication_uncertainty"])
+        self.assertTrue(variability["seed_range_is_not_a_binomial_standard_error"])
         rows = variability["rows"]
         assert isinstance(rows, list)
         self.assertEqual(len(rows), 3)
+        dependence = variability["scenarios"]
+        assert isinstance(dependence, list)
+        self.assertEqual(
+            [item["scenario_name"] for item in dependence],
+            list(VARIABILITY_SCENARIO_NAMES),
+        )
         zero_coverage = _rate(
             _scenario(document, "zero_edge_independent"),
             "iid_normal_interval",
@@ -649,11 +917,99 @@ class StatisticalUncertaintyCalibrationTests(unittest.TestCase):
             self.assertNotIn(row["seed"], FORBIDDEN_TUNING_SEEDS)
             if row["seed"] == PRIMARY_CALIBRATION_SEED:
                 self.assertEqual(row["coverage_of_true_mean_among_available"], zero_coverage)
+                self.assertEqual(row["coverage_denominator"], CLOSED_FORM_REPLICATIONS)
+        for item in dependence:
+            assert isinstance(item, dict)
+            item_rows = item["rows"]
+            assert isinstance(item_rows, list)
+            self.assertEqual(len(item_rows), 3)
+            self.assertTrue(item["excluding_zero_is_false_exclusion"])
+            self.assertEqual(item["true_mean"], 0.0)
+            method_ids = []
+            first = item_rows[0]
+            assert isinstance(first, dict)
+            diagnostics = first["diagnostics"]
+            assert isinstance(diagnostics, list)
+            for diagnostic in diagnostics:
+                assert isinstance(diagnostic, dict)
+                method_ids.append(diagnostic["method_id"])
+                self.assertFalse(diagnostic["selected_by_observed_coverage"])
+                self.assertFalse(diagnostic["empirical_coverage_is_exact_population_error_rate"])
+            self.assertIn("iid_normal_interval", method_ids)
+            for lag in PREDECLARED_HAC_LAGS:
+                self.assertIn(f"newey_west_lag_{lag}", method_ids)
+            if item["scenario_name"] != "zero_edge_independent":
+                for block_length in PREDECLARED_BLOCK_LENGTHS:
+                    self.assertIn(f"moving_block_{block_length}", method_ids)
+                self.assertIn("shared_clock_block_4", method_ids)
+                self.assertIn("incorrect_independent_columns_block_4", method_ids)
+            coverage_spans = item["coverage_across_seeds"]
+            exclusion_spans = item["false_exclusion_across_seeds"]
+            assert isinstance(coverage_spans, dict)
+            assert isinstance(exclusion_spans, dict)
+            iid_span = coverage_spans["iid_normal_interval"]
+            exclusion_span = exclusion_spans["iid_normal_interval"]
+            assert isinstance(iid_span, dict)
+            assert isinstance(exclusion_span, dict)
+            self.assertIsInstance(iid_span["range"], float)
+            self.assertIsInstance(exclusion_span["range"], float)
+            for item_row in item_rows:
+                assert isinstance(item_row, dict)
+                self.assertNotIn(item_row["seed"], FORBIDDEN_TUNING_SEEDS)
+                if item_row["seed"] == PRIMARY_CALIBRATION_SEED:
+                    self.assertTrue(item_row["paired_with_primary_calibration"])
+                    paired = _scenario(document, str(item["scenario_name"]))
+                    self.assertEqual(
+                        _diagnostic_rate(item_row, "iid_normal_interval", "coverage_of_true_mean"),
+                        _rate(
+                            paired,
+                            "iid_normal_interval",
+                            "coverage_of_true_mean_among_available",
+                        ),
+                    )
+                    self.assertEqual(
+                        _diagnostic_rate(item_row, "iid_normal_interval", "excluding_zero"),
+                        _rate(
+                            paired,
+                            "iid_normal_interval",
+                            "rate_excluding_zero_among_available",
+                        ),
+                    )
         scaling = document["scaling"]
         assert isinstance(scaling, dict)
         self.assertFalse(scaling["full_universe_resample_executed"])
         self.assertFalse(scaling["full_universe_holm_executed"])
         self.assertEqual(scaling["frozen_directional_hypotheses_per_annual_segment"], 89460)
+
+
+def _finite_ar1_closed_form(n: int, phi: float) -> float:
+    """Independent geometric-sum check of the finite-sample AR(1) size."""
+
+    if phi == 0.0:
+        return float(n)
+    span = n - 1
+    one_minus = 1.0 - phi
+    geometric = phi * (1.0 - phi**span) / one_minus
+    weighted_index = phi * (
+        1.0 - (span + 1) * phi**span + span * phi ** (span + 1)
+    ) / (one_minus ** 2)
+    weighted = geometric - weighted_index / n
+    return n / (1.0 + 2.0 * weighted)
+
+
+def _diagnostic_rate(row: dict[str, object], method_id: str, block_name: str) -> float:
+    diagnostics = row["diagnostics"]
+    assert isinstance(diagnostics, list)
+    for diagnostic in diagnostics:
+        assert isinstance(diagnostic, dict)
+        if diagnostic["method_id"] != method_id:
+            continue
+        block = diagnostic[block_name]
+        assert isinstance(block, dict)
+        rate = block["rate"]
+        assert isinstance(rate, float)
+        return rate
+    raise AssertionError(method_id)
 
 
 def _rate_width(scenario: dict[str, object]) -> float:

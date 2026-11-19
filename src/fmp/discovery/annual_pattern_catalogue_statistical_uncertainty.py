@@ -22,6 +22,7 @@ import hashlib
 import json
 import math
 import random
+import re
 import time
 import tracemalloc
 from dataclasses import dataclass
@@ -80,9 +81,35 @@ HOLM_METHOD_CHECK_FAMILY = 40
 HOLM_METHOD_CHECK_REPLICATIONS = 160
 HOLM_METHOD_CHECK_SERIES_LENGTH = 30
 HOLM_ALPHA = 0.05
+HOLM_CORRELATED_NULL_SEED = 20261125
 Z_95 = 1.959963984540054
 MAX_DIRECT_SERIES_LENGTH = 2000
+MAX_DECLARED_AR1_SAMPLE_SIZE = 2000
 MAX_SOURCE_LABEL_LENGTH = 128
+VARIABILITY_SCENARIO_NAMES = (
+    "zero_edge_independent",
+    "serial_correlated_noise",
+    "shared_event_membership",
+    "overlapping_horizons",
+    "common_shock_cross_symbol",
+)
+_SYNTHETIC_CLOCK_ID = re.compile(r"^synthetic-clock-[a-z0-9]+(?:-[a-z0-9]+)*$")
+_DIAGNOSTIC_ROLES = {
+    "iid_normal_interval": "iid_assumption",
+    "newey_west_lag_1": "dependence_aware",
+    "newey_west_lag_4": "dependence_aware",
+    "newey_west_lag_8": "dependence_aware",
+    "moving_block_1": "incorrect_independence_diagnostic",
+    "moving_block_4": "dependence_aware",
+    "moving_block_8": "dependence_aware",
+    "shared_clock_block_4": "dependence_aware_shared_clock",
+    "incorrect_independent_columns_block_4": "incorrect_independence_diagnostic",
+    "incorrect_stacked_iid": "incorrect_independence_diagnostic",
+    "preserving_single_series_iid": "paired_single_series",
+    "short_horizon_iid": "paired_short_horizon",
+    "long_horizon_iid": "paired_long_horizon",
+    "contemporaneous_average_iid": "paired_contemporaneous_average",
+}
 
 HISTORICAL_ARTIFACT_READ_AUTHORIZED = False
 HISTORICAL_CATALOGUE_EXECUTION_AUTHORIZED = False
@@ -334,19 +361,23 @@ def _method_catalogue() -> list[dict[str, object]]:
         },
         {
             "method_id": "shared_clock_block_bootstrap",
-            "version": "shared-clock-moving-block-v1",
-            "estimand": "mean of aligned series, resampling each time index once",
+            "version": "shared-clock-moving-block-synthetic-identity-v1",
+            "estimand": "mean of caller-supplied synthetic series, resampling each declared index once",
             "assumptions": [
-                "Series that share a clock are resampled on that clock together.",
-                "One draw of a time block is applied to every series on the clock.",
-                "The contemporaneous average is formed before the interval, so a common shock stays inside the time point.",
+                "Inputs are caller-supplied numeric series. Equal length does not prove timestamp alignment.",
+                "A validated clock id uses the synthetic-clock prefix. That id is not an authentic event timeline.",
+                "When a synthetic clock is declared, one draw of an index block is applied to every series.",
+                "The contemporaneous average is formed before the interval, so a common shock stays inside the index.",
             ],
             "failure_modes": [
-                "Independent column resampling assigns different times to series that shared a shock.",
+                "Treating equal length as proof that market timestamps were aligned.",
+                "Independent column resampling assigns different indexes to series that shared a shock.",
                 "Stacking those series and using an independent-observation interval counts one shock more than once.",
                 "The shared clock does not by itself create a valid p-value.",
                 "A scalar effective sample size is not implied by a shared-clock interval.",
             ],
+            "equal_length_proves_timestamp_alignment": False,
+            "authentic_event_timelines_aligned": False,
             "resamples_each_time_once": True,
             "produces_p_values": False,
             "portfolio_profit_interval": False,
@@ -361,15 +392,19 @@ def _method_catalogue() -> list[dict[str, object]]:
                 "Each individual p-value is valid under the synthetic complete null.",
                 "This check uses a known-sigma Gaussian mean, so the p-value does not come from a bootstrap.",
                 "Holm controls familywise error under arbitrary dependence only when those individual p-values are valid.",
-                "The check family is not the 89460-hypothesis annual universe.",
+                "The independent-null and correlated-null checks use the same family size. The correlated null keeps valid marginal p-values and adds a shared shock.",
+                "The check family is not the 89460-hypothesis per-segment universe.",
+                "89460 is the frozen search universe of one annual segment. It does not prove that selection across years is controlled.",
             ],
             "failure_modes": [
                 "Dependence-preserving resampling is not assumed to produce valid p-values, so those resamples are not passed to Holm.",
                 "Applying Holm only to shortlisted winners does not control the search that produced the shortlist.",
                 "A caller declaration that p-values are valid is not a proof that catalogue p-values exist.",
+                "A bounded method check does not control the catalogue or selection across years.",
             ],
             "applied_to_annual_catalogue": False,
             "produces_catalogue_p_values": False,
+            "catalogue_wide_error_control_claimed": False,
             "selected_by_observed_false_passes": False,
             "selected_by_observed_coverage": False,
         },
@@ -389,8 +424,10 @@ def _scaling_limits() -> dict[str, object]:
             "arithmetic at 89460 hypotheses would be cheap. That cost is not "
             "why the catalogue adjustment is withheld."
         ),
+        "per_segment_hypothesis_count_proves_cross_year_error_control": False,
         "bounded_holm_method_check_family": HOLM_METHOD_CHECK_FAMILY,
         "bounded_method_check_is_the_annual_universe": False,
+        "bounded_method_check_controls_catalogue_wide_error": False,
         "max_predeclared_series_length": max(int(item["n"]) for item in _SCENARIOS),
         "max_direct_series_length": MAX_DIRECT_SERIES_LENGTH,
         "bootstrap_draws": BOOTSTRAP_DRAWS,
@@ -417,6 +454,11 @@ def _recorded_boundaries() -> dict[str, object]:
         },
         "search_universe_directional_hypotheses_per_annual_segment": (
             DIRECTIONAL_HYPOTHESES_PER_ANNUAL_SEGMENT
+        ),
+        "search_universe_meaning": (
+            "89460 is the frozen directional search universe of one annual "
+            "segment. It is not proof that multiple testing or selection "
+            "across years has been controlled."
         ),
         "exp_20261118_069": {
             "experiment_id": CORRELATED_NOISE_CALIBRATION_EXPERIMENT,
@@ -799,15 +841,135 @@ def _aligned_rows(columns: Sequence[Sequence[float]]) -> list[list[float]]:
     return [[column[index] for column in parsed] for index in range(width)]
 
 
+def _synthetic_index_label(index: int) -> str:
+    return f"synthetic-index-{index:04d}"
+
+
+def _refuse_authentic_timeline(authentic_event_timeline: bool) -> None:
+    if authentic_event_timeline is not False:
+        _fail(
+            "STATISTICAL_UNCERTAINTY_AUTHENTIC_TIMELINE_REFUSED",
+            "authentic event timelines are not aligned by this method",
+        )
+
+
+def synthetic_clock_identity(
+    *,
+    length: int,
+    series_count: int,
+    clock_id: str | None,
+    timestamps: Sequence[str] | None = None,
+    authentic_event_timeline: bool = False,
+) -> dict[str, object]:
+    """Validate a caller-declared synthetic clock, or record that none was supplied.
+
+    Equal length is not timestamp alignment. A synthetic clock id does not
+    assert that authentic event timelines were aligned.
+    """
+
+    _refuse_authentic_timeline(authentic_event_timeline)
+    if isinstance(length, bool) or not isinstance(length, int) or length < 1:
+        _fail("STATISTICAL_UNCERTAINTY_MALFORMED_SERIES", "clock length must be a positive integer")
+    if isinstance(series_count, bool) or not isinstance(series_count, int) or series_count < 2:
+        _fail("STATISTICAL_UNCERTAINTY_MALFORMED_SERIES", "a shared clock needs at least two series")
+    if timestamps is not None and clock_id is None:
+        _fail(
+            "STATISTICAL_UNCERTAINTY_CLOCK_IDENTITY_NOT_SYNTHETIC",
+            "timestamps require a synthetic clock id",
+        )
+    if clock_id is None:
+        return {
+            "status": "NOT_SUPPLIED",
+            "synthetic_clock_identity_validated": False,
+            "equal_length_proves_timestamp_alignment": False,
+            "authentic_event_timelines_aligned": False,
+            "series_count": series_count,
+            "length": length,
+            "timestamp_status": "NOT_SUPPLIED",
+            "reason": (
+                "The inputs are caller-supplied numeric series. Equal length "
+                "does not prove that those series share timestamps. No "
+                "authentic event timeline was aligned."
+            ),
+        }
+    if not isinstance(clock_id, str) or _SYNTHETIC_CLOCK_ID.fullmatch(clock_id) is None:
+        _fail(
+            "STATISTICAL_UNCERTAINTY_CLOCK_IDENTITY_NOT_SYNTHETIC",
+            "clock id must be a synthetic-clock slug",
+        )
+    if len(clock_id) > 80:
+        _fail(
+            "STATISTICAL_UNCERTAINTY_CLOCK_IDENTITY_NOT_SYNTHETIC",
+            "clock id exceeds the synthetic label bound",
+        )
+    timestamp_status = "NOT_SUPPLIED"
+    if timestamps is not None:
+        if isinstance(timestamps, (str, bytes)) or not isinstance(timestamps, Sequence):
+            _fail(
+                "STATISTICAL_UNCERTAINTY_CLOCK_TIMESTAMPS_NOT_SYNTHETIC",
+                "timestamps must be synthetic index labels",
+            )
+        expected = [_synthetic_index_label(index) for index in range(length)]
+        if list(timestamps) != expected:
+            _fail(
+                "STATISTICAL_UNCERTAINTY_CLOCK_TIMESTAMPS_NOT_SYNTHETIC",
+                "timestamps must be the synthetic index labels for this length",
+            )
+        timestamp_status = "SYNTHETIC_INDEX_LABELS"
+    return {
+        "status": "SYNTHETIC_CLOCK_IDENTITY_VALIDATED",
+        "clock_id": clock_id,
+        "synthetic_clock_identity_validated": True,
+        "equal_length_proves_timestamp_alignment": False,
+        "authentic_event_timelines_aligned": False,
+        "series_count": series_count,
+        "length": length,
+        "timestamp_status": timestamp_status,
+        "reason": (
+            "The caller declared a synthetic clock identity. Validation checks "
+            "the synthetic id and, when supplied, the synthetic index labels. "
+            "It does not read or align authentic event timelines."
+        ),
+    }
+
+
+def _synthetic_clock_arguments(name: str, length: int) -> tuple[str, tuple[str, ...]]:
+    clock_id = f"synthetic-clock-{name.replace('_', '-')}"
+    timestamps = tuple(_synthetic_index_label(index) for index in range(length))
+    return clock_id, timestamps
+
+
+def _attach_clock(
+    payload: dict[str, object],
+    clock: Mapping[str, object],
+    *,
+    uses_shared_clock: bool,
+) -> dict[str, object]:
+    payload["clock_identity"] = dict(clock)
+    payload["equal_length_proves_timestamp_alignment"] = False
+    payload["authentic_event_timelines_aligned"] = False
+    payload["inputs_are_caller_supplied_numeric_series"] = True
+    payload["uses_declared_shared_clock"] = uses_shared_clock
+    return payload
+
+
 def shared_clock_block_bootstrap_interval(
     columns: Sequence[Sequence[float]],
     block_length: int,
     *,
     draws: int,
     rng: random.Random,
+    clock_id: str | None = None,
+    timestamps: Sequence[str] | None = None,
+    authentic_event_timeline: bool = False,
 ) -> dict[str, object]:
-    """Resample time blocks once and apply each draw to every aligned series."""
+    """Resample index blocks once and apply each draw to every supplied series.
 
+    The series are caller-supplied numbers. Equal length does not prove that
+    timestamps match, and a synthetic clock id is not an authentic timeline.
+    """
+
+    _refuse_authentic_timeline(authentic_event_timeline)
     if (
         isinstance(block_length, bool)
         or not isinstance(block_length, int)
@@ -824,25 +986,40 @@ def shared_clock_block_bootstrap_interval(
     rows = _aligned_rows(columns)
     n = len(rows)
     width = len(rows[0])
+    clock = synthetic_clock_identity(
+        length=n,
+        series_count=width,
+        clock_id=clock_id,
+        timestamps=timestamps,
+        authentic_event_timeline=False,
+    )
     point = [
         sum(row[column] for row in rows) / n
         for column in range(width)
     ]
     if n < 2 or block_length > n:
-        return _unavailable_interval(
-            status="UNAVAILABLE",
-            reason="SHARED_CLOCK_NOT_IDENTIFIED",
-            mean=sum(point) / width,
-            n=n,
-            extra={"block_length": block_length, "series_count": width},
+        return _attach_clock(
+            _unavailable_interval(
+                status="UNAVAILABLE",
+                reason="SHARED_CLOCK_NOT_IDENTIFIED",
+                mean=sum(point) / width,
+                n=n,
+                extra={"block_length": block_length, "series_count": width},
+            ),
+            clock,
+            uses_shared_clock=True,
         )
     if all(row == rows[0] for row in rows):
-        return _unavailable_interval(
-            status="DEGENERATE_VARIANCE",
-            reason="SAMPLE_VARIANCE_IS_ZERO",
-            mean=sum(point) / width,
-            n=n,
-            extra={"block_length": block_length, "series_count": width},
+        return _attach_clock(
+            _unavailable_interval(
+                status="DEGENERATE_VARIANCE",
+                reason="SAMPLE_VARIANCE_IS_ZERO",
+                mean=sum(point) / width,
+                n=n,
+                extra={"block_length": block_length, "series_count": width},
+            ),
+            clock,
+            uses_shared_clock=True,
         )
     starts = n - block_length + 1
     block_count = math.ceil(n / block_length)
@@ -877,29 +1054,33 @@ def shared_clock_block_bootstrap_interval(
             }
         )
     avg_low_index, avg_high_index, avg_low, avg_high = _percentile_bounds(average_draws)
-    return {
-        "status": "EXPLORATORY_NOT_INFERENCE",
-        "reason": "SHARED_CLOCK_RESAMPLED_EACH_TIME_ONCE",
-        "n": n,
-        "series_count": width,
-        "block_length": block_length,
-        "draws": draws,
-        "resamples_each_time_once": True,
-        "independently_resampled_columns": False,
-        "column_intervals": intervals,
-        "unweighted_average_of_column_means": {
-            "mean": sum(point) / width,
-            "low": avg_low,
-            "high": avg_high,
-            "percentile_low_index": avg_low_index,
-            "percentile_high_index": avg_high_index,
-            "simultaneously_executable_portfolio": False,
+    return _attach_clock(
+        {
+            "status": "EXPLORATORY_NOT_INFERENCE",
+            "reason": "SHARED_CLOCK_RESAMPLED_EACH_INDEX_ONCE",
+            "n": n,
+            "series_count": width,
+            "block_length": block_length,
+            "draws": draws,
+            "resamples_each_time_once": True,
+            "independently_resampled_columns": False,
+            "column_intervals": intervals,
+            "unweighted_average_of_column_means": {
+                "mean": sum(point) / width,
+                "low": avg_low,
+                "high": avg_high,
+                "percentile_low_index": avg_low_index,
+                "percentile_high_index": avg_high_index,
+                "simultaneously_executable_portfolio": False,
+            },
+            "inference_authorized": False,
+            "portfolio_profit_interval": False,
+            "p_value": "NOT_COMPUTED",
+            "valid_p_value_claimed": False,
         },
-        "inference_authorized": False,
-        "portfolio_profit_interval": False,
-        "p_value": "NOT_COMPUTED",
-        "valid_p_value_claimed": False,
-    }
+        clock,
+        uses_shared_clock=True,
+    )
 
 
 def independent_column_block_bootstrap_interval(
@@ -908,12 +1089,17 @@ def independent_column_block_bootstrap_interval(
     *,
     draws: int,
     rng: random.Random,
+    clock_id: str | None = None,
+    timestamps: Sequence[str] | None = None,
+    authentic_event_timeline: bool = False,
 ) -> dict[str, object]:
-    """Incorrect diagnostic: resample each aligned series on its own clock.
+    """Incorrect diagnostic: resample each series on its own index sequence.
 
     This exists to show the failure mode. It is not a recommended estimator.
+    A declared synthetic clock is recorded and then ignored.
     """
 
+    _refuse_authentic_timeline(authentic_event_timeline)
     if (
         isinstance(block_length, bool)
         or not isinstance(block_length, int)
@@ -930,6 +1116,13 @@ def independent_column_block_bootstrap_interval(
     rows = _aligned_rows(columns)
     n = len(rows)
     width = len(rows[0])
+    clock = synthetic_clock_identity(
+        length=n,
+        series_count=width,
+        clock_id=clock_id,
+        timestamps=timestamps,
+        authentic_event_timeline=False,
+    )
     parsed = [[row[column] for row in rows] for column in range(width)]
     point = [_mean(column) for column in parsed]
     average_draws: list[float] = []
@@ -956,31 +1149,36 @@ def independent_column_block_bootstrap_interval(
                 "percentile_high_index": column_high_index,
             }
         )
-    return {
-        "status": "EXPLORATORY_NOT_INFERENCE",
-        "reason": "INCORRECT_INDEPENDENT_COLUMN_RESAMPLE",
-        "assumption_label": "incorrect_independence_across_series_that_share_a_clock",
-        "recommended": False,
-        "n": n,
-        "series_count": width,
-        "block_length": block_length,
-        "draws": draws,
-        "resamples_each_time_once": False,
-        "independently_resampled_columns": True,
-        "column_intervals": column_intervals,
-        "unweighted_average_of_independently_resampled_means": {
-            "mean": sum(point) / width,
-            "low": low,
-            "high": high,
-            "percentile_low_index": low_index,
-            "percentile_high_index": high_index,
-            "simultaneously_executable_portfolio": False,
+    return _attach_clock(
+        {
+            "status": "EXPLORATORY_NOT_INFERENCE",
+            "reason": "INCORRECT_INDEPENDENT_COLUMN_RESAMPLE",
+            "assumption_label": "incorrect_independence_across_series_that_share_an_index",
+            "recommended": False,
+            "n": n,
+            "series_count": width,
+            "block_length": block_length,
+            "draws": draws,
+            "resamples_each_time_once": False,
+            "independently_resampled_columns": True,
+            "declared_synthetic_clock_ignored": True,
+            "column_intervals": column_intervals,
+            "unweighted_average_of_independently_resampled_means": {
+                "mean": sum(point) / width,
+                "low": low,
+                "high": high,
+                "percentile_low_index": low_index,
+                "percentile_high_index": high_index,
+                "simultaneously_executable_portfolio": False,
+            },
+            "inference_authorized": False,
+            "portfolio_profit_interval": False,
+            "p_value": "NOT_COMPUTED",
+            "valid_p_value_claimed": False,
         },
-        "inference_authorized": False,
-        "portfolio_profit_interval": False,
-        "p_value": "NOT_COMPUTED",
-        "valid_p_value_claimed": False,
-    }
+        clock,
+        uses_shared_clock=False,
+    )
 
 
 def _normal_two_sided_p(z_value: float) -> float:
@@ -1085,10 +1283,21 @@ def refuse_catalogue_multiple_testing() -> dict[str, object]:
         "shared_event_dependence_accounted_in_a_valid_p_value": False,
         "dependence_preserving_resample_treated_as_p_value": False,
         "optimized_on_observed_false_passes": False,
+        "per_segment_hypothesis_count_proves_cross_year_error_control": False,
+        "multiple_testing_across_years_controlled": False,
+        "selection_across_years_controlled": False,
+        "real_catalogue_p_values_authorized": False,
+        "strategy_v1_significance_claimed": False,
+        "frozen_count_meaning": (
+            "89460 is the frozen directional search universe of one annual "
+            "segment. It is not proof that multiple testing or selection "
+            "across years has been controlled."
+        ),
         "reason": (
             "Event evidence and the cross-year engine do not supply valid "
             "individual p-values. Holm is withheld. A bounded synthetic "
-            "method check does not stand in for the 89460-hypothesis family."
+            "method check does not stand in for the 89460-hypothesis family "
+            "and does not control selection across years."
         ),
     }
 
@@ -1115,10 +1324,16 @@ def effective_sample_size_from_overlap(
         "connected_episode_group_count": connected_episode_group_count,
         "episode_group_count_used_as_value": False,
         "episode_groups_are_independent_trials": False,
+        "ar1_finite_sample_formula_applied": False,
+        "ar1_asymptotic_formula_applied": False,
+        "authentic_event_evidence_requires_justified_dependence_model": True,
         "reason": (
             "A connected component of geometric overlap is not an independent "
             "trial. Serial dependence can remain between groups that do not "
-            "overlap. No effective sample size is identified from these counts."
+            "overlap. No effective sample size is identified from these counts. "
+            "Neither the finite-sample AR(1) variance-equivalent size nor the "
+            "large-sample approximation is applied without a justified "
+            "dependence model."
         ),
     }
 
@@ -1222,6 +1437,179 @@ def _draw_scenario(
     raise AssertionError
 
 
+def binomial_monte_carlo_report(numerator: int, denominator: int) -> dict[str, object]:
+    """Wilson interval and binomial standard error for a Monte Carlo rate.
+
+    The Wilson interval uses the same 95 percent normal quantile as the
+    exploratory normal intervals. A reported rate is not an exact population
+    error rate. A zero denominator leaves the interval unavailable.
+    """
+
+    if isinstance(numerator, bool) or not isinstance(numerator, int):
+        _fail("STATISTICAL_UNCERTAINTY_MALFORMED_COUNTS", "numerator must be an integer")
+    if isinstance(denominator, bool) or not isinstance(denominator, int):
+        _fail("STATISTICAL_UNCERTAINTY_MALFORMED_COUNTS", "denominator must be an integer")
+    if numerator < 0 or denominator < 0 or numerator > denominator:
+        _fail(
+            "STATISTICAL_UNCERTAINTY_MALFORMED_COUNTS",
+            "numerator and denominator are not a binomial count",
+        )
+    method = "sqrt(rate * (1 - rate) / denominator)"
+    if denominator == 0:
+        return {
+            "numerator": numerator,
+            "denominator": 0,
+            "rate": None,
+            "binomial_standard_error": None,
+            "binomial_standard_error_method": method,
+            "binomial_standard_error_understates_boundary_uncertainty": False,
+            "wilson_interval_95": None,
+            "interval_status": "UNAVAILABLE",
+            "empirical_rate_is_exact_population_error_rate": False,
+            "z_95": Z_95,
+        }
+    rate = numerator / denominator
+    standard_error = math.sqrt(rate * (1.0 - rate) / denominator)
+    z_squared = Z_95 * Z_95
+    wilson_denominator = 1.0 + z_squared / denominator
+    centre = (rate + z_squared / (2.0 * denominator)) / wilson_denominator
+    half = (
+        Z_95
+        * math.sqrt(
+            rate * (1.0 - rate) / denominator
+            + z_squared / (4.0 * denominator * denominator)
+        )
+        / wilson_denominator
+    )
+    return {
+        "numerator": numerator,
+        "denominator": denominator,
+        "rate": rate,
+        "binomial_standard_error": standard_error,
+        "binomial_standard_error_method": method,
+        "binomial_standard_error_understates_boundary_uncertainty": standard_error == 0.0,
+        "wilson_interval_95": {
+            "low": max(0.0, centre - half),
+            "high": min(1.0, centre + half),
+            "method": "wilson_score",
+            "z": Z_95,
+            "confidence_level": 0.95,
+        },
+        "interval_status": "REPORTED",
+        "empirical_rate_is_exact_population_error_rate": False,
+        "z_95": Z_95,
+    }
+
+
+def _ar1_weighted_autocorrelation_sum(n: int, phi: float) -> float:
+    if phi == 0.0:
+        return 0.0
+    weighted_sum = 0.0
+    phi_power = 1.0
+    for lag in range(1, n):
+        phi_power *= phi
+        weighted_sum += (1.0 - lag / n) * phi_power
+    return weighted_sum
+
+
+def declared_ar1_effective_sample_size(n: int, phi: float) -> dict[str, object]:
+    """Compare the finite-sample AR(1) size with its large-sample approximation.
+
+    Both numbers use a declared phi. This function does not estimate phi and
+    does not promote either number to authentic event evidence.
+    """
+
+    if isinstance(n, bool) or not isinstance(n, int):
+        _fail("STATISTICAL_UNCERTAINTY_MALFORMED_COUNTS", "sample size must be an integer")
+    if isinstance(phi, bool) or not isinstance(phi, (int, float)):
+        _fail("STATISTICAL_UNCERTAINTY_MALFORMED_SERIES", "phi must be a finite number")
+    phi_value = float(phi)
+    if n < 2 or n > MAX_DECLARED_AR1_SAMPLE_SIZE:
+        return {
+            "status": "UNAVAILABLE",
+            "value": None,
+            "n": n,
+            "phi": phi_value,
+            "phi_estimated_from_sample": False,
+            "identified_for_event_evidence": False,
+            "promoted_to_authentic_event_evidence": False,
+            "authentic_event_evidence_requires_justified_dependence_model": True,
+            "reason": "The declared sample size is outside the bounded AR(1) formula.",
+        }
+    if not math.isfinite(phi_value) or abs(phi_value) >= 1.0:
+        return {
+            "status": "UNAVAILABLE",
+            "value": None,
+            "n": n,
+            "phi": phi_value,
+            "phi_estimated_from_sample": False,
+            "identified_for_event_evidence": False,
+            "promoted_to_authentic_event_evidence": False,
+            "authentic_event_evidence_requires_justified_dependence_model": True,
+            "reason": (
+                "A stationary AR(1) autocorrelation phi**k requires absolute "
+                "phi below 1. No effective sample size is reported."
+            ),
+        }
+    weighted_sum = _ar1_weighted_autocorrelation_sum(n, phi_value)
+    denominator = 1.0 + 2.0 * weighted_sum
+    if denominator <= 0.0:
+        return {
+            "status": "UNAVAILABLE",
+            "value": None,
+            "n": n,
+            "phi": phi_value,
+            "phi_estimated_from_sample": False,
+            "identified_for_event_evidence": False,
+            "promoted_to_authentic_event_evidence": False,
+            "reason": "The finite-sample variance weight was not positive.",
+        }
+    finite_sample = n / denominator
+    asymptotic = n * (1.0 - phi_value) / (1.0 + phi_value)
+    return {
+        "status": "IDENTIFIED_UNDER_DECLARED_AR1_ASSUMPTION",
+        "value": finite_sample,
+        "value_definition": (
+            "finite_sample_variance_equivalent_under_declared_stationary_autocorrelation"
+        ),
+        "n": n,
+        "phi": phi_value,
+        "phi_estimated_from_sample": False,
+        "asymptotic_approximation_used_as_value": False,
+        "finite_sample_variance_equivalent": {
+            "value": finite_sample,
+            "formula": "n / (1 + 2 * sum_{k=1}^{n-1} (1 - k/n) * phi**k)",
+            "interpretation": (
+                "Variance-equivalent sample size for the mean of a second-order "
+                "stationary series whose autocorrelation at lag k is phi**k. "
+                "The weights are the exact finite-sample weights. Phi is declared, "
+                "not estimated."
+            ),
+        },
+        "asymptotic_large_sample_approximation": {
+            "value": asymptotic,
+            "formula": "n * (1 - phi) / (1 + phi)",
+            "interpretation": (
+                "Large-sample approximation for a stationary AR(1). It replaces "
+                "the finite-sample weights by an infinite sum. It is not the "
+                "exact finite-sample variance of the mean."
+            ),
+        },
+        "finite_minus_asymptotic": finite_sample - asymptotic,
+        "formulas_are_the_same_expression": False,
+        "marginal_variance_equivalent": True,
+        "episode_group_count_used_as_value": False,
+        "identified_for_event_evidence": False,
+        "promoted_to_authentic_event_evidence": False,
+        "authentic_event_evidence_requires_justified_dependence_model": True,
+        "failure_mode": (
+            "Both formulas use the declared phi. An estimated autocorrelation, "
+            "or either formula applied to event evidence without that model, "
+            "would be a different claim."
+        ),
+    }
+
+
 class _Aggregate:
     def __init__(self) -> None:
         self.replications = 0
@@ -1264,31 +1652,35 @@ class _Aggregate:
             self.unavailable += 1
 
     def payload(self, true_mean: float) -> dict[str, object]:
+        coverage_report = binomial_monte_carlo_report(self.covering, self.available)
+        exclusion_report = binomial_monte_carlo_report(self.excludes_zero, self.available)
+        above_report = binomial_monte_carlo_report(self.entirely_above_zero, self.available)
         if self.available == 0:
-            coverage = None
             mean_width = None
             median_width = None
-            excludes_rate = None
-            above_rate = None
             status = "DEGENERATE_VARIANCE" if self.unavailable == self.replications else "UNAVAILABLE"
+            monte_carlo_conclusion = "UNAVAILABLE"
         else:
-            coverage = self.covering / self.available
             mean_width = self.width_sum / self.available
             median_width = _median(self.widths)
-            excludes_rate = self.excludes_zero / self.available
-            above_rate = self.entirely_above_zero / self.available
             status = "EXPLORATORY_NOT_INFERENCE"
+            monte_carlo_conclusion = "REPORTED_WITH_MONTE_CARLO_UNCERTAINTY"
         return {
             "status": status,
             "replications": self.replications,
             "intervals_available": self.available,
             "intervals_unavailable": self.unavailable,
-            "coverage_of_true_mean_among_available": coverage,
+            "coverage_of_true_mean_among_available": coverage_report["rate"],
+            "coverage_of_true_mean": coverage_report,
             "coverage_counts_as_calibrated_error_control": False,
+            "empirical_coverage_is_exact_population_error_rate": False,
             "intervals_excluding_zero": self.excludes_zero,
-            "rate_excluding_zero_among_available": excludes_rate,
+            "rate_excluding_zero_among_available": exclusion_report["rate"],
+            "excluding_zero": exclusion_report,
             "intervals_entirely_above_zero": self.entirely_above_zero,
-            "rate_entirely_above_zero_among_available": above_rate,
+            "rate_entirely_above_zero_among_available": above_report["rate"],
+            "entirely_above_zero": above_report,
+            "monte_carlo_conclusion": monte_carlo_conclusion,
             "mean_interval_width": mean_width,
             "median_interval_width": median_width,
             "mean_of_sample_means": (
@@ -1358,20 +1750,7 @@ def _scenario_effective_sample_size(spec: Mapping[str, object]) -> dict[str, obj
             "identified_for_event_evidence": False,
         }
     if kind == "ar1":
-        phi = float(spec["phi"])
-        return {
-            "status": "IDENTIFIED_UNDER_DECLARED_AR1_ASSUMPTION",
-            "value": n * (1.0 - phi) / (1.0 + phi),
-            "phi": phi,
-            "phi_estimated_from_sample": False,
-            "formula": "n * (1 - phi) / (1 + phi)",
-            "episode_group_count_used_as_value": False,
-            "identified_for_event_evidence": False,
-            "failure_mode": (
-                "The formula uses the declared phi. An estimated autocorrelation "
-                "would be a different, unidentified claim."
-            ),
-        }
+        return declared_ar1_effective_sample_size(n, float(spec["phi"]))
     if kind == "shared_event":
         return {
             "status": "IDENTIFIED_UNDER_DECLARED_SHARED_EVENT_MODEL",
@@ -1490,11 +1869,15 @@ def _run_scenario(spec: Mapping[str, object], seed: int) -> dict[str, object]:
                 columns = [short, primary]
             else:
                 columns = [primary, list(primary)]
+            clock_id, timestamps = _synthetic_clock_arguments(name, len(primary))
             shared = shared_clock_block_bootstrap_interval(
                 columns,
                 4,
                 draws=BOOTSTRAP_DRAWS,
                 rng=random.Random(replication_seed + 101),
+                clock_id=clock_id,
+                timestamps=timestamps,
+                authentic_event_timeline=False,
             )
             average = shared["unweighted_average_of_column_means"]
             if isinstance(average, Mapping):
@@ -1510,6 +1893,9 @@ def _run_scenario(spec: Mapping[str, object], seed: int) -> dict[str, object]:
                 4,
                 draws=BOOTSTRAP_DRAWS,
                 rng=random.Random(replication_seed + 202),
+                clock_id=clock_id,
+                timestamps=timestamps,
+                authentic_event_timeline=False,
             )
             incorrect_average = incorrect[
                 "unweighted_average_of_independently_resampled_means"
@@ -1531,6 +1917,20 @@ def _run_scenario(spec: Mapping[str, object], seed: int) -> dict[str, object]:
             "status": "EXPLORATORY_NOT_INFERENCE",
             "p_values_produced": False,
             "valid_p_value_claimed": False,
+            "establishes_calibrated_confidence_intervals": False,
+            "monte_carlo_conclusion": "UNRESOLVED",
+            "monte_carlo_conclusion_reason": (
+                "Twenty bootstrap replications describe exploratory percentile "
+                "intervals. They do not establish calibrated confidence intervals, "
+                "and the empirical rates are not population error rates."
+            ),
+            "synthetic_clock": {
+                "clock_id": f"synthetic-clock-{name.replace('_', '-')}",
+                "timestamp_label_rule": "synthetic-index-0000 through the last index",
+                "synthetic_clock_identity_validated": True,
+                "equal_length_proves_timestamp_alignment": False,
+                "authentic_event_timelines_aligned": False,
+            },
             "methods": {
                 key: aggregate.payload(true_mean) for key, aggregate in bootstrap.items()
             },
@@ -1573,19 +1973,40 @@ def _run_scenario(spec: Mapping[str, object], seed: int) -> dict[str, object]:
     }
 
 
-def _holm_method_check() -> dict[str, object]:
-    rng = random.Random(HOLM_METHOD_CHECK_SEED)
-    uncorrected = 0
-    holm_rejections = 0
-    for _replication in range(HOLM_METHOD_CHECK_REPLICATIONS):
-        p_values: list[float] = []
+def _holm_null_totals(rng: random.Random, *, correlated: bool) -> list[float]:
+    if not correlated:
+        totals: list[float] = []
         for _hypothesis in range(HOLM_METHOD_CHECK_FAMILY):
             total = 0.0
             for _index in range(HOLM_METHOD_CHECK_SERIES_LENGTH):
                 total += _standard_normal(rng)
+            totals.append(total)
+        return totals
+    sums = [0.0 for _hypothesis in range(HOLM_METHOD_CHECK_FAMILY)]
+    scale = math.sqrt(2.0)
+    for _index in range(HOLM_METHOD_CHECK_SERIES_LENGTH):
+        common = _standard_normal(rng)
+        for hypothesis in range(HOLM_METHOD_CHECK_FAMILY):
+            idiosyncratic = _standard_normal(rng)
+            sums[hypothesis] += (common + idiosyncratic) / scale
+    return sums
+
+
+def _holm_complete_null(*, seed: int, correlated: bool) -> dict[str, object]:
+    if seed in FORBIDDEN_TUNING_SEEDS:
+        _fail(
+            "STATISTICAL_UNCERTAINTY_FORBIDDEN_TUNING_SEED",
+            "EXP-20261118-069 seeds are not reused",
+        )
+    rng = random.Random(seed)
+    uncorrected = 0
+    holm_rejections = 0
+    standard_error = math.sqrt(1.0 / HOLM_METHOD_CHECK_SERIES_LENGTH)
+    for _replication in range(HOLM_METHOD_CHECK_REPLICATIONS):
+        p_values: list[float] = []
+        for total in _holm_null_totals(rng, correlated=correlated):
             mean = total / HOLM_METHOD_CHECK_SERIES_LENGTH
-            z_value = mean / math.sqrt(1.0 / HOLM_METHOD_CHECK_SERIES_LENGTH)
-            p_values.append(_normal_two_sided_p(z_value))
+            p_values.append(_normal_two_sided_p(mean / standard_error))
         adjusted = holm_adjusted_p_values(
             p_values,
             source="known_sigma_gaussian_synthetic",
@@ -1598,6 +2019,40 @@ def _holm_method_check() -> dict[str, object]:
             uncorrected += 1
         if any(float(p_value) <= HOLM_ALPHA for p_value in values):
             holm_rejections += 1
+    uncorrected_report = binomial_monte_carlo_report(
+        uncorrected,
+        HOLM_METHOD_CHECK_REPLICATIONS,
+    )
+    holm_report = binomial_monte_carlo_report(
+        holm_rejections,
+        HOLM_METHOD_CHECK_REPLICATIONS,
+    )
+    return {
+        "seed": seed,
+        "correlated_null": correlated,
+        "dependence": "shared_gaussian_shock" if correlated else "independent_hypotheses",
+        "marginal_variance": 1.0,
+        "marginal_p_values_valid_under_synthetic_dgp": True,
+        "catalogue_p_values_used": False,
+        "uncorrected_familywise_rejections": uncorrected,
+        "holm_familywise_rejections": holm_rejections,
+        "uncorrected_familywise_rate": uncorrected_report["rate"],
+        "holm_familywise_rate": holm_report["rate"],
+        "uncorrected_familywise": uncorrected_report,
+        "holm_familywise": holm_report,
+        "familywise_calibration_conclusion": "UNRESOLVED",
+        "familywise_calibration_reason": (
+            "These replications do not establish a calibrated familywise error "
+            "rate. The check is not the annual catalogue and it does not control "
+            "selection across years."
+        ),
+        "empirical_rate_is_exact_population_error_rate": False,
+    }
+
+
+def _holm_method_check() -> dict[str, object]:
+    independent = _holm_complete_null(seed=HOLM_METHOD_CHECK_SEED, correlated=False)
+    correlated = _holm_complete_null(seed=HOLM_CORRELATED_NULL_SEED, correlated=True)
     return {
         "status": "EXPLORATORY_METHOD_CHECK",
         "inference_authorized": False,
@@ -1613,58 +2068,267 @@ def _holm_method_check() -> dict[str, object]:
         "sigma_known": True,
         "alpha": HOLM_ALPHA,
         "complete_null": True,
-        "uncorrected_familywise_rejections": uncorrected,
-        "holm_familywise_rejections": holm_rejections,
-        "uncorrected_familywise_rate": uncorrected / HOLM_METHOD_CHECK_REPLICATIONS,
-        "holm_familywise_rate": holm_rejections / HOLM_METHOD_CHECK_REPLICATIONS,
+        "uncorrected_familywise_rejections": independent["uncorrected_familywise_rejections"],
+        "holm_familywise_rejections": independent["holm_familywise_rejections"],
+        "uncorrected_familywise_rate": independent["uncorrected_familywise_rate"],
+        "holm_familywise_rate": independent["holm_familywise_rate"],
+        "uncorrected_familywise": independent["uncorrected_familywise"],
+        "holm_familywise": independent["holm_familywise"],
+        "familywise_calibration_conclusion": "UNRESOLVED",
+        "independent_complete_null": independent,
+        "correlated_complete_null": correlated,
         "error_control_claimed_for_catalogue": False,
+        "bounded_method_check_controls_catalogue_wide_error": False,
+        "bounded_method_check_controls_selection_across_years": False,
+        "frozen_per_segment_search_universe": DIRECTIONAL_HYPOTHESES_PER_ANNUAL_SEGMENT,
+        "per_segment_hypothesis_count_proves_cross_year_error_control": False,
+        "real_catalogue_p_values_authorized": False,
+        "strategy_v1_significance_claimed": False,
         "bootstrap_p_values_used": False,
         "optimized_on_observed_false_passes": False,
+        "empirical_rate_is_exact_population_error_rate": False,
     }
 
 
-def _variability() -> dict[str, object]:
-    rows = []
-    for seed in VARIABILITY_SEEDS:
-        spec = _SCENARIOS[0]
-        if spec["name"] != "zero_edge_independent":
-            _fail("STATISTICAL_UNCERTAINTY_UNKNOWN_SCENARIO", "variability scenario drifted")
-        aggregate = _Aggregate()
-        for replication_seed in _replication_seeds(seed, CLOSED_FORM_REPLICATIONS):
-            drawn = _draw_scenario(spec, random.Random(replication_seed))
-            primary = drawn["primary"]
-            if not isinstance(primary, list):
-                _fail("STATISTICAL_UNCERTAINTY_MALFORMED_SERIES", "primary series missing")
-            aggregate.add(iid_normal_interval(primary), 0.0)
-        payload = aggregate.payload(0.0)
-        rows.append(
+def _mapping_payload(value: object, detail: str) -> Mapping[str, object]:
+    if not isinstance(value, Mapping):
+        _fail("STATISTICAL_UNCERTAINTY_INTEGRITY", detail)
+    return value
+
+
+def _diagnostic(method_id: str, payload: Mapping[str, object]) -> dict[str, object]:
+    role = _DIAGNOSTIC_ROLES.get(method_id)
+    if role is None:
+        _fail(
+            "STATISTICAL_UNCERTAINTY_UNKNOWN_SCENARIO",
+            f"no diagnostic role for {method_id}",
+        )
+    coverage = _mapping_payload(
+        payload.get("coverage_of_true_mean"),
+        "coverage Monte Carlo report is missing",
+    )
+    exclusion = _mapping_payload(
+        payload.get("excluding_zero"),
+        "exclusion Monte Carlo report is missing",
+    )
+    return {
+        "method_id": method_id,
+        "role": role,
+        "coverage_of_true_mean": dict(coverage),
+        "excluding_zero": dict(exclusion),
+        "intervals_available": payload.get("intervals_available"),
+        "intervals_unavailable": payload.get("intervals_unavailable"),
+        "replications": payload.get("replications"),
+        "empirical_coverage_is_exact_population_error_rate": False,
+        "selected_by_observed_coverage": False,
+    }
+
+
+def _scenario_diagnostics(scenario: Mapping[str, object]) -> list[dict[str, object]]:
+    diagnostics: list[dict[str, object]] = []
+    closed = _mapping_payload(scenario.get("closed_form"), "closed form diagnostics are missing")
+    for method_name, _lag in _closed_form_names():
+        diagnostics.append(
+            _diagnostic(method_name, _mapping_payload(closed.get(method_name), method_name))
+        )
+    comparisons = _mapping_payload(
+        scenario.get("dependence_comparisons"),
+        "dependence comparisons are missing",
+    )
+    for method_name, payload in comparisons.items():
+        diagnostics.append(
+            _diagnostic(
+                str(method_name),
+                _mapping_payload(payload, str(method_name)),
+            )
+        )
+    bootstrap = _mapping_payload(scenario.get("bootstrap"), "bootstrap record is missing")
+    methods = bootstrap.get("methods")
+    if isinstance(methods, Mapping):
+        for method_name, payload in methods.items():
+            diagnostics.append(
+                _diagnostic(
+                    str(method_name),
+                    _mapping_payload(payload, str(method_name)),
+                )
+            )
+    return diagnostics
+
+
+def _numeric_span(values: list[float]) -> dict[str, float | None]:
+    if not values:
+        return {"min": None, "max": None, "range": None}
+    low = min(values)
+    high = max(values)
+    return {"min": low, "max": high, "range": high - low}
+
+
+def _rates_across_seeds(
+    rows: Sequence[Mapping[str, object]],
+    method_id: str,
+    block_name: str,
+) -> dict[str, float | None]:
+    values: list[float] = []
+    for row in rows:
+        diagnostics = row.get("diagnostics")
+        if not isinstance(diagnostics, list):
+            continue
+        for diagnostic in diagnostics:
+            if not isinstance(diagnostic, Mapping) or diagnostic.get("method_id") != method_id:
+                continue
+            block = diagnostic.get(block_name)
+            if isinstance(block, Mapping):
+                rate = block.get("rate")
+                if isinstance(rate, float):
+                    values.append(rate)
+    return _numeric_span(values)
+
+
+def _variability_row(scenario: Mapping[str, object], seed: int) -> dict[str, object]:
+    closed = _mapping_payload(scenario.get("closed_form"), "closed form diagnostics are missing")
+    iid = _mapping_payload(closed.get("iid_normal_interval"), "iid interval is missing")
+    return {
+        "seed": seed,
+        "scenario_name": scenario.get("scenario_name"),
+        "paired_with_primary_calibration": seed == PRIMARY_CALIBRATION_SEED,
+        "scenario_restarts_at_this_seed": True,
+        "mean_of_sample_means": iid.get("mean_of_sample_means"),
+        "diagnostics": _scenario_diagnostics(scenario),
+    }
+
+
+def _legacy_zero_edge_row(row: Mapping[str, object]) -> dict[str, object]:
+    diagnostics = row.get("diagnostics")
+    if not isinstance(diagnostics, list):
+        _fail("STATISTICAL_UNCERTAINTY_INTEGRITY", "variability diagnostics are missing")
+    iid = None
+    for diagnostic in diagnostics:
+        if isinstance(diagnostic, Mapping) and diagnostic.get("method_id") == "iid_normal_interval":
+            iid = diagnostic
+            break
+    if not isinstance(iid, Mapping):
+        _fail("STATISTICAL_UNCERTAINTY_INTEGRITY", "zero-edge iid diagnostic is missing")
+    coverage = _mapping_payload(iid.get("coverage_of_true_mean"), "coverage report is missing")
+    exclusion = _mapping_payload(iid.get("excluding_zero"), "exclusion report is missing")
+    return {
+        "seed": row.get("seed"),
+        "scenario_name": "zero_edge_independent",
+        "method_id": "iid_normal_interval",
+        "coverage_of_true_mean_among_available": coverage.get("rate"),
+        "coverage_numerator": coverage.get("numerator"),
+        "coverage_denominator": coverage.get("denominator"),
+        "coverage_wilson_interval_95": coverage.get("wilson_interval_95"),
+        "rate_excluding_zero_among_available": exclusion.get("rate"),
+        "excluding_zero_numerator": exclusion.get("numerator"),
+        "excluding_zero_denominator": exclusion.get("denominator"),
+        "excluding_zero_wilson_interval_95": exclusion.get("wilson_interval_95"),
+        "mean_of_sample_means": row.get("mean_of_sample_means"),
+        "empirical_coverage_is_exact_population_error_rate": False,
+    }
+
+
+def _variability(primary_scenarios: Sequence[Mapping[str, object]]) -> dict[str, object]:
+    specs = {str(spec["name"]): spec for spec in _SCENARIOS}
+    primary_by_name = {
+        str(scenario.get("scenario_name")): scenario for scenario in primary_scenarios
+    }
+    scenario_reports: list[dict[str, object]] = []
+    for name in VARIABILITY_SCENARIO_NAMES:
+        spec = specs.get(name)
+        primary = primary_by_name.get(name)
+        if spec is None or primary is None:
+            _fail("STATISTICAL_UNCERTAINTY_UNKNOWN_SCENARIO", name)
+        rows: list[dict[str, object]] = []
+        for seed in VARIABILITY_SEEDS:
+            if seed in FORBIDDEN_TUNING_SEEDS:
+                _fail(
+                    "STATISTICAL_UNCERTAINTY_FORBIDDEN_TUNING_SEED",
+                    "EXP-20261118-069 seeds are not reused",
+                )
+            scenario = primary if seed == PRIMARY_CALIBRATION_SEED else _run_scenario(spec, seed)
+            rows.append(_variability_row(scenario, seed))
+        method_ids: list[str] = []
+        first_diagnostics = rows[0]["diagnostics"]
+        if isinstance(first_diagnostics, list):
+            for diagnostic in first_diagnostics:
+                if isinstance(diagnostic, Mapping) and isinstance(diagnostic.get("method_id"), str):
+                    method_ids.append(str(diagnostic["method_id"]))
+        scenario_reports.append(
             {
-                "seed": seed,
-                "scenario_name": "zero_edge_independent",
-                "method_id": "iid_normal_interval",
-                "coverage_of_true_mean_among_available": payload[
-                    "coverage_of_true_mean_among_available"
-                ],
-                "rate_excluding_zero_among_available": payload[
-                    "rate_excluding_zero_among_available"
-                ],
-                "mean_of_sample_means": payload["mean_of_sample_means"],
+                "scenario_name": name,
+                "true_mean": 0.0,
+                "excluding_zero_is_false_exclusion": True,
+                "rows": rows,
+                "coverage_across_seeds": {
+                    method_id: _rates_across_seeds(rows, method_id, "coverage_of_true_mean")
+                    for method_id in method_ids
+                },
+                "false_exclusion_across_seeds": {
+                    method_id: _rates_across_seeds(rows, method_id, "excluding_zero")
+                    for method_id in method_ids
+                },
             }
         )
+    if not scenario_reports or scenario_reports[0]["scenario_name"] != "zero_edge_independent":
+        _fail("STATISTICAL_UNCERTAINTY_UNKNOWN_SCENARIO", "zero-edge variability is missing")
+    zero_report = scenario_reports[0]
+    zero_rows = zero_report["rows"]
+    if not isinstance(zero_rows, list):
+        _fail("STATISTICAL_UNCERTAINTY_INTEGRITY", "zero-edge variability rows are missing")
+    legacy_rows = [
+        _legacy_zero_edge_row(_mapping_payload(row, "variability row is missing"))
+        for row in zero_rows
+    ]
     coverages = [
         float(row["coverage_of_true_mean_among_available"])
-        for row in rows
+        for row in legacy_rows
         if isinstance(row["coverage_of_true_mean_among_available"], float)
     ]
     return {
         "status": "EXPLORATORY_NOT_INFERENCE",
+        "interpretation": "VARIABILITY_ACROSS_SEEDS_NOT_INDEPENDENT_REPLICATION_UNCERTAINTY",
         "seeds": list(VARIABILITY_SEEDS),
         "forbidden_tuning_seeds_excluded": list(FORBIDDEN_TUNING_SEEDS),
-        "rows": rows,
+        "seeds_pooled_into_one_denominator": False,
+        "seed_range_is_not_a_binomial_standard_error": True,
+        "variability_across_seeds_is_independent_replication_uncertainty": False,
+        "paired_noise_paths": (
+            "Each scenario restarts at the supplied seed. Scenarios that "
+            "consume the same normal draws share a noise path. The row at "
+            "the primary seed is the primary calibration row, not an "
+            "additional sample."
+        ),
+        "rows": legacy_rows,
+        "coverage_span_scope": "zero_edge_independent iid_normal_interval across variability seeds",
         "coverage_min": min(coverages) if coverages else None,
         "coverage_max": max(coverages) if coverages else None,
         "coverage_range": (max(coverages) - min(coverages)) if coverages else None,
+        "scenarios": scenario_reports,
         "used_to_choose_a_method": False,
+        "used_to_choose_a_lag_block_length_or_threshold": False,
+    }
+
+
+def _monte_carlo_uncertainty_statement() -> dict[str, object]:
+    return {
+        "status": "REPORTED",
+        "coverage_interval_method": "wilson_score",
+        "rejection_interval_method": "wilson_score",
+        "standard_error_method": "binomial sqrt(rate * (1 - rate) / denominator)",
+        "z_95": Z_95,
+        "closed_form_replications": CLOSED_FORM_REPLICATIONS,
+        "bootstrap_replications": BOOTSTRAP_REPLICATIONS,
+        "numerator_and_denominator_recorded": True,
+        "unavailable_intervals_excluded_from_coverage_denominator": True,
+        "unavailable_interval_count_recorded": True,
+        "empirical_coverage_from_closed_form_replications_is_exact_population_error_rate": False,
+        "exploratory_bootstrap_establishes_calibrated_confidence_intervals": False,
+        "bootstrap_calibration_conclusion": "UNRESOLVED",
+        "bootstrap_calibration_reason": (
+            "Twenty bootstrap replications are an exploratory diagnostic. "
+            "They do not establish calibrated confidence intervals."
+        ),
+        "seed_variability_is_independent_replication_uncertainty": False,
     }
 
 
@@ -1690,7 +2354,8 @@ def _calibration_body(provenance: UncertaintyProvenance) -> dict[str, object]:
         "event_ids_recovered_from_event_fingerprint": False,
         "methods": _method_catalogue(),
         "scenarios": scenarios,
-        "variability_across_seeds": _variability(),
+        "monte_carlo_uncertainty": _monte_carlo_uncertainty_statement(),
+        "variability_across_seeds": _variability(scenarios),
         "multiple_testing": {
             "catalogue": refuse_catalogue_multiple_testing(),
             "synthetic_method_check": _holm_method_check(),
@@ -1709,7 +2374,9 @@ def _calibration_body(provenance: UncertaintyProvenance) -> dict[str, object]:
                 "primary seed, so scenarios that consume the same normal draws "
                 "share a noise path. Bootstrap replications use primary_seed "
                 "+ 17 and do not advance the closed-form stream. Variability "
-                "seeds are separate Random streams."
+                "seeds are separate Random streams and are not pooled with "
+                "the Monte Carlo denominator. The primary-seed variability "
+                "row reuses the primary scenario."
             ),
             "box_muller": "sqrt(-2 log u1) cos(2 pi u2), redrawing u1 until it is positive",
         },
@@ -2238,6 +2905,14 @@ if NEAR_DUPLICATE_JACCARD != 0.90:
     raise ValueError("STATISTICAL_UNCERTAINTY_THRESHOLD_DRIFT")
 if GOVERNING_RESEARCH_METHOD != "DISCOVERY_FIRST_ANNUAL_PATTERN_CATALOGUE":
     raise ValueError("STATISTICAL_UNCERTAINTY_METHOD_DRIFT")
+if PRIMARY_CALIBRATION_SEED not in VARIABILITY_SEEDS:
+    raise ValueError("STATISTICAL_UNCERTAINTY_SEED_DRIFT")
+if HOLM_CORRELATED_NULL_SEED in FORBIDDEN_TUNING_SEEDS or HOLM_CORRELATED_NULL_SEED in VARIABILITY_SEEDS:
+    raise ValueError("STATISTICAL_UNCERTAINTY_SEED_DRIFT")
+if HOLM_CORRELATED_NULL_SEED == HOLM_METHOD_CHECK_SEED:
+    raise ValueError("STATISTICAL_UNCERTAINTY_SEED_DRIFT")
+if set(VARIABILITY_SEEDS) & set(FORBIDDEN_TUNING_SEEDS):
+    raise ValueError("STATISTICAL_UNCERTAINTY_SEED_DRIFT")
 if any(
     (
         EVENT_HISTORICAL_ARTIFACT_READ_AUTHORIZED,
@@ -2266,6 +2941,7 @@ __all__ = [
     "EXPECTED_PROTOCOL_FINGERPRINT",
     "FORBIDDEN_TUNING_SEEDS",
     "HISTORICAL_ARTIFACT_READ_AUTHORIZED",
+    "HOLM_CORRELATED_NULL_SEED",
     "HOLM_METHOD_CHECK_FAMILY",
     "PATTERN_TOOL",
     "PREDECLARED_BLOCK_LENGTHS",
@@ -2274,11 +2950,14 @@ __all__ = [
     "STATISTICAL_UNCERTAINTY_PROTOCOL",
     "STATISTICAL_UNCERTAINTY_VERSION",
     "TRADING_AUTHORIZED",
+    "VARIABILITY_SCENARIO_NAMES",
     "VARIABILITY_SEEDS",
     "WORKFLOW_ACTIVATION_AUTHORIZED",
     "UncertaintyProvenance",
     "assess_event_evidence_uncertainty",
+    "binomial_monte_carlo_report",
     "compile_synthetic_calibration",
+    "declared_ar1_effective_sample_size",
     "effective_sample_size_from_overlap",
     "holm_adjusted_p_values",
     "iid_normal_interval",
@@ -2288,6 +2967,7 @@ __all__ = [
     "newey_west_interval",
     "refuse_catalogue_multiple_testing",
     "shared_clock_block_bootstrap_interval",
+    "synthetic_clock_identity",
     "statistical_uncertainty_contract",
     "validate_uncertainty_document",
 ]
