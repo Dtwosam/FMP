@@ -12,7 +12,10 @@ annual run 385, change DEC-470, or promote a pattern.
 
 Calibration rows are development context. Acceptance uses the holdout
 partition only. A passing synthetic check does not authorize catalogue
-inference.
+inference. Matching a dependence structure, or resampling the right shocks,
+does not make a sample-variance z interval or a percentile bootstrap an
+exact finite-sample reference. That gate is limited to a known-variance
+Gaussian oracle.
 """
 
 from __future__ import annotations
@@ -165,6 +168,11 @@ METHOD_ROLES = (
     "KNOWN_MODEL_ORACLE",
     "SAMPLE_ESTIMATED",
     "EXPERIMENTAL_BOOTSTRAP",
+)
+STATISTICAL_VALIDITY_CLASSES = (
+    "EXACT_FINITE_SAMPLE_REFERENCE",
+    "APPROXIMATE_OR_ASYMPTOTIC",
+    "UNVERIFIED_APPROXIMATION",
 )
 EMPIRICAL_FWER_CLAIMS = (
     "ONE_SIDED_UPPER_BOUND_AT_OR_BELOW_ALPHA",
@@ -723,13 +731,16 @@ def interval_primary_status(
     available: int,
     unavailable_count: int,
     replications: int,
+    calibration_remains_unresolved: bool = False,
 ) -> str:
     """Predeclared interval status. It does not read observed calibration targets.
 
-    Success requires the Wilson interval to contain 95 percent, a predeclared
-    Monte Carlo precision, and a matching assumption. A Wilson upper bound
-    below 90 percent, or a lower bound above 98 percent, is a clear failure.
-    A narrower miss is insufficient precision, not a license to retune.
+    `assumptions_match` means the finite-sample reference distribution is
+    exact. Favorable coverage does not validate an approximate interval.
+    A percentile bootstrap whose dependence structure is preserved stays
+    unresolved while the Monte Carlo sample is below the precision floor.
+    A Wilson upper bound below 90 percent, or a lower bound above 98 percent,
+    is a clear failure.
     """
 
     if available == 0:
@@ -747,6 +758,8 @@ def interval_primary_status(
         return "VALIDATED_UNDER_DECLARED_SYNTHETIC_MODEL"
     if clear_failure:
         return "FAILED_SYNTHETIC_CALIBRATION"
+    if not precise and (assumptions_match or calibration_remains_unresolved):
+        return "INSUFFICIENT_MONTE_CARLO_PRECISION"
     if assumptions_match:
         return "INSUFFICIENT_MONTE_CARLO_PRECISION"
     return "MODEL_ASSUMPTIONS_UNVERIFIED"
@@ -1628,46 +1641,119 @@ def _known_target(scenario_id: str, target: str) -> bool:
     return scenario_id in targets and target in targets[scenario_id]
 
 
+def _sampling_distribution_flags(scenario_id: str, target: str) -> tuple[bool, bool]:
+    """Serial independence and identical distribution for a declared process.
+
+    These are properties of the synthetic series. They are not a claim that a
+    confidence interval is exact.
+    """
+
+    if scenario_id == "changing_volatility":
+        return True, False
+    if scenario_id == "regime_change":
+        return False, False
+    if scenario_id == "degenerate_constant":
+        return True, True
+    if target == "duplicated_rows":
+        return False, False
+    if scenario_id in {"weak_ar1", "strong_ar1", "long_memory", "overlapping_windows"}:
+        return False, True
+    if scenario_id == "multiple_horizons" and target in {"secondary", "contrast"}:
+        return False, True
+    horizon = _exact_finite_horizon(scenario_id, target)
+    if horizon == 0:
+        return True, True
+    if horizon is not None:
+        return False, True
+    return False, False
+
+
+def _percentile_calibration_unresolved(assessment: Mapping[str, object]) -> bool:
+    """A preserved resampling design whose percentile interval is still unproven.
+
+    The flag keeps a 60-replicate bootstrap below the precision floor in the
+    unresolved status. It does not promote that interval to an exact reference.
+    """
+
+    return (
+        assessment.get("method_role") == "EXPERIMENTAL_BOOTSTRAP"
+        and bool(assessment.get("dependence_structure_exact"))
+        and not bool(assessment.get("finite_sample_reference_exact"))
+    )
+
+
 def dependence_assumption_assessment(
     scenario_id: str,
     target: str,
     method_id: str,
 ) -> dict[str, object]:
-    """Classify dependence assumptions without reading coverage.
+    """Classify dependence and finite-sample validity without reading coverage.
 
-    `finite_sample_assumptions_exact` is true only when the sampling model
-    matches the declared process exactly. A floor truncation, a Bartlett lag,
-    and a fixed block are not that match. `captures_all_dependence` stays
-    false for every lag and block procedure.
+    `dependence_structure_exact` records whether the method uses the declared
+    dependence or the declared resampling units. `predeclared_design_applies`
+    records whether that design was specified for the process, including an
+    asymptotic truncation. `finite_sample_reference_exact` is narrower: the
+    sampling distribution of the interval or test is exact at this sample size.
+
+    `finite_sample_assumptions_exact` is that reference flag. The acceptance
+    gate reads it. Favorable coverage does not make a sample-variance z
+    interval or a percentile bootstrap exact. A known-variance Gaussian oracle
+    can still be exact. A Bartlett lag, a floor truncation, and a fixed block
+    are not exact references. `captures_all_dependence` stays false for every
+    lag and block procedure.
     """
 
     known = _known_target(scenario_id, target)
     horizon = _exact_finite_horizon(scenario_id, target) if known else None
     truncation = _practical_truncation_lag(scenario_id, target) if known else None
     variance_break = known and scenario_id == "changing_volatility" and target == "primary"
+    if known:
+        serially_independent, identically_distributed = _sampling_distribution_flags(
+            scenario_id, target
+        )
+    else:
+        serially_independent, identically_distributed = False, False
+    iid_exchangeable = (
+        known
+        and serially_independent
+        and identically_distributed
+        and horizon == 0
+        and scenario_id != "degenerate_constant"
+    )
     role = _method_role(method_id)
     process_class = (
         _process_dependence_class(scenario_id, target)
         if known
         else "UNVERIFIED_APPROXIMATION"
     )
-    finite_exact = False
+    reference_exact = False
+    dependence_structure_exact = False
+    dependence_preserved = False
     design_applies = False
     method_class = "UNVERIFIED_APPROXIMATION"
     window_includes: bool | None = None
     captures_all = False
-    statement = "The finite-sample dependence assumption is not exact."
+    statement = "The finite-sample reference distribution is not exact."
     if not known:
         statement = "The scenario and target are not in the declared catalogue."
     elif method_id == "iid_normal_interval":
-        finite_exact = horizon == 0 or variance_break
-        design_applies = finite_exact
-        if finite_exact:
+        if iid_exchangeable:
+            dependence_structure_exact = True
+            design_applies = True
             method_class = "EXACT_FINITE_DEPENDENCE_HORIZON"
             captures_all = True
             statement = (
-                "Serial dependence ends at lag 0. The interval uses the sample "
-                "variance and is not a known-model oracle."
+                "The observations are independent and identically distributed. "
+                "The interval uses the sample variance and a normal z quantile. "
+                "With unknown variance the exact finite-sample Gaussian reference "
+                "is Student's t with n-1 degrees of freedom. This z interval is a "
+                "sample-estimated approximation."
+            )
+        elif variance_break:
+            statement = (
+                "The observations are serially independent and are not identically "
+                "distributed. The sample-variance z interval assumes identical "
+                "distribution and is not an exact finite-sample procedure."
             )
         else:
             statement = "The IID interval does not match this dependence."
@@ -1705,15 +1791,27 @@ def dependence_assumption_assessment(
             window_includes = False
             statement = "No exact stationary horizon makes this fixed lag an identity."
     elif method_id in {"declared_model_z_interval", "iid_variance_z_interval"}:
-        finite_exact = _z_assumptions(scenario_id, target, method_id)
-        design_applies = finite_exact
-        method_class = process_class if finite_exact else "UNVERIFIED_APPROXIMATION"
-        if finite_exact:
+        reference_exact = _z_assumptions(scenario_id, target, method_id)
+        dependence_structure_exact = reference_exact
+        design_applies = reference_exact
+        method_class = process_class if reference_exact else "UNVERIFIED_APPROXIMATION"
+        if reference_exact:
             statement = (
-                "Known-model oracle. The interval uses a declared variance of "
-                "the mean. It does not estimate dependence from the sample, and "
+                "Known-model oracle. The declared variance of the mean and the "
+                "Gaussian distribution make the z interval an exact finite-sample "
+                "reference. It does not estimate dependence from the sample, and "
                 "an oracle pass does not validate a practical dependence estimator."
             )
+            if variance_break:
+                statement += (
+                    " The observations are serially independent and are not "
+                    "identically distributed."
+                )
+            elif scenario_id == "regime_change":
+                statement += (
+                    " The series is not stationary and has no exact finite "
+                    "dependence horizon."
+                )
         else:
             statement = "The plugged-in variance is not the declared variance of the mean."
     elif method_id.startswith("moving_block_") or method_id in {
@@ -1727,11 +1825,24 @@ def dependence_assumption_assessment(
             block = SHARED_CLOCK_BLOCK_LENGTH
         else:
             block = LONG_BLOCK_LENGTH
-        if method_id.startswith("moving_block_") and block == 1 and (horizon == 0 or variance_break):
-            finite_exact = True
+        if method_id.startswith("moving_block_") and block == 1 and iid_exchangeable:
+            dependence_structure_exact = True
+            dependence_preserved = True
             design_applies = True
             method_class = "EXACT_FINITE_DEPENDENCE_HORIZON"
-            statement = "Block length 1 resamples serially independent observations."
+            statement = (
+                "Block length 1 resamples serially independent, identically "
+                "distributed observations. That preserves the independence "
+                "structure. The percentile interval is not an exact finite-sample "
+                "confidence interval."
+            )
+        elif method_id.startswith("moving_block_") and block == 1 and variance_break:
+            statement = (
+                "Block length 1 treats the draws as exchangeable. These "
+                "observations are serially independent and are not identically "
+                "distributed. The percentile interval is not an exact "
+                "finite-sample confidence interval."
+            )
         elif truncation is not None and block >= truncation:
             design_applies = True
             method_class = "PRACTICAL_AUTOCORRELATION_TRUNCATION"
@@ -1763,30 +1874,36 @@ def dependence_assumption_assessment(
             "not a dependence model."
         )
     elif method_id == "cluster_event_bootstrap":
-        finite_exact = (scenario_id, target) == (
+        events_are_units = (scenario_id, target) == (
             "shared_identical_observations",
             "unique_events",
         )
-        design_applies = finite_exact
+        dependence_structure_exact = events_are_units
+        dependence_preserved = events_are_units
+        design_applies = events_are_units
         method_class = (
-            "EXACT_FINITE_DEPENDENCE_HORIZON" if finite_exact else "UNVERIFIED_APPROXIMATION"
+            "EXACT_FINITE_DEPENDENCE_HORIZON" if events_are_units else "UNVERIFIED_APPROXIMATION"
         )
         statement = (
-            "Unique events are the resampling units."
-            if finite_exact
+            "Unique events are the resampling units, so the independent-event "
+            "structure is preserved. The percentile interval is not an exact "
+            "finite-sample confidence interval."
+            if events_are_units
             else "Copied rows are not extra independent trials."
         )
     elif method_id == "shock_rebuild_bootstrap":
-        finite_exact = (scenario_id, target) == ("overlapping_windows", "primary")
-        design_applies = finite_exact
+        shocks_are_units = (scenario_id, target) == ("overlapping_windows", "primary")
+        dependence_structure_exact = shocks_are_units
+        dependence_preserved = shocks_are_units
+        design_applies = shocks_are_units
         method_class = (
-            "EXACT_FINITE_DEPENDENCE_HORIZON" if finite_exact else "UNVERIFIED_APPROXIMATION"
+            "EXACT_FINITE_DEPENDENCE_HORIZON" if shocks_are_units else "UNVERIFIED_APPROXIMATION"
         )
         statement = (
-            "Resamples the known iid shocks and rebuilds every overlap. It does "
-            "not estimate a truncation lag. The percentile interval remains an "
-            "experimental bootstrap."
-            if finite_exact
+            "Resamples the known iid shocks and rebuilds every overlap. That "
+            "preserves the shock structure. The percentile interval is not an "
+            "exact finite-sample confidence interval."
+            if shocks_are_units
             else "Shock rebuilding applies only to the declared overlapping-window process."
         )
     elif method_id == "studentized_null_centered_mbb_16":
@@ -1812,44 +1929,60 @@ def dependence_assumption_assessment(
         window_includes = False
         statement = (
             "Studentized moving-block p-values use fixed-lag Newey-West and a "
-            "fixed block. Neither is an exact finite-sample dependence model."
+            "fixed block. Neither is an exact finite-sample reference, and a "
+            "preserved dependence structure would not make the p-value exact."
         )
     if scenario_id == "long_memory" and known:
         statement = (
             "The simulator is an MA(23), not an infinite long-memory process. " + statement
         )
+    if reference_exact:
+        validity = "EXACT_FINITE_SAMPLE_REFERENCE"
+    elif design_applies or dependence_structure_exact:
+        validity = "APPROXIMATE_OR_ASYMPTOTIC"
+    else:
+        validity = "UNVERIFIED_APPROXIMATION"
     if method_class not in DEPENDENCE_ASSUMPTION_CLASSES:
         _fail("DEPENDENCE_VALIDATION_NUMERICAL", "dependence class is not recognized")
     if role not in METHOD_ROLES:
         _fail("DEPENDENCE_VALIDATION_NUMERICAL", "method role is not recognized")
+    if validity not in STATISTICAL_VALIDITY_CLASSES:
+        _fail("DEPENDENCE_VALIDATION_NUMERICAL", "statistical validity class is not recognized")
     return {
         "autocorrelation_remains_beyond_every_finite_lag": truncation is not None,
         "captures_all_dependence": captures_all,
+        "dependence_preserved": dependence_preserved,
+        "dependence_structure_exact": dependence_structure_exact,
         "exact_finite_horizon": horizon,
-        "finite_sample_assumptions_exact": finite_exact,
+        "finite_sample_assumptions_exact": reference_exact,
+        "finite_sample_reference_exact": reference_exact,
+        "identically_distributed": identically_distributed,
         "known_model_oracle": role == "KNOWN_MODEL_ORACLE",
         "method_dependence_class": method_class,
         "method_role": role,
         "practical_autocorrelation_truncation_lag": truncation,
         "predeclared_design_applies": design_applies,
         "process_dependence_class": process_class,
+        "serially_independent": serially_independent,
         "simulated_process_is_infinite_long_memory": False,
         "statement": statement,
+        "statistical_validity_class": validity,
         "window_includes_every_nonzero_population_autocovariance": window_includes,
     }
 
 
 def assumptions_match(scenario_id: str, target: str, method_id: str) -> bool:
-    """Whether the finite-sample dependence assumption is exact.
+    """Whether the finite-sample reference distribution is exact.
 
     The decision uses the known data-generating process. It does not use
-    coverage from either partition. A truncated lag or a fixed block returns
-    false.
+    coverage from either partition. A sample-variance z interval, a percentile
+    bootstrap, a truncated lag, and a fixed block return false. Preserving an
+    independent event or shock structure does not change that result.
     """
 
     return bool(
         dependence_assumption_assessment(scenario_id, target, method_id)[
-            "finite_sample_assumptions_exact"
+            "finite_sample_reference_exact"
         ]
     )
 
@@ -2149,13 +2282,14 @@ def _interval_row(
     moments = _population_moments(scenario_id, target)
     true_mean = float(moments["true_mean"])
     assessment = dependence_assumption_assessment(scenario_id, target, method_id)
-    matched = bool(assessment["finite_sample_assumptions_exact"])
+    matched = bool(assessment["finite_sample_reference_exact"])
     numeric_status = interval_primary_status(
         assumptions_match=matched,
         covered=bucket.covered,
         available=bucket.available,
         unavailable_count=bucket.unavailable,
         replications=replications,
+        calibration_remains_unresolved=_percentile_calibration_unresolved(assessment),
     )
     primary = numeric_status if partition == HOLDOUT_PARTITION else "EXPLORATORY_ONLY"
     coverage = binomial_monte_carlo_report(bucket.covered, bucket.available)
@@ -2426,7 +2560,7 @@ def _evaluate_studentized(
         assessment = dependence_assumption_assessment(
             scenario_id, "primary", "studentized_null_centered_mbb_16"
         )
-        matched = bool(assessment["finite_sample_assumptions_exact"])
+        matched = bool(assessment["finite_sample_reference_exact"])
         for seed in seeds:
             draw = _draw_scenario(scenario_id, random.Random(seed))
             series = draw["primary"]
@@ -2480,7 +2614,7 @@ def _evaluate_studentized(
                 "finite_sample_limitation": (
                     "Sixty Monte Carlo replications and 49 bootstrap draws "
                     "are below the predeclared validation precision. The fixed "
-                    "lag and block are not an exact finite-sample dependence model."
+                    "lag and block are not an exact finite-sample reference."
                 ),
             }
         )
@@ -2842,7 +2976,10 @@ def _scenario_catalogue() -> list[dict[str, object]]:
         "shared_identical_observations": "60 iid events, each copied into two adjacent rows.",
         "common_shock_cross_symbol": "Two series share a factor with weight squared 0.49.",
         "multiple_horizons": "The same shocks scored at horizon 1 and as a 4-shock average.",
-        "changing_volatility": "Independent observations, sigma 1 then sigma 3 at the midpoint.",
+        "changing_volatility": (
+            "Serially independent normal draws that are not identically distributed. "
+            "Scale 1 on the first half and scale 3 on the second half."
+        ),
         "regime_change": "An iid block followed by an independent AR(1) block with phi 0.9.",
         "planted_positive": "Independent N(0.35, 1) observations.",
         "planted_negative": "Independent N(-0.35, 1) observations.",
@@ -2867,7 +3004,15 @@ def _method_catalogue() -> list[dict[str, object]]:
     return [
         {
             "method_id": "iid_normal_interval",
-            "assumptions": "Independent observations with finite variance. Sample variance uses n-1.",
+            "method_role": "SAMPLE_ESTIMATED",
+            "assumptions": (
+                "Independent and identically distributed observations with finite "
+                "variance. Sample variance uses n-1 and the interval uses a normal "
+                "z quantile. Unknown variance makes this a sample-estimated "
+                "approximation. The exact finite-sample Gaussian reference is "
+                "Student's t with n-1 degrees of freedom. The calculation is unchanged."
+            ),
+            "finite_sample_reference_exact": False,
         },
         {
             "method_id": "newey_west_bartlett",
@@ -2902,10 +3047,13 @@ def _method_catalogue() -> list[dict[str, object]]:
             "method_role": "EXPERIMENTAL_BOOTSTRAP",
             "block_lengths": list(PREDECLARED_BLOCK_LENGTHS),
             "assumptions": (
-                "Length 1 resamples serially independent observations. A longer "
-                "fixed block is an asymptotic approximation and does not contain "
-                "all AR(1) dependence."
+                "Length 1 preserves serial independence when the observations are "
+                "identically distributed. The percentile interval is not an exact "
+                "finite-sample confidence interval. A longer fixed block is an "
+                "asymptotic approximation and does not contain all AR(1) dependence. "
+                "Changing volatility is not an identical-distribution resample."
             ),
+            "finite_sample_reference_exact": False,
             "captures_all_dependence": False,
         },
         {
@@ -2936,11 +3084,25 @@ def _method_catalogue() -> list[dict[str, object]]:
         },
         {
             "method_id": "cluster_event_bootstrap",
-            "assumptions": "Event identities are the resampling units.",
+            "method_role": "EXPERIMENTAL_BOOTSTRAP",
+            "assumptions": (
+                "Unique events are the resampling units, so the independent-event "
+                "structure is preserved. The percentile interval is not an exact "
+                "finite-sample confidence interval."
+            ),
+            "dependence_preserved": True,
+            "finite_sample_reference_exact": False,
         },
         {
             "method_id": "shock_rebuild_bootstrap",
-            "assumptions": "Overlapping outcomes are functions of iid shocks that can be resampled.",
+            "method_role": "EXPERIMENTAL_BOOTSTRAP",
+            "assumptions": (
+                "Overlapping outcomes are functions of iid shocks that can be "
+                "resampled. Rebuilding those windows preserves the shock structure. "
+                "The percentile interval is not an exact finite-sample confidence interval."
+            ),
+            "dependence_preserved": True,
+            "finite_sample_reference_exact": False,
         },
         {
             "method_id": "studentized_null_centered_mbb_16",
@@ -2953,6 +3115,21 @@ def _method_catalogue() -> list[dict[str, object]]:
             "produces_confidence_interval": False,
         },
     ]
+
+
+def _classification_revision() -> dict[str, object]:
+    """Labels for this correction. They do not launch a new validation."""
+
+    return {
+        "sample_variance_z_interval_has_exact_finite_sample_reference": False,
+        "dependence_preservation_makes_a_percentile_interval_exact": False,
+        "changing_volatility_observations_are_identically_distributed": False,
+        "classification_correction_is_a_new_independent_validation": False,
+        "new_validation_experiment_launched": False,
+        "inspected_outcomes_reused_as_fresh_confirmation": False,
+        "exact_finite_sample_reference_requires_known_gaussian_variance": True,
+        "statuses_recomputed_from_existing_counts": True,
+    }
 
 
 def _acceptance_rule() -> dict[str, object]:
@@ -3043,6 +3220,9 @@ def _summary(rows: Sequence[Mapping[str, object]]) -> dict[str, object]:
         "validated_experimental_bootstraps": experimental_bootstraps,
         "validated_practical_dependence_estimators": dependence_estimators,
         "oracle_pass_validates_a_practical_dependence_estimator": False,
+        "sample_variance_z_interval_has_exact_finite_sample_reference": False,
+        "dependence_preservation_makes_a_percentile_interval_exact": False,
+        "classification_correction_is_a_new_independent_validation": False,
         "failed_synthetic_calibration": failed,
         "validated_methods_are_not_authorized_for_catalogue_inference": True,
         "software_correctness_is_not_synthetic_calibration": True,
@@ -3161,12 +3341,19 @@ def _expected_numeric_status(row: Mapping[str, object]) -> str:
         coverage = row.get("coverage")
         if not isinstance(coverage, Mapping):
             _fail("DEPENDENCE_VALIDATION_INTEGRITY", "coverage is missing")
+        scenario_id = row.get("scenario_id")
+        target = row.get("target")
+        method_id = row.get("method_id")
+        if not isinstance(scenario_id, str) or not isinstance(target, str) or not isinstance(method_id, str):
+            _fail("DEPENDENCE_VALIDATION_INTEGRITY", "a row identity is missing")
+        assessment = dependence_assumption_assessment(scenario_id, target, method_id)
         return interval_primary_status(
             assumptions_match=bool(row.get("assumptions_match")),
             covered=int(coverage["numerator"]),
             available=int(coverage["denominator"]),
             unavailable_count=int(row["unavailable_count"]),
             replications=int(row["replications"]),
+            calibration_remains_unresolved=_percentile_calibration_unresolved(assessment),
         )
     if kind == "null_test":
         rejections = row.get("rejections")
@@ -3224,6 +3411,13 @@ def _check_row(row: Mapping[str, object]) -> None:
         )
     if row.get("method_role") != expected_assessment["method_role"]:
         _fail("DEPENDENCE_VALIDATION_INTEGRITY", "method role does not match the procedure")
+    if expected_assessment["finite_sample_assumptions_exact"] is not expected_assessment[
+        "finite_sample_reference_exact"
+    ]:
+        _fail(
+            "DEPENDENCE_VALIDATION_INTEGRITY",
+            "the acceptance gate was separated from the finite-sample reference",
+        )
     stored_assessment = row.get("dependence_assessment")
     if stored_assessment != expected_assessment:
         _fail(
@@ -3235,6 +3429,46 @@ def _check_row(row: Mapping[str, object]) -> None:
             "DEPENDENCE_VALIDATION_INTEGRITY",
             "a Newey-West lag was described as capturing all dependence",
         )
+    if method_id == "iid_normal_interval" and expected_assessment["finite_sample_reference_exact"] is True:
+        _fail(
+            "DEPENDENCE_VALIDATION_INTEGRITY",
+            "a sample-variance z interval was labeled as an exact finite-sample reference",
+        )
+    if (
+        expected_assessment["dependence_preserved"] is True
+        and expected_assessment["finite_sample_reference_exact"] is True
+    ):
+        _fail(
+            "DEPENDENCE_VALIDATION_INTEGRITY",
+            "preserved resampling was labeled as an exact finite-sample reference",
+        )
+    if scenario_id == "changing_volatility":
+        if expected_assessment["identically_distributed"] is not False:
+            _fail(
+                "DEPENDENCE_VALIDATION_INTEGRITY",
+                "changing-volatility observations were treated as identically distributed",
+            )
+        if expected_assessment["serially_independent"] is not True:
+            _fail(
+                "DEPENDENCE_VALIDATION_INTEGRITY",
+                "changing-volatility observations were treated as serially dependent",
+            )
+    if status == "VALIDATED_UNDER_DECLARED_SYNTHETIC_MODEL":
+        if expected_assessment["finite_sample_reference_exact"] is not True:
+            _fail(
+                "DEPENDENCE_VALIDATION_INTEGRITY",
+                "favorable coverage validated a method without an exact finite-sample reference",
+            )
+        if expected_assessment["statistical_validity_class"] != "EXACT_FINITE_SAMPLE_REFERENCE":
+            _fail(
+                "DEPENDENCE_VALIDATION_INTEGRITY",
+                "favorable coverage validated an approximate reference distribution",
+            )
+        if expected_assessment["method_role"] != "KNOWN_MODEL_ORACLE":
+            _fail(
+                "DEPENDENCE_VALIDATION_INTEGRITY",
+                "favorable coverage validated a method that is not a known-variance Gaussian oracle",
+            )
     if (
         status == "VALIDATED_UNDER_DECLARED_SYNTHETIC_MODEL"
         and expected_assessment["method_role"] == "KNOWN_MODEL_ORACLE"
@@ -3339,6 +3573,7 @@ def _body(provenance: DependenceValidationProvenance) -> dict[str, object]:
             "holdout_pooled_with_calibration": False,
         },
         "acceptance_rule": _acceptance_rule(),
+        "finite_sample_classification_revision": _classification_revision(),
         "scenarios": _scenario_catalogue(),
         "methods": _method_catalogue(),
         "effective_sample_sizes": [
@@ -3673,6 +3908,61 @@ def validate_dependence_validation_document(document: Mapping[str, object] | byt
             "DEPENDENCE_VALIDATION_INTEGRITY",
             "an oracle pass was treated as a practical dependence estimator",
         )
+    if summary.get("validated_sample_estimators") != recomputed["validated_sample_estimators"]:
+        _fail("DEPENDENCE_VALIDATION_INTEGRITY", "sample-estimator summary drifted")
+    if summary.get("validated_experimental_bootstraps") != recomputed["validated_experimental_bootstraps"]:
+        _fail("DEPENDENCE_VALIDATION_INTEGRITY", "bootstrap summary drifted")
+    if recomputed["validated_sample_estimators"]:
+        _fail(
+            "DEPENDENCE_VALIDATION_INTEGRITY",
+            "a sample-estimated interval was validated without an exact finite-sample reference",
+        )
+    if recomputed["validated_experimental_bootstraps"]:
+        _fail(
+            "DEPENDENCE_VALIDATION_INTEGRITY",
+            "a percentile bootstrap was validated without an exact finite-sample reference",
+        )
+    if summary.get("sample_variance_z_interval_has_exact_finite_sample_reference") is not False:
+        _fail(
+            "DEPENDENCE_VALIDATION_INTEGRITY",
+            "a sample-variance z interval was labeled as an exact finite-sample reference",
+        )
+    if summary.get("dependence_preservation_makes_a_percentile_interval_exact") is not False:
+        _fail(
+            "DEPENDENCE_VALIDATION_INTEGRITY",
+            "preserved resampling was labeled as an exact finite-sample reference",
+        )
+    if summary.get("classification_correction_is_a_new_independent_validation") is not False:
+        _fail(
+            "DEPENDENCE_VALIDATION_INTEGRITY",
+            "the classification correction was marked as a new independent validation",
+        )
+    classification = parsed.get("finite_sample_classification_revision")
+    if not isinstance(classification, Mapping):
+        _fail("DEPENDENCE_VALIDATION_INTEGRITY", "finite-sample classification revision is missing")
+    for flag in (
+        "sample_variance_z_interval_has_exact_finite_sample_reference",
+        "dependence_preservation_makes_a_percentile_interval_exact",
+        "changing_volatility_observations_are_identically_distributed",
+        "classification_correction_is_a_new_independent_validation",
+        "new_validation_experiment_launched",
+        "inspected_outcomes_reused_as_fresh_confirmation",
+    ):
+        if classification.get(flag) is not False:
+            _fail(
+                "DEPENDENCE_VALIDATION_INTEGRITY",
+                "the classification correction was marked as a new independent validation",
+            )
+    if classification.get("exact_finite_sample_reference_requires_known_gaussian_variance") is not True:
+        _fail(
+            "DEPENDENCE_VALIDATION_INTEGRITY",
+            "an exact finite-sample reference was claimed without a known Gaussian variance",
+        )
+    if classification.get("statuses_recomputed_from_existing_counts") is not True:
+        _fail(
+            "DEPENDENCE_VALIDATION_INTEGRITY",
+            "statuses were not recomputed from the existing counts",
+        )
     acceptance = parsed.get("acceptance_rule")
     if not isinstance(acceptance, Mapping):
         _fail("DEPENDENCE_VALIDATION_INTEGRITY", "acceptance rule is missing")
@@ -3764,6 +4054,7 @@ def dependence_validation_contract() -> dict[str, object]:
         "calibration_master_seed": CALIBRATION_MASTER_SEED,
         "holdout_master_seed": HOLDOUT_MASTER_SEED,
         "acceptance_rule": _acceptance_rule(),
+        "finite_sample_classification_revision": _classification_revision(),
         "authorizations": _authorizations(),
         "recorded_thresholds": _recorded_thresholds(),
         "prior_ar1_context": dict(_PRIOR_AR1_CONTEXT),
@@ -3851,8 +4142,80 @@ def _assert_frozen_boundaries() -> None:
     truncation = dependence_assumption_assessment("strong_ar1", "primary", "newey_west_lag_16")
     if truncation["finite_sample_assumptions_exact"] or truncation["captures_all_dependence"]:
         raise ValueError("DEPENDENCE_VALIDATION_TRUNCATION_TREATED_AS_EXACT")
+    if truncation["finite_sample_reference_exact"]:
+        raise ValueError("DEPENDENCE_VALIDATION_TRUNCATION_TREATED_AS_EXACT")
     if truncation["method_dependence_class"] != "PRACTICAL_AUTOCORRELATION_TRUNCATION":
         raise ValueError("DEPENDENCE_VALIDATION_TRUNCATION_TREATED_AS_EXACT")
+    plain = dependence_assumption_assessment(
+        "independent_zero_edge", "primary", "iid_normal_interval"
+    )
+    if plain["finite_sample_reference_exact"] or plain["finite_sample_assumptions_exact"]:
+        raise ValueError("DEPENDENCE_VALIDATION_Z_INTERVAL_TREATED_AS_EXACT")
+    if plain["statistical_validity_class"] != "APPROXIMATE_OR_ASYMPTOTIC":
+        raise ValueError("DEPENDENCE_VALIDATION_Z_INTERVAL_TREATED_AS_EXACT")
+    if not plain["serially_independent"] or not plain["identically_distributed"]:
+        raise ValueError("DEPENDENCE_VALIDATION_IID_DISTRIBUTION_DRIFT")
+    if not plain["dependence_structure_exact"]:
+        raise ValueError("DEPENDENCE_VALIDATION_IID_DISTRIBUTION_DRIFT")
+    volatility = dependence_assumption_assessment(
+        "changing_volatility", "primary", "iid_normal_interval"
+    )
+    if volatility["identically_distributed"] or volatility["finite_sample_reference_exact"]:
+        raise ValueError("DEPENDENCE_VALIDATION_VARIANCE_BREAK_TREATED_AS_IDENTICAL")
+    if not volatility["serially_independent"]:
+        raise ValueError("DEPENDENCE_VALIDATION_VARIANCE_BREAK_TREATED_AS_IDENTICAL")
+    if volatility["statistical_validity_class"] != "UNVERIFIED_APPROXIMATION":
+        raise ValueError("DEPENDENCE_VALIDATION_VARIANCE_BREAK_TREATED_AS_IDENTICAL")
+    volatility_block = dependence_assumption_assessment(
+        "changing_volatility", "primary", "moving_block_1"
+    )
+    if (
+        volatility_block["identically_distributed"]
+        or volatility_block["dependence_structure_exact"]
+        or volatility_block["finite_sample_reference_exact"]
+        or volatility_block["dependence_preserved"]
+    ):
+        raise ValueError("DEPENDENCE_VALIDATION_VARIANCE_BREAK_TREATED_AS_IDENTICAL")
+    volatility_oracle = dependence_assumption_assessment(
+        "changing_volatility", "primary", "declared_model_z_interval"
+    )
+    if (
+        not volatility_oracle["finite_sample_reference_exact"]
+        or volatility_oracle["identically_distributed"]
+        or volatility_oracle["statistical_validity_class"] != "EXACT_FINITE_SAMPLE_REFERENCE"
+    ):
+        raise ValueError("DEPENDENCE_VALIDATION_ORACLE_REFERENCE_DRIFT")
+    oracle = dependence_assumption_assessment(
+        "independent_zero_edge", "primary", "declared_model_z_interval"
+    )
+    if (
+        not oracle["finite_sample_reference_exact"]
+        or oracle["statistical_validity_class"] != "EXACT_FINITE_SAMPLE_REFERENCE"
+        or oracle["method_role"] != "KNOWN_MODEL_ORACLE"
+    ):
+        raise ValueError("DEPENDENCE_VALIDATION_ORACLE_REFERENCE_DRIFT")
+    block = dependence_assumption_assessment(
+        "independent_zero_edge", "primary", "moving_block_1"
+    )
+    if block["finite_sample_reference_exact"] or not block["dependence_preserved"]:
+        raise ValueError("DEPENDENCE_VALIDATION_BOOTSTRAP_TREATED_AS_EXACT")
+    if block["statistical_validity_class"] != "APPROXIMATE_OR_ASYMPTOTIC":
+        raise ValueError("DEPENDENCE_VALIDATION_BOOTSTRAP_TREATED_AS_EXACT")
+    cluster = dependence_assumption_assessment(
+        "shared_identical_observations", "unique_events", "cluster_event_bootstrap"
+    )
+    if cluster["finite_sample_reference_exact"] or not cluster["dependence_preserved"]:
+        raise ValueError("DEPENDENCE_VALIDATION_BOOTSTRAP_TREATED_AS_EXACT")
+    shock = dependence_assumption_assessment(
+        "overlapping_windows", "primary", "shock_rebuild_bootstrap"
+    )
+    if shock["finite_sample_reference_exact"] or not shock["dependence_structure_exact"]:
+        raise ValueError("DEPENDENCE_VALIDATION_BOOTSTRAP_TREATED_AS_EXACT")
+    studentized = dependence_assumption_assessment(
+        "independent_zero_edge", "primary", "studentized_null_centered_mbb_16"
+    )
+    if studentized["finite_sample_reference_exact"] or studentized["dependence_structure_exact"]:
+        raise ValueError("DEPENDENCE_VALIDATION_BOOTSTRAP_TREATED_AS_EXACT")
     if BOUNDED_REPRODUCTION_SEED in FORBIDDEN_MASTER_SEEDS:
         raise ValueError("DEPENDENCE_VALIDATION_SEED_DRIFT")
     if BOUNDED_REPRODUCTION_SEED == HOLDOUT_MASTER_SEED:

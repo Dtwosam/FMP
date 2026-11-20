@@ -29,6 +29,7 @@ from fmp.discovery.annual_pattern_catalogue_dependence_validation import (
     SHARED_EVENT_COUNT,
     STRONG_AR_PHI,
     WEAK_AR_PHI,
+    Z_95,
     DependenceValidationProvenance,
     ar1_effective_sample_size,
     ar1_variance_of_mean,
@@ -230,21 +231,25 @@ class DependenceValidationRuleTests(unittest.TestCase):
         self.assertTrue(overlap_lag["window_includes_every_nonzero_population_autocovariance"])
         self.assertFalse(overlap_lag["captures_all_dependence"])
         self.assertTrue(overlap_lag["predeclared_design_applies"])
-        self.assertTrue(assumptions_match("overlapping_windows", "primary", "shock_rebuild_bootstrap"))
+        self.assertFalse(assumptions_match("overlapping_windows", "primary", "shock_rebuild_bootstrap"))
         shock = dependence_assumption_assessment(
             "overlapping_windows", "primary", "shock_rebuild_bootstrap"
         )
         self.assertEqual(shock["method_role"], "EXPERIMENTAL_BOOTSTRAP")
         self.assertFalse(shock["captures_all_dependence"])
+        self.assertTrue(shock["dependence_structure_exact"])
+        self.assertTrue(shock["dependence_preserved"])
+        self.assertFalse(shock["finite_sample_reference_exact"])
+        self.assertEqual(shock["statistical_validity_class"], "APPROXIMATE_OR_ASYMPTOTIC")
         self.assertFalse(
             assumptions_match("shared_identical_observations", "duplicated_rows", "iid_normal_interval")
         )
         self.assertTrue(
             assumptions_match("shared_identical_observations", "unique_events", "declared_model_z_interval")
         )
-        self.assertTrue(assumptions_match("changing_volatility", "primary", "iid_normal_interval"))
+        self.assertFalse(assumptions_match("changing_volatility", "primary", "iid_normal_interval"))
         self.assertFalse(assumptions_match("changing_volatility", "primary", "newey_west_lag_8"))
-        self.assertTrue(assumptions_match("changing_volatility", "primary", "moving_block_1"))
+        self.assertFalse(assumptions_match("changing_volatility", "primary", "moving_block_1"))
         self.assertFalse(assumptions_match("changing_volatility", "primary", "moving_block_16"))
         self.assertFalse(assumptions_match("regime_change", "primary", "iid_normal_interval"))
         regime = dependence_assumption_assessment(
@@ -273,6 +278,80 @@ class DependenceValidationRuleTests(unittest.TestCase):
         self.assertTrue(studentized["predeclared_design_applies"])
         self.assertEqual(studentized["method_dependence_class"], "ASYMPTOTIC_WEAK_DEPENDENCE")
         self.assertFalse(assumptions_match("long_memory", "primary", "studentized_null_centered_mbb_16"))
+
+    def test_finite_sample_reference_is_separate_from_dependence(self) -> None:
+        oracle = dependence_assumption_assessment(
+            "independent_zero_edge", "primary", "declared_model_z_interval"
+        )
+        self.assertTrue(oracle["finite_sample_reference_exact"])
+        self.assertEqual(oracle["statistical_validity_class"], "EXACT_FINITE_SAMPLE_REFERENCE")
+        self.assertEqual(oracle["method_role"], "KNOWN_MODEL_ORACLE")
+        self.assertTrue(assumptions_match("independent_zero_edge", "primary", "declared_model_z_interval"))
+        sample = dependence_assumption_assessment(
+            "independent_zero_edge", "primary", "iid_normal_interval"
+        )
+        self.assertFalse(sample["finite_sample_reference_exact"])
+        self.assertFalse(assumptions_match("independent_zero_edge", "primary", "iid_normal_interval"))
+        self.assertTrue(sample["serially_independent"])
+        self.assertTrue(sample["identically_distributed"])
+        self.assertTrue(sample["dependence_structure_exact"])
+        self.assertEqual(sample["method_role"], "SAMPLE_ESTIMATED")
+        self.assertEqual(sample["statistical_validity_class"], "APPROXIMATE_OR_ASYMPTOTIC")
+        self.assertIn("Student's t", str(sample["statement"]))
+        events = dependence_assumption_assessment(
+            "shared_identical_observations", "unique_events", "cluster_event_bootstrap"
+        )
+        self.assertTrue(events["dependence_preserved"])
+        self.assertTrue(events["dependence_structure_exact"])
+        self.assertFalse(events["finite_sample_reference_exact"])
+        self.assertFalse(
+            assumptions_match(
+                "shared_identical_observations", "unique_events", "cluster_event_bootstrap"
+            )
+        )
+        self.assertEqual(events["statistical_validity_class"], "APPROXIMATE_OR_ASYMPTOTIC")
+        volatility = dependence_assumption_assessment(
+            "changing_volatility", "primary", "iid_normal_interval"
+        )
+        self.assertTrue(volatility["serially_independent"])
+        self.assertFalse(volatility["identically_distributed"])
+        self.assertFalse(volatility["dependence_structure_exact"])
+        self.assertFalse(volatility["finite_sample_reference_exact"])
+        self.assertEqual(volatility["statistical_validity_class"], "UNVERIFIED_APPROXIMATION")
+        volatility_oracle = dependence_assumption_assessment(
+            "changing_volatility", "primary", "declared_model_z_interval"
+        )
+        self.assertFalse(volatility_oracle["identically_distributed"])
+        self.assertTrue(volatility_oracle["serially_independent"])
+        self.assertTrue(volatility_oracle["finite_sample_reference_exact"])
+        self.assertEqual(
+            volatility_oracle["statistical_validity_class"],
+            "EXACT_FINITE_SAMPLE_REFERENCE",
+        )
+        volatility_block = dependence_assumption_assessment(
+            "changing_volatility", "primary", "moving_block_1"
+        )
+        self.assertFalse(volatility_block["identically_distributed"])
+        self.assertFalse(volatility_block["dependence_preserved"])
+        self.assertFalse(volatility_block["finite_sample_reference_exact"])
+        preserved = interval_primary_status(
+            assumptions_match=False,
+            covered=57,
+            available=60,
+            unavailable_count=0,
+            replications=60,
+            calibration_remains_unresolved=True,
+        )
+        self.assertEqual(preserved, "INSUFFICIENT_MONTE_CARLO_PRECISION")
+        approximate = interval_primary_status(
+            assumptions_match=False,
+            covered=380,
+            available=400,
+            unavailable_count=0,
+            replications=400,
+            calibration_remains_unresolved=False,
+        )
+        self.assertEqual(approximate, "MODEL_ASSUMPTIONS_UNVERIFIED")
 
     def test_status_rules_reject_success_without_precision(self) -> None:
         validated = interval_primary_status(
@@ -439,6 +518,8 @@ class DependenceValidationRuleTests(unittest.TestCase):
         self.assertEqual(iid["p_value"], "P_VALUES_UNAVAILABLE")
         self.assertIsInstance(oracle["p_value"], float)
         self.assertLess(float(oracle["low"]), float(oracle["high"]))
+        half = (float(iid["high"]) - float(iid["low"])) / 2.0
+        self.assertAlmostEqual(half, Z_95 * float(iid["standard_error"]))
 
     def test_resampling_preserves_or_breaks_shared_structure(self) -> None:
         values = [float(index) for index in range(1, 21)]
@@ -685,25 +766,72 @@ class DependenceValidationHarnessTests(unittest.TestCase):
         self.assertFalse(summary["oracle_pass_validates_a_practical_dependence_estimator"])
         self.assertEqual(summary["validated_practical_dependence_estimators"], [])
         self.assertEqual(summary["validated_experimental_bootstraps"], [])
+        self.assertEqual(summary["validated_sample_estimators"], [])
+        self.assertFalse(summary["sample_variance_z_interval_has_exact_finite_sample_reference"])
+        self.assertFalse(summary["dependence_preservation_makes_a_percentile_interval_exact"])
+        self.assertFalse(summary["classification_correction_is_a_new_independent_validation"])
         oracles = summary["validated_known_model_oracles"]
         assert isinstance(oracles, list)
         self.assertGreater(len(oracles), 0)
         validated_rows = summary["validated_under_declared_synthetic_model"]
         assert isinstance(validated_rows, list)
+        self.assertEqual(validated_rows, oracles)
         for identity in validated_rows:
             assert isinstance(identity, dict)
             method_id = str(identity["method_id"])
-            self.assertFalse(method_id.startswith("newey_west_lag_"))
-            self.assertFalse(method_id.startswith("moving_block_"))
-            self.assertNotIn(
-                method_id,
-                {
-                    "circular_block_16",
-                    "stationary_block_16",
-                    "shared_clock_block_8",
-                    "studentized_null_centered_mbb_16",
-                },
-            )
+            self.assertIn(method_id, {"declared_model_z_interval", "iid_variance_z_interval"})
+            self.assertNotEqual(method_id, "iid_normal_interval")
+        plain = self._holdout("independent_zero_edge", "primary", "iid_normal_interval")
+        plain_assessment = plain["dependence_assessment"]
+        assert isinstance(plain_assessment, dict)
+        self.assertFalse(plain["assumptions_match"])
+        self.assertFalse(plain_assessment["finite_sample_reference_exact"])
+        self.assertTrue(plain_assessment["dependence_structure_exact"])
+        self.assertTrue(plain_assessment["identically_distributed"])
+        self.assertEqual(plain_assessment["statistical_validity_class"], "APPROXIMATE_OR_ASYMPTOTIC")
+        self.assertNotEqual(plain["primary_status"], "VALIDATED_UNDER_DECLARED_SYNTHETIC_MODEL")
+        volatility = self._holdout("changing_volatility", "primary", "iid_normal_interval")
+        volatility_assessment = volatility["dependence_assessment"]
+        assert isinstance(volatility_assessment, dict)
+        self.assertTrue(volatility_assessment["serially_independent"])
+        self.assertFalse(volatility_assessment["identically_distributed"])
+        self.assertFalse(volatility_assessment["finite_sample_reference_exact"])
+        self.assertNotEqual(volatility["primary_status"], "VALIDATED_UNDER_DECLARED_SYNTHETIC_MODEL")
+        volatility_oracle = self._holdout(
+            "changing_volatility", "primary", "declared_model_z_interval"
+        )
+        volatility_oracle_assessment = volatility_oracle["dependence_assessment"]
+        assert isinstance(volatility_oracle_assessment, dict)
+        self.assertFalse(volatility_oracle_assessment["identically_distributed"])
+        self.assertTrue(volatility_oracle_assessment["finite_sample_reference_exact"])
+        self.assertTrue(volatility_oracle["assumptions_match"])
+        shock = self._holdout("overlapping_windows", "primary", "shock_rebuild_bootstrap")
+        shock_assessment = shock["dependence_assessment"]
+        assert isinstance(shock_assessment, dict)
+        self.assertTrue(shock_assessment["dependence_preserved"])
+        self.assertFalse(shock_assessment["finite_sample_reference_exact"])
+        self.assertLess(int(shock["replications"]), MIN_DENOMINATOR_TO_VALIDATE)
+        self.assertNotEqual(shock["primary_status"], "VALIDATED_UNDER_DECLARED_SYNTHETIC_MODEL")
+        cluster = self._holdout(
+            "shared_identical_observations", "unique_events", "cluster_event_bootstrap"
+        )
+        cluster_assessment = cluster["dependence_assessment"]
+        assert isinstance(cluster_assessment, dict)
+        self.assertTrue(cluster_assessment["dependence_preserved"])
+        self.assertFalse(cluster_assessment["finite_sample_reference_exact"])
+        self.assertLess(int(cluster["replications"]), MIN_DENOMINATOR_TO_VALIDATE)
+        self.assertNotEqual(cluster["primary_status"], "VALIDATED_UNDER_DECLARED_SYNTHETIC_MODEL")
+        revision = self.document["finite_sample_classification_revision"]
+        assert isinstance(revision, dict)
+        self.assertFalse(revision["classification_correction_is_a_new_independent_validation"])
+        self.assertFalse(revision["new_validation_experiment_launched"])
+        self.assertFalse(revision["sample_variance_z_interval_has_exact_finite_sample_reference"])
+        self.assertTrue(revision["statuses_recomputed_from_existing_counts"])
+        checked = validate_dependence_validation_document(self.raw)
+        self.assertFalse(checked["independently_reproduced_evidence"])
+        self.assertFalse(checked["numerical_experiment_regenerated"])
+        self.assertFalse(checked["full_monte_carlo_reproduced"])
+        self.assertTrue(checked["statuses_recomputed_from_recorded_counts"])
         strong_nw = self._holdout("strong_ar1", "primary", "newey_west_lag_16")
         strong_assessment = strong_nw["dependence_assessment"]
         assert isinstance(strong_assessment, dict)
@@ -896,6 +1024,33 @@ class DependenceValidationHarnessTests(unittest.TestCase):
         self.assertIn(
             "assumptions_match does not match the declared process",
             str(flipped.exception),
+        )
+        altered = json.loads(self.raw.decode("utf-8"))
+        altered_row = next(
+            row
+            for row in altered["partitions"]["holdout"]["rows"]
+            if row["scenario_id"] == "independent_zero_edge"
+            and row["target"] == "primary"
+            and row["method_id"] == "declared_model_z_interval"
+        )
+        altered_row["coverage"]["numerator"] = 380
+        body = {key: value for key, value in altered.items() if key != "content_sha256"}
+        altered["content_sha256"] = _sha256_json(body)
+        digested = validate_dependence_validation_document(_canonical_json(altered))
+        self.assertFalse(digested["independently_reproduced_evidence"])
+        self.assertFalse(digested["full_monte_carlo_reproduced"])
+        self.assertFalse(digested["numerical_experiment_regenerated"])
+        self.assertFalse(digested["recomputed_digest_of_altered_counts_is_independent_reproduction"])
+        altered["finite_sample_classification_revision"][
+            "classification_correction_is_a_new_independent_validation"
+        ] = True
+        body = {key: value for key, value in altered.items() if key != "content_sha256"}
+        altered["content_sha256"] = _sha256_json(body)
+        with self.assertRaises(ValueError) as claimed_revision:
+            validate_dependence_validation_document(_canonical_json(altered))
+        self.assertIn(
+            "the classification correction was marked as a new independent validation",
+            str(claimed_revision.exception),
         )
 
 
