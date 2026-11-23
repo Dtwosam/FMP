@@ -1,18 +1,26 @@
 # N1-v0 prospective observation protocol
 
-**Status:** WRITTEN UNDER DEC-637. Collection is not approved.
+**Status:** PILOT AUTHORIZED BY DEC-638. Fetch has not started. The DEC-637 rule is unchanged.
 
 **Rule:** N1-v0 News-Shock USD Continuation, as frozen in DEC-637.  
 **Baseline of the authorization:** `845e571a451fed51e638140ea3d1f0c72fa8c907`.
 
 ## When collection may start
 
-Two approvals are required before any quote is collected:
+DEC-638 is the later approval required by DEC-637. It authorizes a two-event prospective quote pilot and nothing else.
 
-1. DEC-637 is the repository record of the rule.
-2. A later, separate owner approval names this frozen rule and authorizes collection.
+The frozen signal commit is `78185a1aded7f5d97c296c16fdfd615f46934353`. The effective authorization timestamp is the committer timestamp of the DEC-638 decision commit. Every collected bar timestamp must be strictly after that instant.
 
-Until that second approval, this document authorizes no market-data read, no historical backtest, no broker connection, and no demo, live, or real-money order.
+The approved windows, from the BLS calendars accessed 2026-11-23, are:
+
+1. Employment Situation for November 2026, Friday 4 December 2026, 08:30 America/New_York.
+2. Consumer Price Index for November 2026, Thursday 10 December 2026, 08:30 America/New_York.
+
+The quote set for each window is EURUSD, GBPUSD, and USDJPY at 08:29–08:34, plus EURUSD at 08:36–09:30. The source is new $0 Dukascopy 1-minute bid/ask for those minutes. November 2026 releases are already past and are not collected. Real Earnings at the CPI minute is not an N1 release.
+
+A release counts as one of the two only when BLS records publication at 08:30 America/New_York. Any other status is kept and does not count. A replacement date needs a new recorded calendar citation before its quotes can be collected.
+
+No quote is fetched before the first bar of an approved window. This pilot authorizes no historical read, no broker connection, and no demo, live, or real-money order.
 
 ## What a later collection would record
 
@@ -58,21 +66,11 @@ The label is applied after the engine returns. It leaves the 08:35 decision, the
 - A duplicate `(timestamp_utc, symbol)` raises. The review does not choose a bar.
 - A complete grid with `STOP`, with NO TRADE, or with a risk rejection is not an ordinary time exit. Those rows stay.
 
-## Next owner decision — not approved
+## DEC-638 pilot record
 
-This section names the later decision that would be required before any prospective quote is collected. It does not grant that decision. DEC-637 remains a synthetic exception. Until the later decision is recorded, this protocol authorizes no market-data read.
+DEC-638 grants the two-window pilot described above. The raw engine trade or rejection is stored separately from `review_n1_observation`. An incomplete label does not erase a stop that the engine already filled. The labeled slippage runs are 0.5, 0.2, and 1.0 adverse pips, each in its own run. The hypothetical commission remains 3.50 USD per standard lot per side, accessed 2026-11-17. Prospective quotes are not verified broker fills.
 
-The later decision has to state all of the following.
-
-**Data source.** New canonical 1-minute bid and ask bars for EURUSD, GBPUSD, and USDJPY only, in the existing quote schema, for minutes that occur after the approval timestamp. The feed is the $0 Dukascopy bid/ask source already named in the master spec, limited to bars that did not exist at approval. Protected annual artefacts, the stored historical research files, a new vendor, a paid feed, and a broker tick stream are outside that source. If those bars cannot be captured at $0 without opening a closed path, collection stays blocked.
-
-**Collection start.** The first BLS CPI or BLS Employment Situation release that is actually published at 08:30 America/New_York strictly after the collection approval is recorded. No backfill. No release whose publication minute is already past at approval. The December 2026 BLS list shows how the calendar is read. It is not a start date: Friday 4 December 2026, 08:30 AM Eastern Time, Employment Situation for November 2026; Thursday 10 December 2026, 08:30 AM Eastern Time, Consumer Price Index for November 2026. Real Earnings printed at the same CPI minute is not an N1 release. Schedule: <https://www.bls.gov/schedule/2026/12_sched_list.htm>, accessed 2026-11-23, last modified 9 November 2026. The page states that all times are Eastern Time. CPI home <https://www.bls.gov/cpi/>, accessed 2026-11-23, schedules the November 2026 CPI for 10 December 2026 at 8:30 A.M. Eastern Time. Series calendars: <https://www.bls.gov/schedule/news_release/cpi.htm> and <https://www.bls.gov/schedule/news_release/empsit.htm>. Publication status comes from BLS. It is not inferred from price.
-
-**Data quality.** Store `review_n1_observation` with every row. Keep `INCOMPLETE` rows and `END_OF_DATA` rows. Neither counts as an ordinary 09:30 time exit. Keep NO TRADE, missing-quote, and rejected-entry rows.
-
-**Costs.** The bid/ask spread stays inside the quotes. One published commission figure, labeled hypothetical, and one adverse slippage assumption per run. The IC Markets Raw Spread MetaTrader figure of 3.50 USD per standard lot per side, accessed 2026-11-17, remains the labeled figure until a later decision replaces the citation. The frozen rule exits at 09:30, so the observation does not book overnight financing. Prospective quote observations are not verified broker fills. No order is placed to observe a fill. The development budget stays $0.
-
-**Still closed unless a separate entry says otherwise.** Annual catalogue execution, annual run 385, workflow enablement, DEC-470 edits, parameter changes, broker connection, demo, live, and real-money trading. DEC-469 / DEC-268 remain the governing method.
+The recorder does not download quotes. Fetch stays closed until an approved window opens and the signal file still matches commit `78185a1aded7f5d97c296c16fdfd615f46934353`.
 
 ## Boundaries
 

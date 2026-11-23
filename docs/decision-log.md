@@ -11427,3 +11427,46 @@ The same module labels, after the engine returns, whether the canonical bars nee
 ### Still closed
 
 No protected or historical market-data read, no annual catalogue execution, no consumption of annual run 385, no workflow, tag, runner, or branch-protection change, no broker connection, and no demo, live, or real-money order. Issues #779, #820, and #821 remain unresolved. The prospective protocol does not authorize collection. Collection starts only under a later, separate approval. The Phase 7 reproduction gate in `docs/phase7-stage2-trade-recovery-decision.md` is unchanged and is not taken here.
+
+## 2026-11-23 — DEC-638 APPROVED — N1-v0 prospective observation pilot
+
+**Status:** APPROVED OWNER DECISION. Research-data authorization only. This is not broker, demo, live, or real-money trading authority. It does not amend DEC-469, DEC-268, DEC-470, the operating guardrail, phase order, the instrument universe, the risk hard limits, or the real-money lock. DEC-629 and DEC-630 stay proposed and unadopted. Not Strategy V1. Not a promotion. Two observations are not statistical proof.
+
+**Identity:** The next decision-log entry after DEC-637. It is not the unmerged branch `dec-638-exclusive-legacy-report-create`. It is not the local Phase 7 synthetic preflight that used the label DEC-638 for evidence directories.
+
+**Frozen research version:** `78185a1aded7f5d97c296c16fdfd615f46934353` on draft PR #2340. The N1-v0 entry, exit, confirmation, stop, and risk rules remain the DEC-637 rule. `src/fmp/research/n1_news_shock.py` must stay byte-identical to that commit. A later edit to that file is not an approved signal. Collection follows the frozen blob, not a moving branch head.
+
+**Effective timestamp:** the UTC committer timestamp of this commit. A market bar is eligible only when its timestamp is strictly after that instant. The pilot recorder copies the resolved timestamp from `git show -s --format=%cI` of this commit. No earlier event is backfilled.
+
+Master spec section 26 requires this entry before the recording mechanism. This entry does not change phase order and does not skip an acceptance gate, so the build-order rule for phase-order changes does not require a separate merged pull request. The decision commit precedes the recorder commit. PR #2340 stays unmerged.
+
+### Approved windows
+
+BLS calendars accessed 2026-11-23. Times on those pages are Eastern Time. Publication status comes from BLS and is not inferred from price.
+
+The November 2026 Employment Situation was scheduled for 6 November 2026 at 08:30, and the October 2026 CPI was scheduled for 10 November 2026 at 08:30. Both instants are before this authorization. They are not pilot windows.
+
+The approved quote windows are the next two scheduled N1 releases:
+
+1. Employment Situation for November 2026, Friday 4 December 2026, 08:30 America/New_York. Sources: <https://www.bls.gov/schedule/news_release/empsit.htm> and <https://www.bls.gov/schedule/2026/12_sched_list.htm> (December list last modified 9 November 2026).
+2. Consumer Price Index for November 2026, Thursday 10 December 2026, 08:30 America/New_York. Sources: <https://www.bls.gov/schedule/news_release/cpi.htm>, the same December list, and <https://www.bls.gov/cpi/>.
+
+Real Earnings scheduled at the same minute as the 10 December CPI is not an N1 release.
+
+For each window the only authorized bars are EURUSD, GBPUSD, and USDJPY at 08:29 through 08:34 America/New_York, plus EURUSD at 08:36 through 09:30 America/New_York. The source is new Dukascopy 1-minute bid and ask data for those minutes, at $0. It is not a read of the stored historical research files, not a protected annual artefact, and not a broker feed.
+
+A release counts toward the two-event limit only when BLS records that it was actually published at 08:30 America/New_York. A delayed, cancelled, unpublished, or retimed release is kept in the record and does not consume one of the two counts. Quote collection for a replacement date is not approved by this entry. The next BLS calendar citation has to be recorded before any later window opens. If both scheduled releases qualify, the pilot stops after the 10 December 2026 window.
+
+### Recording
+
+Use the frozen `evaluate_n1_v0` signal, the existing execution and risk contracts, and `review_n1_observation`, without retuning. Store the engine trade or rejection separately from the quality label. A missing quote after an already completed stop does not erase that stop. Keep mixed signals, NO TRADE, rejected entries, stop losses, time exits, incomplete coverage, and missing quotes.
+
+The accounting equity for the hypothetical result is 100,000 USD. That figure is the DEC-637 synthetic denominator. It is not a live account and not a searched parameter. Requested risk stays 0.25% inside the existing hard limits.
+
+Costs are the collected bid/ask spread, the hypothetical IC Markets Raw Spread MetaTrader commission of 3.50 USD per standard lot per side accessed 2026-11-17, and three separately labeled adverse-slippage runs at 0.5, 0.2, and 1.0 pip. Those runs are not combined into one fill. They are not verified broker fills. No order is placed to observe a fill. No paid subscription or infrastructure is authorized.
+
+No market quote is fetched by the commit that adds the recorder. The recorder accepts caller-supplied bars for the two windows and refuses earlier timestamps. Download waits until an approved window and is not started here. `EXP-20261123-079` is the pilot record.
+
+### Still closed
+
+Historical and protected market-data access, annual catalogue execution, annual run 385, DEC-470 amendments, new parameter searches, broker connections, demo, live, and real-money orders, unapproved workflow activation, and automatic strategy promotion. DEC-469 / DEC-268 remain the governing method. The Phase 7 reproduction gate is unchanged and is not taken here. Issues #779, #820, and #821 remain unresolved.

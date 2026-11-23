@@ -2319,3 +2319,7 @@ Added an opt-in writer that keeps the trade and rejection rows the existing Phas
 ## 2026-11-23 — DEC-637 N1-v0 synthetic research exception
 
 Recorded the owner's narrow approval to represent N1-v0 News-Shock USD Continuation with the existing decision and scheduled-exit contracts and to check it on synthetic quotes. The annual catalogue remains the governing method. DEC-629 and DEC-630 stay unadopted. DEC-470, the risk hard limits, phase order, and the real-money lock are unchanged. The written prospective protocol does not authorize market-data collection. The same exception adds an after-the-fact completeness label: a missing 09:30 bar stays `END_OF_DATA`, and a missing intermediate bar stays incomplete. No protected research or trading authority is opened.
+
+## 2026-11-23 — DEC-638 N1-v0 prospective observation pilot
+
+Recorded the owner's approval to collect two prospective N1-v0 event windows after the decision timestamp: the 4 December 2026 Employment Situation and the 10 December 2026 CPI, both scheduled at 08:30 America/New_York. The signal stays the DEC-637 rule at commit `78185a1aded7f5d97c296c16fdfd615f46934353`. No historical read, catalogue run, workflow activation, broker connection, or trade is authorized. No quote was fetched with this decision.
