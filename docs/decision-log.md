@@ -11381,3 +11381,45 @@ The same decision id is expected across 0.2, 0.5, and 1.0 pip because the engine
 The executing commit of a future reproduction will not be `a1f8a0466463c79fdbceb9d6ebad9e3ea809474d`, because that commit does not contain this writer. `result.json` and `windows.json` include `code_commit`, so a later run will not byte-match the original aggregate hashes. The numeric comparison can still be reviewed, and the commit difference has to stay visible. The bounded procedure is in `docs/phase7-stage2-trade-recovery-decision.md`. It is not an authorization. The next milestone is a formal owner decision on whether to authorize one controlled historical reproduction.
 
 On Python 3.12.13, `tests.test_phase7_trade_retention` was 7 tests and exited 0. Focused `tests.test_phase7_trade_retention`, `tests.test_phase7_evaluation`, `tests.test_phase7_artifacts`, `tests.test_phase7_cli`, `tests.test_trade_level_evidence`, and `tests.test_phase3_reporting` were 40 tests in 0.055s and exited 0. That run includes `test_gross_loss_matches_phase3_positive_magnitude`. `PYTHONPATH=src .venv/bin/python -m unittest discover -s tests` printed `Ran 4970 tests in 436.496s` and `FAILED (failures=145, errors=229, skipped=31)`, exit 1. That is 7 more tests than the DEC-635 count of 4963, with the same 145 failures and 229 errors. Those failures remain annual-catalogue and EXP-062 source-pin checks. Installed workflows were not edited. Run 385 stays unconsumed. Issues #779, #820, and #821 remain unresolved. No workflow, tag, runner, ruleset, broker, demo, live, or real-money path is authorized.
+
+## 2026-11-23 — DEC-637 APPROVED — N1-v0 synthetic research exception
+
+**Status:** APPROVED OWNER EXCEPTION. Narrow and source-only. This entry does not amend DEC-469, DEC-268, DEC-470, the operating guardrail, phase order, the instrument universe, the risk hard limits, or the real-money lock. DEC-629 and DEC-630 stay proposed and unadopted. Not Strategy V1. Not a promotion. Not trading authority.
+
+**Baseline:** `845e571a451fed51e638140ea3d1f0c72fa8c907`.
+
+The owner authorized one independently specified Forex hypothesis, N1-v0 News-Shock USD Continuation, so it can be represented and checked with synthetic quotes. The annual pattern catalogue remains the governing research method. This exception does not open a second method.
+
+This decision-log identity is the next entry after DEC-636. It is not the unmerged branch `dec-637-exclusive-merged-audit-reports`. That branch is outside this authorization and is not an ancestor of the baseline.
+
+Master spec section 26 requires an explicit decision-log entry and the corresponding source-of-truth edits before implementation when a change would otherwise conflict with the baseline. A named signal beside the catalogue was that conflict. Build-order change control for phase order does not apply: this entry does not change phase order and does not skip an acceptance gate. Those clauses require the record before the module. They do not require a separate docs pull request to be merged before the module is written. The authorization commit precedes the signal commit. The pull request stays unmerged for review.
+
+### Frozen rule
+
+N1-v0 watches two releases: BLS CPI and the BLS Employment Situation, and only when the release was actually published at 08:30 America/New_York. The clock conversion uses `America/New_York` with a UTC round trip. A delayed, cancelled, unpublished, or differently timed release is NO TRADE.
+
+The observation is the five completed one-minute bars labelled 08:30 through 08:34. The reference is the 08:29 one-minute mid close, `(bid_close + ask_close) / 2`. USD strength is EURUSD down, GBPUSD down, and USDJPY up, measured from each pair's 08:34 mid close against its 08:29 mid close. USD weakness is the opposite on all three. A flat leg, a mixed sign, or a missing quote is NO TRADE. The traded instrument is EURUSD only. The other two pairs are direction inputs.
+
+The decision timestamp is 08:35 New York. The earliest execution is the 08:36 New York bar open. Direction and the original protective stop use no price from 08:35 or later. Under the default `NEXT_SUPPLIED_BAR` mode, the 08:35 bar is not strictly after 08:35, so the engine fill is the 08:36 bar when that bar is the next supplied EURUSD bar. A missing or gapped entry bar stays `TIMING_CONTRACT`. It is not carried forward.
+
+The stop is the opposite executable-side extreme of the EURUSD 08:30–08:34 range. A short stop is the maximum ask high. A long stop is the minimum bid low. There is no target. Requested risk is 0.25% of current risk equity, and the existing hard limits still apply. The exit is that stop or 09:30 New York, whichever the engine reaches first. The 09:30 exit is a `ScheduledExit` filled at that bar's open. One event produces at most one EURUSD decision. Two releases on the same New York date are NO TRADE, so the rule does not pyramid. There is no overnight hold and no parameter search.
+
+A later price may change the fill, the size, or a risk rejection. It must not change the signal or the original stop. An entry that gaps through that stop is the existing `INVALID_STOP_TARGET` rejection. A later bar that opens through the stop is the existing gap stop at that bar's open. Missing quotes, unpublished releases, and disagreements stay in the record as NO TRADE.
+
+### Authorized work
+
+- An isolated module at `src/fmp/research/n1_news_shock.py` that emits the existing `Decision` and `ScheduledExit` values.
+- Synthetic fixtures and focused tests, including `run_backtest` on caller-supplied synthetic quotes.
+- The written protocol `docs/n1-v0-prospective-observation-protocol.md`.
+
+`Decision`, `Position`, `TradeRecord`, `assess_decision`, `evaluate_exit`, `RiskConfig`, and the default backtest timing mode stay unchanged. The module is not registered as a strategy, is not wired into a workflow, and is not a catalogue cell.
+
+### Costs and evidence
+
+The engine still applies one `slippage_pips` value to every fill in a run. That value is adverse to the order side. A second run with a different single value is a separate labeled stress. The engine does not provide an asymmetric fill or a worst-extreme fill inside one run. A bid/ask spread inside the synthetic quotes plus the published IC Markets Raw Spread MetaTrader commission of 3.50 USD per standard lot per side, accessed 2026-11-17, is a hypothetical cost package. It is not a verified Dukascopy fill and it is not verified broker execution. The spread is not charged a second time.
+
+Synthetic passes are engineering checks. They are not evidence of profitable trading. Twelve or twenty-four events would not be statistical proof. Outcomes must not change the frozen rule. `EXP-20261123-078` records the synthetic check and does not open market data.
+
+### Still closed
+
+No protected or historical market-data read, no annual catalogue execution, no consumption of annual run 385, no workflow, tag, runner, or branch-protection change, no broker connection, and no demo, live, or real-money order. Issues #779, #820, and #821 remain unresolved. The prospective protocol does not authorize collection. Collection starts only under a later, separate approval. The Phase 7 reproduction gate in `docs/phase7-stage2-trade-recovery-decision.md` is unchanged and is not taken here.

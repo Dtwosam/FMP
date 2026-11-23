@@ -2315,3 +2315,7 @@ Aligned caller-supplied gross loss with the Phase 3 positive magnitude and label
 ## 2026-11-17 — DEC-636 Phase 7 trade-record retention
 
 Added an opt-in writer that keeps the trade and rejection rows the existing Phase 7 evaluator already returns. The writer uses a separate checksummed directory and does not change the aggregate artifact format, the frozen evaluator, or artifact `10414817824`. No authentic 199-trade Stage 2 series was recovered. A later historical reproduction still requires a separate owner decision. DEC-629 and DEC-630 stay proposed. The guardrail, instrument universe, risk hard limits, phase order, and real-money lock are unchanged.
+
+## 2026-11-23 — DEC-637 N1-v0 synthetic research exception
+
+Recorded the owner's narrow approval to represent N1-v0 News-Shock USD Continuation with the existing decision and scheduled-exit contracts and to check it on synthetic quotes. The annual catalogue remains the governing method. DEC-629 and DEC-630 stay unadopted. DEC-470, the risk hard limits, phase order, and the real-money lock are unchanged. The written prospective protocol does not authorize market-data collection. No protected research or trading authority is opened.
