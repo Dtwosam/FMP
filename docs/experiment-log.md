@@ -3598,3 +3598,35 @@ Copy this section for each serious experiment:
 - Conclusion: NEED_MORE_DATA
 - Reason: the rows are synthetic. The holdout was already inspected, so the revised classification is not an independent confirmation. Frozen historical catalogues were not opened. Valid p-values for the 89,460-hypothesis family are not available. Sixty bootstrap replicates and sixty studentized replicates do not establish calibrated intervals or p-values. Student's t was not substituted for the existing z interval.
 - Follow-up: keep DEC-470, the event-evidence schema, the statistical-uncertainty schema, the annual miner, and the cross-year statistical block unchanged. Annual run 385 stays unopened. No merge is authorized by this experiment.
+
+### EXP-20261123-078 — N1-v0 synthetic signal check
+
+- Date: 2026-11-23
+- Status: INCONCLUSIVE
+- Hypothesis: Frozen N1-v0 emits reproducible EURUSD decisions from synthetic quotes, and the existing engine records the hypothetical spread, one slippage assumption, and the published commission without changing the signal or the original stop.
+- Code commit: branch `draft/dec637-n1-v0-synthetic-exception`. Authorization parent `ca5ba3c6533a667d93e57ef22369bfab3fe3042b`. Branch base `845e571a451fed51e638140ea3d1f0c72fa8c907`.
+- Data manifest/version: `n1-v0-synthetic-quotes`. No market-data file and no protected artifact was opened.
+- Pair(s): EURUSD is the only traded symbol. GBPUSD and USDJPY are direction inputs in the synthetic fixture.
+- Timeframe(s): 1m quotes supplied directly. No derived-bar builder was used.
+- Data range: not applicable. Clocks are 2026-01-13, 2026-03-08, 2026-03-09, 2026-07-14, and 2026-11-02 America/New_York.
+- Train period: not applicable
+- Validation period: not applicable
+- Final-test touched?: NO
+- Strategy/model: N1-v0 News-Shock USD Continuation, isolated in `src/fmp/research/n1_news_shock.py`. Not registered. Not Strategy V1. DEC-469 / DEC-268 remain the governing method.
+- Features: none
+- Parameters/search space: none. The rule, the 0.25% risk fraction, the 08:36 entry, and the 09:30 exit are frozen.
+- Random seed (if relevant): not applicable
+- Spread/cost model: the spread is the synthetic bid/ask. Commission is the published IC Markets Raw Spread MetaTrader figure of 3.50 USD per standard lot per side, accessed 2026-11-17, passed through `FixedCommissionPerMillion` at 35 USD per million per side. The package is hypothetical. It is not a verified Dukascopy fill and not verified broker execution.
+- Slippage model: one adverse `slippage_pips` value per run. The recorded check uses 0.5 pip, and separate runs use 0.2 and 1.0 pip. Those runs are not combined into an asymmetric or worst-extreme fill.
+- Risk assumptions: 0.25% of current risk equity, subject to the existing 0.50% per-trade, 1.00% simultaneous, and 1.50% daily-halt limits. An entry through the original stop is `INVALID_STOP_TARGET`. A risk budget that sizes to zero units is `INVALID_SIZE`.
+- Trade count: synthetic fixtures only. No market trades.
+- Net return after costs: not a market result. The 100,000-unit short fixture records 7.00 USD round-turn commission at the published 3.50 per-side rate, plus adverse slippage on the 0.5-pip run.
+- Expectancy/trade: not estimated
+- Profit factor: not computed
+- Max drawdown: not computed
+- Key subperiod results: not market years. Winter and summer clocks convert to 13:30 UTC and 12:30 UTC. The 2026-03-08 02:30 America/New_York gap is rejected.
+- Robustness/cost sensitivity: later synthetic prices change the fill and the size and leave the direction and the original stop unchanged. A separate 1.0-pip run is a second single-assumption stress, not one asymmetric fill.
+- Result summary: 16 focused tests in `tests.test_n1_news_shock` exited 0. USD strength is short EURUSD. USD weakness is long EURUSD. Mixed, flat, missing, unpublished, delayed, mistimed, and unsupported releases stay NO TRADE. Two releases on one New York date stay NO TRADE. The fill is the 08:36 open. The scheduled exit is the 09:30 open. A gap stop fills at the opened-through price. A missing 08:36 bar is `TIMING_CONTRACT`. A missing 09:30 bar stays `END_OF_DATA` and is not rewritten. NO TRADE rows are kept.
+- Conclusion: NEED_MORE_DATA
+- Reason: the rows are synthetic engineering checks. They do not show a market edge. Prospective collection is written and not approved.
+- Follow-up: keep DEC-470, DEC-629, and DEC-630 unchanged. Do not collect market data until a later separate approval. Do not merge this branch as a promotion. Annual run 385 stays unopened.
