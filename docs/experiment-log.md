@@ -3631,3 +3631,35 @@ Copy this section for each serious experiment:
 - Reason: the rows are synthetic engineering checks. They do not show a market edge. Prospective collection is written and not approved.
 - Follow-up: keep DEC-470, DEC-629, and DEC-630 unchanged. Do not collect market data until a later separate approval. Do not merge this branch as a promotion. Annual run 385 stays unopened.
 - Addendum 2026-11-23: `review_n1_observation` labels the same synthetic fixtures after the engine returns. Focused `tests.test_n1_news_shock` was 24 tests and exited 0. A missing 09:30 bar stays `END_OF_DATA` and is not an ordinary time exit. A missing intermediate bar stays incomplete when the engine returns `TIME_EXIT`. The 08:35 bar is not required. The signal, the original stop, and the engine are unchanged. Collection remains unapproved.
+
+### EXP-20261123-079 — N1-v0 prospective observation pilot
+
+- Date: 2026-11-23
+- Status: NOT_STARTED
+- Hypothesis: Two prospective N1-v0 windows can be recorded from new Dukascopy bid/ask bars without changing the frozen DEC-637 rule, and the raw engine result stays intact when the quality label is incomplete.
+- Code commit: decision `09ca49abbd6478db44bf070ebed5e9f77db705b1`. Frozen signal `78185a1aded7f5d97c296c16fdfd615f46934353`. Effective authorization timestamp 2026-11-23T15:13:54+01:00.
+- Data manifest/version: `n1-v0-prospective-supplied-bars` for the recorder check. No market-data file and no protected artifact was opened.
+- Pair(s): EURUSD is the only traded symbol. GBPUSD and USDJPY are direction inputs.
+- Timeframe(s): 1m bid/ask. The approved minutes are 08:29–08:34 for the three pairs and 08:36–09:30 for EURUSD.
+- Data range: Employment Situation on 2026-12-04 and CPI on 2026-12-10, each scheduled at 08:30 America/New_York. November 2026 releases are excluded.
+- Train period: not applicable
+- Validation period: not applicable
+- Final-test touched?: NO
+- Strategy/model: frozen N1-v0. Not registered. Not Strategy V1. DEC-469 / DEC-268 remain the governing method.
+- Features: none
+- Parameters/search space: none. Slippage runs are the existing labeled values 0.5, 0.2, and 1.0 pip. Accounting equity is the existing 100,000 USD synthetic denominator.
+- Random seed (if relevant): not applicable
+- Spread/cost model: spread stays inside the supplied bid/ask. Commission is the hypothetical 3.50 USD per standard lot per side accessed 2026-11-17. Not a verified broker fill.
+- Slippage model: one adverse value per run, in separate labeled runs. The runs are not combined.
+- Risk assumptions: 0.25% of the accounting equity, subject to the existing hard limits.
+- Trade count: no market trades. The recorder check uses synthetic bars only.
+- Net return after costs: not a market result.
+- Expectancy/trade: not estimated
+- Profit factor: not computed
+- Max drawdown: not computed
+- Key subperiod results: not available. The pilot has not collected quotes.
+- Robustness/cost sensitivity: not a market comparison. A stop with later missing bars remains a stop on the raw record while the quality label stays incomplete.
+- Result summary: focused `tests.test_n1_prospective_pilot` was 11 tests and exited 0. `tests.test_n1_news_shock` remained 24 tests and exited 0. No quote was downloaded.
+- Conclusion: NEED_MORE_DATA
+- Reason: the pilot windows have not opened. A synthetic recorder check is not prospective evidence.
+- Follow-up: fetch stays closed until 4 December 2026 08:29 America/New_York. Confirm the BLS publication status from BLS before counting a release. Keep DEC-470, DEC-629, and DEC-630 unchanged. Annual run 385 stays unopened. Do not promote the rule from two events.
