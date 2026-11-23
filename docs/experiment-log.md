@@ -3630,3 +3630,4 @@ Copy this section for each serious experiment:
 - Conclusion: NEED_MORE_DATA
 - Reason: the rows are synthetic engineering checks. They do not show a market edge. Prospective collection is written and not approved.
 - Follow-up: keep DEC-470, DEC-629, and DEC-630 unchanged. Do not collect market data until a later separate approval. Do not merge this branch as a promotion. Annual run 385 stays unopened.
+- Addendum 2026-11-23: `review_n1_observation` labels the same synthetic fixtures after the engine returns. Focused `tests.test_n1_news_shock` was 24 tests and exited 0. A missing 09:30 bar stays `END_OF_DATA` and is not an ordinary time exit. A missing intermediate bar stays incomplete when the engine returns `TIME_EXIT`. The 08:35 bar is not required. The signal, the original stop, and the engine are unchanged. Collection remains unapproved.

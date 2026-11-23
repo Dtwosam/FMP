@@ -27,6 +27,8 @@ from fmp.research.n1_news_shock import (
     hypothetical_published_commission_model,
     n1_run_decision_config,
     new_york_clock_utc,
+    required_n1_observation_keys,
+    review_n1_observation,
 )
 from fmp.research.retail_costs import IC_MT4_RAW_COMMISSION
 from fmp.risk import RiskConfig
@@ -580,6 +582,204 @@ class N1NewsShockTests(unittest.TestCase):
         bars.append(bars[0])
         with self.assertRaises(ValueError):
             evaluate_n1_v0(_release(), bars)
+        with self.assertRaises(ValueError):
+            review_n1_observation(WINTER, bars, exit_reason=ExitReason.TIME_EXIT)
+
+    def test_complete_time_exit_is_ordinary_and_does_not_require_0835(self) -> None:
+        bars = _session(WINTER, direction="strength", stop_bar_extreme=1.10150)
+        signal = evaluate_n1_v0(_release(), bars)
+        assert signal.scheduled_exit is not None
+        result = run_backtest(
+            bars=bars,
+            decisions=(signal.decision,),
+            scheduled_exits=(signal.scheduled_exit,),
+            config=_config(bars),
+        )
+        self.assertEqual(result.trades[0].exit_reason, ExitReason.TIME_EXIT)
+        review = review_n1_observation(
+            WINTER,
+            bars,
+            exit_reason=result.trades[0].exit_reason,
+        )
+        self.assertEqual(review.quality, "COMPLETE")
+        self.assertEqual(review.missing_labels, ())
+        self.assertTrue(review.ordinary_n1_time_exit)
+        self.assertEqual(review.exit_reason, ExitReason.TIME_EXIT.value)
+        keys = required_n1_observation_keys(WINTER)
+        self.assertEqual(len(keys), 73)
+        self.assertNotIn((_utc(WINTER, 8, 35), "EURUSD"), keys)
+        self.assertNotIn((_utc(WINTER, 8, 36), "GBPUSD"), keys)
+        self.assertIn((_utc(WINTER, 8, 29), "USDJPY"), keys)
+        self.assertIn((_utc(WINTER, 8, 34), "GBPUSD"), keys)
+        self.assertIn((_utc(WINTER, 8, 36), "EURUSD"), keys)
+        self.assertIn((_utc(WINTER, 9, 30), "EURUSD"), keys)
+
+        without_decision_bar = [
+            bar
+            for bar in bars
+            if not (bar.symbol == "EURUSD" and bar.timestamp_utc == _utc(WINTER, 8, 35))
+        ]
+        unchanged = evaluate_n1_v0(_release(), without_decision_bar)
+        self.assertEqual(unchanged.decision.direction, Direction.SHORT)
+        self.assertEqual(unchanged.decision.stop_price, 1.10150)
+        rerun = run_backtest(
+            bars=without_decision_bar,
+            decisions=(unchanged.decision,),
+            scheduled_exits=(unchanged.scheduled_exit,),
+            config=_config(without_decision_bar),
+        )
+        self.assertEqual(rerun.trades[0].exit_reason, ExitReason.TIME_EXIT)
+        still_complete = review_n1_observation(
+            WINTER,
+            without_decision_bar,
+            exit_reason=rerun.trades[0].exit_reason,
+        )
+        self.assertEqual(still_complete.quality, "COMPLETE")
+        self.assertTrue(still_complete.ordinary_n1_time_exit)
+
+    def test_missing_0930_end_of_data_is_not_an_ordinary_time_exit(self) -> None:
+        bars = _session(
+            WINTER,
+            direction="strength",
+            stop_bar_extreme=1.10150,
+            through=(8, 50),
+        )
+        signal = evaluate_n1_v0(_release(), bars)
+        assert signal.scheduled_exit is not None
+        self.assertEqual(signal.scheduled_exit.timestamp_utc, _utc(WINTER, 9, 30))
+        self.assertEqual(signal.decision.stop_price, 1.10150)
+        result = run_backtest(
+            bars=bars,
+            decisions=(signal.decision,),
+            scheduled_exits=(signal.scheduled_exit,),
+            config=_config(bars),
+        )
+        self.assertEqual(result.trades[0].exit_reason, ExitReason.END_OF_DATA)
+        review = review_n1_observation(
+            WINTER,
+            bars,
+            exit_reason=result.trades[0].exit_reason,
+        )
+        self.assertEqual(review.quality, "INCOMPLETE")
+        self.assertFalse(review.ordinary_n1_time_exit)
+        self.assertEqual(review.exit_reason, ExitReason.END_OF_DATA.value)
+        self.assertIn("EURUSD 09:30 America/New_York", review.missing_labels)
+        self.assertIn("not an ordinary", review.explanation)
+        forced = review_n1_observation(WINTER, bars, exit_reason=ExitReason.TIME_EXIT)
+        self.assertEqual(forced.quality, "INCOMPLETE")
+        self.assertFalse(forced.ordinary_n1_time_exit)
+
+    def test_missing_intermediate_bar_is_incomplete_despite_time_exit(self) -> None:
+        bars = [
+            bar
+            for bar in _session(WINTER, direction="strength", stop_bar_extreme=1.10150)
+            if not (bar.symbol == "EURUSD" and bar.timestamp_utc == _utc(WINTER, 8, 40))
+        ]
+        signal = evaluate_n1_v0(_release(), bars)
+        self.assertEqual(signal.decision.direction, Direction.SHORT)
+        self.assertEqual(signal.decision.stop_price, 1.10150)
+        assert signal.scheduled_exit is not None
+        result = run_backtest(
+            bars=bars,
+            decisions=(signal.decision,),
+            scheduled_exits=(signal.scheduled_exit,),
+            config=_config(bars),
+        )
+        self.assertEqual(result.trades[0].exit_reason, ExitReason.TIME_EXIT)
+        self.assertEqual(result.trades[0].exit_timestamp_utc, _utc(WINTER, 9, 30))
+        review = review_n1_observation(
+            WINTER,
+            bars,
+            exit_reason=result.trades[0].exit_reason,
+        )
+        self.assertEqual(review.quality, "INCOMPLETE")
+        self.assertFalse(review.ordinary_n1_time_exit)
+        self.assertEqual(review.missing_labels, ("EURUSD 08:40 America/New_York",))
+        self.assertIn("stop path", review.explanation)
+
+    def test_missing_entry_bar_is_incomplete_and_stays_rejected(self) -> None:
+        bars = [
+            bar
+            for bar in _session(WINTER, direction="strength", stop_bar_extreme=1.10150)
+            if not (bar.symbol == "EURUSD" and bar.timestamp_utc == _utc(WINTER, 8, 36))
+        ]
+        signal = evaluate_n1_v0(_release(), bars)
+        self.assertEqual(signal.decision.direction, Direction.SHORT)
+        self.assertEqual(signal.decision.earliest_executable_timestamp_utc, _utc(WINTER, 8, 36))
+        assert signal.scheduled_exit is not None
+        result = run_backtest(
+            bars=bars,
+            decisions=(signal.decision,),
+            scheduled_exits=(signal.scheduled_exit,),
+            config=_config(bars),
+        )
+        self.assertEqual(result.rejections[0].code, RejectionCode.TIMING_CONTRACT)
+        review = review_n1_observation(WINTER, bars, exit_reason=None)
+        self.assertEqual(review.quality, "INCOMPLETE")
+        self.assertFalse(review.ordinary_n1_time_exit)
+        self.assertIn("EURUSD 08:36 America/New_York", review.missing_labels)
+
+    def test_missing_signal_window_is_no_trade_and_incomplete(self) -> None:
+        bars = _session(
+            WINTER,
+            direction="strength",
+            stop_bar_extreme=1.10150,
+            omit={("GBPUSD", 32)},
+        )
+        signal = evaluate_n1_v0(_release(), bars)
+        self.assertEqual(signal.decision.direction, Direction.NO_TRADE)
+        self.assertEqual(signal.reason_code, REASON_MISSING_QUOTE)
+        result = run_backtest(
+            bars=bars,
+            decisions=(signal.decision,),
+            config=_config(bars),
+        )
+        self.assertEqual(result.rejections[0].code, RejectionCode.NO_TRADE)
+        review = review_n1_observation(WINTER, bars, exit_reason=None)
+        self.assertEqual(review.quality, "INCOMPLETE")
+        self.assertFalse(review.ordinary_n1_time_exit)
+        self.assertIn("GBPUSD 08:32 America/New_York", review.missing_labels)
+
+    def test_complete_stop_is_not_an_ordinary_time_exit(self) -> None:
+        bars = _session(
+            WINTER,
+            direction="strength",
+            stop_bar_extreme=1.10150,
+            gap_at=(8, 40, 1.10300, 1.10320),
+        )
+        signal = evaluate_n1_v0(_release(), bars)
+        assert signal.scheduled_exit is not None
+        result = run_backtest(
+            bars=bars,
+            decisions=(signal.decision,),
+            scheduled_exits=(signal.scheduled_exit,),
+            config=_config(bars),
+        )
+        self.assertEqual(result.trades[0].exit_reason, ExitReason.STOP)
+        review = review_n1_observation(
+            WINTER,
+            bars,
+            exit_reason=result.trades[0].exit_reason,
+        )
+        self.assertEqual(review.quality, "COMPLETE")
+        self.assertEqual(review.missing_labels, ())
+        self.assertFalse(review.ordinary_n1_time_exit)
+        self.assertEqual(review.exit_reason, ExitReason.STOP.value)
+
+    def test_complete_disagreement_is_not_an_ordinary_time_exit(self) -> None:
+        bars = _session(WINTER, direction="mixed")
+        signal = evaluate_n1_v0(_release(), bars)
+        self.assertEqual(signal.reason_code, REASON_DISAGREEMENT)
+        self.assertEqual(signal.decision.direction, Direction.NO_TRADE)
+        review = review_n1_observation(WINTER, bars, exit_reason=None)
+        self.assertEqual(review.quality, "COMPLETE")
+        self.assertFalse(review.ordinary_n1_time_exit)
+        self.assertIsNone(review.exit_reason)
+
+    def test_review_rejects_a_string_exit_reason(self) -> None:
+        bars = _session(WINTER, direction="strength", stop_bar_extreme=1.10150)
+        with self.assertRaises(TypeError):
+            review_n1_observation(WINTER, bars, exit_reason="TIME_EXIT")  # type: ignore[arg-type]
 
 
 if __name__ == "__main__":

@@ -8,6 +8,9 @@ Direction and the original stop use the 08:29 close and the completed
 08:30–08:34 bars only. Prices at 08:35 or later can change a fill, a size,
 or a risk rejection. They cannot change this signal.
 
+`review_n1_observation` is an after-the-fact label. It does not change
+the 08:35 decision. A missing bar cannot become an ordinary 09:30 exit.
+
 The governing method remains DEC-469 / DEC-268 annual catalogue discovery.
 """
 
@@ -21,7 +24,7 @@ from typing import Mapping, Sequence
 from zoneinfo import ZoneInfo
 
 from fmp.backtest.costs import FixedCommissionPerMillion
-from fmp.contracts import Decision, Direction, QuoteBar, ScheduledExit
+from fmp.contracts import Decision, Direction, ExitReason, QuoteBar, ScheduledExit
 from fmp.research.retail_costs import IC_MT4_RAW_COMMISSION, STANDARD_LOT_UNITS
 
 RULE_ID = "N1-v0"
@@ -41,6 +44,8 @@ REASON_DISAGREEMENT = "DISAGREEMENT"
 REASON_MULTIPLE_RELEASES = "MULTIPLE_RELEASES"
 REASON_USD_STRENGTH = "USD_STRENGTH"
 REASON_USD_WEAKNESS = "USD_WEAKNESS"
+QUALITY_COMPLETE = "COMPLETE"
+QUALITY_INCOMPLETE = "INCOMPLETE"
 
 HYPOTHETICAL_COST_LABEL = (
     "hypothetical: bid/ask spread inside the caller-supplied quotes, plus the "
@@ -113,6 +118,35 @@ class N1Signal:
             raise ValueError("N1-v0 risk fraction is fixed")
 
 
+@dataclass(frozen=True, slots=True)
+class N1ObservationReview:
+    """Whether the supplied bars can be read as one N1 observation.
+
+    ``ordinary_n1_time_exit`` is true only for a complete grid whose engine
+    reason is ``TIME_EXIT``. ``END_OF_DATA`` never qualifies.
+    """
+
+    quality: str
+    missing_labels: tuple[str, ...]
+    ordinary_n1_time_exit: bool
+    exit_reason: str | None
+    explanation: str
+
+    def __post_init__(self) -> None:
+        if self.quality not in (QUALITY_COMPLETE, QUALITY_INCOMPLETE):
+            raise ValueError("unknown observation quality")
+        if self.quality == QUALITY_COMPLETE and self.missing_labels:
+            raise ValueError("a complete observation has no missing bars")
+        if self.quality == QUALITY_INCOMPLETE and not self.missing_labels:
+            raise ValueError("an incomplete observation names the missing bars")
+        if self.ordinary_n1_time_exit and (
+            self.quality != QUALITY_COMPLETE
+            or self.missing_labels
+            or self.exit_reason != ExitReason.TIME_EXIT.value
+        ):
+            raise ValueError("an ordinary N1 time exit requires a complete grid and TIME_EXIT")
+
+
 def new_york_clock_utc(day: date, hour: int, minute: int) -> datetime:
     """Convert a New York clock time to UTC.
 
@@ -167,6 +201,69 @@ def n1_run_decision_config() -> dict[str, str]:
         "slippage": "one_adverse_pips_value_per_run",
         "evidence_class": "synthetic_engineering_check",
     }
+
+
+def required_n1_observation_keys(day: date) -> tuple[tuple[datetime, str], ...]:
+    """Bars a completed N1 observation must contain.
+
+    The signal window is 08:29–08:34 on EURUSD, GBPUSD, and USDJPY.
+    The execution window is EURUSD from 08:36 through 09:30 inclusive.
+    The 08:35 bar is omitted. The position is not open on it, and the
+    signal does not read it, so its absence hides no stop path.
+    """
+
+    execution = tuple(
+        (new_york_clock_utc(day, hour, minute), TRADED_SYMBOL)
+        for hour, minute in _clocks_from_0836_through_0930()
+    )
+    return _required_bars(day) + execution
+
+
+def review_n1_observation(
+    day: date,
+    bars: Sequence[QuoteBar],
+    *,
+    exit_reason: ExitReason | None = None,
+) -> N1ObservationReview:
+    """Label a finished observation without changing the signal or the engine.
+
+    The caller passes the engine reason through. This function does not
+    replace ``END_OF_DATA`` with a 09:30 exit and does not treat a missing
+    minute as a clear stop path.
+    """
+
+    if exit_reason is not None and not isinstance(exit_reason, ExitReason):
+        raise TypeError("exit_reason must be an ExitReason or None")
+    indexed = _index_bars(bars)
+    missing = tuple(
+        _missing_label(timestamp, symbol)
+        for timestamp, symbol in required_n1_observation_keys(day)
+        if (timestamp, symbol) not in indexed
+    )
+    reason_name = None if exit_reason is None else exit_reason.value
+    if not missing and exit_reason is ExitReason.TIME_EXIT:
+        quality = QUALITY_COMPLETE
+        ordinary = True
+        explanation = "required bars are present and the engine reason is TIME_EXIT"
+    elif not missing:
+        quality = QUALITY_COMPLETE
+        ordinary = False
+        explanation = "required bars are present; this result is not an ordinary N1 time exit"
+    elif exit_reason is ExitReason.END_OF_DATA:
+        quality = QUALITY_INCOMPLETE
+        ordinary = False
+        explanation = "END_OF_DATA is not an ordinary N1 time exit"
+    else:
+        quality = QUALITY_INCOMPLETE
+        ordinary = False
+        explanation = "a missing bar is not a clear stop path and is not an ordinary N1 time exit"
+    return N1ObservationReview(
+        quality=quality,
+        missing_labels=missing,
+        ordinary_n1_time_exit=ordinary,
+        exit_reason=reason_name,
+        explanation=explanation,
+    )
 
 
 def evaluate_n1_v0(release: N1Release, bars: Sequence[QuoteBar]) -> N1Signal:
@@ -353,6 +450,24 @@ def _required_bars(day: date) -> tuple[tuple[datetime, str], ...]:
         for symbol in DIRECTION_SYMBOLS
         for minute in minutes
     )
+
+
+def _clocks_from_0836_through_0930() -> tuple[tuple[int, int], ...]:
+    clocks: list[tuple[int, int]] = []
+    hour = 8
+    minute = 36
+    while (hour, minute) <= (9, 30):
+        clocks.append((hour, minute))
+        minute += 1
+        if minute == 60:
+            hour += 1
+            minute = 0
+    return tuple(clocks)
+
+
+def _missing_label(timestamp: datetime, symbol: str) -> str:
+    local = timestamp.astimezone(NEW_YORK)
+    return f"{symbol} {local.hour:02d}:{local.minute:02d} America/New_York"
 
 
 def _mid_change(

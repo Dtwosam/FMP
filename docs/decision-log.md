@@ -11420,6 +11420,10 @@ The engine still applies one `slippage_pips` value to every fill in a run. That 
 
 Synthetic passes are engineering checks. They are not evidence of profitable trading. Twelve or twenty-four events would not be statistical proof. Outcomes must not change the frozen rule. `EXP-20261123-078` records the synthetic check and does not open market data.
 
+### Observation completeness
+
+The same module labels, after the engine returns, whether the canonical bars needed to read an observation were present. The label is not a new trading rule and does not authorize collection. The 08:35 decision still does not require the 09:30 bar to exist, and it still does not read prices at 08:35 or later. The 08:35 EURUSD bar itself is not required: the position is not open on it. A missing 09:30 bar leaves the engine `END_OF_DATA` result in the record, and that result is not an ordinary 09:30 time exit. A missing bar from the 08:36 entry through the 09:30 exit leaves the observation incomplete, including when the engine returns `TIME_EXIT`, because the unobserved stop path is not treated as clear. NO TRADE, missing quotes, and rejected entries stay.
+
 ### Still closed
 
 No protected or historical market-data read, no annual catalogue execution, no consumption of annual run 385, no workflow, tag, runner, or branch-protection change, no broker connection, and no demo, live, or real-money order. Issues #779, #820, and #821 remain unresolved. The prospective protocol does not authorize collection. Collection starts only under a later, separate approval. The Phase 7 reproduction gate in `docs/phase7-stage2-trade-recovery-decision.md` is unchanged and is not taken here.
