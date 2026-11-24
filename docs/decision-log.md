@@ -11470,3 +11470,37 @@ No market quote is fetched by the commit that adds the recorder. The recorder ac
 ### Still closed
 
 Historical and protected market-data access, annual catalogue execution, annual run 385, DEC-470 amendments, new parameter searches, broker connections, demo, live, and real-money orders, unapproved workflow activation, and automatic strategy promotion. DEC-469 / DEC-268 remain the governing method. The Phase 7 reproduction gate is unchanged and is not taken here. Issues #779, #820, and #821 remain unresolved.
+
+## 2026-11-24 — DEC-639 APPROVED — N1-v0 Dukascopy daily-file transport exception
+
+**Status:** APPROVED OWNER DECISION. This extends DEC-638 data transport only. It does not change the N1-v0 rule, the eligible research minutes, phase order, the instrument universe, the risk hard limits, or the real-money lock. It is not broker, demo, live, or real-money trading authority. DEC-629 and DEC-630 stay proposed and unadopted. Not Strategy V1. Not a promotion. Two market events are an operational and preliminary economic observation, not proof of profitability.
+
+**Identity:** The next decision-log entry after DEC-638. It is not the unmerged branch `dec-639-combined-exclusive-output-rehearsal`. It is not the local Phase 7 Stage 2 evidence package stored under the label DEC-639 at executing commit `6782bcd6a8a1098b0c2a34a7b2064c39a7535de1`. This entry does not authorize another Stage 2 reproduction.
+
+**Frozen research version:** `78185a1aded7f5d97c296c16fdfd615f46934353`. `src/fmp/research/n1_news_shock.py` stays byte-identical to that commit. Execution contracts stay unchanged.
+
+**Effective timestamp:** the UTC committer timestamp of this commit. A download is also refused until both of the following are true: BLS publication is verified at 08:30 America/New_York, and the observation window has completed. The last authorized bar is labeled 09:30 America/New_York and covers that minute, so the window is complete at 09:31 America/New_York. The transport code copies this commit's timestamp from `git show -s --format=%cI` and refuses an earlier retrieval or verification timestamp.
+
+Master spec section 26 requires this entry before the acquisition code. This entry does not change phase order and does not skip an acceptance gate. The decision commit precedes the implementation commit. PR #2340 stays an unmerged draft.
+
+### Authorized source access
+
+Only 4 December 2026 (Employment Situation, `bls-empsit-2026-12-04`) and 10 December 2026 (Consumer Price Index, `bls-cpi-2026-12-10`). Only EURUSD, GBPUSD, and USDJPY. Only the public Dukascopy daily objects `BID_candles_min_1.bi5` and `ASK_candles_min_1.bi5` for those six instrument/date pairs. Maximum six source files on one date and twelve files across both dates. No other date, instrument, vendor, or stored historical research file is authorized.
+
+The public object remains the whole UTC day. `DukascopySource.url_for` is the URL builder. December is zero-based month 11. There is still no minute-range URL. `acquire_chunk` stays unused because it writes the historical raw store.
+
+### Transport and retention
+
+Use the smallest isolated path compatible with the existing Dukascopy source: `DukascopySource.url_for`, the existing HTTP transport interface, and `decode_bi5_day`. Write the compressed bytes only in a temporary directory whose resolved path does not contain a `dukascopy` part. SHA-256 the exact compressed bytes. Extract only the DEC-638 minutes: EURUSD, GBPUSD, and USDJPY at 08:29–08:34 America/New_York, and EURUSD at 08:36–09:30 America/New_York. Do not retain, analyze, or score any other minute, including 08:35. After the hash is recorded and extraction has finished, delete the temporary full-day payloads. Preserve the source manifest, the compressed-byte hashes, the permitted canonical bars, and the evidence rows.
+
+Bind each evidence row to those source-file hashes and to the hash of the extracted bars. Caller-supplied labels and timestamps do not establish authentic market provenance. A missing, incomplete, or undecodable source file is recorded as a collection limitation. Prices are not invented and no other feed is substituted. An unpublished, delayed, cancelled, or retimed release is retained and does not consume a slot. Its quotes are not downloaded.
+
+No source file is downloaded by the decision commit or by the implementation commit. A real download waits until the publication check and the completed window for that release.
+
+### Observation record
+
+For each qualifying event preserve the official BLS publication status, the source-file identities and compressed SHA-256 hashes, the permitted quote bars and their hash, the retrieval and verification timestamps, the N1 signal or NO TRADE decision, the raw engine trade or rejection, the completeness label, the three separate hypothetical slippage results at 0.5, 0.2, and 1.0 pip, and the existing hypothetical commission assumption. Do not drop losing trades, rejected entries, incomplete observations, or stopped positions. A completed stop followed by missing later quotes stays a stop.
+
+### Still closed
+
+Historical research backfill, protected data access, annual catalogue execution, annual run 385, DEC-470 amendments, parameter optimization, workflow activation, broker connections, demo trading, live trading, and real-money orders. November 2026 and every date other than the two named days stay closed. A replacement calendar date needs its own recorded citation. DEC-469 / DEC-268 remain the governing method. The Phase 7 reproduction gate is unchanged and is not taken here. Issues #779, #820, and #821 remain unresolved. `EXP-20261123-079` remains the pilot record and stays `NOT_STARTED` until a real event is collected.

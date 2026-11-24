@@ -2327,3 +2327,7 @@ Recorded the owner's approval to collect two prospective N1-v0 event windows aft
 ## 2026-11-24 — N1-v0 capture readiness, daily file not authorized
 
 The DEC-638 recorder rejects an 08:35 bar and appends JSONL evidence without replacing an earlier row. The public Dukascopy object is a whole-day `candles_min_1.bi5` file, so the existing pilot cannot collect those quotes inside the approved minute list. The daily-file transport envelope is identified and not granted. No quote was downloaded. No new decision number is opened. DEC-629 and DEC-630 stay proposed. The guardrail, instrument universe, risk hard limits, phase order, and real-money lock are unchanged.
+
+## 2026-11-24 — DEC-639 N1-v0 Dukascopy daily-file transport exception
+
+Recorded the owner's approval to retrieve the twelve public daily BID and ASK bi5 files for the 4 December 2026 Employment Situation and the 10 December 2026 CPI, as a transport envelope for the DEC-638 minutes. The signal, the eligible minutes, and the trading lock stay unchanged. Download waits for a verified 08:30 America/New_York publication and a completed window. No quote was fetched with this decision. This entry is not the audit-report branch `dec-639-combined-exclusive-output-rehearsal` and not the local Phase 7 Stage 2 package. DEC-629 and DEC-630 stay proposed. The guardrail, instrument universe, risk hard limits, phase order, and real-money lock are unchanged.
