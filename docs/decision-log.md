@@ -11381,3 +11381,126 @@ The same decision id is expected across 0.2, 0.5, and 1.0 pip because the engine
 The executing commit of a future reproduction will not be `a1f8a0466463c79fdbceb9d6ebad9e3ea809474d`, because that commit does not contain this writer. `result.json` and `windows.json` include `code_commit`, so a later run will not byte-match the original aggregate hashes. The numeric comparison can still be reviewed, and the commit difference has to stay visible. The bounded procedure is in `docs/phase7-stage2-trade-recovery-decision.md`. It is not an authorization. The next milestone is a formal owner decision on whether to authorize one controlled historical reproduction.
 
 On Python 3.12.13, `tests.test_phase7_trade_retention` was 7 tests and exited 0. Focused `tests.test_phase7_trade_retention`, `tests.test_phase7_evaluation`, `tests.test_phase7_artifacts`, `tests.test_phase7_cli`, `tests.test_trade_level_evidence`, and `tests.test_phase3_reporting` were 40 tests in 0.055s and exited 0. That run includes `test_gross_loss_matches_phase3_positive_magnitude`. `PYTHONPATH=src .venv/bin/python -m unittest discover -s tests` printed `Ran 4970 tests in 436.496s` and `FAILED (failures=145, errors=229, skipped=31)`, exit 1. That is 7 more tests than the DEC-635 count of 4963, with the same 145 failures and 229 errors. Those failures remain annual-catalogue and EXP-062 source-pin checks. Installed workflows were not edited. Run 385 stays unconsumed. Issues #779, #820, and #821 remain unresolved. No workflow, tag, runner, ruleset, broker, demo, live, or real-money path is authorized.
+
+## 2026-11-23 — DEC-637 APPROVED — N1-v0 synthetic research exception
+
+**Status:** APPROVED OWNER EXCEPTION. Narrow and source-only. This entry does not amend DEC-469, DEC-268, DEC-470, the operating guardrail, phase order, the instrument universe, the risk hard limits, or the real-money lock. DEC-629 and DEC-630 stay proposed and unadopted. Not Strategy V1. Not a promotion. Not trading authority.
+
+**Baseline:** `845e571a451fed51e638140ea3d1f0c72fa8c907`.
+
+The owner authorized one independently specified Forex hypothesis, N1-v0 News-Shock USD Continuation, so it can be represented and checked with synthetic quotes. The annual pattern catalogue remains the governing research method. This exception does not open a second method.
+
+This decision-log identity is the next entry after DEC-636. It is not the unmerged branch `dec-637-exclusive-merged-audit-reports`. That branch is outside this authorization and is not an ancestor of the baseline.
+
+Master spec section 26 requires an explicit decision-log entry and the corresponding source-of-truth edits before implementation when a change would otherwise conflict with the baseline. A named signal beside the catalogue was that conflict. Build-order change control for phase order does not apply: this entry does not change phase order and does not skip an acceptance gate. Those clauses require the record before the module. They do not require a separate docs pull request to be merged before the module is written. The authorization commit precedes the signal commit. The pull request stays unmerged for review.
+
+### Frozen rule
+
+N1-v0 watches two releases: BLS CPI and the BLS Employment Situation, and only when the release was actually published at 08:30 America/New_York. The clock conversion uses `America/New_York` with a UTC round trip. A delayed, cancelled, unpublished, or differently timed release is NO TRADE.
+
+The observation is the five completed one-minute bars labelled 08:30 through 08:34. The reference is the 08:29 one-minute mid close, `(bid_close + ask_close) / 2`. USD strength is EURUSD down, GBPUSD down, and USDJPY up, measured from each pair's 08:34 mid close against its 08:29 mid close. USD weakness is the opposite on all three. A flat leg, a mixed sign, or a missing quote is NO TRADE. The traded instrument is EURUSD only. The other two pairs are direction inputs.
+
+The decision timestamp is 08:35 New York. The earliest execution is the 08:36 New York bar open. Direction and the original protective stop use no price from 08:35 or later. Under the default `NEXT_SUPPLIED_BAR` mode, the 08:35 bar is not strictly after 08:35, so the engine fill is the 08:36 bar when that bar is the next supplied EURUSD bar. A missing or gapped entry bar stays `TIMING_CONTRACT`. It is not carried forward.
+
+The stop is the opposite executable-side extreme of the EURUSD 08:30–08:34 range. A short stop is the maximum ask high. A long stop is the minimum bid low. There is no target. Requested risk is 0.25% of current risk equity, and the existing hard limits still apply. The exit is that stop or 09:30 New York, whichever the engine reaches first. The 09:30 exit is a `ScheduledExit` filled at that bar's open. One event produces at most one EURUSD decision. Two releases on the same New York date are NO TRADE, so the rule does not pyramid. There is no overnight hold and no parameter search.
+
+A later price may change the fill, the size, or a risk rejection. It must not change the signal or the original stop. An entry that gaps through that stop is the existing `INVALID_STOP_TARGET` rejection. A later bar that opens through the stop is the existing gap stop at that bar's open. Missing quotes, unpublished releases, and disagreements stay in the record as NO TRADE.
+
+### Authorized work
+
+- An isolated module at `src/fmp/research/n1_news_shock.py` that emits the existing `Decision` and `ScheduledExit` values.
+- Synthetic fixtures and focused tests, including `run_backtest` on caller-supplied synthetic quotes.
+- The written protocol `docs/n1-v0-prospective-observation-protocol.md`.
+
+`Decision`, `Position`, `TradeRecord`, `assess_decision`, `evaluate_exit`, `RiskConfig`, and the default backtest timing mode stay unchanged. The module is not registered as a strategy, is not wired into a workflow, and is not a catalogue cell.
+
+### Costs and evidence
+
+The engine still applies one `slippage_pips` value to every fill in a run. That value is adverse to the order side. A second run with a different single value is a separate labeled stress. The engine does not provide an asymmetric fill or a worst-extreme fill inside one run. A bid/ask spread inside the synthetic quotes plus the published IC Markets Raw Spread MetaTrader commission of 3.50 USD per standard lot per side, accessed 2026-11-17, is a hypothetical cost package. It is not a verified Dukascopy fill and it is not verified broker execution. The spread is not charged a second time.
+
+Synthetic passes are engineering checks. They are not evidence of profitable trading. Twelve or twenty-four events would not be statistical proof. Outcomes must not change the frozen rule. `EXP-20261123-078` records the synthetic check and does not open market data.
+
+### Observation completeness
+
+The same module labels, after the engine returns, whether the canonical bars needed to read an observation were present. The label is not a new trading rule and does not authorize collection. The 08:35 decision still does not require the 09:30 bar to exist, and it still does not read prices at 08:35 or later. The 08:35 EURUSD bar itself is not required: the position is not open on it. A missing 09:30 bar leaves the engine `END_OF_DATA` result in the record, and that result is not an ordinary 09:30 time exit. A missing bar from the 08:36 entry through the 09:30 exit leaves the observation incomplete, including when the engine returns `TIME_EXIT`, because the unobserved stop path is not treated as clear. NO TRADE, missing quotes, and rejected entries stay.
+
+### Still closed
+
+No protected or historical market-data read, no annual catalogue execution, no consumption of annual run 385, no workflow, tag, runner, or branch-protection change, no broker connection, and no demo, live, or real-money order. Issues #779, #820, and #821 remain unresolved. The prospective protocol does not authorize collection. Collection starts only under a later, separate approval. The Phase 7 reproduction gate in `docs/phase7-stage2-trade-recovery-decision.md` is unchanged and is not taken here.
+
+## 2026-11-23 — DEC-638 APPROVED — N1-v0 prospective observation pilot
+
+**Status:** APPROVED OWNER DECISION. Research-data authorization only. This is not broker, demo, live, or real-money trading authority. It does not amend DEC-469, DEC-268, DEC-470, the operating guardrail, phase order, the instrument universe, the risk hard limits, or the real-money lock. DEC-629 and DEC-630 stay proposed and unadopted. Not Strategy V1. Not a promotion. Two observations are not statistical proof.
+
+**Identity:** The next decision-log entry after DEC-637. It is not the unmerged branch `dec-638-exclusive-legacy-report-create`. It is not the local Phase 7 synthetic preflight that used the label DEC-638 for evidence directories.
+
+**Frozen research version:** `78185a1aded7f5d97c296c16fdfd615f46934353` on draft PR #2340. The N1-v0 entry, exit, confirmation, stop, and risk rules remain the DEC-637 rule. `src/fmp/research/n1_news_shock.py` must stay byte-identical to that commit. A later edit to that file is not an approved signal. Collection follows the frozen blob, not a moving branch head.
+
+**Effective timestamp:** the UTC committer timestamp of this commit. A market bar is eligible only when its timestamp is strictly after that instant. The pilot recorder copies the resolved timestamp from `git show -s --format=%cI` of this commit. No earlier event is backfilled.
+
+Master spec section 26 requires this entry before the recording mechanism. This entry does not change phase order and does not skip an acceptance gate, so the build-order rule for phase-order changes does not require a separate merged pull request. The decision commit precedes the recorder commit. PR #2340 stays unmerged.
+
+### Approved windows
+
+BLS calendars accessed 2026-11-23. Times on those pages are Eastern Time. Publication status comes from BLS and is not inferred from price.
+
+The November 2026 Employment Situation was scheduled for 6 November 2026 at 08:30, and the October 2026 CPI was scheduled for 10 November 2026 at 08:30. Both instants are before this authorization. They are not pilot windows.
+
+The approved quote windows are the next two scheduled N1 releases:
+
+1. Employment Situation for November 2026, Friday 4 December 2026, 08:30 America/New_York. Sources: <https://www.bls.gov/schedule/news_release/empsit.htm> and <https://www.bls.gov/schedule/2026/12_sched_list.htm> (December list last modified 9 November 2026).
+2. Consumer Price Index for November 2026, Thursday 10 December 2026, 08:30 America/New_York. Sources: <https://www.bls.gov/schedule/news_release/cpi.htm>, the same December list, and <https://www.bls.gov/cpi/>.
+
+Real Earnings scheduled at the same minute as the 10 December CPI is not an N1 release.
+
+For each window the only authorized bars are EURUSD, GBPUSD, and USDJPY at 08:29 through 08:34 America/New_York, plus EURUSD at 08:36 through 09:30 America/New_York. The source is new Dukascopy 1-minute bid and ask data for those minutes, at $0. It is not a read of the stored historical research files, not a protected annual artefact, and not a broker feed.
+
+A release counts toward the two-event limit only when BLS records that it was actually published at 08:30 America/New_York. A delayed, cancelled, unpublished, or retimed release is kept in the record and does not consume one of the two counts. Quote collection for a replacement date is not approved by this entry. The next BLS calendar citation has to be recorded before any later window opens. If both scheduled releases qualify, the pilot stops after the 10 December 2026 window.
+
+### Recording
+
+Use the frozen `evaluate_n1_v0` signal, the existing execution and risk contracts, and `review_n1_observation`, without retuning. Store the engine trade or rejection separately from the quality label. A missing quote after an already completed stop does not erase that stop. Keep mixed signals, NO TRADE, rejected entries, stop losses, time exits, incomplete coverage, and missing quotes.
+
+The accounting equity for the hypothetical result is 100,000 USD. That figure is the DEC-637 synthetic denominator. It is not a live account and not a searched parameter. Requested risk stays 0.25% inside the existing hard limits.
+
+Costs are the collected bid/ask spread, the hypothetical IC Markets Raw Spread MetaTrader commission of 3.50 USD per standard lot per side accessed 2026-11-17, and three separately labeled adverse-slippage runs at 0.5, 0.2, and 1.0 pip. Those runs are not combined into one fill. They are not verified broker fills. No order is placed to observe a fill. No paid subscription or infrastructure is authorized.
+
+No market quote is fetched by the commit that adds the recorder. The recorder accepts caller-supplied bars for the two windows and refuses earlier timestamps. Download waits until an approved window and is not started here. `EXP-20261123-079` is the pilot record.
+
+### Still closed
+
+Historical and protected market-data access, annual catalogue execution, annual run 385, DEC-470 amendments, new parameter searches, broker connections, demo, live, and real-money orders, unapproved workflow activation, and automatic strategy promotion. DEC-469 / DEC-268 remain the governing method. The Phase 7 reproduction gate is unchanged and is not taken here. Issues #779, #820, and #821 remain unresolved.
+
+## 2026-11-24 — DEC-639 APPROVED — N1-v0 Dukascopy daily-file transport exception
+
+**Status:** APPROVED OWNER DECISION. This extends DEC-638 data transport only. It does not change the N1-v0 rule, the eligible research minutes, phase order, the instrument universe, the risk hard limits, or the real-money lock. It is not broker, demo, live, or real-money trading authority. DEC-629 and DEC-630 stay proposed and unadopted. Not Strategy V1. Not a promotion. Two market events are an operational and preliminary economic observation, not proof of profitability.
+
+**Identity:** The next decision-log entry after DEC-638. It is not the unmerged branch `dec-639-combined-exclusive-output-rehearsal`. It is not the local Phase 7 Stage 2 evidence package stored under the label DEC-639 at executing commit `6782bcd6a8a1098b0c2a34a7b2064c39a7535de1`. This entry does not authorize another Stage 2 reproduction.
+
+**Frozen research version:** `78185a1aded7f5d97c296c16fdfd615f46934353`. `src/fmp/research/n1_news_shock.py` stays byte-identical to that commit. Execution contracts stay unchanged.
+
+**Effective timestamp:** the UTC committer timestamp of this commit. A download is also refused until both of the following are true: BLS publication is verified at 08:30 America/New_York, and the observation window has completed. The last authorized bar is labeled 09:30 America/New_York and covers that minute, so the window is complete at 09:31 America/New_York. The transport code copies this commit's timestamp from `git show -s --format=%cI` and refuses an earlier retrieval or verification timestamp.
+
+Master spec section 26 requires this entry before the acquisition code. This entry does not change phase order and does not skip an acceptance gate. The decision commit precedes the implementation commit. PR #2340 stays an unmerged draft.
+
+### Authorized source access
+
+Only 4 December 2026 (Employment Situation, `bls-empsit-2026-12-04`) and 10 December 2026 (Consumer Price Index, `bls-cpi-2026-12-10`). Only EURUSD, GBPUSD, and USDJPY. Only the public Dukascopy daily objects `BID_candles_min_1.bi5` and `ASK_candles_min_1.bi5` for those six instrument/date pairs. Maximum six source files on one date and twelve files across both dates. No other date, instrument, vendor, or stored historical research file is authorized.
+
+The public object remains the whole UTC day. `DukascopySource.url_for` is the URL builder. December is zero-based month 11. There is still no minute-range URL. `acquire_chunk` stays unused because it writes the historical raw store.
+
+### Transport and retention
+
+Use the smallest isolated path compatible with the existing Dukascopy source: `DukascopySource.url_for`, the existing HTTP transport interface, and `decode_bi5_day`. Write the compressed bytes only in a temporary directory whose resolved path does not contain a `dukascopy` part. SHA-256 the exact compressed bytes. Extract only the DEC-638 minutes: EURUSD, GBPUSD, and USDJPY at 08:29–08:34 America/New_York, and EURUSD at 08:36–09:30 America/New_York. Do not retain, analyze, or score any other minute, including 08:35. After the hash is recorded and extraction has finished, delete the temporary full-day payloads. Preserve the source manifest, the compressed-byte hashes, the permitted canonical bars, and the evidence rows.
+
+Bind each evidence row to those source-file hashes and to the hash of the extracted bars. Caller-supplied labels and timestamps do not establish authentic market provenance. A missing, incomplete, or undecodable source file is recorded as a collection limitation. Prices are not invented and no other feed is substituted. An unpublished, delayed, cancelled, or retimed release is retained and does not consume a slot. Its quotes are not downloaded.
+
+No source file is downloaded by the decision commit or by the implementation commit. A real download waits until the publication check and the completed window for that release.
+
+### Observation record
+
+For each qualifying event preserve the official BLS publication status, the source-file identities and compressed SHA-256 hashes, the permitted quote bars and their hash, the retrieval and verification timestamps, the N1 signal or NO TRADE decision, the raw engine trade or rejection, the completeness label, the three separate hypothetical slippage results at 0.5, 0.2, and 1.0 pip, and the existing hypothetical commission assumption. Do not drop losing trades, rejected entries, incomplete observations, or stopped positions. A completed stop followed by missing later quotes stays a stop.
+
+### Still closed
+
+Historical research backfill, protected data access, annual catalogue execution, annual run 385, DEC-470 amendments, parameter optimization, workflow activation, broker connections, demo trading, live trading, and real-money orders. November 2026 and every date other than the two named days stay closed. A replacement calendar date needs its own recorded citation. DEC-469 / DEC-268 remain the governing method. The Phase 7 reproduction gate is unchanged and is not taken here. Issues #779, #820, and #821 remain unresolved. `EXP-20261123-079` remains the pilot record and stays `NOT_STARTED` until a real event is collected.

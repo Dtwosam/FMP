@@ -2315,3 +2315,23 @@ Aligned caller-supplied gross loss with the Phase 3 positive magnitude and label
 ## 2026-11-17 — DEC-636 Phase 7 trade-record retention
 
 Added an opt-in writer that keeps the trade and rejection rows the existing Phase 7 evaluator already returns. The writer uses a separate checksummed directory and does not change the aggregate artifact format, the frozen evaluator, or artifact `10414817824`. No authentic 199-trade Stage 2 series was recovered. A later historical reproduction still requires a separate owner decision. DEC-629 and DEC-630 stay proposed. The guardrail, instrument universe, risk hard limits, phase order, and real-money lock are unchanged.
+
+## 2026-11-23 — DEC-637 N1-v0 synthetic research exception
+
+Recorded the owner's narrow approval to represent N1-v0 News-Shock USD Continuation with the existing decision and scheduled-exit contracts and to check it on synthetic quotes. The annual catalogue remains the governing method. DEC-629 and DEC-630 stay unadopted. DEC-470, the risk hard limits, phase order, and the real-money lock are unchanged. The written prospective protocol does not authorize market-data collection. The same exception adds an after-the-fact completeness label: a missing 09:30 bar stays `END_OF_DATA`, and a missing intermediate bar stays incomplete. No protected research or trading authority is opened.
+
+## 2026-11-23 — DEC-638 N1-v0 prospective observation pilot
+
+Recorded the owner's approval to collect two prospective N1-v0 event windows after the decision timestamp: the 4 December 2026 Employment Situation and the 10 December 2026 CPI, both scheduled at 08:30 America/New_York. The signal stays the DEC-637 rule at commit `78185a1aded7f5d97c296c16fdfd615f46934353`. No historical read, catalogue run, workflow activation, broker connection, or trade is authorized. No quote was fetched with this decision. The recorder accepts supplied bars for those two windows, keeps the engine result separate from the quality label, and does not download quotes.
+
+## 2026-11-24 — N1-v0 capture readiness, daily file not authorized
+
+The DEC-638 recorder rejects an 08:35 bar and appends JSONL evidence without replacing an earlier row. The public Dukascopy object is a whole-day `candles_min_1.bi5` file, so the existing pilot cannot collect those quotes inside the approved minute list. The daily-file transport envelope is identified and not granted. No quote was downloaded. No new decision number is opened. DEC-629 and DEC-630 stay proposed. The guardrail, instrument universe, risk hard limits, phase order, and real-money lock are unchanged.
+
+## 2026-11-24 — DEC-639 N1-v0 Dukascopy daily-file transport exception
+
+Recorded the owner's approval to retrieve the twelve public daily BID and ASK bi5 files for the 4 December 2026 Employment Situation and the 10 December 2026 CPI, as a transport envelope for the DEC-638 minutes. The signal, the eligible minutes, and the trading lock stay unchanged. Download waits for a verified 08:30 America/New_York publication and a completed window. No quote was fetched with this decision. This entry is not the audit-report branch `dec-639-combined-exclusive-output-rehearsal` and not the local Phase 7 Stage 2 package. DEC-629 and DEC-630 stay proposed. The guardrail, instrument universe, risk hard limits, phase order, and real-money lock are unchanged.
+
+The following implementation adds `observe_n1_transport_window`. It hashes the compressed daily bytes, keeps the DEC-638 minutes, deletes the full-day payload, and binds those hashes to the evidence rows. Caller-supplied labels remain synthetic. No quote was downloaded.
+
+The real HTTP path now reads the system UTC clock before a request. A future caller clock cannot open a download before 09:31 America/New_York. A BLS verification timestamp remains the operator's manual check and is not publication proof. The operator is asked to wait until the event's UTC day ends before the first attempt. No additional file, date, or repeat download is authorized. No quote was downloaded.

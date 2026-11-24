@@ -3598,3 +3598,72 @@ Copy this section for each serious experiment:
 - Conclusion: NEED_MORE_DATA
 - Reason: the rows are synthetic. The holdout was already inspected, so the revised classification is not an independent confirmation. Frozen historical catalogues were not opened. Valid p-values for the 89,460-hypothesis family are not available. Sixty bootstrap replicates and sixty studentized replicates do not establish calibrated intervals or p-values. Student's t was not substituted for the existing z interval.
 - Follow-up: keep DEC-470, the event-evidence schema, the statistical-uncertainty schema, the annual miner, and the cross-year statistical block unchanged. Annual run 385 stays unopened. No merge is authorized by this experiment.
+
+### EXP-20261123-078 — N1-v0 synthetic signal check
+
+- Date: 2026-11-23
+- Status: INCONCLUSIVE
+- Hypothesis: Frozen N1-v0 emits reproducible EURUSD decisions from synthetic quotes, and the existing engine records the hypothetical spread, one slippage assumption, and the published commission without changing the signal or the original stop.
+- Code commit: branch `draft/dec637-n1-v0-synthetic-exception`. Authorization parent `ca5ba3c6533a667d93e57ef22369bfab3fe3042b`. Branch base `845e571a451fed51e638140ea3d1f0c72fa8c907`.
+- Data manifest/version: `n1-v0-synthetic-quotes`. No market-data file and no protected artifact was opened.
+- Pair(s): EURUSD is the only traded symbol. GBPUSD and USDJPY are direction inputs in the synthetic fixture.
+- Timeframe(s): 1m quotes supplied directly. No derived-bar builder was used.
+- Data range: not applicable. Clocks are 2026-01-13, 2026-03-08, 2026-03-09, 2026-07-14, and 2026-11-02 America/New_York.
+- Train period: not applicable
+- Validation period: not applicable
+- Final-test touched?: NO
+- Strategy/model: N1-v0 News-Shock USD Continuation, isolated in `src/fmp/research/n1_news_shock.py`. Not registered. Not Strategy V1. DEC-469 / DEC-268 remain the governing method.
+- Features: none
+- Parameters/search space: none. The rule, the 0.25% risk fraction, the 08:36 entry, and the 09:30 exit are frozen.
+- Random seed (if relevant): not applicable
+- Spread/cost model: the spread is the synthetic bid/ask. Commission is the published IC Markets Raw Spread MetaTrader figure of 3.50 USD per standard lot per side, accessed 2026-11-17, passed through `FixedCommissionPerMillion` at 35 USD per million per side. The package is hypothetical. It is not a verified Dukascopy fill and not verified broker execution.
+- Slippage model: one adverse `slippage_pips` value per run. The recorded check uses 0.5 pip, and separate runs use 0.2 and 1.0 pip. Those runs are not combined into an asymmetric or worst-extreme fill.
+- Risk assumptions: 0.25% of current risk equity, subject to the existing 0.50% per-trade, 1.00% simultaneous, and 1.50% daily-halt limits. An entry through the original stop is `INVALID_STOP_TARGET`. A risk budget that sizes to zero units is `INVALID_SIZE`.
+- Trade count: synthetic fixtures only. No market trades.
+- Net return after costs: not a market result. The 100,000-unit short fixture records 7.00 USD round-turn commission at the published 3.50 per-side rate, plus adverse slippage on the 0.5-pip run.
+- Expectancy/trade: not estimated
+- Profit factor: not computed
+- Max drawdown: not computed
+- Key subperiod results: not market years. Winter and summer clocks convert to 13:30 UTC and 12:30 UTC. The 2026-03-08 02:30 America/New_York gap is rejected.
+- Robustness/cost sensitivity: later synthetic prices change the fill and the size and leave the direction and the original stop unchanged. A separate 1.0-pip run is a second single-assumption stress, not one asymmetric fill.
+- Result summary: 16 focused tests in `tests.test_n1_news_shock` exited 0. USD strength is short EURUSD. USD weakness is long EURUSD. Mixed, flat, missing, unpublished, delayed, mistimed, and unsupported releases stay NO TRADE. Two releases on one New York date stay NO TRADE. The fill is the 08:36 open. The scheduled exit is the 09:30 open. A gap stop fills at the opened-through price. A missing 08:36 bar is `TIMING_CONTRACT`. A missing 09:30 bar stays `END_OF_DATA` and is not rewritten. NO TRADE rows are kept.
+- Conclusion: NEED_MORE_DATA
+- Reason: the rows are synthetic engineering checks. They do not show a market edge. Prospective collection is written and not approved.
+- Follow-up: keep DEC-470, DEC-629, and DEC-630 unchanged. Do not collect market data until a later separate approval. Do not merge this branch as a promotion. Annual run 385 stays unopened.
+- Addendum 2026-11-23: `review_n1_observation` labels the same synthetic fixtures after the engine returns. Focused `tests.test_n1_news_shock` was 24 tests and exited 0. A missing 09:30 bar stays `END_OF_DATA` and is not an ordinary time exit. A missing intermediate bar stays incomplete when the engine returns `TIME_EXIT`. The 08:35 bar is not required. The signal, the original stop, and the engine are unchanged. Collection remains unapproved.
+
+### EXP-20261123-079 — N1-v0 prospective observation pilot
+
+- Date: 2026-11-23
+- Status: NOT_STARTED
+- Hypothesis: Two prospective N1-v0 windows can be recorded from new Dukascopy bid/ask bars without changing the frozen DEC-637 rule, and the raw engine result stays intact when the quality label is incomplete.
+- Code commit: decision `09ca49abbd6478db44bf070ebed5e9f77db705b1`. Frozen signal `78185a1aded7f5d97c296c16fdfd615f46934353`. Effective authorization timestamp 2026-11-23T15:13:54+01:00.
+- Data manifest/version: `n1-v0-prospective-supplied-bars` for the recorder check. No market-data file and no protected artifact was opened.
+- Pair(s): EURUSD is the only traded symbol. GBPUSD and USDJPY are direction inputs.
+- Timeframe(s): 1m bid/ask. The approved minutes are 08:29–08:34 for the three pairs and 08:36–09:30 for EURUSD.
+- Data range: Employment Situation on 2026-12-04 and CPI on 2026-12-10, each scheduled at 08:30 America/New_York. November 2026 releases are excluded.
+- Train period: not applicable
+- Validation period: not applicable
+- Final-test touched?: NO
+- Strategy/model: frozen N1-v0. Not registered. Not Strategy V1. DEC-469 / DEC-268 remain the governing method.
+- Features: none
+- Parameters/search space: none. Slippage runs are the existing labeled values 0.5, 0.2, and 1.0 pip. Accounting equity is the existing 100,000 USD synthetic denominator.
+- Random seed (if relevant): not applicable
+- Spread/cost model: spread stays inside the supplied bid/ask. Commission is the hypothetical 3.50 USD per standard lot per side accessed 2026-11-17. Not a verified broker fill.
+- Slippage model: one adverse value per run, in separate labeled runs. The runs are not combined.
+- Risk assumptions: 0.25% of the accounting equity, subject to the existing hard limits.
+- Trade count: no market trades. The recorder check uses synthetic bars only.
+- Net return after costs: not a market result.
+- Expectancy/trade: not estimated
+- Profit factor: not computed
+- Max drawdown: not computed
+- Key subperiod results: not available. The pilot has not collected quotes.
+- Robustness/cost sensitivity: not a market comparison. A stop with later missing bars remains a stop on the raw record while the quality label stays incomplete.
+- Result summary: focused `tests.test_n1_prospective_pilot` was 11 tests and exited 0. `tests.test_n1_news_shock` remained 24 tests and exited 0. No quote was downloaded.
+- Conclusion: NEED_MORE_DATA
+- Reason: the pilot windows have not opened. A synthetic recorder check is not prospective evidence.
+- Follow-up: DEC-639 authorizes the daily bi5 transport envelope for 4 December 2026 and 10 December 2026 only. Do not download a file before BLS verifies publication at 08:30 America/New_York and the window has completed. Confirm the BLS publication status from BLS before counting a release. Keep DEC-470, DEC-629, and DEC-630 unchanged. Annual run 385 stays unopened. Do not promote the rule from two events.
+- Addendum 2026-11-24: the recorder rejects a supplied 08:35 EURUSD bar. The decision timestamp stays 08:35 America/New_York and the earliest execution stays 08:36. `append_labeled_pilot_evidence` writes three slippage rows to `n1-v0-pilot-evidence.jsonl` and raises `DuplicatePilotObservation` instead of replacing an earlier row. Synthetic rows use `synthetic_fixture_not_market_evidence`. Focused `tests.test_n1_prospective_pilot` was 16 tests and exited 0. Combined with `tests.test_n1_news_shock`, 40 tests exited 0. No quote was downloaded. Status remains NOT_STARTED.
+- Addendum 2026-11-24, DEC-639: the owner authorized the twelve public daily files as a transport envelope. Caller-supplied labels are not market provenance. No quote was downloaded with the decision. Status remains NOT_STARTED.
+- Addendum 2026-11-24, transport implementation: `observe_n1_transport_window` hashes synthetic compressed bytes, drops every minute outside the DEC-638 list, deletes the payload, and binds the source hashes to the evidence rows. A missing or undecodable file stays a collection limitation. Focused `tests.test_n1_dukascopy_transport` was 10 tests and exited 0. Combined with `tests.test_n1_prospective_pilot` and `tests.test_n1_news_shock`, 50 tests exited 0. No quote was downloaded. Status remains NOT_STARTED.
+- Addendum 2026-11-24, production clock: the real HTTP client checks the system UTC clock before a request. A future `now_utc` does not open that request before 09:31 America/New_York. A scripted transport still accepts a deterministic caller clock. A BLS verification timestamp does not prove publication. Focused `tests.test_n1_dukascopy_transport` was 15 tests and exited 0. Combined with the pilot and signal tests, 55 tests exited 0. No quote was downloaded. Status remains NOT_STARTED.
