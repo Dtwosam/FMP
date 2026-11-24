@@ -10,10 +10,11 @@ import tempfile
 import unittest
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
+from unittest.mock import patch
 from zoneinfo import ZoneInfo
 
 from fmp.contracts import ExitReason
-from fmp.data.dukascopy import DukascopySource, HttpResponse
+from fmp.data.dukascopy import DukascopySource, HttpResponse, UrllibTransport
 from fmp.data.types import RawChunkKey
 from fmp.research.n1_dukascopy_transport import observe_n1_transport_window
 from fmp.research.n1_news_shock import ReleaseKind, ReleaseStatus, required_n1_observation_keys
@@ -120,6 +121,17 @@ def _strength_bodies(day: date) -> dict[str, bytes]:
                 rows.append((_seconds(day, hour, minute), *_ohlc(symbol, prices[0], prices[1], high_px=high)))
             bodies[source.url_for(RawChunkKey(symbol, side, day))] = _compress(rows)
     return bodies
+
+
+class _GuardedHttp(UrllibTransport):
+    """Production-class client whose get() never opens a socket."""
+
+    def __init__(self) -> None:
+        self.calls: list[str] = []
+
+    def get(self, url: str, timeout_seconds: float) -> HttpResponse:
+        self.calls.append(url)
+        return HttpResponse(status=404, body=b"")
 
 
 class _ScriptedTransport:
@@ -356,6 +368,111 @@ class N1DukascopyTransportTests(unittest.TestCase):
                     transport=transport,
                 )
             self.assertEqual(transport.calls, [])
+
+    def test_production_http_rejects_a_future_caller_clock(self) -> None:
+        early = datetime(2026, 11, 25, 12, 0, tzinfo=timezone.utc)
+        future = _after_window(CPI_DAY)
+        client = _GuardedHttp()
+        with patch("fmp.research.n1_dukascopy_transport._system_utc_now", return_value=early):
+            with tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                with self.assertRaises(ValueError) as caught:
+                    observe_n1_transport_window(
+                        _cpi(),
+                        transport_directory=root / "transport",
+                        evidence_directory=root / "evidence",
+                        bls_status_verified_at_utc=future,
+                        now_utc=future,
+                        transport=client,
+                    )
+                self.assertIn("not complete", str(caught.exception))
+                self.assertEqual(client.calls, [])
+                self.assertFalse((root / "evidence" / "n1-v0-pilot-evidence.jsonl").exists())
+            with patch.object(UrllibTransport, "get", side_effect=AssertionError("socket")) as get:
+                with tempfile.TemporaryDirectory() as tmp:
+                    root = Path(tmp)
+                    with self.assertRaises(ValueError):
+                        observe_n1_transport_window(
+                            _cpi(),
+                            transport_directory=root / "transport",
+                            evidence_directory=root / "evidence",
+                            bls_status_verified_at_utc=future,
+                            now_utc=future,
+                            transport=None,
+                        )
+                self.assertEqual(get.call_count, 0)
+
+    def test_caller_clock_cannot_outrun_the_system_clock(self) -> None:
+        system = _after_window(CPI_DAY)
+        later = system + timedelta(minutes=5)
+        client = _GuardedHttp()
+        with patch("fmp.research.n1_dukascopy_transport._system_utc_now", return_value=system):
+            with tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                with self.assertRaises(ValueError) as caught:
+                    observe_n1_transport_window(
+                        _cpi(),
+                        transport_directory=root / "transport",
+                        evidence_directory=root / "evidence",
+                        bls_status_verified_at_utc=system,
+                        now_utc=later,
+                        transport=client,
+                    )
+                self.assertIn("system clock", str(caught.exception))
+                self.assertEqual(client.calls, [])
+
+    def test_system_clock_opens_production_http_when_the_caller_clock_is_early(self) -> None:
+        system = _after_window(CPI_DAY)
+        caller = _utc(CPI_DAY, 9, 30)
+        verified = _utc(CPI_DAY, 8, 30)
+        client = _GuardedHttp()
+        with patch("fmp.research.n1_dukascopy_transport._system_utc_now", return_value=system):
+            with tempfile.TemporaryDirectory() as tmp:
+                records = observe_n1_transport_window(
+                    _cpi(),
+                    transport_directory=Path(tmp) / "transport",
+                    evidence_directory=Path(tmp) / "evidence",
+                    bls_status_verified_at_utc=verified,
+                    now_utc=caller,
+                    transport=client,
+                )
+        self.assertEqual(len(client.calls), 6)
+        self.assertEqual(records[0].collection_limitation, "source_not_available")
+        self.assertEqual(records[0].data_retrieved_at_utc, system.isoformat())
+
+    def test_scripted_transport_keeps_a_deterministic_clock(self) -> None:
+        early = datetime(2026, 11, 24, 12, 0, tzinfo=timezone.utc)
+        bodies = {url: (200, body) for url, body in _strength_bodies(EMPSIT_DAY).items()}
+        transport = _ScriptedTransport(bodies)
+        when = _after_window(EMPSIT_DAY)
+        with patch("fmp.research.n1_dukascopy_transport._system_utc_now", return_value=early):
+            with tempfile.TemporaryDirectory() as tmp:
+                observe_n1_transport_window(
+                    _empsit(),
+                    transport_directory=Path(tmp) / "transport",
+                    evidence_directory=Path(tmp) / "evidence",
+                    bls_status_verified_at_utc=when,
+                    now_utc=when,
+                    transport=transport,
+                )
+        self.assertEqual(len(transport.calls), 6)
+
+    def test_verification_timestamp_does_not_prove_publication(self) -> None:
+        system = _after_window(CPI_DAY)
+        client = _GuardedHttp()
+        with patch("fmp.research.n1_dukascopy_transport._system_utc_now", return_value=system):
+            with tempfile.TemporaryDirectory() as tmp:
+                records = observe_n1_transport_window(
+                    _cpi(status=ReleaseStatus.DELAYED, actual=None),
+                    transport_directory=Path(tmp) / "transport",
+                    evidence_directory=Path(tmp) / "evidence",
+                    bls_status_verified_at_utc=system,
+                    now_utc=system,
+                    transport=client,
+                )
+        self.assertEqual(client.calls, [])
+        self.assertEqual(records[0].collection_limitation, "publication_not_at_0830")
+        self.assertFalse(records[0].qualifying_publication)
 
     def test_forged_provenance_seal_is_rejected(self) -> None:
         with self.assertRaises(ValueError):

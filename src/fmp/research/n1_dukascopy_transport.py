@@ -3,8 +3,10 @@
 The public Dukascopy object is one UTC day. This module hashes those
 compressed bytes, extracts the approved minutes, and deletes the payload.
 It does not call ``acquire_chunk`` and it does not write the historical
-raw store. A real download waits until publication is verified and the
-observation window has completed.
+raw store. The real HTTP client reads the system UTC clock and refuses
+a request before 09:31 America/New_York. A caller-supplied clock cannot
+open that path early. A BLS verification timestamp records the operator's
+manual check and does not prove publication.
 """
 
 from __future__ import annotations
@@ -66,12 +68,13 @@ def observe_n1_transport_window(
     _require_approved_release(release)
     now = _require_utc(now_utc, "now_utc")
     verified = _require_utc(bls_status_verified_at_utc, "bls_status_verified_at_utc")
-    _require_retrieval_clock(release.new_york_date, now)
-    _require_verification_clock(release.new_york_date, verified, now)
+    retrieval_clock = _retrieval_clock(release.new_york_date, now, verified, transport)
     if prospective_observation_stored(evidence_directory, release.release_id):
         raise DuplicatePilotObservation(
             "an observation for this release and slippage is already stored"
         )
+    # The verification timestamp is the operator's manual BLS check time.
+    # Publication still has to be on the release record. The timestamp is not that proof.
     if _qualifies(release):
         source_files, bars, limitation, evidence_class = _acquire_daily_files(
             release,
@@ -90,7 +93,7 @@ def observe_n1_transport_window(
         source_files=source_files,
         quote_input_sha256=_quote_input_sha256(bars),
         bls_status_verified_at_utc=verified.astimezone(timezone.utc).isoformat(),
-        data_retrieved_at_utc=now.astimezone(timezone.utc).isoformat(),
+        data_retrieved_at_utc=retrieval_clock.astimezone(timezone.utc).isoformat(),
         collection_limitation=limitation,
         evidence_class=evidence_class,
     )
@@ -105,6 +108,11 @@ def _acquire_daily_files(
     source: DukascopySource,
     timeout_seconds: float,
 ) -> tuple[tuple[SourceFileRecord, ...], tuple[QuoteBar, ...], str | None, str]:
+    if _production_http_client(transport):
+        _require_retrieval_clock(
+            release.new_york_date,
+            _require_utc(_system_utc_now(), "system_utc"),
+        )
     client = transport if transport is not None else UrllibTransport()
     work = transport_directory / f".n1-{release.release_id}"
     _refuse_protected_evidence_directory(work)
@@ -299,6 +307,32 @@ def _require_utc(value: datetime, field: str) -> datetime:
     if value.utcoffset() != timezone.utc.utcoffset(value):
         raise ValueError(f"{field} must use UTC")
     return value.astimezone(timezone.utc)
+
+
+def _system_utc_now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def _production_http_client(transport: HttpTransport | None) -> bool:
+    return transport is None or isinstance(transport, UrllibTransport)
+
+
+def _retrieval_clock(
+    day,
+    now: datetime,
+    verified: datetime,
+    transport: HttpTransport | None,
+) -> datetime:
+    if not _production_http_client(transport):
+        _require_retrieval_clock(day, now)
+        _require_verification_clock(day, verified, now)
+        return now
+    actual = _require_utc(_system_utc_now(), "system_utc")
+    _require_retrieval_clock(day, actual)
+    if now > actual:
+        raise ValueError("now_utc is after the system clock")
+    _require_verification_clock(day, verified, actual)
+    return actual
 
 
 def _require_retrieval_clock(day, now: datetime) -> None:
