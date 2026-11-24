@@ -1,19 +1,27 @@
 from __future__ import annotations
 
 import ast
+import json
 import subprocess
+import tempfile
 import unittest
 from datetime import date, datetime, timezone
 from pathlib import Path
 
 from fmp.contracts import ExitReason, QuoteBar, RejectionCode
-from fmp.research.n1_news_shock import ReleaseKind, ReleaseStatus
+from fmp.data.dukascopy import DukascopySource
+from fmp.data.types import RawChunkKey
+from fmp.research.n1_news_shock import ReleaseKind, ReleaseStatus, evaluate_n1_v0
 from fmp.research.n1_prospective_pilot import (
     AUTHORIZATION_COMMIT,
     AUTHORIZATION_EFFECTIVE_UTC,
     EVIDENCE_CLASS,
     FROZEN_SIGNAL_COMMIT,
+    MINUTE_WINDOW_DOWNLOAD_SUPPORTED,
+    SYNTHETIC_EVIDENCE_CLASS,
+    DuplicatePilotObservation,
     PilotWindowClosed,
+    append_labeled_pilot_evidence,
     assert_frozen_signal_blob,
     record_labeled_slippage_runs,
     record_pilot,
@@ -44,6 +52,15 @@ def _cpi(**kwargs):
     )
 
 
+def _approved(day: date, bars: list[QuoteBar]) -> list[QuoteBar]:
+    stamp = _utc(day, 8, 35)
+    return [
+        bar
+        for bar in bars
+        if not (bar.symbol == "EURUSD" and bar.timestamp_utc == stamp)
+    ]
+
+
 class N1ProspectivePilotTests(unittest.TestCase):
     def test_effective_timestamp_is_the_decision_commit(self) -> None:
         shown = subprocess.check_output(
@@ -68,14 +85,14 @@ class N1ProspectivePilotTests(unittest.TestCase):
         self.assertNotIn("def fetch_", source)
 
     def test_complete_window_keeps_time_exit_and_hypothetical_cost(self) -> None:
-        bars = _session(CPI_DAY, direction="strength", stop_bar_extreme=1.10150)
+        bars = _approved(CPI_DAY, _session(CPI_DAY, direction="strength", stop_bar_extreme=1.10150))
         record = record_pilot_observation(_cpi(), bars, slippage_pips=0.5)
         self.assertEqual(record.raw_exit_reason, ExitReason.TIME_EXIT.value)
         self.assertEqual(record.quality, "COMPLETE")
         self.assertTrue(record.ordinary_n1_time_exit)
         self.assertEqual(record.missing_labels, ())
         self.assertEqual(record.raw_commission_usd, 7.0)
-        self.assertEqual(record.evidence_class, EVIDENCE_CLASS)
+        self.assertEqual(record.evidence_class, SYNTHETIC_EVIDENCE_CLASS)
         self.assertTrue(record.qualifying_publication)
         self.assertTrue(record.engine_ran)
         self.assertFalse(record.quality_replaces_raw_result)
@@ -88,7 +105,7 @@ class N1ProspectivePilotTests(unittest.TestCase):
             gap_at=(8, 40, 1.10300, 1.10320),
         )
         cutoff = _utc(EMPSIT_DAY, 8, 40)
-        truncated = [bar for bar in bars if bar.timestamp_utc <= cutoff]
+        truncated = _approved(EMPSIT_DAY, [bar for bar in bars if bar.timestamp_utc <= cutoff])
         record = record_pilot_observation(_empsit(), truncated, slippage_pips=0.5)
         self.assertEqual(record.raw_exit_reason, ExitReason.STOP.value)
         self.assertEqual(record.raw_stop_price, 1.10150)
@@ -111,7 +128,10 @@ class N1ProspectivePilotTests(unittest.TestCase):
 
     def test_mistimed_publication_stays_a_rejection_and_does_not_count(self) -> None:
         release = _empsit(actual=_utc(EMPSIT_DAY, 8, 31))
-        bars = _session(EMPSIT_DAY, direction="strength", stop_bar_extreme=1.10150)
+        bars = _approved(
+            EMPSIT_DAY,
+            _session(EMPSIT_DAY, direction="strength", stop_bar_extreme=1.10150),
+        )
         record = record_pilot_observation(release, bars, slippage_pips=0.2)
         self.assertEqual(record.raw_rejection_code, RejectionCode.NO_TRADE.value)
         self.assertIsNone(record.raw_exit_reason)
@@ -154,7 +174,7 @@ class N1ProspectivePilotTests(unittest.TestCase):
             record_pilot_observation(_empsit(), (bar,), slippage_pips=0.5)
 
     def test_labeled_slippage_runs_stay_separate(self) -> None:
-        bars = _session(CPI_DAY, direction="strength", stop_bar_extreme=1.10150)
+        bars = _approved(CPI_DAY, _session(CPI_DAY, direction="strength", stop_bar_extreme=1.10150))
         records = record_labeled_slippage_runs(_cpi(), bars)
         self.assertEqual([record.slippage_pips for record in records], [0.5, 0.2, 1.0])
         self.assertEqual(records[0].raw_stop_price, records[2].raw_stop_price)
@@ -167,7 +187,10 @@ class N1ProspectivePilotTests(unittest.TestCase):
             (),
             0.5,
         )
-        second_bars = _session(CPI_DAY, direction="weakness", stop_bar_extreme=1.09800)
+        second_bars = _approved(
+            CPI_DAY,
+            _session(CPI_DAY, direction="weakness", stop_bar_extreme=1.09800),
+        )
         second = (_cpi(), second_bars, 1.0)
         records = record_pilot((first, second))
         self.assertEqual(len(records), 2)
@@ -178,9 +201,95 @@ class N1ProspectivePilotTests(unittest.TestCase):
             record_pilot((second, second))
 
     def test_unlabeled_slippage_is_refused(self) -> None:
-        bars = _session(CPI_DAY, direction="strength", stop_bar_extreme=1.10150)
+        bars = _approved(CPI_DAY, _session(CPI_DAY, direction="strength", stop_bar_extreme=1.10150))
         with self.assertRaises(ValueError):
             record_pilot_observation(_cpi(), bars, slippage_pips=0.7)
+
+    def test_0835_bar_is_outside_the_authorized_window(self) -> None:
+        bars = _session(CPI_DAY, direction="strength", stop_bar_extreme=1.10150)
+        self.assertTrue(any(bar.timestamp_utc == _utc(CPI_DAY, 8, 35) for bar in bars))
+        with self.assertRaises(ValueError):
+            record_pilot_observation(_cpi(), bars, slippage_pips=0.5)
+        approved = _approved(CPI_DAY, bars)
+        signal = evaluate_n1_v0(_cpi(), approved)
+        self.assertEqual(signal.decision.decision_timestamp_utc, _utc(CPI_DAY, 8, 35))
+        self.assertEqual(signal.decision.earliest_executable_timestamp_utc, _utc(CPI_DAY, 8, 36))
+        record = record_pilot_observation(_cpi(), approved, slippage_pips=0.5)
+        self.assertEqual(record.raw_exit_reason, ExitReason.TIME_EXIT.value)
+
+    def test_dukascopy_object_is_a_daily_file(self) -> None:
+        key = RawChunkKey("EURUSD", "BID", CPI_DAY)
+        url = DukascopySource().url_for(key)
+        self.assertEqual(
+            url,
+            "https://datafeed.dukascopy.com/datafeed/EURUSD/2026/11/10/BID_candles_min_1.bi5",
+        )
+        self.assertFalse(MINUTE_WINDOW_DOWNLOAD_SUPPORTED)
+        self.assertNotIn("urllib", Path(REPO_ROOT, "src/fmp/research/n1_prospective_pilot.py").read_text())
+
+    def test_evidence_appends_three_runs_and_does_not_overwrite(self) -> None:
+        bars = _approved(EMPSIT_DAY, _session(
+            EMPSIT_DAY,
+            direction="strength",
+            stop_bar_extreme=1.10150,
+            gap_at=(8, 40, 1.10300, 1.10320),
+        ))
+        cutoff = _utc(EMPSIT_DAY, 8, 40)
+        truncated = [bar for bar in bars if bar.timestamp_utc <= cutoff]
+        with tempfile.TemporaryDirectory() as tmp:
+            directory = Path(tmp)
+            records = append_labeled_pilot_evidence(directory, _empsit(), truncated)
+            path = directory / "n1-v0-pilot-evidence.jsonl"
+            first = path.read_bytes()
+            rows = [json.loads(line) for line in first.decode().splitlines()]
+            self.assertEqual([row["slippage_pips"] for row in rows], [0.5, 0.2, 1.0])
+            self.assertEqual({row["evidence_class"] for row in rows}, {SYNTHETIC_EVIDENCE_CLASS})
+            self.assertTrue(all(row["market_evidence"] is False for row in rows))
+            self.assertTrue(all(row["raw_exit_reason"] == ExitReason.STOP.value for row in rows))
+            self.assertTrue(all(row["quality"] == "INCOMPLETE" for row in rows))
+            self.assertTrue(all(row["quality_replaces_raw_result"] is False for row in rows))
+            self.assertEqual(len({row["quote_input_sha256"] for row in rows}), 1)
+            self.assertEqual(len(records), 3)
+            with self.assertRaises(DuplicatePilotObservation):
+                append_labeled_pilot_evidence(directory, _empsit(), truncated)
+            self.assertEqual(path.read_bytes(), first)
+
+    def test_prospective_label_requires_provenance_and_synthetic_cannot_use_it(self) -> None:
+        bars = _approved(CPI_DAY, _session(CPI_DAY, direction="strength", stop_bar_extreme=1.10150))
+        verified = datetime(2026, 12, 10, 15, 0, tzinfo=timezone.utc)
+        with tempfile.TemporaryDirectory() as tmp:
+            directory = Path(tmp)
+            records = append_labeled_pilot_evidence(
+                directory,
+                _cpi(),
+                bars,
+                evidence_origin="prospective_market",
+                bls_status_verified_at_utc=verified,
+                data_retrieved_at_utc=verified,
+            )
+            row = json.loads((directory / "n1-v0-pilot-evidence.jsonl").read_text().splitlines()[0])
+            self.assertEqual(records[0].evidence_class, EVIDENCE_CLASS)
+            self.assertTrue(row["market_evidence"])
+            self.assertEqual(row["quote_source"], "dukascopy-public-daily-m1-bi5-v1")
+            self.assertEqual(row["frozen_signal_commit"], FROZEN_SIGNAL_COMMIT)
+            self.assertEqual(row["authorization_commit"], AUTHORIZATION_COMMIT)
+            self.assertIn("3.50", row["commission_assumption"])
+        with self.assertRaises(ValueError):
+            record_pilot_observation(
+                _cpi(),
+                bars,
+                slippage_pips=0.5,
+                evidence_origin="synthetic_fixture",
+                data_retrieved_at_utc=verified,
+            )
+
+    def test_evidence_refuses_the_historical_dukascopy_store(self) -> None:
+        bars = _approved(CPI_DAY, _session(CPI_DAY, direction="flat"))
+        with tempfile.TemporaryDirectory() as tmp:
+            blocked = Path(tmp) / "raw" / "dukascopy" / "v1"
+            blocked.mkdir(parents=True)
+            with self.assertRaises(ValueError):
+                append_labeled_pilot_evidence(blocked, _cpi(), bars)
 
 
 if __name__ == "__main__":

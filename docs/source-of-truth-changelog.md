@@ -2323,3 +2323,7 @@ Recorded the owner's narrow approval to represent N1-v0 News-Shock USD Continuat
 ## 2026-11-23 — DEC-638 N1-v0 prospective observation pilot
 
 Recorded the owner's approval to collect two prospective N1-v0 event windows after the decision timestamp: the 4 December 2026 Employment Situation and the 10 December 2026 CPI, both scheduled at 08:30 America/New_York. The signal stays the DEC-637 rule at commit `78185a1aded7f5d97c296c16fdfd615f46934353`. No historical read, catalogue run, workflow activation, broker connection, or trade is authorized. No quote was fetched with this decision. The recorder accepts supplied bars for those two windows, keeps the engine result separate from the quality label, and does not download quotes.
+
+## 2026-11-24 — N1-v0 capture readiness, daily file not authorized
+
+The DEC-638 recorder rejects an 08:35 bar and appends JSONL evidence without replacing an earlier row. The public Dukascopy object is a whole-day `candles_min_1.bi5` file, so the existing pilot cannot collect those quotes inside the approved minute list. The daily-file transport envelope is identified and not granted. No quote was downloaded. No new decision number is opened. DEC-629 and DEC-630 stay proposed. The guardrail, instrument universe, risk hard limits, phase order, and real-money lock are unchanged.
