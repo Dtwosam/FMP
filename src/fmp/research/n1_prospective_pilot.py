@@ -1,11 +1,13 @@
 """Record one N1-v0 prospective pilot observation.
 
-DEC-638 authorizes two future quote windows. This module does not download
-market data, does not contact a broker, and does not change the frozen
-signal. The engine trade or rejection is stored separately from the
-quality label.
+DEC-638 authorizes two future quote windows. DEC-639 authorizes the
+daily-file transport in ``n1_dukascopy_transport``. This module does not
+download market data, does not contact a broker, and does not change the
+frozen signal. The engine trade or rejection is stored separately from
+the quality label.
 
 The signal file must match commit 78185a1aded7f5d97c296c16fdfd615f46934353.
+Caller-supplied labels are not market provenance.
 """
 
 from __future__ import annotations
@@ -41,14 +43,19 @@ from fmp.risk import RiskConfig
 FROZEN_SIGNAL_COMMIT = "78185a1aded7f5d97c296c16fdfd615f46934353"
 AUTHORIZATION_COMMIT = "09ca49abbd6478db44bf070ebed5e9f77db705b1"
 AUTHORIZATION_EFFECTIVE_UTC = "2026-11-23T15:13:54+01:00"
+TRANSPORT_DECISION_COMMIT = "adc4836ff08ea642a0053982cbc377ab3e6c12c0"
+TRANSPORT_EFFECTIVE_UTC = "2026-11-24T13:00:31+01:00"
 EVIDENCE_CLASS = "prospective_quote_observation_not_broker_fill"
+COLLECTION_LIMITATION_CLASS = "prospective_collection_limitation_not_quote_evidence"
 SYNTHETIC_EVIDENCE_CLASS = "synthetic_fixture_not_market_evidence"
+ACQUISITION_PATH = "n1-dukascopy-daily-transport-v1"
 SYNTHETIC_ORIGIN = "synthetic_fixture"
 PROSPECTIVE_ORIGIN = "prospective_market"
 SYNTHETIC_QUOTE_SOURCE = "synthetic_fixture"
 PROSPECTIVE_QUOTE_SOURCE = "dukascopy-public-daily-m1-bi5-v1"
 MINUTE_WINDOW_DOWNLOAD_SUPPORTED = False
 EVIDENCE_FILENAME = "n1-v0-pilot-evidence.jsonl"
+MANIFEST_FILENAME = "n1-v0-pilot-source-manifest.jsonl"
 PILOT_ACCOUNTING_EQUITY_USD = 100_000.0
 LABELED_SLIPPAGE_PIPS = (0.5, 0.2, 1.0)
 SIGNAL_PATH = "src/fmp/research/n1_news_shock.py"
@@ -65,6 +72,52 @@ class PilotWindowClosed(RuntimeError):
 
 class DuplicatePilotObservation(RuntimeError):
     """An earlier row already occupies this release and slippage slot."""
+
+
+class _TransportSeal:
+    """Private mark for provenance built by the DEC-639 transport."""
+
+
+_TRANSPORT_SEAL = _TransportSeal()
+
+
+@dataclass(frozen=True, slots=True)
+class SourceFileRecord:
+    """One compressed daily file. A missing file has no price bytes."""
+
+    pair: str
+    side: str
+    url: str
+    sha256: str | None
+    compressed_size_bytes: int | None
+    http_status: int | None
+    status: str
+
+
+@dataclass(frozen=True, slots=True)
+class TransportProvenance:
+    """Provenance only the approved acquisition path can construct."""
+
+    seal: object
+    source_files: tuple[SourceFileRecord, ...]
+    quote_input_sha256: str
+    bls_status_verified_at_utc: str
+    data_retrieved_at_utc: str
+    collection_limitation: str | None
+    evidence_class: str
+
+    def __post_init__(self) -> None:
+        if self.seal is not _TRANSPORT_SEAL:
+            raise ValueError("caller-supplied labels do not establish market provenance")
+        hashed = [item for item in self.source_files if item.status == "hashed" and item.sha256]
+        if self.evidence_class == EVIDENCE_CLASS:
+            if not hashed:
+                raise ValueError("quote evidence requires a hashed source file")
+        elif self.evidence_class == COLLECTION_LIMITATION_CLASS:
+            if not self.collection_limitation:
+                raise ValueError("a collection limitation must be named")
+        else:
+            raise ValueError("unknown transport evidence class")
 
 
 @dataclass(frozen=True, slots=True)
@@ -93,6 +146,9 @@ class N1PilotRecord:
     quote_input_sha256: str
     bls_status_verified_at_utc: str | None
     data_retrieved_at_utc: str | None
+    source_files: tuple[SourceFileRecord, ...] = ()
+    collection_limitation: str | None = None
+    acquisition_path: str | None = None
     quality_replaces_raw_result: bool = False
 
     def __post_init__(self) -> None:
@@ -103,8 +159,19 @@ class N1PilotRecord:
                 raise ValueError("a synthetic fixture is not prospective market evidence")
             if self.bls_status_verified_at_utc is not None or self.data_retrieved_at_utc is not None:
                 raise ValueError("a synthetic fixture has no market retrieval timestamp")
+            if self.acquisition_path is not None or self.source_files or self.collection_limitation is not None:
+                raise ValueError("a synthetic fixture has no source-file provenance")
         elif self.evidence_origin == PROSPECTIVE_ORIGIN:
-            if self.evidence_class != EVIDENCE_CLASS:
+            if self.acquisition_path != ACQUISITION_PATH:
+                raise ValueError("prospective evidence requires the approved acquisition path")
+            if self.evidence_class == EVIDENCE_CLASS:
+                hashed = [item for item in self.source_files if item.status == "hashed" and item.sha256]
+                if not hashed:
+                    raise ValueError("quote evidence requires a hashed source file")
+            elif self.evidence_class == COLLECTION_LIMITATION_CLASS:
+                if not self.collection_limitation:
+                    raise ValueError("a collection limitation must be named")
+            else:
                 raise ValueError("prospective evidence requires the prospective evidence class")
         else:
             raise ValueError("unknown evidence origin")
@@ -128,21 +195,54 @@ def record_pilot_observation(
     evidence_origin: str = SYNTHETIC_ORIGIN,
     bls_status_verified_at_utc: datetime | None = None,
     data_retrieved_at_utc: datetime | None = None,
+    transport_provenance: TransportProvenance | None = None,
 ) -> N1PilotRecord:
     """Record one supplied window. Bars must already be in memory."""
 
     assert_frozen_signal_blob()
     if not isinstance(release, N1Release):
         raise TypeError("release must be an N1Release")
-    evidence_class, quote_source, verified_at, retrieved_at = _evidence_provenance(
-        evidence_origin,
-        bls_status_verified_at_utc,
-        data_retrieved_at_utc,
-    )
+    source_files: tuple[SourceFileRecord, ...] = ()
+    collection_limitation = None
+    acquisition_path = None
+    if transport_provenance is None:
+        if evidence_origin != SYNTHETIC_ORIGIN:
+            raise ValueError("caller-supplied labels do not establish market provenance")
+        evidence_class, quote_source, verified_at, retrieved_at = _evidence_provenance(
+            evidence_origin,
+            bls_status_verified_at_utc,
+            data_retrieved_at_utc,
+        )
+    else:
+        if not isinstance(transport_provenance, TransportProvenance):
+            raise TypeError("transport provenance must come from the approved acquisition path")
+        evidence_origin = PROSPECTIVE_ORIGIN
+        evidence_class = transport_provenance.evidence_class
+        verified_at = _timestamp_after_authorization(
+            datetime.fromisoformat(transport_provenance.bls_status_verified_at_utc),
+            "bls_status_verified_at_utc",
+            TRANSPORT_EFFECTIVE_UTC,
+        )
+        retrieved_at = _timestamp_after_authorization(
+            datetime.fromisoformat(transport_provenance.data_retrieved_at_utc),
+            "data_retrieved_at_utc",
+            TRANSPORT_EFFECTIVE_UTC,
+        )
+        hashed = any(
+            item.status == "hashed" and item.sha256 for item in transport_provenance.source_files
+        )
+        quote_source = PROSPECTIVE_QUOTE_SOURCE if hashed else "not_fetched"
+        source_files = transport_provenance.source_files
+        collection_limitation = transport_provenance.collection_limitation
+        acquisition_path = ACQUISITION_PATH
     slippage = _require_labeled_slippage(slippage_pips)
     _require_approved_release(release)
     supplied = tuple(bars)
     _require_timestamps_after_authorization(supplied)
+    if transport_provenance is not None:
+        _require_timestamps_after_instant(supplied, TRANSPORT_EFFECTIVE_UTC)
+        if _quote_input_sha256(supplied) != transport_provenance.quote_input_sha256:
+            raise ValueError("extracted-bar hash does not match the acquisition record")
     _require_window_keys(release.new_york_date, supplied)
     signal = evaluate_n1_v0(release, supplied)
     review_reason = None
@@ -204,6 +304,9 @@ def record_pilot_observation(
         quote_input_sha256=_quote_input_sha256(supplied),
         bls_status_verified_at_utc=verified_at,
         data_retrieved_at_utc=retrieved_at,
+        source_files=source_files,
+        collection_limitation=collection_limitation,
+        acquisition_path=acquisition_path,
     )
 
 
@@ -250,6 +353,29 @@ def append_labeled_pilot_evidence(
         data_retrieved_at_utc=data_retrieved_at_utc,
     )
     _append_evidence_lines(directory, release, records)
+    return records
+
+
+def append_transported_pilot_evidence(
+    directory: Path,
+    release: N1Release,
+    bars: Sequence[QuoteBar],
+    provenance: TransportProvenance,
+) -> tuple[N1PilotRecord, ...]:
+    """Append three slippage rows bound to one acquisition record."""
+
+    _refuse_protected_evidence_directory(directory)
+    records = tuple(
+        record_pilot_observation(
+            release,
+            bars,
+            slippage_pips=pips,
+            transport_provenance=provenance,
+        )
+        for pips in LABELED_SLIPPAGE_PIPS
+    )
+    _append_evidence_lines(directory, release, records)
+    _append_source_manifest(directory, _manifest_line(release, records[0]))
     return records
 
 
@@ -338,13 +464,24 @@ def _evidence_provenance(
     raise ValueError("unknown evidence origin")
 
 
-def _timestamp_after_authorization(value: datetime, field: str) -> str:
+def _timestamp_after_authorization(
+    value: datetime,
+    field: str,
+    effective_utc: str = AUTHORIZATION_EFFECTIVE_UTC,
+) -> str:
     if value.tzinfo is None or value.utcoffset() != timedelta(0):
         raise ValueError(f"{field} must use UTC")
-    effective = datetime.fromisoformat(AUTHORIZATION_EFFECTIVE_UTC).astimezone(timezone.utc)
+    effective = datetime.fromisoformat(effective_utc).astimezone(timezone.utc)
     if value <= effective:
         raise ValueError(f"{field} is not strictly after the authorization timestamp")
     return value.astimezone(timezone.utc).isoformat()
+
+
+def _require_timestamps_after_instant(bars: Sequence[QuoteBar], effective_utc: str) -> None:
+    effective = datetime.fromisoformat(effective_utc).astimezone(timezone.utc)
+    for bar in bars:
+        if bar.timestamp_utc <= effective:
+            raise ValueError("bar timestamp is not strictly after the transport decision")
 
 
 def _quote_input_sha256(bars: Sequence[QuoteBar]) -> str:
@@ -367,6 +504,76 @@ def _quote_input_sha256(bars: Sequence[QuoteBar]) -> str:
             )
         )
     return hashlib.sha256("\n".join(lines).encode()).hexdigest()
+
+
+def _manifest_line(release: N1Release, record: N1PilotRecord) -> str:
+    payload = {
+        "schema": "fmp-n1-v0-pilot-source-manifest-v1",
+        "release_id": release.release_id,
+        "new_york_date": release.new_york_date.isoformat(),
+        "retrieved_at_utc": record.data_retrieved_at_utc,
+        "bls_status_verified_at_utc": record.bls_status_verified_at_utc,
+        "quote_input_sha256": record.quote_input_sha256,
+        "collection_limitation": record.collection_limitation,
+        "source_files": [_source_file_payload(item) for item in record.source_files],
+        "transport_decision_commit": TRANSPORT_DECISION_COMMIT,
+        "payloads_deleted": True,
+    }
+    return json.dumps(payload, sort_keys=True, separators=(",", ":"))
+
+
+def _source_file_payload(item: SourceFileRecord) -> dict[str, object]:
+    return {
+        "pair": item.pair,
+        "side": item.side,
+        "url": item.url,
+        "sha256": item.sha256,
+        "compressed_size_bytes": item.compressed_size_bytes,
+        "http_status": item.http_status,
+        "status": item.status,
+    }
+
+
+def prospective_observation_stored(directory: Path, release_id: str) -> bool:
+    """True when this release already has a prospective evidence row."""
+
+    path = directory / EVIDENCE_FILENAME
+    if not path.exists() or path.is_symlink():
+        return False
+    text = path.read_text()
+    if text and not text.endswith("\n"):
+        raise ValueError("evidence file is missing a trailing newline")
+    for line in text.splitlines():
+        row = json.loads(line)
+        if row["evidence_origin"] == PROSPECTIVE_ORIGIN and row["release_id"] == release_id:
+            return True
+    return False
+
+
+def _append_source_manifest(directory: Path, line: str) -> None:
+    path = directory / MANIFEST_FILENAME
+    if path.is_symlink():
+        raise ValueError("source manifest must not be a symlink")
+    payload = (line + "\n").encode()
+    fd = os.open(path, os.O_RDWR | os.O_CREAT, 0o644)
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX)
+        os.lseek(fd, 0, os.SEEK_SET)
+        existing = b""
+        while True:
+            block = os.read(fd, 65536)
+            if not block:
+                break
+            existing += block
+        text = existing.decode()
+        if text and not text.endswith("\n"):
+            raise ValueError("source manifest is missing a trailing newline")
+        os.lseek(fd, 0, os.SEEK_END)
+        os.write(fd, payload)
+        os.fsync(fd)
+    finally:
+        fcntl.flock(fd, fcntl.LOCK_UN)
+        os.close(fd)
 
 
 def _refuse_protected_evidence_directory(directory: Path) -> None:
@@ -422,7 +629,7 @@ def _evidence_line(release: N1Release, record: N1PilotRecord) -> str:
     actual = None if release.actual_release_utc is None else release.actual_release_utc.isoformat()
     payload = {
         "schema": "fmp-n1-v0-pilot-evidence-v1",
-        "market_evidence": record.evidence_origin == PROSPECTIVE_ORIGIN,
+        "market_evidence": record.evidence_class == EVIDENCE_CLASS,
         "evidence_origin": record.evidence_origin,
         "evidence_class": record.evidence_class,
         "release_id": record.release_id,
@@ -435,6 +642,12 @@ def _evidence_line(release: N1Release, record: N1PilotRecord) -> str:
         "data_retrieved_at_utc": record.data_retrieved_at_utc,
         "quote_source": record.quote_source,
         "quote_input_sha256": record.quote_input_sha256,
+        "acquisition_path": record.acquisition_path,
+        "collection_limitation": record.collection_limitation,
+        "source_files": [_source_file_payload(item) for item in record.source_files],
+        "transport_decision_commit": (
+            None if record.acquisition_path is None else TRANSPORT_DECISION_COMMIT
+        ),
         "frozen_signal_commit": FROZEN_SIGNAL_COMMIT,
         "authorization_commit": AUTHORIZATION_COMMIT,
         "authorization_effective_utc": AUTHORIZATION_EFFECTIVE_UTC,

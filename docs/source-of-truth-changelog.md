@@ -2331,3 +2331,5 @@ The DEC-638 recorder rejects an 08:35 bar and appends JSONL evidence without rep
 ## 2026-11-24 — DEC-639 N1-v0 Dukascopy daily-file transport exception
 
 Recorded the owner's approval to retrieve the twelve public daily BID and ASK bi5 files for the 4 December 2026 Employment Situation and the 10 December 2026 CPI, as a transport envelope for the DEC-638 minutes. The signal, the eligible minutes, and the trading lock stay unchanged. Download waits for a verified 08:30 America/New_York publication and a completed window. No quote was fetched with this decision. This entry is not the audit-report branch `dec-639-combined-exclusive-output-rehearsal` and not the local Phase 7 Stage 2 package. DEC-629 and DEC-630 stay proposed. The guardrail, instrument universe, risk hard limits, phase order, and real-money lock are unchanged.
+
+The following implementation adds `observe_n1_transport_window`. It hashes the compressed daily bytes, keeps the DEC-638 minutes, deletes the full-day payload, and binds those hashes to the evidence rows. Caller-supplied labels remain synthetic. No quote was downloaded.

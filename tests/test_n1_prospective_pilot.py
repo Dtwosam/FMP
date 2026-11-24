@@ -15,7 +15,6 @@ from fmp.research.n1_news_shock import ReleaseKind, ReleaseStatus, evaluate_n1_v
 from fmp.research.n1_prospective_pilot import (
     AUTHORIZATION_COMMIT,
     AUTHORIZATION_EFFECTIVE_UTC,
-    EVIDENCE_CLASS,
     FROZEN_SIGNAL_COMMIT,
     MINUTE_WINDOW_DOWNLOAD_SUPPORTED,
     SYNTHETIC_EVIDENCE_CLASS,
@@ -254,26 +253,21 @@ class N1ProspectivePilotTests(unittest.TestCase):
                 append_labeled_pilot_evidence(directory, _empsit(), truncated)
             self.assertEqual(path.read_bytes(), first)
 
-    def test_prospective_label_requires_provenance_and_synthetic_cannot_use_it(self) -> None:
+    def test_caller_labels_are_not_market_provenance(self) -> None:
         bars = _approved(CPI_DAY, _session(CPI_DAY, direction="strength", stop_bar_extreme=1.10150))
         verified = datetime(2026, 12, 10, 15, 0, tzinfo=timezone.utc)
         with tempfile.TemporaryDirectory() as tmp:
             directory = Path(tmp)
-            records = append_labeled_pilot_evidence(
-                directory,
-                _cpi(),
-                bars,
-                evidence_origin="prospective_market",
-                bls_status_verified_at_utc=verified,
-                data_retrieved_at_utc=verified,
-            )
-            row = json.loads((directory / "n1-v0-pilot-evidence.jsonl").read_text().splitlines()[0])
-            self.assertEqual(records[0].evidence_class, EVIDENCE_CLASS)
-            self.assertTrue(row["market_evidence"])
-            self.assertEqual(row["quote_source"], "dukascopy-public-daily-m1-bi5-v1")
-            self.assertEqual(row["frozen_signal_commit"], FROZEN_SIGNAL_COMMIT)
-            self.assertEqual(row["authorization_commit"], AUTHORIZATION_COMMIT)
-            self.assertIn("3.50", row["commission_assumption"])
+            with self.assertRaises(ValueError):
+                append_labeled_pilot_evidence(
+                    directory,
+                    _cpi(),
+                    bars,
+                    evidence_origin="prospective_market",
+                    bls_status_verified_at_utc=verified,
+                    data_retrieved_at_utc=verified,
+                )
+            self.assertFalse((directory / "n1-v0-pilot-evidence.jsonl").exists())
         with self.assertRaises(ValueError):
             record_pilot_observation(
                 _cpi(),
